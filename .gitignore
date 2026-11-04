@@ -1,0 +1,32 @@
+# --- credentials ---
+.env
+.env.*
+!.env.example
+
+# --- large binaries / vendor docs (too big for git) ---
+*.chm
+*.iso
+*.dmg
+
+# --- Office lock files (created when a doc is open in Office) ---
+~$*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.venv/
+venv/
+
+# --- editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- regenerable bulk metric exports ---
+# Re-create with: python tools/fetch_tpops_metrics.py --hours 24
+data/metrics_series_*.json

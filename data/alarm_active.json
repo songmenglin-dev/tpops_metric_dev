@@ -1,0 +1,39 @@
+{
+  "records": [
+    {
+      "severity": "major",
+      "status": "activated",
+      "cause": "",
+      "engine": "gaussdb",
+      "alarm_id": "2007010001",
+      "alarm_name": "节点NTP状态异常",
+      "alarm_category": "节点状态",
+      "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+      "instance_name": "gauss-6374",
+      "alarm_items_sum": 1,
+      "alarm_type": "event",
+      "first_alarm_time": 1793758083000,
+      "last_alarm_time": 1793771156000,
+      "alarm_duration": "4小时5分钟",
+      "component_name": "实例管理"
+    },
+    {
+      "severity": "major",
+      "status": "activated",
+      "cause": "",
+      "engine": "gaussdb",
+      "alarm_id": "2007010001",
+      "alarm_name": "节点NTP状态异常",
+      "alarm_category": "节点状态",
+      "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+      "instance_name": "gauss-75a2",
+      "alarm_items_sum": 2,
+      "alarm_type": "event",
+      "first_alarm_time": 1793757300000,
+      "last_alarm_time": 1793770400000,
+      "alarm_duration": "4小时18分钟",
+      "component_name": "实例管理"
+    }
+  ],
+  "total_count": 2
+}

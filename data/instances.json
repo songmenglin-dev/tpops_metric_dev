@@ -1,0 +1,35 @@
+{
+  "total_count": 2,
+  "instances": [
+    {
+      "id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+      "name": "gauss-6374",
+      "mode": "Combined",
+      "created_at": "2026-11-03T07:52:54+0000",
+      "instance_status": "normal",
+      "engine_name": "gaussdbv5",
+      "engine_version": "V2.0-10.0.0",
+      "agent_info": {
+        "latest_version": "gaussdbv5_agent_26.861.0.1",
+        "current_version": "gaussdbv5_agent_26.861.0.1",
+        "last_version": null,
+        "upgrade_status": "Completed"
+      }
+    },
+    {
+      "id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+      "name": "gauss-75a2",
+      "mode": "Ha",
+      "created_at": "2026-11-03T07:40:27+0000",
+      "instance_status": "normal",
+      "engine_name": "gaussdbv5",
+      "engine_version": "V2.0-10.0.0",
+      "agent_info": {
+        "latest_version": "gaussdbv5_agent_26.861.0.1",
+        "current_version": "gaussdbv5_agent_26.861.0.1",
+        "last_version": null,
+        "upgrade_status": "Completed"
+      }
+    }
+  ]
+}
