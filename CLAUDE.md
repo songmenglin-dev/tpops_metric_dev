@@ -44,7 +44,8 @@ tpops_kafka/
     └── serializer.py# JSON 序列化
 
 tools/     # 现有离线取数脚本 + 参考实现，保留
-data/      # 离线样本（指标目录、告警样例）
+data/      # 离线样本（指标侧：目录、映射、查询方案、实测结果）
+│  └── alarm/   # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
 docs/      # TPOPS API 参考（由 CHM 转换，未增补）
 ```
 

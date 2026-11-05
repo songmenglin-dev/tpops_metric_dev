@@ -1,5 +1,5 @@
 {
-  "alarm_statistic.json": {
+  "statistic.json": {
     "api": "告警数量查询",
     "method": "GET",
     "url": "https://172.16.103.193:8002/rds/v3/alarm/records/statistic",
@@ -9,7 +9,7 @@
       "X-Language": "zh-cn"
     }
   },
-  "alarm_active.json": {
+  "active.json": {
     "api": "告警结果列表",
     "method": "POST",
     "url": "https://172.16.103.193:8002/rds/v3/alarm/records",
@@ -26,7 +26,7 @@
     "note": "active alarms, grouped per instance+alarm_id",
     "total_count": 2
   },
-  "alarm_active_detail.json": {
+  "active_detail.json": {
     "api": "告警结果列表",
     "method": "POST",
     "url": "https://172.16.103.193:8002/rds/v3/alarm/records",
@@ -43,7 +43,7 @@
     "note": "active alarms, one row per node",
     "total_count": 3
   },
-  "alarm_history.json": {
+  "history.json": {
     "api": "告警结果列表",
     "method": "POST",
     "url": "https://172.16.103.193:8002/rds/v3/alarm/records",
@@ -60,7 +60,7 @@
     "note": "recovered/cleared alarms, grouped",
     "total_count": 4
   },
-  "alarm_history_detail.json": {
+  "history_detail.json": {
     "api": "告警结果列表",
     "method": "POST",
     "url": "https://172.16.103.193:8002/rds/v3/alarm/records",

@@ -41,7 +41,8 @@ is 1440 minutes; the client fetches a fresh token per run.
 
 ## Alarms
 
-`python tools/fetch_tpops_alarms.py` — fetches alarm data into `data/`.
+`python tools/fetch_tpops_alarms.py` — fetches alarm data into `data/alarm/`.
+See `data/alarm/README.md` for what each file holds.
 
 | API | Purpose |
 |---|---|
