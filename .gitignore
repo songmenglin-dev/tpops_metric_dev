@@ -30,3 +30,6 @@ Thumbs.db
 # --- regenerable bulk metric exports ---
 # Re-create with: python tools/fetch_tpops_metrics.py --hours 24
 data/metrics_series_*.json
+
+# 原子写入的临时文件
+*.tmp
