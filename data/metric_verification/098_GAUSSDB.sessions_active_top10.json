@@ -1,0 +1,79 @@
+{
+  "customer_metric": "GAUSSDB.sessions_active_top10",
+  "customer_metric_name": "会话时间TOP10",
+  "customer_category": "会话信息",
+  "tpops_metric": "pg_stat_activity.query_start",
+  "tpops_metric_name": "会话查询开始时刻",
+  "status": "可提供",
+  "match_level": "直接对应",
+  "source": "命令中心SQL",
+  "note": "按 query_start 排序取 Top N",
+  "customer_spec": {
+    "data_type": "文本",
+    "data_update_cycle": "5",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "method": "POST",
+    "uri": "/rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "body": {
+        "instance_id": "<instance_id>",
+        "node_ids": [
+          "<node_id>"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "100"
+          }
+        ]
+      }
+    },
+    "expected_result": "会话列表，按 query_start 升序取前 10（时长最长的 10 个会话）",
+    "related_apis": [
+      "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
+      "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 19:00:34",
+    "method": "命令中心执行 SQL",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 5.8,
+    "row_count": 7,
+    "error": null,
+    "sample": [
+      {
+        "datname": "postgres",
+        "usename": "rdsAdmin",
+        "query_start": "2026-11-04 09:34:13.468005+08",
+        "query": "WLM fetch collect info from data nodes"
+      },
+      {
+        "datname": "postgres",
+        "usename": "rdsAdmin",
+        "query_start": "2026-11-04 09:34:13.472533+08",
+        "query": "COMMStatusCheck has handled client disconnection."
+      }
+    ]
+  }
+}

@@ -665,7 +665,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -714,7 +714,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -861,7 +861,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -1247,7 +1247,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -1531,7 +1531,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select datname, state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by datname, state"
+                    "param_value": "select datname, state, count(*) as cnt from pg_stat_activity where state is not null group by datname, state"
                   },
                   {
                     "param_name": "limit",
@@ -1540,7 +1540,7 @@
                 ]
               }
             },
-            "expected_result": "按库/会话状态聚合的会话数（已排除 state 为空的后台进程）",
+            "expected_result": "按库/会话状态聚合的会话数（state 为 NULL 的后台进程已被排除）",
             "related_apis": [
               "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
               "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
@@ -2412,7 +2412,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -2461,7 +2461,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -2571,7 +2571,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -2632,7 +2632,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -2681,7 +2681,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -2730,7 +2730,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",
@@ -4334,7 +4334,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select datname, state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by datname, state"
+                    "param_value": "select datname, state, count(*) as cnt from pg_stat_activity where state is not null group by datname, state"
                   },
                   {
                     "param_name": "limit",
@@ -4343,7 +4343,7 @@
                 ]
               }
             },
-            "expected_result": "按库/会话状态聚合的会话数（已排除 state 为空的后台进程）",
+            "expected_result": "按库/会话状态聚合的会话数（state 为 NULL 的后台进程已被排除）",
             "related_apis": [
               "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
               "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
@@ -4734,7 +4734,7 @@
                 "params": [
                   {
                     "param_name": "sql_text",
-                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null and state <> '' group by state"
+                    "param_value": "select state, count(*) as cnt from pg_stat_activity where state is not null group by state"
                   },
                   {
                     "param_name": "limit",

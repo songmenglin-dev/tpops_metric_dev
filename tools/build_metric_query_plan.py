@@ -128,7 +128,8 @@ APIS["POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list"] = {
         ]
     },
     "notes": "慢查询总数 = slow_sql_infos 长度；Select/DML 拆分按 sql_text 前缀统计。"
-             "2026-11-05 实测传齐文档参数仍返回 400「参数错误」，落地前需调试",
+             "实测约束：查询时间窗口上限 24 小时，超出（48h/7d/30d）一律返回 400「参数错误」；"
+             "2026-11-05 实测 24h 窗口返回 200，该实例当前无超过阈值的慢 SQL",
     "covers_metrics": 0,
     "is_prerequisite": False,
 }
@@ -184,6 +185,7 @@ APIS["POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}"] = {
     },
     "response": {"job_id": "任务 ID", "node_tasks": [{"task_id": "节点任务 ID", "node_id": "节点 ID"}]},
     "notes": "GaussDB 的 SQL 方言为 PG 9.2 级：不支持 FILTER 子句，请用 CASE WHEN；"
+             "实测方言坑：条件 state <> 空串 恒为假（会把全部会话过滤掉），排除后台进程请用 state is not null；"
              "2026-11-05 实测 50 条 SQL 中有 3 条偶发失败（重试即成功），采集端必须做重试；"
              "参数 sql_text 属敏感字段，任务记录里显示为 ******",
     "covers_metrics": 0,
@@ -306,11 +308,11 @@ def sql_for(field):
                 "单行单列：%s" % col)
     if field == "pg_stat_activity":
         return ("select datname, state, count(*) as cnt from pg_stat_activity "
-                "where state is not null and state <> '' group by datname, state",
-                "按库/会话状态聚合的会话数（已排除 state 为空的后台进程）")
+                "where state is not null group by datname, state",
+                "按库/会话状态聚合的会话数（state 为 NULL 的后台进程已被排除）")
     if field == "pg_stat_activity.state":
         return ("select state, count(*) as cnt from pg_stat_activity "
-                "where state is not null and state <> '' group by state",
+                "where state is not null group by state",
                 "按会话状态聚合：idle / active / idle in transaction / idle in transaction (aborted)")
     if field == "pg_stat_activity.query":
         return ("select datname, usename, state, query_start, query from pg_stat_activity "

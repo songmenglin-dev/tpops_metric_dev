@@ -1,0 +1,72 @@
+{
+  "customer_metric": "gaussdb.Pagesize",
+  "customer_metric_name": "页大小",
+  "customer_category": "基本信息",
+  "tpops_metric": "pg_settings.block_size",
+  "tpops_metric_name": "页大小",
+  "status": "可提供",
+  "match_level": "直接对应",
+  "source": "命令中心SQL",
+  "note": "实测 8192",
+  "customer_spec": {
+    "data_type": "整数",
+    "data_update_cycle": "1",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "method": "POST",
+    "uri": "/rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "body": {
+        "instance_id": "<instance_id>",
+        "node_ids": [
+          "<node_id>"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select name, setting, unit from pg_settings where name = 'block_size'"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "100"
+          }
+        ]
+      }
+    },
+    "expected_result": "该参数名与取值，如 block_size = ...",
+    "related_apis": [
+      "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
+      "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:57:23",
+    "method": "命令中心执行 SQL",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 6.0,
+    "row_count": 1,
+    "error": null,
+    "sample": [
+      {
+        "name": "block_size",
+        "setting": "8192",
+        "unit": ""
+      }
+    ]
+  }
+}

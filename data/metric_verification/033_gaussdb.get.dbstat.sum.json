@@ -1,0 +1,101 @@
+{
+  "customer_metric": "gaussdb.get.dbstat.sum",
+  "customer_metric_name": "获取db性能数据",
+  "customer_category": "性能信息",
+  "tpops_metric": "pg_stat_database + pg_stat_user_tables",
+  "tpops_metric_name": "库级统计视图 + pg_stat_user_tables",
+  "status": "可提供",
+  "match_level": "直接对应",
+  "source": "命令中心SQL",
+  "note": "库级 + 表级统计视图",
+  "customer_spec": {
+    "data_type": "字符",
+    "data_update_cycle": "1",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "method": "POST",
+    "uri": "/rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "body": {
+        "instance_id": "<instance_id>",
+        "node_ids": [
+          "<node_id>"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select d.datname, d.numbackends, d.xact_commit, d.xact_rollback, d.blks_read, d.blks_hit, t.schemaname, t.relname, t.n_live_tup, t.n_dead_tup, t.seq_scan, t.idx_scan, t.n_tup_ins, t.n_tup_upd, t.n_tup_del from pg_stat_database d left join pg_stat_user_tables t on d.datname = current_database() order by t.n_dead_tup desc limit 100"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "100"
+          }
+        ]
+      }
+    },
+    "expected_result": "库级统计 + 表级统计联合结果",
+    "related_apis": [
+      "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
+      "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:54:47",
+    "method": "命令中心执行 SQL",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 5.8,
+    "row_count": 85,
+    "error": null,
+    "sample": [
+      {
+        "datname": "template1",
+        "numbackends": "0",
+        "xact_commit": "0",
+        "xact_rollback": "0",
+        "blks_read": "0",
+        "blks_hit": "0",
+        "schemaname": "",
+        "relname": "",
+        "n_live_tup": "",
+        "n_dead_tup": "",
+        "seq_scan": "",
+        "idx_scan": "",
+        "n_tup_ins": "",
+        "n_tup_upd": "",
+        "n_tup_del": ""
+      },
+      {
+        "datname": "templatea",
+        "numbackends": "0",
+        "xact_commit": "0",
+        "xact_rollback": "0",
+        "blks_read": "0",
+        "blks_hit": "0",
+        "schemaname": "",
+        "relname": "",
+        "n_live_tup": "",
+        "n_dead_tup": "",
+        "seq_scan": "",
+        "idx_scan": "",
+        "n_tup_ins": "",
+        "n_tup_upd": "",
+        "n_tup_del": ""
+      }
+    ]
+  }
+}

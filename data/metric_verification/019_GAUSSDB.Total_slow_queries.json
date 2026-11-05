@@ -1,0 +1,58 @@
+{
+  "customer_metric": "GAUSSDB.Total_slow_queries",
+  "customer_metric_name": "慢查询总数",
+  "customer_category": "慢查询信息",
+  "tpops_metric": "slow-sql-list.sql_id",
+  "tpops_metric_name": "慢SQL唯一标识",
+  "status": "可提供",
+  "match_level": "可统计",
+  "source": "诊断优化接口",
+  "note": "慢SQL集合条数统计",
+  "customer_spec": {
+    "data_type": "整数",
+    "data_update_cycle": "5",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list",
+    "method": "POST",
+    "uri": "/rds/gaussdb/v3/instances/{instance_id}/slow-sql-list",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "path_params": {
+        "instance_id": "<instance_id>"
+      },
+      "body": {
+        "start_time": "<13 位毫秒时间戳>",
+        "end_time": "<13 位毫秒时间戳>",
+        "instance_id": "<instance_id>",
+        "threshold": 1000,
+        "threshold_unit": "ms",
+        "node_ids": [
+          "<node_id>"
+        ]
+      }
+    },
+    "expected_result": "slow_sql_infos[] 每项含 sql_id / sql_text / calls / db_name；总数取数组长度，Select/DML 拆分按 sql_text 前缀统计",
+    "related_apis": [
+      "POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list",
+      "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:53:52",
+    "method": "慢SQL集合接口",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过（查询成功，当前无数据）",
+    "elapsed_seconds": 2.0,
+    "row_count": 0,
+    "error": null,
+    "sample": []
+  }
+}

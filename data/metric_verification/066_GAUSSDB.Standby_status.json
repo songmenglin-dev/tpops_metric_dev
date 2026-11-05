@@ -1,0 +1,96 @@
+{
+  "customer_metric": "GAUSSDB.Standby_status",
+  "customer_metric_name": "Standby状态",
+  "customer_category": "基本信息",
+  "tpops_metric": "datanode_switch_status",
+  "tpops_metric_name": "DN主备状态",
+  "status": "可提供",
+  "match_level": "近似对应",
+  "source": "监控指标接口",
+  "note": "平台为 DN 主备状态",
+  "customer_spec": {
+    "data_type": "整数",
+    "data_update_cycle": "5",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/v3/monitor/metrics",
+    "method": "POST",
+    "uri": "/rds/v3/monitor/metrics",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "start_time": "<13 位毫秒时间戳，窗口 ≥ 1 小时>",
+        "end_time": "<13 位毫秒时间戳，回退 5 分钟>",
+        "is_latest_point_only": "false",
+        "instances": [
+          {
+            "instance_id": "<instance_id>"
+          }
+        ],
+        "metric_names": [
+          "datanode_switch_status"
+        ]
+      }
+    },
+    "expected_result": "series 给出「DN主备状态」取值",
+    "related_apis": [
+      "POST /rds/v3/monitor/metrics"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:57:29",
+    "method": "监控指标接口",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 0.2,
+    "row_count": 2,
+    "error": null,
+    "sample": [
+      {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "metric_name_cn": "DN主备状态",
+        "collection_frequency": 30,
+        "timestamps": 120,
+        "hosts": 9,
+        "sample": {
+          "172.16.103.126-dn_6005": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "172.16.103.126-dn_6009": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+        "metric_name_cn": "DN主备状态",
+        "collection_frequency": 30,
+        "timestamps": 120,
+        "hosts": 3,
+        "sample": {
+          "172.16.103.152-dn_6002": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "172.16.103.153-dn_6003": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    ]
+  }
+}

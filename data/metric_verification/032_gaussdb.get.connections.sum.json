@@ -1,0 +1,77 @@
+{
+  "customer_metric": "gaussdb.get.connections.sum",
+  "customer_metric_name": "获取连接信息",
+  "customer_category": "性能信息",
+  "tpops_metric": "pg_stat_activity",
+  "tpops_metric_name": "实时会话视图",
+  "status": "可提供",
+  "match_level": "直接对应",
+  "source": "命令中心SQL",
+  "note": "会话清单（27 个字段）",
+  "customer_spec": {
+    "data_type": "字符",
+    "data_update_cycle": "1",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "method": "POST",
+    "uri": "/rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "body": {
+        "instance_id": "<instance_id>",
+        "node_ids": [
+          "<node_id>"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select datname, state, count(*) as cnt from pg_stat_activity where state is not null group by datname, state"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "100"
+          }
+        ]
+      }
+    },
+    "expected_result": "按库/会话状态聚合的会话数（state 为 NULL 的后台进程已被排除）",
+    "related_apis": [
+      "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
+      "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:54:41",
+    "method": "命令中心执行 SQL",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 6.0,
+    "row_count": 2,
+    "error": null,
+    "sample": [
+      {
+        "datname": "postgres",
+        "state": "idle",
+        "cnt": "10"
+      },
+      {
+        "datname": "postgres",
+        "state": "active",
+        "cnt": "7"
+      }
+    ]
+  }
+}

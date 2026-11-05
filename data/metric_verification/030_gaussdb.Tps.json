@@ -1,0 +1,91 @@
+{
+  "customer_metric": "gaussdb.Tps",
+  "customer_metric_name": "TPS（每秒事务数）",
+  "customer_category": "性能信息",
+  "tpops_metric": "rds400_gaussv5_total_counter",
+  "tpops_metric_name": "用户总事务数/秒（TPS）",
+  "status": "可提供",
+  "match_level": "直接对应",
+  "source": "监控指标接口",
+  "note": "平台为用户总事务数/秒",
+  "customer_spec": {
+    "data_type": "浮点",
+    "data_update_cycle": "5",
+    "collect_cycle_unit": "分",
+    "metric_unit": "个"
+  },
+  "query": {
+    "api": "POST /rds/v3/monitor/metrics",
+    "method": "POST",
+    "uri": "/rds/v3/monitor/metrics",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "start_time": "<13 位毫秒时间戳，窗口 ≥ 1 小时>",
+        "end_time": "<13 位毫秒时间戳，回退 5 分钟>",
+        "is_latest_point_only": "false",
+        "instances": [
+          {
+            "instance_id": "<instance_id>"
+          }
+        ],
+        "metric_names": [
+          "rds400_gaussv5_total_counter"
+        ]
+      }
+    },
+    "expected_result": "series 按主机 IP 给出「用户总事务数/秒（TPS）」时序值",
+    "related_apis": [
+      "POST /rds/v3/monitor/metrics"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:54:40",
+    "method": "监控指标接口",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 0.4,
+    "row_count": 2,
+    "error": null,
+    "sample": [
+      {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "metric_name_cn": "用户总事务数/秒（TPS）",
+        "collection_frequency": 60,
+        "timestamps": 120,
+        "hosts": 3,
+        "sample": {
+          "cn_5002": [
+            10.0,
+            10.0,
+            9.0
+          ],
+          "cn_5001": [
+            9.0,
+            10.0,
+            9.0
+          ]
+        }
+      },
+      {
+        "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+        "metric_name_cn": "用户总事务数/秒（TPS）",
+        "collection_frequency": 60,
+        "timestamps": 120,
+        "hosts": 1,
+        "sample": {
+          "dn_6001": [
+            21.0,
+            21.0,
+            20.0
+          ]
+        }
+      }
+    ]
+  }
+}

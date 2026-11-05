@@ -1,0 +1,75 @@
+{
+  "customer_metric": "GAUSSDB.[{#DATNAME}]_update_records_per_second",
+  "customer_metric_name": "[{#DATNAME}]每秒Update记录数",
+  "customer_category": "数据库信息",
+  "tpops_metric": "pg_stat_database.tup_updated",
+  "tpops_metric_name": "更新的行数",
+  "status": "可提供",
+  "match_level": "需换算",
+  "source": "命令中心SQL",
+  "note": "累计值，每秒速率需按周期差分",
+  "customer_spec": {
+    "data_type": "整数",
+    "data_update_cycle": "5",
+    "collect_cycle_unit": "分",
+    "metric_unit": "tup/s"
+  },
+  "query": {
+    "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "method": "POST",
+    "uri": "/rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "body": {
+        "instance_id": "<instance_id>",
+        "node_ids": [
+          "<node_id>"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select datname, tup_updated from pg_stat_database"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "100"
+          }
+        ]
+      }
+    },
+    "expected_result": "每库一行：datname + tup_updated",
+    "related_apis": [
+      "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
+      "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 19:00:06",
+    "method": "命令中心执行 SQL",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 5.8,
+    "row_count": 9,
+    "error": null,
+    "sample": [
+      {
+        "datname": "templatea",
+        "tup_updated": "0"
+      },
+      {
+        "datname": "template1",
+        "tup_updated": "0"
+      }
+    ]
+  }
+}

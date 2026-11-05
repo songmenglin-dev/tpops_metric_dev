@@ -1,0 +1,86 @@
+{
+  "customer_metric": "GAUSSDB.Service_availability_testing",
+  "customer_metric_name": "服务可用性检测",
+  "customer_category": "可用性",
+  "tpops_metric": "gaussdb_instance_status",
+  "tpops_metric_name": "实例状态",
+  "status": "可提供",
+  "match_level": "近似对应",
+  "source": "监控指标接口",
+  "note": "另可用 GET /rds/health-status 探测服务健康",
+  "customer_spec": {
+    "data_type": "字符",
+    "data_update_cycle": "1",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/v3/monitor/metrics",
+    "method": "POST",
+    "uri": "/rds/v3/monitor/metrics",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "start_time": "<13 位毫秒时间戳，窗口 ≥ 1 小时>",
+        "end_time": "<13 位毫秒时间戳，回退 5 分钟>",
+        "is_latest_point_only": "false",
+        "instances": [
+          {
+            "instance_id": "<instance_id>"
+          }
+        ],
+        "metric_names": [
+          "gaussdb_instance_status"
+        ]
+      }
+    },
+    "expected_result": "series 给出「实例状态」取值（0=正常，非 0 为异常态）",
+    "related_apis": [
+      "POST /rds/v3/monitor/metrics"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:53:58",
+    "method": "监控指标接口",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 0.3,
+    "row_count": 2,
+    "error": null,
+    "sample": [
+      {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "metric_name_cn": "实例状态",
+        "collection_frequency": 30,
+        "timestamps": 120,
+        "hosts": 1,
+        "sample": {
+          "value": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      },
+      {
+        "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+        "metric_name_cn": "实例状态",
+        "collection_frequency": 30,
+        "timestamps": 120,
+        "hosts": 1,
+        "sample": {
+          "value": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    ]
+  }
+}

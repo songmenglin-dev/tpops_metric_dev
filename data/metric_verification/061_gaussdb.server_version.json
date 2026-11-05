@@ -1,0 +1,64 @@
+{
+  "customer_metric": "gaussdb.server_version",
+  "customer_metric_name": "版本",
+  "customer_category": "基本信息",
+  "tpops_metric": "instances.engine_version",
+  "tpops_metric_name": "引擎版本",
+  "status": "可提供",
+  "match_level": "直接对应",
+  "source": "实例接口",
+  "note": "GET /rds/v3.2/instances；另有 GET /rds/v3/version-info",
+  "customer_spec": {
+    "data_type": "字符",
+    "data_update_cycle": "1",
+    "collect_cycle_unit": "时",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "GET /rds/v3.2/instances",
+    "method": "GET",
+    "uri": "/rds/v3.2/instances",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      },
+      "query_params": {
+        "limit": 100,
+        "offset": 0
+      }
+    },
+    "expected_result": "instances[].engine_version 为引擎版本（如 V2.0-10.0.0）",
+    "related_apis": [
+      "GET /rds/v3.2/instances"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:57:11",
+    "method": "实例列表接口",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 0.2,
+    "row_count": 2,
+    "error": null,
+    "sample": [
+      {
+        "id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "name": "gauss-6374",
+        "mode": "Combined",
+        "engine_name": "gaussdbv5",
+        "engine_version": "V2.0-10.0.0",
+        "instance_status": "normal"
+      },
+      {
+        "id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+        "name": "gauss-75a2",
+        "mode": "Ha",
+        "engine_name": "gaussdbv5",
+        "engine_version": "V2.0-10.0.0",
+        "instance_status": "normal"
+      }
+    ]
+  }
+}

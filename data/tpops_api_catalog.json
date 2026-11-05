@@ -155,7 +155,7 @@
           }
         ]
       },
-      "notes": "慢查询总数 = slow_sql_infos 长度；Select/DML 拆分按 sql_text 前缀统计。2026-11-05 实测传齐文档参数仍返回 400「参数错误」，落地前需调试"
+      "notes": "慢查询总数 = slow_sql_infos 长度；Select/DML 拆分按 sql_text 前缀统计。实测约束：查询时间窗口上限 24 小时，超出（48h/7d/30d）一律返回 400「参数错误」；2026-11-05 实测 24h 窗口返回 200，该实例当前无超过阈值的慢 SQL"
     },
     {
       "id": "POST /rds/gaussdb/v3/instances/{instance_id}/top-sql-list",
@@ -250,7 +250,7 @@
           }
         ]
       },
-      "notes": "GaussDB 的 SQL 方言为 PG 9.2 级：不支持 FILTER 子句，请用 CASE WHEN；2026-11-05 实测 50 条 SQL 中有 3 条偶发失败（重试即成功），采集端必须做重试；参数 sql_text 属敏感字段，任务记录里显示为 ******"
+      "notes": "GaussDB 的 SQL 方言为 PG 9.2 级：不支持 FILTER 子句，请用 CASE WHEN；实测方言坑：条件 state <> 空串 恒为假（会把全部会话过滤掉），排除后台进程请用 state is not null；2026-11-05 实测 50 条 SQL 中有 3 条偶发失败（重试即成功），采集端必须做重试；参数 sql_text 属敏感字段，任务记录里显示为 ******"
     },
     {
       "id": "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",

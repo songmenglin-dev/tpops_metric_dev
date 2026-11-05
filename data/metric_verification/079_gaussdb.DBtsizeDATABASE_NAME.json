@@ -1,0 +1,75 @@
+{
+  "customer_metric": "gaussdb.DBtsize[{#DATABASE_NAME}]",
+  "customer_metric_name": "[{#DATABASE_NAME}]库大小",
+  "customer_category": "数据库统计信息",
+  "tpops_metric": "pg_database_size(datname)",
+  "tpops_metric_name": "数据库大小",
+  "status": "可提供",
+  "match_level": "直接对应",
+  "source": "命令中心SQL",
+  "note": "平台另有 rds128 聚合值",
+  "customer_spec": {
+    "data_type": "字符",
+    "data_update_cycle": "2",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "method": "POST",
+    "uri": "/rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "body": {
+        "instance_id": "<instance_id>",
+        "node_ids": [
+          "<node_id>"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select datname, pg_database_size(datname) as size_bytes from pg_database order by size_bytes desc"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "100"
+          }
+        ]
+      }
+    },
+    "expected_result": "每库一行：datname + size_bytes",
+    "related_apis": [
+      "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
+      "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
+      "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:58:35",
+    "method": "命令中心执行 SQL",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过",
+    "elapsed_seconds": 6.3,
+    "row_count": 9,
+    "error": null,
+    "sample": [
+      {
+        "datname": "postgres",
+        "size_bytes": "307339268"
+      },
+      {
+        "datname": "sun_db",
+        "size_bytes": "28270596"
+      }
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "customer_metric": "gaussdb.Top10sql",
+  "customer_metric_name": "当前运行时间最长的Top10 SQL",
+  "customer_category": "性能信息",
+  "tpops_metric": "top-sql-list.total_elapse_time",
+  "tpops_metric_name": "SQL 总执行时间",
+  "status": "可提供",
+  "match_level": "直接对应",
+  "source": "诊断优化接口",
+  "note": "按 total_elapse_time 排序取 Top N",
+  "customer_spec": {
+    "data_type": "字符",
+    "data_update_cycle": "2",
+    "collect_cycle_unit": "分",
+    "metric_unit": null
+  },
+  "query": {
+    "api": "POST /rds/gaussdb/v3/instances/{instance_id}/top-sql-list",
+    "method": "POST",
+    "uri": "/rds/gaussdb/v3/instances/{instance_id}/top-sql-list",
+    "request": {
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      },
+      "path_params": {
+        "instance_id": "<instance_id>"
+      },
+      "body": {
+        "instance_id": "<instance_id>",
+        "node_ids": [
+          "<node_id>",
+          "<node_id2>"
+        ],
+        "start_time": "<13 位毫秒时间戳>",
+        "end_time": "<13 位毫秒时间戳>"
+      }
+    },
+    "expected_result": "top_sql_infos[] 每项含 sql_text / total_elapse_time / calls / db_name；按 total_elapse_time 降序取前 10",
+    "related_apis": [
+      "POST /rds/gaussdb/v3/instances/{instance_id}/top-sql-list",
+      "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"
+    ]
+  },
+  "verification": {
+    "tested_at": "2026-11-05 18:54:58",
+    "method": "Top SQL 列表接口",
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_name": "gauss-75a2_root_0",
+    "state": "通过（查询成功，当前无数据）",
+    "elapsed_seconds": 1.8,
+    "row_count": 0,
+    "error": null,
+    "sample": []
+  }
+}
