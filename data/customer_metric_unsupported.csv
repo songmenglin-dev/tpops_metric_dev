@@ -1,53 +1,22 @@
 ﻿适用资源类型,指标分类,中文名,英文名,数据类型,数据更新周期,采集更新周期单位,生成性能基线,指标单位
-GAUSSDB实例,慢查询信息,Select慢查询数,GAUSSDB.Select_slow_queries,整数,5,分,否,
-GAUSSDB实例,慢查询信息,DML慢查询数,GAUSSDB.DML_slow_queries,整数,5,分,否,
-GAUSSDB实例,连接情况,事务中已中止的空闲连接数,gaussdb.Idle_in_transaction_aborted,整数,1,分,是,个
 GAUSSDB实例,可用性,服务端口{#PORT}检测,gaussdb_{#PORT}port.status,整数,1,分,否,
-GAUSSDB实例,性能信息,获取连接信息,gaussdb.get.connections.sum,字符,1,分,是,
-GAUSSDB实例,性能信息,获取db性能数据,gaussdb.get.dbstat.sum,字符,1,分,否,
-GAUSSDB实例,表信息,({#NAME})被删除的行总数（包括已回收行）,gaussdb.{#NAME}.Number.lete.ples,整数,2,分,是,
-GAUSSDB实例,基本信息,版本,gaussdb.server_version,字符,1,时,否,
-GAUSSDB实例,性能信息,正在运行的SQL,gaussdb.running.sql.limit.20,字符,2,分,否,
 GAUSSDB实例,表信息,({#NAME})已删除但未回收的行数（死亡行）,gaussdb.{#NAME}.Number.ad.ples,整数,2,分,是,
-GAUSSDB实例,表信息,({#NAME})通过 HOT更新的行数,gaussdb.{#NAME}.Number.t.date.ples,整数,2,分,是,%
-GAUSSDB实例,表信息,({#NAME})索引扫描次数,gaussdb.{#NAME}.number.Of.index.scan,整数,2,分,是,
-GAUSSDB实例,表信息,({#NAME})顺序扫描读取的行数,gaussdb.{#NAME}.number.Of.quential.ples.ad,整数,2,分,是,
-GAUSSDB实例,表信息,({#NAME})通过索引扫描获取的行数,gaussdb.{#NAME}.number.Of.dex.ples.ad,整数,2,分,是,
-GAUSSDB实例,表信息,({#NAME})插入的行数,gaussdb.{#NAME}.number.Of.insert.tuples,整数,2,分,是,
 GAUSSDB实例,表信息,({#NAME})当前活跃的行数,gaussdb.{#NAME}.number.Of.live.tuples,整数,2,分,是,
-GAUSSDB实例,表信息,({#NAME})更新的行总数,gaussdb.{#NAME}.number.Of.update.tuples,整数,2,分,是,
-GAUSSDB实例,表信息,({#NAME})顺序扫描次数,gaussdb.{#NAME}.number.Of.sequential.scan,整数,2,分,是,
 GAUSSDB实例,锁信息,DB [{#DBNAME}]: Num of accessexclusive locks,gaussdb.locks.accessexclusive[{#DBNAME}],整数,2,分,否,
 GAUSSDB实例,表信息,({#NAME})死亡行占比,gaussdb.{#NAME}.garbage.Ratio,浮点,2,分,是,
 GAUSSDB实例,基本信息,字符集,gaussdb.Serverencoding,字符,24,时,是,
-GAUSSDB实例,性能信息,当前运行时间最长的Top10 SQL,gaussdb.Top10sql,字符,2,分,否,
 GAUSSDB实例,基本信息,时区,gaussdb.Timezone,字符,24,时,是,个
 GAUSSDB实例,基本信息,页大小,gaussdb.Pagesize,整数,1,分,是,
-GAUSSDB实例,连接情况,事务中空闲的连接数,gaussdb.Idle_in_transaction,整数,1,分,是,个
 GAUSSDB实例,连接情况,快路径函数调用的连接数,gaussdb.Fastpath_function_call,整数,1,分,是,个
 GAUSSDB实例,性能信息,临时文件大小,gaussdb.Temp_bytes,整数,1,分,是,
-GAUSSDB实例,性能信息,删除的行数,gaussdb.Tup_deleted,整数,1,分,是,
-GAUSSDB实例,性能信息,插入的行数,gaussdb.Tup_inserted,整数,1,分,是,
 GAUSSDB实例,性能信息,数据库操作冲突次数,gaussdb.Conflicts,整数,1,分,是,ms
-GAUSSDB实例,性能信息,更新的行数,gaussdb.Tup_updated,整数,1,分,是,个
-GAUSSDB实例,性能信息,查询返回的行数,gaussdb.Tup_returned,整数,1,分,是,
 GAUSSDB实例,性能信息,生成的临时文件数,gaussdb.Temp_files,整数,1,分,是,b
-GAUSSDB实例,性能信息,通过索引获取的行数,gaussdb.tup_fetched,整数,1,分,是,
 GAUSSDB实例,连接情况,禁用的连接数,gaussdb.Disabled_conn,整数,1,分,是,个
-GAUSSDB实例,连接情况,空闲连接数,gaussdb.Idle_conn,整数,1,分,是,个
 GAUSSDB实例,连接情况,预提交事务数,gaussdb.Prepared,整数,1,分,是,个
 GAUSSDB实例,Agent,发送设备名给Agent,gaussdb.sendAgentName,文本,5,分,否,
 GAUSSDB实例,事务信息,({#NAME}) number of dead tuples,GAUSSDB.{#NAME}.Number.ad.ples,整数,5,分,否,
-GAUSSDB实例,事务信息,({#NAME}) number of delete tuples,GAUSSDB.{#NAME}.Number.lete.ples,整数,5,分,否,tuples/s
 GAUSSDB实例,事务信息,({#NAME})Garbage ratio,GAUSSDB.{#NAME}.garbage.Ratio,浮点,5,分,否,%
-GAUSSDB实例,事务信息,({#NAME}) number of hot update tuples,GAUSSDB.{#NAME}.Number.t.date.ples,整数,5,分,否,tuples/s
-GAUSSDB实例,事务信息,({#NAME})number of index scan,GAUSSDB.{#NAME}.number.Of.index.scan,整数,5,分,否,scans/s
-GAUSSDB实例,事务信息,({#NAME})number of index tuples read,GAUSSDB.{#NAME}.number.Of.dex.ples.ad,整数,5,分,否,tuples/s
 GAUSSDB实例,事务信息,({#NAME})number of live tuples,GAUSSDB.{#NAME}.number.Of.live.tuples,整数,5,分,否,
-GAUSSDB实例,事务信息,({#NAME})number of insert tuples,GAUSSDB.{#NAME}.number.Of.insert.tuples,整数,5,分,否,tuples/s
-GAUSSDB实例,事务信息,({#NAME})number of sequencial scan,GAUSSDB.{#NAME}.number.Of.sequential.scan,整数,5,分,否,scans/s
-GAUSSDB实例,事务信息,({#NAME})number of sequencial tuples read,GAUSSDB.{#NAME}.number.Of.quential.ples.ad,整数,5,分,否,tuples/s
-GAUSSDB实例,事务信息,({#NAME})number of update tuples,GAUSSDB.{#NAME}.number.Of.update.tuples,整数,5,分,否,tuples/s
 GAUSSDB实例,Bgwriter信息,Buffers Alloc,GAUSSDB.Buffers_Alloc,整数,5,分,否,buffers/s
 GAUSSDB实例,Bgwriter信息,Buffers Backend,GAUSSDB.Buffers_Backend,整数,5,分,否,buffers/s
 GAUSSDB实例,Bgwriter信息,Buffers Backend Fsync,GAUSSDB.Buffers_Backend_Fsync,整数,5,分,否,buffers/s
@@ -55,16 +24,5 @@ GAUSSDB实例,Bgwriter信息,Buffers Checkpoint,GAUSSDB.Buffers_Checkpoint,整�
 GAUSSDB实例,Bgwriter信息,Buffers Clean,GAUSSDB.Buffers_Clean,整数,5,分,否,buffers/s
 GAUSSDB实例,Bgwriter信息,Checkpoint count (by checkpoint segments),GAUSSDB.Checkpoint_count_eckpoint_gments,整数,5,分,否,cps
 GAUSSDB实例,Bgwriter信息,Checkpoint count (by checkpoint timeout),GAUSSDB.Checkpoint_count_eckpoint_meout,整数,5,分,否,cps
-GAUSSDB实例,事务信息,Idle in transaction connections,GAUSSDB.Idle_in_transaction_connections,整数,5,分,否,
-GAUSSDB实例,事务信息,Idle connections,GAUSSDB.Idle_connections,整数,5,分,否,
 GAUSSDB实例,Bgwriter信息,Max Written Clean,GAUSSDB.Max_Written_Clean,整数,5,分,否,buffers/s
-GAUSSDB实例,数据库信息,[{#DATNAME}] Commited transactions,GAUSSDB.[{#DATNAME}]_committed_transactions,整数,5,分,否,tps
-GAUSSDB实例,数据库信息,[{#DATNAME}] Active connections,GAUSSDB.[{#DATNAME}]_Active_connections,整数,5,分,否,
-GAUSSDB实例,数据库信息,[{#DATNAME}] Rolled back transactions,GAUSSDB.[{#DATNAME}]_rolled_back_transactions,整数,5,分,否,tps
 GAUSSDB实例,事务信息,最大连接数,GAUSSDB.maximum_connection,整数,5,分,否,
-GAUSSDB实例,数据库信息,[{#DATNAME}]每秒Fetch记录数,GAUSSDB.[{#DATNAME}]_fetch_records_per_second,整数,5,分,否,tup/s
-GAUSSDB实例,数据库信息,[{#DATNAME}]每秒Insert记录数,GAUSSDB.[{#DATNAME}]_insert_records_per_second,整数,5,分,否,tup/s
-GAUSSDB实例,数据库信息,[{#DATNAME}]每秒Return记录数,GAUSSDB.[{#DATNAME}]_return_records_per_second,整数,5,分,否,tup/s
-GAUSSDB实例,数据库信息,[{#DATNAME}]每秒Update记录数,GAUSSDB.[{#DATNAME}]_update_records_per_second,整数,5,分,否,tup/s
-GAUSSDB实例,会话信息,会话时间TOP10,GAUSSDB.sessions_active_top10,文本,5,分,否,
-GAUSSDB实例,数据库信息,[{#DATNAME}]每秒Delete记录数,GAUSSDB.[{#DATNAME}]_delete_records_per_second,整数,5,分,否,tup/s
