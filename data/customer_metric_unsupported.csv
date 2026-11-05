@@ -1,28 +1,4 @@
 ﻿适用资源类型,指标分类,中文名,英文名,数据类型,数据更新周期,采集更新周期单位,生成性能基线,指标单位
-GAUSSDB实例,可用性,服务端口{#PORT}检测,gaussdb_{#PORT}port.status,整数,1,分,否,
-GAUSSDB实例,表信息,({#NAME})已删除但未回收的行数（死亡行）,gaussdb.{#NAME}.Number.ad.ples,整数,2,分,是,
-GAUSSDB实例,表信息,({#NAME})当前活跃的行数,gaussdb.{#NAME}.number.Of.live.tuples,整数,2,分,是,
-GAUSSDB实例,锁信息,DB [{#DBNAME}]: Num of accessexclusive locks,gaussdb.locks.accessexclusive[{#DBNAME}],整数,2,分,否,
-GAUSSDB实例,表信息,({#NAME})死亡行占比,gaussdb.{#NAME}.garbage.Ratio,浮点,2,分,是,
-GAUSSDB实例,基本信息,字符集,gaussdb.Serverencoding,字符,24,时,是,
-GAUSSDB实例,基本信息,时区,gaussdb.Timezone,字符,24,时,是,个
-GAUSSDB实例,基本信息,页大小,gaussdb.Pagesize,整数,1,分,是,
 GAUSSDB实例,连接情况,快路径函数调用的连接数,gaussdb.Fastpath_function_call,整数,1,分,是,个
-GAUSSDB实例,性能信息,临时文件大小,gaussdb.Temp_bytes,整数,1,分,是,
-GAUSSDB实例,性能信息,数据库操作冲突次数,gaussdb.Conflicts,整数,1,分,是,ms
-GAUSSDB实例,性能信息,生成的临时文件数,gaussdb.Temp_files,整数,1,分,是,b
 GAUSSDB实例,连接情况,禁用的连接数,gaussdb.Disabled_conn,整数,1,分,是,个
-GAUSSDB实例,连接情况,预提交事务数,gaussdb.Prepared,整数,1,分,是,个
 GAUSSDB实例,Agent,发送设备名给Agent,gaussdb.sendAgentName,文本,5,分,否,
-GAUSSDB实例,事务信息,({#NAME}) number of dead tuples,GAUSSDB.{#NAME}.Number.ad.ples,整数,5,分,否,
-GAUSSDB实例,事务信息,({#NAME})Garbage ratio,GAUSSDB.{#NAME}.garbage.Ratio,浮点,5,分,否,%
-GAUSSDB实例,事务信息,({#NAME})number of live tuples,GAUSSDB.{#NAME}.number.Of.live.tuples,整数,5,分,否,
-GAUSSDB实例,Bgwriter信息,Buffers Alloc,GAUSSDB.Buffers_Alloc,整数,5,分,否,buffers/s
-GAUSSDB实例,Bgwriter信息,Buffers Backend,GAUSSDB.Buffers_Backend,整数,5,分,否,buffers/s
-GAUSSDB实例,Bgwriter信息,Buffers Backend Fsync,GAUSSDB.Buffers_Backend_Fsync,整数,5,分,否,buffers/s
-GAUSSDB实例,Bgwriter信息,Buffers Checkpoint,GAUSSDB.Buffers_Checkpoint,整数,5,分,否,buffers/s
-GAUSSDB实例,Bgwriter信息,Buffers Clean,GAUSSDB.Buffers_Clean,整数,5,分,否,buffers/s
-GAUSSDB实例,Bgwriter信息,Checkpoint count (by checkpoint segments),GAUSSDB.Checkpoint_count_eckpoint_gments,整数,5,分,否,cps
-GAUSSDB实例,Bgwriter信息,Checkpoint count (by checkpoint timeout),GAUSSDB.Checkpoint_count_eckpoint_meout,整数,5,分,否,cps
-GAUSSDB实例,Bgwriter信息,Max Written Clean,GAUSSDB.Max_Written_Clean,整数,5,分,否,buffers/s
-GAUSSDB实例,事务信息,最大连接数,GAUSSDB.maximum_connection,整数,5,分,否,
