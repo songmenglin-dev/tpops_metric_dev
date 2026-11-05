@@ -2,7 +2,7 @@
 
 Fetch monitoring data for every GaussDB instance visible on the TPOPS platform.
 
-> **API 参考文档：[`docs/`](../docs/README.md)** — 从 CHM 产品文档转换而来的接口定义（原始内容，未做增补）。
+> **API 参考文档：[`docs/api/`](../docs/api/)** — 从 CHM 产品文档转换而来的接口定义（原始内容，未做增补）。索引见 [`docs/README.md`](../docs/README.md)。
 
 ## Setup
 

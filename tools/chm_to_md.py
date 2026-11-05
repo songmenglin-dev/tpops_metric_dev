@@ -6,8 +6,8 @@ the API reference pages and writes them out as Markdown, preserving the original
 content (no additions).
 
 Usage:
-    7z x <file>.chm -o/tmp/chm
-    python tools/chm_to_md.py /tmp/chm docs
+    7z x "docs/06_GaussDB V2.0-26.861.1 产品文档(for 轻量化部署形态) 01.chm" -o/tmp/chm
+    python tools/chm_to_md.py /tmp/chm docs/api
 """
 
 import html
@@ -156,7 +156,7 @@ def render_page(path):
 
 def main():
     src = sys.argv[1] if len(sys.argv) > 1 else "/tmp/chm"
-    dst = sys.argv[2] if len(sys.argv) > 2 else "docs"
+    dst = sys.argv[2] if len(sys.argv) > 2 else "docs/api"
     os.makedirs(dst, exist_ok=True)
     for fname, section, pages in TOC_STRUCTURE:
         chunks = [f"# {section}\n"]

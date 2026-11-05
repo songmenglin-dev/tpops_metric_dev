@@ -46,7 +46,10 @@ tpops_kafka/
 tools/     # 现有离线取数脚本 + 参考实现，保留
 data/      # 离线样本（指标侧：目录、映射、查询方案、实测结果）
 │  └── alarm/   # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
-docs/      # TPOPS API 参考（由 CHM 转换，未增补）
+docs/      # 文档
+│  ├── api/            # TPOPS API 参考（由 CHM 转换，未增补）
+│  ├── *.chm           # GaussDB 产品文档原始包（312 MB，未入库）
+│  └── *.docx          # 客户监控平台接入指引（走 Agent，非本项目路径）
 ```
 
 ## 运行
@@ -125,10 +128,11 @@ pytest-cov<5
 
 | 文件 | 内容 |
 |---|---|
-| `docs/README.md` | TPOPS API 参考索引（CHM 原文转换） |
-| `docs/API参考-监控大盘.md` | 指标查询接口定义 |
-| `docs/API参考-告警管理.md` | 告警接口定义 |
-| `docs/API参考-登录.md` | mini-token 认证流程 |
+| `docs/README.md` | 文档总索引 |
+| `docs/api/API参考-监控大盘.md` | 指标查询接口定义 |
+| `docs/api/API参考-告警管理.md` | 告警接口定义 |
+| `docs/api/API参考-登录.md` | mini-token 认证流程 |
 | `tools/README.md` | 离线取数脚本用法（`tools/tpops_client.py` 是可用参考实现） |
-| `高斯DB-指标明细.xlsx` | 客户指标库（101 个指标，映射的基准） |
-| `广东电网ITSCADA系统监控接入操作指引（数据库）V0.4.docx` | 客户监控平台接入指引（其余数据库走 Agent 方式，非 Kafka） |
+| `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` | 客户指标库（101 个指标，映射的基准） |
+| `docs/广东电网ITSCADA系统监控接入操作指引（数据库）V0.4.docx` | 客户监控平台接入指引（其余数据库走 Agent 方式，非 Kafka） |
+| `docs/06_GaussDB V2.0-26.861.1 产品文档(for 轻量化部署形态) 01.chm` | GaussDB 产品文档原始包（312 MB，未入库） |
