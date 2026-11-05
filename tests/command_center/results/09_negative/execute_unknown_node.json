@@ -6,7 +6,7 @@
   "response": {
     "status_code": 400,
     "headers": {
-      "X-TRACE-ID": "58e4bfc9-e776-4ac9-8606-b5230c33ac53",
+      "X-TRACE-ID": "9cea9fa6-5039-4205-8f92-e754d517196a",
       "X-Frame-Options": "SAMEORIGIN",
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -22,7 +22,7 @@
       "Content-Encoding": "gzip",
       "Content-Type": "application/json;charset=UTF-8",
       "Transfer-Encoding": "chunked",
-      "Date": "Thu, 05 Nov 2026 15:22:16 GMT",
+      "Date": "Thu, 05 Nov 2026 23:26:35 GMT",
       "Connection": "close",
       "Server": "127.0.0.1"
     },

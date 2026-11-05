@@ -1,10 +1,8 @@
 {
   "base_url": "https://172.16.103.193:8002",
-  "tested_at": "2026-11-05 21:39:39 +0800",
+  "tested_at": "2026-11-06 05:43:51 +0800",
   "interfaces": {
-    "mini-token": {
-      "status_code": 200
-    },
+    "mini-token": "<REDACTED>",
     "commands/{cmd_id} (detail)": {
       "status_code": 200,
       "fetched": 142,
@@ -28,12 +26,12 @@
     },
     "customer-commands/{cmd_id} (execute)": {
       "status_code": 200,
-      "job_id": "560ce18d-0804-4976-a35c-99ddf4a09a59",
+      "job_id": "7e5e1763-a56b-443b-b80a-ba3f21b6936a",
       "ok": true
     },
     "batch-exec-job/task-records": {
       "status_code": 200,
-      "job_status": "completed",
+      "job_status": "running",
       "statistics": {
         "total": 1,
         "succeed": 1,
@@ -131,7 +129,7 @@
       "call_type": "sync",
       "params_sent": [],
       "execute_status_code": 200,
-      "job_status": "completed",
+      "job_status": "running",
       "node_status": [
         "succeed"
       ],

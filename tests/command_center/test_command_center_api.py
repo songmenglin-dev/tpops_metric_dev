@@ -145,7 +145,7 @@ def write_json(path, payload):
     print("    wrote %s (%.0f KB)" % (os.path.relpath(path, ROOT), size_kb))
 
 
-def record_response(path, resp, extra=None):
+def record_response(path, resp, extra=None, request_body=None):
     """把 HTTP 响应完整记录下来：状态码 + 头 + 原始响应体。"""
     try:
         body = resp.json()
@@ -162,6 +162,8 @@ def record_response(path, resp, extra=None):
             "body": body,
         },
     }
+    if request_body is not None:
+        payload["request"]["body"] = request_body
     if extra:
         payload["extra"] = extra
     write_json(path, payload)
@@ -254,7 +256,10 @@ def execute_and_wait(client, cmd_id, instance_id, node_ids, params, tag):
         "node_ids": node_ids,
         "params": params,
     })
-    body = record_response(prefix, resp, extra={"stage": "execute", "cmd_id": cmd_id})
+    body = record_response(prefix, resp, extra={"stage": "execute", "cmd_id": cmd_id},
+                           request_body={"instance_id": instance_id,
+                                         "node_ids": node_ids,
+                                         "params": params})
     if resp.status_code != 200:
         return {"execute": body, "execute_status_code": resp.status_code,
                 "records": None, "result": None, "ok": False}

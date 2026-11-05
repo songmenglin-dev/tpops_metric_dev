@@ -6,6 +6,10 @@
 测试脚本：[`test_command_center_api.py`](test_command_center_api.py)
 实测数据：[`results/`](results/)
 
+**想快速查某个接口的入参与响应结构 → 看 [`API速查.md`](API速查.md)**（8 个接口一页看完，
+由 `build_api_quickref.py` 从 `results/` 自动生成，内容全部来自真实调用）。
+`results/` 是逐次调用的原始留档，便于逐条复核。
+
 ## 覆盖的接口
 
 | # | 方法 | 路径 | 说明 |

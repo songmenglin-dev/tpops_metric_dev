@@ -1,13 +1,13 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/a4dfe0b5-ab1c-429a-ba15-a3ac44c122c7/batch-exec-job/369c8fa5-c3d8-41fc-b8e4-4ddcd667670e/task-record/f4150288-cc07-41dc-b0e9-1192f1594fbf/detail"
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/a4dfe0b5-ab1c-429a-ba15-a3ac44c122c7/batch-exec-job/2dd9163e-b779-4f1c-9970-445e38b95886/task-record/31af6477-90ca-4dc7-a901-53d2e0112824/detail"
   },
   "response": {
     "status_code": 200,
     "headers": {
       "Cache-Control": "no-cache, no-store, must-revalidate",
-      "X-TRACE-ID": "a41f19ad-5e1a-46c2-8798-e078c27ae582",
+      "X-TRACE-ID": "760aab83-c5b4-466f-be5d-8f67b97b3908",
       "X-Frame-Options": "SAMEORIGIN",
       "X-Content-Type-Options": "nosniff",
       "X-Download-Options": "noopen",
@@ -22,7 +22,7 @@
       "Content-Encoding": "gzip",
       "Content-Type": "application/json;charset=UTF-8",
       "Transfer-Encoding": "chunked",
-      "Date": "Thu, 05 Nov 2026 15:22:10 GMT",
+      "Date": "Thu, 05 Nov 2026 23:26:22 GMT",
       "Keep-Alive": "timeout=20",
       "Connection": "keep-alive",
       "Server": "127.0.0.1"
@@ -41,6 +41,6 @@
   },
   "extra": {
     "stage": "task-result",
-    "task_id": "f4150288-cc07-41dc-b0e9-1192f1594fbf"
+    "task_id": "31af6477-90ca-4dc7-a901-53d2e0112824"
   }
 }

@@ -1,13 +1,13 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=560ce18d-0804-4976-a35c-99ddf4a09a59&offset=0&limit=100"
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7e5e1763-a56b-443b-b80a-ba3f21b6936a&offset=0&limit=100"
   },
   "response": {
     "status_code": 200,
     "headers": {
       "Cache-Control": "no-cache, no-store, must-revalidate",
-      "X-TRACE-ID": "421c9aa0-5aaa-44e9-8ccf-611683c6f8f9",
+      "X-TRACE-ID": "82c15556-4e82-483e-9b45-fa8dca5e8f49",
       "X-Frame-Options": "SAMEORIGIN",
       "X-Content-Type-Options": "nosniff",
       "X-Download-Options": "noopen",
@@ -22,7 +22,7 @@
       "Content-Encoding": "gzip",
       "Content-Type": "application/json;charset=UTF-8",
       "Transfer-Encoding": "chunked",
-      "Date": "Thu, 05 Nov 2026 15:21:00 GMT",
+      "Date": "Thu, 05 Nov 2026 23:25:12 GMT",
       "Keep-Alive": "timeout=20",
       "Connection": "keep-alive",
       "Server": "127.0.0.1"
@@ -36,15 +36,15 @@
         "running": 0,
         "other": 0
       },
-      "job_status": "completed",
+      "job_status": "running",
       "tasks": [
         {
-          "task_id": "0a188836-153b-464f-8f80-bc0e41134970",
+          "task_id": "3216b95c-4e38-4b9a-bbb7-46badd99ed00",
           "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
           "instance_name": "gauss-75a2",
           "node_id": "d5284a09d06c4b2798c8c713259fe705no14",
           "node_name": "gauss-75a2_root_0",
-          "agent_req_id": "ComOmCmd-0a188836-153b-464f-8f80-bc0e41134970",
+          "agent_req_id": "ComOmCmd-3216b95c-4e38-4b9a-bbb7-46badd99ed00",
           "status": "succeed",
           "params": [
             {
@@ -61,15 +61,15 @@
           "is_redirect": false,
           "download_file_id": null,
           "error_msg": null,
-          "start_time": 1793892053150,
-          "finish_time": 1793892057739,
-          "expire_time": 1794151253149
+          "start_time": 1793921105094,
+          "finish_time": 1793921109413,
+          "expire_time": 1794180305093
         }
       ]
     }
   },
   "extra": {
     "stage": "task-records",
-    "job_id": "560ce18d-0804-4976-a35c-99ddf4a09a59"
+    "job_id": "7e5e1763-a56b-443b-b80a-ba3f21b6936a"
   }
 }

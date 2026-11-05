@@ -7,7 +7,7 @@
     "status_code": 400,
     "headers": {
       "Cache-Control": "no-cache, no-store, must-revalidate",
-      "X-TRACE-ID": "1942ad9a-476a-45eb-ba44-ee20015631ee",
+      "X-TRACE-ID": "0b44cfcd-310a-4176-9d57-188bd0418961",
       "X-Frame-Options": "SAMEORIGIN",
       "X-Content-Type-Options": "nosniff",
       "X-Download-Options": "noopen",
@@ -22,7 +22,7 @@
       "Content-Encoding": "gzip",
       "Content-Type": "application/json;charset=UTF-8",
       "Transfer-Encoding": "chunked",
-      "Date": "Thu, 05 Nov 2026 15:22:17 GMT",
+      "Date": "Thu, 05 Nov 2026 23:26:36 GMT",
       "Connection": "close",
       "Server": "127.0.0.1"
     },

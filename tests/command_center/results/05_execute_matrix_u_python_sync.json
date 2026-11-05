@@ -1,12 +1,19 @@
 {
   "request": {
     "method": "POST",
-    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/customer-commands/265cde3e-2a47-4c75-b22f-42bd56d503a3"
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/customer-commands/265cde3e-2a47-4c75-b22f-42bd56d503a3",
+    "body": {
+      "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+      "node_ids": [
+        "d5284a09d06c4b2798c8c713259fe705no14"
+      ],
+      "params": []
+    }
   },
   "response": {
     "status_code": 200,
     "headers": {
-      "X-TRACE-ID": "1d78f85d-2640-4b6d-85cd-0d311a4d7768",
+      "X-TRACE-ID": "220a46fb-9031-4894-b48e-b2e0882922a8",
       "X-Frame-Options": "SAMEORIGIN",
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -22,16 +29,16 @@
       "Content-Encoding": "gzip",
       "Content-Type": "application/json;charset=UTF-8",
       "Transfer-Encoding": "chunked",
-      "Date": "Thu, 05 Nov 2026 15:21:58 GMT",
+      "Date": "Thu, 05 Nov 2026 23:26:10 GMT",
       "Keep-Alive": "timeout=20",
       "Connection": "keep-alive",
       "Server": "127.0.0.1"
     },
     "body": {
-      "job_id": "1a1c483b-d40d-4a4f-b792-cc278c969f48",
+      "job_id": "82b9fce4-d567-4869-a043-e50d44b9aa6a",
       "node_tasks": [
         {
-          "task_id": "7a0a08c8-08c5-4a21-8bc5-659dc9aff020",
+          "task_id": "4cf61aaa-2649-4eaa-89e4-6a75df5668e6",
           "node_id": "d5284a09d06c4b2798c8c713259fe705no14"
         }
       ]
