@@ -7,6 +7,81 @@
     "prerequisite_apis": 4,
     "covered_metrics": 98
   },
+  "platform_facts": {
+    "api_survey": {
+      "method": "从 CHM 产品文档（14655 个 HTML 页面，gb18030 编码）提取全部 /v3/** 接口路径，共 147 个去重 API，再按两种前缀候选逐个实测",
+      "prefix_candidates": {
+        "/rds/gaussdb/v3/**": "102 个非 404（400=缺参数 45、200=可用 35、201=1、500=服务端错误 6、403=无权限 15）",
+        "/rds/v3/**": "仅认证、实例列表、监控指标、告警这几个"
+      },
+      "conclusion": "两种前缀都真实存在：/rds/v3 是基础平台接口（监控、告警、认证），/rds/gaussdb/v3 是数据库管理接口（命令中心、诊断优化）。只查其中一种会漏掉大半指标。",
+      "lesson": "「平台没有某指标」这种结论，必须以「该平台全部 API 都探测过」为前提，否则就是把「没查到」当成「没有」。"
+    },
+    "builtin_commands": {
+      "api": "GET /rds/gaussdb/v3/command-center/customer-commands",
+      "count": 142,
+      "note": "内置命令含 SQL / SHELL / PYTHON 三类，可直接用任意 SQL 的通用命令",
+      "relevant": {
+        "general_single_sql_query": "通用 SQL 查询，模板 select * from ({sql_text}) limit {limit};可执行任意 SQL，是 82 个 pg_stat 类指标的主通道",
+        "dbs.full.get_stat_all_tables": "top 20 死元组占用（n_dead_tup / n_live_tup / dead_tup_ratio）",
+        "query_slow_table_statistics": "用户表 tuple 统计（n_tup_ins/upd/del、n_live_tup、n_dead_tup、last_vacuum…）",
+        "query_table_statistics_info": "指定表的统计信息",
+        "query_database_info": "字符集（pg_encoding_to_char(encoding)）",
+        "DBS.FULL.get_database_size": "各库大小",
+        "query_table_locks_ha / query_table_locks_distribute": "表上锁（pg_locks）",
+        "query_slow_sql_ha / query_slow_sql_distribute / query_history_slow_sql_records": "慢 SQL"
+      }
+    },
+    "pg_stat_views": {
+      "note": "字段已与实库 information_schema.columns 核对；GaussDB 的 pg_stat_activity 无 wait_event_type/wait_event，等待类指标按 state 判定",
+      "pg_stat_user_tables / pg_stat_all_tables": {
+        "field_count": 22,
+        "fields": "seq_scan, seq_tup_read, idx_scan, idx_tup_fetch, n_tup_ins, n_tup_upd, n_tup_del, n_tup_hot_upd, n_live_tup, n_dead_tup, last_vacuum, vacuum_count …"
+      },
+      "pg_stat_activity": {
+        "field_count": 27,
+        "fields": "datname, pid, state, query, query_start, waiting, unique_sql_id …"
+      },
+      "pg_stat_database": {
+        "field_count": 19,
+        "fields": "numbackends, xact_commit, xact_rollback, blks_read, blks_hit, tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted, conflicts, temp_files, temp_bytes, deadlocks, blk_read_time, blk_write_time"
+      },
+      "pg_stat_bgwriter": {
+        "field_count": 11,
+        "fields": "checkpoints_timed, checkpoints_req, buffers_checkpoint, buffers_clean, maxwritten_clean, buffers_backend, buffers_backend_fsync, buffers_alloc"
+      }
+    },
+    "merged_collection": {
+      "note": "命令中心单次往返 10~20 秒，82 个指标若各发一条 SQL 则一轮要 50 次往返，采集周期撑不住；应合并成少量几条 SQL 每轮下发一次",
+      "verified_example": "select (select row_to_json(b) from pg_stat_bgwriter b) as bgwriter, (select string_agg(name||'='||setting,' | ' order by name) from pg_settings where name in ('max_connections','TimeZone','block_size','port','shared_buffers')) as settings, (select row_to_json(d) from pg_stat_database d where datname='postgres') as dbstat, (select count(*) from pg_locks where mode='AccessExclusiveLock') as accessexclusive_locks, (select count(*) from pg_prepared_xacts) as prepared_xacts, (select string_agg(datname||':'||pg_encoding_to_char(encoding),',') from pg_database) as encodings",
+      "verified_result_keys": [
+        "bgwriter",
+        "settings",
+        "dbstat",
+        "accessexclusive_locks",
+        "prepared_xcts",
+        "encodings"
+      ]
+    },
+    "execution_constraints": {
+      "note": "命令详情里的 constraint_config 约束：执行节点角色/组件类型须满足（如 general_single_sql_query 要求 limit_node_types=[master]、limit_component_types=[cn,dn]），集群形态也须匹配",
+      "risk": "执行自定义命令（来源非系统默认）属于风险操作，命令详情明确要求确认不会产生慢SQL、输出大小可控（建议每轮一条合并 SQL、limit 适中）",
+      "masking": "任务记录里 sql_text 属敏感参数，会被掩码显示为 ******（执行本身不受影响）"
+    },
+    "cumulative_counters": {
+      "note": "pg_stat_* 是累计量（自 stats_reset 起算），而 POST /rds/v3/monitor/metrics 是真正的时序。Kafka 侧要统一成客户的「每秒/每分钟」口径，得在采集侧统一做差分，并处理实例重启导致的计数归零",
+      "rate_metrics": [
+        "GAUSSDB.[{#DATNAME}]_fetch_records_per_second",
+        "GAUSSDB.[{#DATNAME}]_insert_records_per_second",
+        "GAUSSDB.[{#DATNAME}]_return_records_per_second",
+        "GAUSSDB.[{#DATNAME}]_update_records_per_second",
+        "GAUSSDB.[{#DATNAME}]_delete_records_per_second"
+      ]
+    },
+    "data_caveat": {
+      "note": "当前两个实例创建于 2026-11-03，是空库：pg_stat_user_tables 无业务表、real-time-session 空、databases 空（仅系统库）。表级 22 项指标虽有字段，但当前实例上没有真实数据可验，需在有业务数据的实例上复验数值合理性"
+    }
+  },
   "apis": [
     {
       "id": "POST /rds/v3/auth/mini-token",

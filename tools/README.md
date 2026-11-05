@@ -90,9 +90,6 @@ All outputs are JSON — each file is the raw JSON body returned by one API call
 | `metrics_series_<N>m.json` | `POST /rds/v3/monitor/metrics` | current values over a short window (`is_latest_point_only: "false"`) — **use this for "current value"** |
 | `metrics_series_<N>h.json` | `POST /rds/v3/monitor/metrics` | long time series (`is_latest_point_only: "false"`) — default `--hours 2` |
 
-`metrics_series_*.json` is gitignored as regenerable bulk output; the rest are kept as a
-committed baseline.
-
 The default run produces three data files:
 
 | File | Window | Size | Covers |
@@ -102,6 +99,25 @@ The default run produces three data files:
 | `metrics_latest.json` | snapshot | ~215 KB | all values, but 74% have `timestamp=0` |
 
 Pass `--hours 24` for a full-day series (11 MB) when you need trends.
+
+These exports are all **reproducible from the platform** and are therefore gitignored:
+`metrics_series_*.json`, `metrics_latest.json`, `metric_catalog.json`, plus the two
+files derived from them (`tpops_all_metric.json`, `metric_names.csv`, see below).
+`instances.json` and `manifest.json` are kept as a committed baseline.
+
+### Rebuilding the metric dictionary
+
+`data/tpops_all_metric.json` (234 platform metrics: english id / chinese name / unit /
+group / collection frequency) and `data/metric_names.csv` (the same data as a table) are
+built from the raw exports above:
+
+```bash
+python tools/fetch_tpops_metrics.py --hours 2
+python tools/build_tpops_metric_dict.py
+```
+
+`build_customer_metric_mapping.py` needs `tpops_all_metric.json` to resolve the
+platform-side metric names, so run the dictionary build first if it is missing.
 
 ### Which file to use for "current value"
 

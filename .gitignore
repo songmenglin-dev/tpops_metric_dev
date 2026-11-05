@@ -27,9 +27,15 @@ venv/
 .DS_Store
 Thumbs.db
 
-# --- regenerable bulk metric exports ---
-# Re-create with: python tools/fetch_tpops_metrics.py --hours 24
+# --- regenerable metric exports ---
+# All of these come from the TPOPS platform and are reproducible:
+#   python tools/fetch_tpops_metrics.py --hours 2   # 原始抓取
+#   python tools/build_tpops_metric_dict.py          # 由原始抓取重建指标字典
 data/metrics_series_*.json
+data/metrics_latest.json
+data/metric_catalog.json
+data/tpops_all_metric.json
+data/metric_names.csv
 
 # 原子写入的临时文件
 *.tmp

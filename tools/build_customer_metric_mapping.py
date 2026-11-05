@@ -14,6 +14,10 @@
 
 用法：
     python tools/build_customer_metric_mapping.py
+
+前置：data/tpops_all_metric.json 是可再生产物，缺失时先重建
+    python tools/fetch_tpops_metrics.py --hours 2
+    python tools/build_tpops_metric_dict.py
 """
 
 import csv
@@ -378,6 +382,11 @@ def read_client_rows():
 
 
 def load_tpops_dict():
+    if not os.path.exists(TPOPS_DICT):
+        sys.exit("找不到 %s\n"
+                 "该字典是可再生产物，需先抓取平台数据再重建：\n"
+                 "    python tools/fetch_tpops_metrics.py --hours 2\n"
+                 "    python tools/build_tpops_metric_dict.py" % TPOPS_DICT)
     with open(TPOPS_DICT, encoding="utf-8") as fh:
         return json.load(fh)
 
