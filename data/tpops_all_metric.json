@@ -1,0 +1,2138 @@
+{
+  "source": {
+    "metric": "data/metric_catalog.json (GET /rds/v3/monitor/metrics/series, metrics[].name, 12 分组并集)",
+    "metric_name": "data/metrics_series_2h.json (POST /rds/v3/monitor/metrics, metrics[].metric_name)",
+    "unit": "data/metric_catalog.json (metrics[].unit)",
+    "group": "data/metric_catalog.json (所在分组，COREMETRICS 为重复组另记于 also_in_group)",
+    "collection_frequency": "data/metrics_series_2h.json (metrics[].collection_frequency)"
+  },
+  "join_key": "metric",
+  "total": 234,
+  "with_chinese_name": 216,
+  "metrics": [
+    {
+      "metric": "buffer_size",
+      "metric_name": "内存缓冲空间",
+      "unit": "GB",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "cache_size",
+      "metric_name": "内存缓存空间",
+      "unit": "GB",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "cpu_core_count",
+      "metric_name": "CPU核数",
+      "unit": "Count",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "cpu_percent",
+      "metric_name": "CPU使用率",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "cpu_sys_usage",
+      "metric_name": "CPU内核态时间占比",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "cpu_user_usage",
+      "metric_name": "CPU用户态时间占比",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "cpu_wait_usage",
+      "metric_name": "CPU等待磁盘I/O时间占比",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "database_bytes_in",
+      "metric_name": "网卡接收速率",
+      "unit": "byte/s",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "database_bytes_out",
+      "metric_name": "网卡发送速率",
+      "unit": "byte/s",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "database_rx_dropped",
+      "metric_name": "丢弃数据包占接收数据包比例",
+      "unit": "%",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "database_rx_errors",
+      "metric_name": "错误数据包占接收数据包比例",
+      "unit": "%",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "database_tx_dropped",
+      "metric_name": "丢弃数据包占发送数据包比例",
+      "unit": "%",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "database_tx_errors",
+      "metric_name": "错误数据包占发送数据包比例",
+      "unit": "%",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "datanode_switch_status",
+      "metric_name": "DN主备状态",
+      "unit": null,
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 30,
+      "has_data": true
+    },
+    {
+      "metric": "gaussdb_instance_status",
+      "metric_name": "实例状态",
+      "unit": null,
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 30,
+      "has_data": true
+    },
+    {
+      "metric": "idle_percent",
+      "metric_name": "CPU空闲时间占比",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "io_wait_percent",
+      "metric_name": "CPU等待磁盘I/O时间占比",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "mem_size",
+      "metric_name": "内存空间大小",
+      "unit": "GB",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "mem_usage",
+      "metric_name": "内存使用率",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "mem_used_size",
+      "metric_name": "内存已使用空间",
+      "unit": "GB",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "nas_usage",
+      "metric_name": null,
+      "unit": "%",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds075_dbmanager_process_code",
+      "metric_name": "dbmanager进程状态",
+      "unit": null,
+      "group": "AGENTSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rds076_watchdog_process_code",
+      "metric_name": "watchdog进程状态",
+      "unit": null,
+      "group": "AGENTSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rds077_agentmonitor_process_code",
+      "metric_name": "agent_monitor进程状态",
+      "unit": null,
+      "group": "AGENTSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rds079_gaussv5_current_sleep_time",
+      "metric_name": "主机流控时间",
+      "unit": "us",
+      "group": "SYNCSTAT",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds080_gaussv5_current_rto",
+      "metric_name": "备机RTO时间",
+      "unit": "s",
+      "group": "SYNCSTAT",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds081_gaussv5_login_counter",
+      "metric_name": "用户登入次数/秒",
+      "unit": "Count/s",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds081_gaussv5_login_counter_SYS",
+      "metric_name": "系统用户登入次数/秒",
+      "unit": "Count/s",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds081_gaussv5_login_counter_USER",
+      "metric_name": "业务用户登入次数/秒",
+      "unit": "Count/s",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds082_gaussv5_logout_counter",
+      "metric_name": "用户登出次数/秒",
+      "unit": "Count/s",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds082_gaussv5_logout_counter_SYS",
+      "metric_name": "系统用户登出次数/秒",
+      "unit": "Count/s",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds082_gaussv5_logout_counter_USER",
+      "metric_name": "业务用户登出次数/秒",
+      "unit": "Count/s",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds083_gaussv5_standby_delay",
+      "metric_name": "备机redo进度",
+      "unit": "byte",
+      "group": "SYNCSTAT",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds085_gaussv5_wait_ratio",
+      "metric_name": "锁等待状态会话比率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds085_gaussv5_wait_ratio_SYS",
+      "metric_name": "系统用户锁等待状态会话比率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds085_gaussv5_wait_ratio_USER",
+      "metric_name": "业务用户锁等待状态会话比率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds086_gaussv5_active_ratio",
+      "metric_name": "活跃会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds086_gaussv5_active_ratio_SYS",
+      "metric_name": "系统用户活跃会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds086_gaussv5_active_ratio_USER",
+      "metric_name": "业务用户活跃会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds089_gaussv5_inuse_counter",
+      "metric_name": "CN连接数",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds090_gaussv5_buffer_hit_ratio",
+      "metric_name": "buffer命中率",
+      "unit": "%",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds090_gaussv5_buffer_hit_ratio_real_time",
+      "metric_name": "实时buffer命中率",
+      "unit": "%",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds091_gaussv5_deadlocks",
+      "metric_name": "死锁次数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds091_gaussv5_deadlocks_SYS_db",
+      "metric_name": "死锁次数(系统库)",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds091_gaussv5_deadlocks_USER_db",
+      "metric_name": "死锁次数(业务库)",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds092_gaussv5_commit_counter",
+      "metric_name": "用户提交事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds092_gaussv5_commit_counter_SYS",
+      "metric_name": "系统用户提交事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds092_gaussv5_commit_counter_USER",
+      "metric_name": "业务用户提交事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds093_gaussv5_rollback_counter",
+      "metric_name": "用户回滚事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds093_gaussv5_rollback_counter_SYS",
+      "metric_name": "系统用户回滚事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds093_gaussv5_rollback_counter_USER",
+      "metric_name": "业务用户回滚事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds094_gaussv5_bg_commit_counter",
+      "metric_name": "后台提交事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds094_gaussv5_bg_commit_counter_SYS",
+      "metric_name": "系统用户后台提交事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds094_gaussv5_bg_commit_counter_USER",
+      "metric_name": "业务用户后台提交事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds095_gaussv5_bg_rollback_counter",
+      "metric_name": "后台回滚事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds095_gaussv5_bg_rollback_counter_SYS",
+      "metric_name": "系统用户后台回滚事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds095_gaussv5_bg_rollback_counter_USER",
+      "metric_name": "业务用户后台回滚事务数/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds096_gaussv5_resp_avg",
+      "metric_name": "用户事务平均响应时间",
+      "unit": "us",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds096_gaussv5_resp_avg_SYS",
+      "metric_name": "系统用户事务平均响应时间",
+      "unit": "us",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds096_gaussv5_resp_avg_USER",
+      "metric_name": "业务用户事务平均响应时间",
+      "unit": "us",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds097_gaussv5_rollback_ratio",
+      "metric_name": "用户事务回滚率",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds097_gaussv5_rollback_ratio_SYS",
+      "metric_name": "系统用户事务回滚率",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds097_gaussv5_rollback_ratio_USER",
+      "metric_name": "业务用户事务回滚率",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds098_gaussv5_bg_rollback_ratio",
+      "metric_name": "后台事务回滚率",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds098_gaussv5_bg_rollback_ratio_SYS",
+      "metric_name": "系统用户后台事务回滚率",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds098_gaussv5_bg_rollback_ratio_USER",
+      "metric_name": "业务用户后台事务回滚率",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds099_gaussv5_ddl_count",
+      "metric_name": "平均DDL每秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds099_gaussv5_ddl_count_SYS",
+      "metric_name": "平均DDL每秒(系统用户)",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds099_gaussv5_ddl_count_USER",
+      "metric_name": "平均DDL每秒(业务用户)",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds100_gaussv5_dml_count",
+      "metric_name": "平均DML每秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds100_gaussv5_dml_count_SYS",
+      "metric_name": "平均DML每秒(系统用户)",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds100_gaussv5_dml_count_USER",
+      "metric_name": "平均DML每秒(业务用户)",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds101_gaussv5_dcl_count",
+      "metric_name": "平均DCL每秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds101_gaussv5_dcl_count_SYS",
+      "metric_name": "平均DCL每秒(系统用户)",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds101_gaussv5_dcl_count_USER",
+      "metric_name": "平均DCL每秒(业务用户)",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds102_gaussv5_ddl_dcl_ratio",
+      "metric_name": "DDL+DCL比率",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds103_gaussv5_P80",
+      "metric_name": "80% SQL的响应时间",
+      "unit": "us",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds104_gaussv5_P95",
+      "metric_name": "95%SQL的响应时间",
+      "unit": "us",
+      "group": "TRANSACTION",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds105_gaussv5_ckpt_delay",
+      "metric_name": "待落盘的数据量",
+      "unit": "byte",
+      "group": "SYNCSTAT",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds106_gaussv5_phyrds",
+      "metric_name": "读物理文件的IO次数/秒",
+      "unit": "Count/s",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds107_gaussv5_phywrts",
+      "metric_name": "写物理文件IO次数/秒",
+      "unit": "Count/s",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds108_gaussdbv5_thread_pool",
+      "metric_name": "线程池使用率",
+      "unit": "%",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds109_max_process_memory",
+      "metric_name": "进程占用内存上限",
+      "unit": "MB",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds110_process_used_memory",
+      "metric_name": "进程已使用内存",
+      "unit": "MB",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds111_process_used_memory_usage",
+      "metric_name": "进程内存使用率",
+      "unit": "%",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds112_max_dynamic_memory",
+      "metric_name": "动态内存使用上限",
+      "unit": "MB",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds113_dynamic_used_memory",
+      "metric_name": "已使用的动态内存",
+      "unit": "MB",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds114_dynamic_used_memory_usage",
+      "metric_name": "动态内存使用率",
+      "unit": "%",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds115_other_used_memory",
+      "metric_name": "已使用的其他内存",
+      "unit": "MB",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds116_shared_used_memory",
+      "metric_name": "已使用的共享内存",
+      "unit": "MB",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds117_gaussv5_active_session",
+      "metric_name": "活跃会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds117_gaussv5_active_session_SYS",
+      "metric_name": "系统活跃会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds117_gaussv5_active_session_USER",
+      "metric_name": "业务活跃会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds118_gaussv5_wait_session",
+      "metric_name": "等待会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds118_gaussv5_wait_session_SYS",
+      "metric_name": "系统用户等待会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds118_gaussv5_wait_session_USER",
+      "metric_name": "业务用户等待会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds119_cn_temp_dir_size",
+      "metric_name": "CN临时目录大小",
+      "unit": "MB",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds120_dn_temp_dir_size",
+      "metric_name": "DN临时目录大小",
+      "unit": "MB",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rds121_etcd_data_dir_size",
+      "metric_name": "ETCD数据目录大小",
+      "unit": "MB",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds122_gaussv5_fd_leak_num",
+      "metric_name": "泄露句柄数",
+      "unit": "Count",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds123_xlog_lsn",
+      "metric_name": "Xlog速率",
+      "unit": "byte/s",
+      "group": "SYNCSTAT",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds124_candidate_slots_num",
+      "metric_name": "候选槽位数量",
+      "unit": "Count",
+      "group": "SYNCSTAT",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds125_dirty_page_num",
+      "metric_name": "未落盘脏页数量",
+      "unit": "Count",
+      "group": "SYNCSTAT",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds126_xlog_num",
+      "metric_name": "XLOG数量",
+      "unit": "Count",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds127_sys_database_size",
+      "metric_name": "系统数据库大小",
+      "unit": "byte",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds128_user_database_size",
+      "metric_name": "用户数据库总大小",
+      "unit": "byte",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds129_select_distribution",
+      "metric_name": "SELECT语句占比",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds129_select_distribution_SYS",
+      "metric_name": "SELECT语句占比(系统用户)",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds129_select_distribution_USER",
+      "metric_name": "SELECT语句占比(业务用户)",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds130_update_distribution",
+      "metric_name": "UPDATE语句占比",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds130_update_distribution_SYS",
+      "metric_name": "UPDATE语句占比(系统用户)",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds130_update_distribution_USER",
+      "metric_name": "UPDATE语句占比(业务用户)",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds131_insert_distribution",
+      "metric_name": "INSERT语句占比",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds131_insert_distribution_SYS",
+      "metric_name": "INSERT语句占比(系统用户)",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds131_insert_distribution_USER",
+      "metric_name": "INSERT语句占比(业务用户)",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds132_delete_distribution",
+      "metric_name": "DELETE语句占比",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds132_delete_distribution_SYS",
+      "metric_name": "DELETE语句占比(系统用户)",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds132_delete_distribution_USER",
+      "metric_name": "DELETE语句占比(业务用户)",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds133_cn_startup_time",
+      "metric_name": "CN进程启动时刻",
+      "unit": "timestamp",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds134_dn_startup_time",
+      "metric_name": "DN进程启动时刻",
+      "unit": "timestamp",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds135_gtm_startup_time",
+      "metric_name": "GTM进程启动时刻",
+      "unit": "timestamp",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds136_cms_startup_time",
+      "metric_name": "CMS进程启动时刻",
+      "unit": "timestamp",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds137_etcd_startup_time",
+      "metric_name": "ETCD进程启动时刻",
+      "unit": "timestamp",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds138_cma_startup_time",
+      "metric_name": "CMA进程启动时刻",
+      "unit": "timestamp",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds139_gtm_process_mem_usage",
+      "metric_name": "GTM进程内存占用",
+      "unit": "byte",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds140_etcd_process_mem_usage",
+      "metric_name": "ETCD进程内存占用",
+      "unit": "byte",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds141_cms_process_mem_usage",
+      "metric_name": "CMS进程内存占用",
+      "unit": "byte",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds142_cma_process_mem_usage",
+      "metric_name": "CMA进程内存占用",
+      "unit": "byte",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds143_gaussv5_online_session",
+      "metric_name": "在线会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds143_gaussv5_online_session_SYS",
+      "metric_name": "系统用户在线会话数",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds143_gaussv5_online_session_USER",
+      "metric_name": "业务用户在线会话数",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds144_online_ratio",
+      "metric_name": "在线会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds144_online_ratio_SYS",
+      "metric_name": "系统用户在线会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds144_online_ratio_USER",
+      "metric_name": "业务用户在线会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds145_gaussdbv5_statement",
+      "metric_name": "statement数量",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds145_gaussdbv5_statement_SYS",
+      "metric_name": "statement数量(系统用户)",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds145_gaussdbv5_statement_USER",
+      "metric_name": "statement数量(业务用户)",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds146_gaussdbv5_slowquery_sys_SYS",
+      "metric_name": "系统库慢SQL数量(系统用户)",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds146_gaussdbv5_slowquery_sys_USER",
+      "metric_name": "系统库慢SQL数量(业务用户)",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds147_gaussdbv5_slowquery_user_SYS",
+      "metric_name": "用户库慢SQL数量(系统用户)",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds147_gaussdbv5_slowquery_user_USER",
+      "metric_name": "用户库慢SQL数量(业务用户)",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds148_gaussdbv5_error_om",
+      "metric_name": "OM模块ERROR日志数",
+      "unit": "Count",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds149_gaussdbv5_error_cm",
+      "metric_name": "CM模块ERROR日志数",
+      "unit": "Count",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds150_gaussdbv5_error_kernel",
+      "metric_name": "内核ERROR日志数",
+      "unit": "Count",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "rds150_om_agent_process",
+      "metric_name": "om_agent进程状态",
+      "unit": null,
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rds151_om_monitor_process",
+      "metric_name": "om_monitor进程状态",
+      "unit": null,
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rds170_undo_size",
+      "metric_name": "undo页面使用数量",
+      "unit": "Count",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds171_undo_rate",
+      "metric_name": "undo页面生成速率",
+      "unit": "Count/s",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds172_streaming_dr_xlog_gap",
+      "metric_name": null,
+      "unit": "byte",
+      "group": "FORDR",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds173_streaming_dr_xlog_to_be_replayed",
+      "metric_name": null,
+      "unit": "byte",
+      "group": "FORDR",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds174_streaming_dr_xlog_flushing_rate",
+      "metric_name": null,
+      "unit": "byte/s",
+      "group": "FORDR",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds175_streaming_dr_xlog_replay_rate",
+      "metric_name": null,
+      "unit": "byte/s",
+      "group": "FORDR",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds176_streaming_dr_rpo",
+      "metric_name": null,
+      "unit": "s",
+      "group": "FORDR",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds177_streaming_dr_rto",
+      "metric_name": null,
+      "unit": "s",
+      "group": "FORDR",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds183_sharestore_local_rto",
+      "metric_name": null,
+      "unit": "s",
+      "group": "FORDR",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds184_bad_block_num",
+      "metric_name": "数据页面损坏数量",
+      "unit": "Count",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds190_long_running_transaction_exectime",
+      "metric_name": "数据库最长事务的执行时长",
+      "unit": "s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds192_replication_slot_wal_log_size",
+      "metric_name": "复制槽保留的WAL日志大小",
+      "unit": "byte",
+      "group": "SYNCSTAT",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds195_gaussv5_locks_session",
+      "metric_name": "等锁会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds195_gaussv5_locks_session_SYS",
+      "metric_name": "系统用户等锁会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds195_gaussv5_locks_session_USER",
+      "metric_name": "业务用户等锁会话数量",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds196_gaussv5_locks_ratio",
+      "metric_name": "等锁会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds196_gaussv5_locks_ratio_SYS",
+      "metric_name": "系统用户等锁会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds196_gaussv5_locks_ratio_USER",
+      "metric_name": "业务用户等锁会话率",
+      "unit": "%",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds228_nvme_cache_usage",
+      "metric_name": null,
+      "unit": "%",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds229_nvme_cache_used_size",
+      "metric_name": null,
+      "unit": "GB",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "rds240_gaussdbv5_thread_pool_session_waiting",
+      "metric_name": "建连线程池waiting数量",
+      "unit": "Count",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds241_gaussdbv5_thread_pool_stream_running",
+      "metric_name": "stream线程池running数量",
+      "unit": "Count",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds242_gaussdbv5_stream_max_connection",
+      "metric_name": "stream连接数使用率",
+      "unit": "%",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds311_long_transactions_num_60min",
+      "metric_name": "运行超过60分钟的事务数量",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rds312_long_transactions_num_120min",
+      "metric_name": "运行超过120分钟的事务数量",
+      "unit": "Count",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rds400_gaussv5_total_counter",
+      "metric_name": "用户总事务数/秒（TPS）",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds400_gaussv5_total_counter_SYS",
+      "metric_name": "用户总事务数/秒(系统用户）",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds400_gaussv5_total_counter_USER",
+      "metric_name": "用户总事务数/秒（业务用户）",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds401_gaussv5_commit_ratio",
+      "metric_name": "用户事务提交率",
+      "unit": "%",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds402_gaussv5_ddl_dml_dcl_count",
+      "metric_name": "平均SQL执行数（QPS）",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds402_gaussv5_ddl_dml_dcl_count_SYS",
+      "metric_name": "平均SQL执行数（系统用户）",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds402_gaussv5_ddl_dml_dcl_count_USER",
+      "metric_name": "平均SQL执行数（业务用户）",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds403_gaussv5_insert_sql_count",
+      "metric_name": "INSERT语句数量/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds404_gaussv5_select_sql_count",
+      "metric_name": "SELECT语句数量/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds405_gaussv5_delete_sql_count",
+      "metric_name": "DELETE语句数量/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds406_gaussv5_update_sql_count",
+      "metric_name": "UPDATE语句数量/秒",
+      "unit": "Count/s",
+      "group": "TRANSACTION",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds407_gaussv5_total_locks_count",
+      "metric_name": "锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds407_gaussv5_total_locks_count_SYS",
+      "metric_name": "系统用户数据库锁总数 ",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds407_gaussv5_total_locks_count_USER",
+      "metric_name": "业务用户数据库锁总数 ",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds408_gaussv5_relation_locks_count",
+      "metric_name": "表级锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds408_gaussv5_relation_locks_count_SYS",
+      "metric_name": "系统用户表级锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds408_gaussv5_relation_locks_count_USER",
+      "metric_name": "业务用户表级锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds409_gaussv5_tuple_locks_count",
+      "metric_name": "行级锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds409_gaussv5_tuple_locks_count_SYS",
+      "metric_name": "系统用户行级锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds409_gaussv5_tuple_locks_count_USER",
+      "metric_name": "业务用户行级锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds410_gaussv5_other_locks_count",
+      "metric_name": "其他锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds410_gaussv5_other_locks_count_SYS",
+      "metric_name": "系统其他锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds410_gaussv5_other_locks_count_USER",
+      "metric_name": "业务其他锁总数",
+      "unit": "Count",
+      "group": "LOCK",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds411_gaussv5_blks_read_counter",
+      "metric_name": "磁盘读取block/秒",
+      "unit": "Count/s",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds412_gaussv5_blks_hit_counter",
+      "metric_name": "缓存读取block/秒",
+      "unit": "Count/s",
+      "group": "PROCESSRESOURCE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "rds416_gaussv5_max_active_session",
+      "metric_name": "历史最高活跃会话数",
+      "unit": "Count",
+      "group": "CONNECTION",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "rx_dropped",
+      "metric_name": "丢弃数据包占接收数据包比例",
+      "unit": "%",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "rx_errors",
+      "metric_name": "错误数据包占接收数据包比例",
+      "unit": "%",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "sys001_cpu_usage",
+      "metric_name": "CPU使用率",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "sys002_idle_usage",
+      "metric_name": "CPU空闲时间占比",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "sys010_mem_usage",
+      "metric_name": "内存使用率",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "sys011_bytes_in",
+      "metric_name": "网卡接收速率",
+      "unit": "byte/s",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "sys012_bytes_out",
+      "metric_name": "网卡发送速率",
+      "unit": "byte/s",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "sys013_mem_free_size",
+      "metric_name": "内存可用空间",
+      "unit": "GB",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "sys014_signal_num",
+      "metric_name": "信号量",
+      "unit": "Count",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "sys016_cpu_load",
+      "metric_name": "CPU负载",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys023_file_handler_num",
+      "metric_name": "Inode使用率",
+      "unit": "%",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 300,
+      "has_data": true
+    },
+    {
+      "metric": "sys024_swap_total_size",
+      "metric_name": "交换内存总大小",
+      "unit": "MB",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys025_swap_used_ratio",
+      "metric_name": "交换内存使用率",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys026_swap_used_size",
+      "metric_name": "交换内存已使用大小",
+      "unit": "MB",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys041_sys_disk_usage",
+      "metric_name": "系统磁盘使用率",
+      "unit": "%",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys063_disk_used_size",
+      "metric_name": "数据磁盘已使用大小",
+      "unit": "GB",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys064_disk_total_size",
+      "metric_name": "数据磁盘总大小",
+      "unit": "GB",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys065_disk_usage",
+      "metric_name": "数据磁盘使用率",
+      "unit": "%",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys066_log_disk_used_size",
+      "metric_name": null,
+      "unit": "GB",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "sys067_log_disk_total_size",
+      "metric_name": null,
+      "unit": "GB",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "sys068_log_disk_usage",
+      "metric_name": null,
+      "unit": "%",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "sys069_iops",
+      "metric_name": "数据磁盘每秒读写次数",
+      "unit": "Count/s",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys070_log_iops",
+      "metric_name": null,
+      "unit": "Count/s",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "sys071_disk_write_throughput",
+      "metric_name": "数据磁盘写吞吐量",
+      "unit": "byte/s",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys072_disk_read_throughput",
+      "metric_name": "数据磁盘读吞吐量",
+      "unit": "byte/s",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys073_log_disk_write_throughput",
+      "metric_name": null,
+      "unit": "byte/s",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "sys074_log_disk_read_throughput",
+      "metric_name": null,
+      "unit": "byte/s",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "sys075_avg_disk_ms_per_write",
+      "metric_name": "数据磁盘单次写入花费的时间",
+      "unit": "ms",
+      "group": "IOSTORAGE",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys076_avg_disk_ms_per_read",
+      "metric_name": "数据磁盘单次读取花费的时间",
+      "unit": "ms",
+      "group": "IOSTORAGE",
+      "also_in_group": [
+        "COREMETRICS"
+      ],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys077_avg_log_disk_ms_per_write",
+      "metric_name": null,
+      "unit": "ms",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "sys078_avg_log_disk_ms_per_read",
+      "metric_name": null,
+      "unit": "ms",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": null,
+      "has_data": false
+    },
+    {
+      "metric": "sys081_svctm",
+      "metric_name": "数据磁盘平均服务耗时",
+      "unit": "ms",
+      "group": "IOSTORAGE",
+      "also_in_group": [],
+      "collection_frequency": 60,
+      "has_data": true
+    },
+    {
+      "metric": "sys084_clock_synchronization_diff",
+      "metric_name": "与有效时钟源的偏差时间",
+      "unit": "ms",
+      "group": "INSTATUS",
+      "also_in_group": [],
+      "collection_frequency": 3600,
+      "has_data": true
+    },
+    {
+      "metric": "sys_percent",
+      "metric_name": "CPU内核态时间占比",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "tx_dropped",
+      "metric_name": "丢弃数据包占发送数据包比例",
+      "unit": "%",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "tx_errors",
+      "metric_name": "错误数据包占发送数据包比例",
+      "unit": "%",
+      "group": "NETWORK",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    },
+    {
+      "metric": "user_percent",
+      "metric_name": "CPU用户态时间占比",
+      "unit": "%",
+      "group": "CPUMEMORY",
+      "also_in_group": [],
+      "collection_frequency": 10,
+      "has_data": true
+    }
+  ]
+}
