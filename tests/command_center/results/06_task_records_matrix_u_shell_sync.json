@@ -1,0 +1,64 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/a4dfe0b5-ab1c-429a-ba15-a3ac44c122c7/batch-exec-job/task-records?job_id=369c8fa5-c3d8-41fc-b8e4-4ddcd667670e&offset=0&limit=100"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "9ca63ace-6a26-44f4-b28e-558cec2e5dcb",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:22:09 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "total_count": 1,
+      "statistics": {
+        "total": 1,
+        "succeed": 1,
+        "failed": 0,
+        "running": 0,
+        "other": 0
+      },
+      "job_status": "running",
+      "tasks": [
+        {
+          "task_id": "f4150288-cc07-41dc-b0e9-1192f1594fbf",
+          "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+          "instance_name": "gauss-75a2",
+          "node_id": "d5284a09d06c4b2798c8c713259fe705no14",
+          "node_name": "gauss-75a2_root_0",
+          "agent_req_id": "ComOmCmd-f4150288-cc07-41dc-b0e9-1192f1594fbf",
+          "status": "succeed",
+          "params": [],
+          "is_redirect": false,
+          "download_file_id": null,
+          "error_msg": null,
+          "start_time": 1793892122648,
+          "finish_time": 1793892129224,
+          "expire_time": 1794151322647
+        }
+      ]
+    }
+  },
+  "extra": {
+    "stage": "task-records",
+    "job_id": "369c8fa5-c3d8-41fc-b8e4-4ddcd667670e"
+  }
+}

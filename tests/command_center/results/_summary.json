@@ -1,0 +1,303 @@
+{
+  "base_url": "https://172.16.103.193:8002",
+  "tested_at": "2026-11-05 21:39:39 +0800",
+  "interfaces": {
+    "mini-token": {
+      "status_code": 200
+    },
+    "commands/{cmd_id} (detail)": {
+      "status_code": 200,
+      "fetched": 142,
+      "failed": [],
+      "note": "复用已有结果（--matrix-only）"
+    },
+    "customer-commands (list)": {
+      "status_code": 200,
+      "total_count": 142,
+      "filters_total_count": {
+        "cmd_type=SQL": 112,
+        "cmd_type=SHELL": 20,
+        "cmd_type=PYTHON": 8,
+        "source=default": 142,
+        "source=custom": 0,
+        "status=enabled": 142,
+        "status=disabled": 142,
+        "call_type=sync": 140,
+        "call_type=async": 2
+      }
+    },
+    "customer-commands/{cmd_id} (execute)": {
+      "status_code": 200,
+      "job_id": "560ce18d-0804-4976-a35c-99ddf4a09a59",
+      "ok": true
+    },
+    "batch-exec-job/task-records": {
+      "status_code": 200,
+      "job_status": "completed",
+      "statistics": {
+        "total": 1,
+        "succeed": 1,
+        "failed": 0,
+        "running": 0,
+        "other": 0
+      }
+    },
+    "task-record/{task_id}/detail": {
+      "status_code": 200,
+      "status": "succeed",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map"
+    }
+  },
+  "instance": {
+    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+    "node_id": "d5284a09d06c4b2798c8c713259fe705no14",
+    "node_count": 3
+  },
+  "execution_matrix": [
+    {
+      "cmd_id": "965e830e-8dcf-4bfd-92f1-943e6bf9fd32",
+      "cmd_name": "auto_emergency_scenario_data_collect_ha",
+      "cmd_type": "PYTHON",
+      "call_type": "async",
+      "params_sent": [
+        {
+          "param_name": "type",
+          "param_value": "slot_slow_collector"
+        }
+      ],
+      "execute_status_code": 200,
+      "job_status": "running",
+      "node_status": [
+        "failed"
+      ],
+      "node_error_msg": [
+        "fail to exec cmd, error_msg: exec cmd timeout, exceed 60.0s"
+      ],
+      "result_status": "failed",
+      "out_format": "text",
+      "out_mode": "single",
+      "out_type": "string",
+      "is_redirect": true,
+      "result_preview": "None"
+    },
+    {
+      "cmd_id": "265cde3e-2a47-4c75-b22f-42bd56d503a3",
+      "cmd_name": "DBS.check_archive",
+      "cmd_type": "PYTHON",
+      "call_type": "sync",
+      "params_sent": [],
+      "execute_status_code": 200,
+      "job_status": "running",
+      "node_status": [
+        "succeed"
+      ],
+      "node_error_msg": [
+        null
+      ],
+      "result_status": "succeed",
+      "out_format": "text",
+      "out_mode": "single",
+      "out_type": "bool",
+      "is_redirect": false,
+      "result_preview": "true"
+    },
+    {
+      "cmd_id": "a4dfe0b5-ab1c-429a-ba15-a3ac44c122c7",
+      "cmd_name": "DBS.After505.Cent.ERROR.AccountLock",
+      "cmd_type": "SHELL",
+      "call_type": "sync",
+      "params_sent": [],
+      "execute_status_code": 200,
+      "job_status": "running",
+      "node_status": [
+        "succeed"
+      ],
+      "node_error_msg": [
+        null
+      ],
+      "result_status": "succeed",
+      "out_format": "text",
+      "out_mode": "single",
+      "out_type": "string",
+      "is_redirect": false,
+      "result_preview": "Failed to execute command on all nodes.\n\nOutput:\n[GAUSS-51400] : Failed to execute the command: ls -ltr /data/cluster/var/lib/log/Ruby/gs_log/dn*/gaussdb-* | tail -10 | awk '{print }' | xargs zgrep -E 'The account has been locked.|The account is not within the period of validity.' 2>/dev/null. Error:\n[FAILURE] 172.16.103.151:\n\n[FAILURE] 172.16.103.152:\n\n[FAILURE] 172.16.103.153:\n\n.\n"
+    },
+    {
+      "cmd_id": "7caa91e0-042f-426b-acdb-369be210c22d",
+      "cmd_name": "DBS.Cent.SLOW.WaitLock",
+      "cmd_type": "SQL",
+      "call_type": "sync",
+      "params_sent": [],
+      "execute_status_code": 200,
+      "job_status": "completed",
+      "node_status": [
+        "succeed"
+      ],
+      "node_error_msg": [
+        null
+      ],
+      "result_status": "succeed",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "is_redirect": false,
+      "result_preview": "[]"
+    },
+    {
+      "cmd_id": "5a3a37d1-63ba-4d3d-8456-8e66a211463b",
+      "cmd_name": "dbs.full.get_stat_all_tables",
+      "cmd_type": "sql",
+      "call_type": "sync",
+      "params_sent": [],
+      "execute_status_code": 500,
+      "job_status": null,
+      "node_status": [],
+      "node_error_msg": [],
+      "result_status": null,
+      "out_format": null,
+      "out_mode": null,
+      "out_type": null,
+      "is_redirect": null,
+      "result_preview": ""
+    }
+  ],
+  "negative_cases": [
+    {
+      "case": "list_invalid_cmd_type",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/customer-commands",
+      "status_code": 400,
+      "expectation": "非法枚举值应返回 400 参数错误",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: cmd_type"
+    },
+    {
+      "case": "list_invalid_status",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/customer-commands",
+      "status_code": 400,
+      "expectation": "非法枚举值应返回 400 参数错误",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: status"
+    },
+    {
+      "case": "list_invalid_cluster_mode",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/customer-commands",
+      "status_code": 400,
+      "expectation": "cluster_mode 需 JSON 数组格式，字符串应返回 400",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: cluster_mode"
+    },
+    {
+      "case": "list_status_disabled",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/customer-commands",
+      "status_code": 200,
+      "expectation": "平台无 disabled 命令时，过滤是否生效（实测返回全部 enabled）",
+      "error_code": null,
+      "error_msg": null
+    },
+    {
+      "case": "detail_invalid_cmd_id",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/commands/not-a-uuid",
+      "status_code": 400,
+      "expectation": "非法 cmd_id 应返回 400",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: cmd_id"
+    },
+    {
+      "case": "detail_nonexistent_cmd_id",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/commands/00000000-0000-0000-0000-000000000000",
+      "status_code": 404,
+      "expectation": "不存在的 cmd_id 应返回 404 或空结果",
+      "error_code": "DBS.06030148",
+      "error_msg": "统一命令不存在。命令ID=00000000-0000-0000-0000-000000000000，命令名称="
+    },
+    {
+      "case": "execute_invalid_cmd_id",
+      "method": "POST",
+      "path": "/gaussdb/v3/command-center/customer-commands/not-a-uuid",
+      "status_code": 400,
+      "expectation": "非法 cmd_id 应返回 400",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: cmd_id"
+    },
+    {
+      "case": "execute_missing_instance",
+      "method": "POST",
+      "path": "/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "status_code": 400,
+      "expectation": "缺少 instance_id 应返回 400",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: instance_id"
+    },
+    {
+      "case": "execute_missing_node",
+      "method": "POST",
+      "path": "/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "status_code": 400,
+      "expectation": "缺少 node_ids 应返回 400",
+      "error_code": "DBS.280001",
+      "error_msg": "参数错误. [node_ids]"
+    },
+    {
+      "case": "execute_bad_sql",
+      "method": "POST",
+      "path": "/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "status_code": 400,
+      "expectation": "非 select/show 开头的 SQL 应被参数校验拒绝",
+      "error_code": "DBS.06030081",
+      "error_msg": "校验失败，可能参数非法或不满足场景要求。更多定位信息：-校验项：sql_text，-错误描述：invalid SQL statement with unsupported type. Only support single [select]。"
+    },
+    {
+      "case": "execute_limit_out_of_range",
+      "method": "POST",
+      "path": "/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "status_code": 400,
+      "expectation": "limit 超出 1~1000 应被拒绝",
+      "error_code": "DBS.06030081",
+      "error_msg": "校验失败，可能参数非法或不满足场景要求。更多定位信息：-校验项：parma.limit，-错误描述：cmd general_single_sql_query parma.limit range invalid。"
+    },
+    {
+      "case": "execute_unknown_node",
+      "method": "POST",
+      "path": "/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "status_code": 400,
+      "expectation": "不存在的 node_id 应被拒绝",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: nodeIds[0].<list element>"
+    },
+    {
+      "case": "task_records_no_job_id",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records",
+      "status_code": 400,
+      "expectation": "缺少 job_id 应返回 400",
+      "error_code": "DBS.280270",
+      "error_msg": "参数不存在 [job_id]"
+    },
+    {
+      "case": "task_records_invalid_job_id",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records",
+      "status_code": 400,
+      "expectation": "非法 job_id 应返回 400",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: job_id"
+    },
+    {
+      "case": "task_detail_invalid_task_id",
+      "method": "GET",
+      "path": "/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/00000000-0000-0000-0000-000000000000/task-record/not-a-uuid/detail",
+      "status_code": 400,
+      "expectation": "非法 task_id 应返回 400",
+      "error_code": "DBS.06010013",
+      "error_msg": "参数错误: task_id"
+    }
+  ]
+}

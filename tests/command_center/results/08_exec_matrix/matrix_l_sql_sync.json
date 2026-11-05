@@ -1,0 +1,17 @@
+{
+  "cmd_id": "5a3a37d1-63ba-4d3d-8456-8e66a211463b",
+  "cmd_name": "dbs.full.get_stat_all_tables",
+  "cmd_type": "sql",
+  "call_type": "sync",
+  "params_sent": [],
+  "execute_status_code": 500,
+  "job_status": null,
+  "node_status": [],
+  "node_error_msg": [],
+  "result_status": null,
+  "out_format": null,
+  "out_mode": null,
+  "out_type": null,
+  "is_redirect": null,
+  "result_preview": ""
+}

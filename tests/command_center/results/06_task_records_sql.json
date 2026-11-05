@@ -1,0 +1,75 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=560ce18d-0804-4976-a35c-99ddf4a09a59&offset=0&limit=100"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "421c9aa0-5aaa-44e9-8ccf-611683c6f8f9",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:21:00 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "total_count": 1,
+      "statistics": {
+        "total": 1,
+        "succeed": 1,
+        "failed": 0,
+        "running": 0,
+        "other": 0
+      },
+      "job_status": "completed",
+      "tasks": [
+        {
+          "task_id": "0a188836-153b-464f-8f80-bc0e41134970",
+          "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+          "instance_name": "gauss-75a2",
+          "node_id": "d5284a09d06c4b2798c8c713259fe705no14",
+          "node_name": "gauss-75a2_root_0",
+          "agent_req_id": "ComOmCmd-0a188836-153b-464f-8f80-bc0e41134970",
+          "status": "succeed",
+          "params": [
+            {
+              "param_name": "limit",
+              "param_value": "10",
+              "sensitive": false
+            },
+            {
+              "param_name": "sql_text",
+              "param_value": "******",
+              "sensitive": true
+            }
+          ],
+          "is_redirect": false,
+          "download_file_id": null,
+          "error_msg": null,
+          "start_time": 1793892053150,
+          "finish_time": 1793892057739,
+          "expire_time": 1794151253149
+        }
+      ]
+    }
+  },
+  "extra": {
+    "stage": "task-records",
+    "job_id": "560ce18d-0804-4976-a35c-99ddf4a09a59"
+  }
+}

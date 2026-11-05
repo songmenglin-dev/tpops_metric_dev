@@ -1,0 +1,126 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/commands/f86e1f05-af53-4b5c-bfce-114ee9bba41f"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "6636728f-775d-46e7-8e1e-f4fa1d968eb1",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:08:27 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "cmd_id": "f86e1f05-af53-4b5c-bfce-114ee9bba41f",
+      "cmd_name": "query_gs_get_explain_ha",
+      "cmd_type": "SQL",
+      "description": "打印正在执行语句执行计划",
+      "call_type": "sync",
+      "category": "plan",
+      "source": "default",
+      "action": "query",
+      "status": "enabled",
+      "limit_usage": [
+        "api"
+      ],
+      "creator": "admin",
+      "operator": "admin",
+      "create_time": 1793689815966,
+      "operate_time": 1793689815966,
+      "constraint_config": {
+        "cluster_mode": "Ha",
+        "limit_node_types": [
+          "master",
+          "slave",
+          "readreplica"
+        ],
+        "limit_component_types": [
+          "dn"
+        ],
+        "db_version": {
+          "min_value": "3.100.0",
+          "max_value": null
+        },
+        "kernel_version": {
+          "min_value": "503",
+          "max_value": null
+        }
+      },
+      "param_config": {
+        "params": [
+          {
+            "param_id": "3972e0ef-cf05-4bd2-9409-0d9a199d87fa",
+            "param_name": "pid",
+            "param_type": "single",
+            "data_type": "string",
+            "sensitive": false,
+            "required": true,
+            "default_value": null,
+            "min_value": null,
+            "max_value": null,
+            "max_size": null,
+            "enum_values": null,
+            "pattern": "[0-9]{1,256}",
+            "placeholder_wrapper": "origin",
+            "description": "后台线程ID"
+          }
+        ]
+      },
+      "exec_config": {
+        "params": [
+          {
+            "param_name": "switch_database",
+            "param_value": false,
+            "sensitive": null
+          },
+          {
+            "param_name": "database_field",
+            "param_value": null,
+            "sensitive": null
+          },
+          {
+            "param_name": "result_masks",
+            "param_value": [],
+            "sensitive": null
+          },
+          {
+            "param_name": "time_out",
+            "param_value": 30000,
+            "sensitive": null
+          }
+        ]
+      },
+      "output_config": {
+        "format": "json",
+        "mode": "array",
+        "type": "map",
+        "is_redirect": false,
+        "storage_mode": null,
+        "save_dir": null
+      },
+      "compare_config": {
+        "fields": [],
+        "is_support": false
+      },
+      "remark": null,
+      "cmd_content": "select * from gs_get_explain({pid});"
+    }
+  }
+}

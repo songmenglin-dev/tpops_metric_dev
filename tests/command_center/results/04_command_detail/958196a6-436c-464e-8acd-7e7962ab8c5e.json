@@ -1,0 +1,141 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/commands/958196a6-436c-464e-8acd-7e7962ab8c5e"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "422af21f-a1c3-4522-98b6-13222ff5d293",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:08:33 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "cmd_id": "958196a6-436c-464e-8acd-7e7962ab8c5e",
+      "cmd_name": "query_gs_asp_sql_execute_number_by_time",
+      "cmd_type": "SQL",
+      "description": "查询gs_asp指定时间段内语句执行次数",
+      "call_type": "sync",
+      "category": "sql_statistics",
+      "source": "default",
+      "action": "query",
+      "status": "enabled",
+      "limit_usage": [
+        "api"
+      ],
+      "creator": "admin",
+      "operator": "admin",
+      "create_time": 1793689815937,
+      "operate_time": 1793689815937,
+      "constraint_config": {
+        "cluster_mode": "All",
+        "limit_node_types": [
+          "master"
+        ],
+        "limit_component_types": [
+          "cn",
+          "dn"
+        ],
+        "db_version": {
+          "min_value": "3.100.0",
+          "max_value": null
+        },
+        "kernel_version": {
+          "min_value": "503",
+          "max_value": null
+        }
+      },
+      "param_config": {
+        "params": [
+          {
+            "param_id": "f5be192a-ceb1-4e3a-bff6-6442aae3171e",
+            "param_name": "start_time_stamp",
+            "param_type": "single",
+            "data_type": "time_stamp",
+            "sensitive": false,
+            "required": true,
+            "default_value": null,
+            "min_value": null,
+            "max_value": null,
+            "max_size": null,
+            "enum_values": null,
+            "pattern": "^[\\d]{13}$",
+            "placeholder_wrapper": "origin",
+            "description": "起始时间戳"
+          },
+          {
+            "param_id": "d27a0b4e-484b-4c32-b06e-1250c486f4aa",
+            "param_name": "end_time_stamp",
+            "param_type": "single",
+            "data_type": "time_stamp",
+            "sensitive": false,
+            "required": true,
+            "default_value": null,
+            "min_value": null,
+            "max_value": null,
+            "max_size": null,
+            "enum_values": null,
+            "pattern": "^[\\d]{13}$",
+            "placeholder_wrapper": "origin",
+            "description": "截止时间戳"
+          }
+        ]
+      },
+      "exec_config": {
+        "params": [
+          {
+            "param_name": "switch_database",
+            "param_value": false,
+            "sensitive": null
+          },
+          {
+            "param_name": "database_field",
+            "param_value": null,
+            "sensitive": null
+          },
+          {
+            "param_name": "result_masks",
+            "param_value": [],
+            "sensitive": null
+          },
+          {
+            "param_name": "time_out",
+            "param_value": 30000,
+            "sensitive": null
+          }
+        ]
+      },
+      "output_config": {
+        "format": "json",
+        "mode": "array",
+        "type": "map",
+        "is_redirect": false,
+        "storage_mode": null,
+        "save_dir": null
+      },
+      "compare_config": {
+        "fields": [],
+        "is_support": false
+      },
+      "remark": null,
+      "cmd_content": "select unique_query_id,count(1) from gs_asp where sample_time between to_timestamp({start_time_stamp}/1000) and to_timestamp({end_time_stamp}/1000) group by 1 order by 2 desc;"
+    }
+  }
+}

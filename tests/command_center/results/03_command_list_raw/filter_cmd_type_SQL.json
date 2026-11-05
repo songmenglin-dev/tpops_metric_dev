@@ -1,0 +1,266 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/customer-commands?cmd_type=SQL"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "e3e67a30-c32b-456d-9557-202fa42aefe3",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:08:18 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "total_count": 112,
+      "data": [
+        {
+          "cmd_id": "276b5b7f-5a55-4a52-84a1-f4ce3e052ff4",
+          "cmd_name": "DBS.stream_recommended_value",
+          "cmd_type": "SQL",
+          "description": "获取comm_max_stream参数推荐值。current_value为DN实际comm_max_stream值。recommended_value为根据当前环境规格计算出的DNcomm_max_stream参数的最大推荐值，取小于通过公式计算出的具体值calculated_value的1024的整数倍。",
+          "call_type": "sync",
+          "category": "error_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "Distributed",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT pgxc_node_str() AS node_name, (select setting from pg_settings where name = 'comm_max_stream') AS current_value, LEAST( ({cpu_nums} / {dn_nums})^2 * 2 * 20, ((SELECT setting::FLOAT FROM pg_settings WHERE name = 'max_process_memory') * 1024) * 0.005 / ((SELECT setting::FLOAT FROM pg_settings WHERE name = 'max_coordinators') + (SELECT setting::FLOAT FROM pg_settings WHERE name = 'comm_max_datanode')) / 380.0, 8192 ) AS calculated_value, GREATEST( FLOOR(calculated_value / 1024) * 1024, 1024) AS recommended_value LIMIT 5;",
+          "remark": ""
+        },
+        {
+          "cmd_id": "25666e33-1691-498a-9a1c-ea9140791654",
+          "cmd_name": "DBS.FULL.query_memctx_cen",
+          "cmd_type": "SQL",
+          "description": "查看当前动态内存上下文详细信息。",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "Ha",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT contextname, sum(totalsize)/1024/1024 totalsize_mb, sum(freesize)/1024/1024 freesize_mb, count(*) sum FROM {view_name} GROUP BY contextname ORDER BY totalsize_mb DESC LIMIT 20;",
+          "remark": ""
+        },
+        {
+          "cmd_id": "9592b74c-e8d7-4977-90c7-78533410a1ce",
+          "cmd_name": "DBS.FULL.query_memctx_dis_cn",
+          "cmd_type": "SQL",
+          "description": "在分布式CN进程上查询当前动态内存上下文信息。",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "Distributed",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT pgxc_node_str(),contextname, sum(totalsize)/1024/1024 totalsize_mb, sum(freesize)/1024/1024 freesize_mb, count(*) sum FROM {view_name} GROUP BY contextname ORDER BY totalsize_mb DESC LIMIT 20;",
+          "remark": ""
+        },
+        {
+          "cmd_id": "47e9645d-2845-4532-a820-cafe02c05eb0",
+          "cmd_name": "DBS.FULL.query_memctx_dis_dn",
+          "cmd_type": "SQL",
+          "description": "在分布式主DN进程上查询当前动态内存上下文信息。",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "Distributed",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT pgxc_node_str(),contextname, sum(totalsize)/1024/1024 totalsize_mb, sum(freesize)/1024/1024 freesize_mb, count(*) sum FROM {view_name} GROUP BY contextname ORD}ER BY totalsize_mb DESC LIMIT 20;",
+          "remark": ""
+        },
+        {
+          "cmd_id": "d6b5d1cd-b672-4c9e-b6bb-48ecc6b7ebd4",
+          "cmd_name": "DBS.FULL.cen_get_tmp_query",
+          "cmd_type": "SQL",
+          "description": "集中式查询临时文件落盘的SQL",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "Ha",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT extract(epoch from current_timestamp-query_start) AS query_runtime, query_start,pid,sessionid,datname, usename, state,query_id,unique_sql_id, substring(query, 0, 100) AS query FROM pg_stat_activity WHERE pid in(SELECT DISTINCT substring(name FROM 'pgsql_tmp(\\d+)\\.') FROM pg_ls_tmpdir()) ORDER BY query_runtime DESC LIMIT 20;",
+          "remark": ""
+        },
+        {
+          "cmd_id": "d2710fb4-e5be-48f7-ba00-392233db7d9f",
+          "cmd_name": "DBS.FULL.get_tables_size",
+          "cmd_type": "SQL",
+          "description": "查询空间占用高的表",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "All",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT table_name,pg_size_pretty(table_size) AS table_size FROM (SELECT schemaname||'.'||tablename as table_name,pg_relation_size(schemaname||'.'||tablename) as table_size FROM pg_tables ORDER BY table_size DESC LIMIT 20);",
+          "remark": ""
+        },
+        {
+          "cmd_id": "64439de0-22c1-4d37-9443-9d0d19c9cc0b",
+          "cmd_name": "DBS.FULL.dis_get_tmp_query",
+          "cmd_type": "SQL",
+          "description": "分布式查询临时文件落盘的SQL",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "Distributed",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT get_nodename(),extract(epoch from current_timestamp-query_start) AS query_runtime, query_start,pid,sessionid,datname, usename, state,query_id,unique_sql_id, substring(query, 0, 100) AS query FROM pg_stat_activity WHERE pid in(SELECT DISTINCT substring(name FROM 'pgsql_tmp(\\d+)\\.') FROM pg_ls_tmpdir()) ORDER BY query_runtime DESC LIMIT 20;",
+          "remark": ""
+        },
+        {
+          "cmd_id": "ee691701-b10a-46dc-a081-8ee4496bade9",
+          "cmd_name": "DBS.FULL.gs_undo_meta_dump_slot",
+          "cmd_type": "SQL",
+          "description": "查询undo元信息",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "All",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT * FROM gs_undo_meta_dump_slot(1,-1) LIMIT 10;",
+          "remark": ""
+        },
+        {
+          "cmd_id": "8a0a428c-1253-4e4e-9fce-6dc1bc5642c0",
+          "cmd_name": "DBS.FULL.get_database_size",
+          "cmd_type": "SQL",
+          "description": "查询database大小",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "All",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT datname,pg_size_pretty(database_size) database_size FROM (SELECT datname,pg_database_size(datname) database_size FROM pg_database ORDER BY database_size DESC) LIMIT 20;",
+          "remark": ""
+        },
+        {
+          "cmd_id": "f68587d3-321a-442e-a0fc-c2379bc9421a",
+          "cmd_name": "DBS.stream_top_sql",
+          "cmd_type": "SQL",
+          "description": "查询各DN分片占用stream连接的TOP SQL信息。",
+          "call_type": "sync",
+          "category": "error_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "Distributed",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "SELECT r.node_name,a.datname, a.usename,a.unique_sql_id, max(extract(epoch from current_timestamp-query_start)) AS max_query_runtime, count(1) AS query_count,sum(r.count) AS stream_thread_count, substring(a.query,0,50) AS query_str FROM ( SELECT query_id,node_name,remote_name,count(*), ROW_NUMBER() OVER (PARTITION BY query_id,node_name ORDER BY count DESC) as rn FROM pgxc_comm_send_stream GROUP BY query_id,node_name, remote_name  ) r LEFT JOIN pgxc_stat_activity a ON r.query_id = a.query_id WHERE r.rn = 1 AND a.pid <> pg_backend_pid() AND unique_sql_id IS NOT NULL GROUP BY 1,2,3,4,8 ORDER BY 1 ASC,7 DESC LIMIT 20;",
+          "remark": ""
+        }
+      ]
+    }
+  }
+}

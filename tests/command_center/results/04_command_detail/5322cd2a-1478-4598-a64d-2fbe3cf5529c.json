@@ -1,0 +1,141 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/commands/5322cd2a-1478-4598-a64d-2fbe3cf5529c"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "e7e684a2-799d-46c1-8de8-d8205af0356b",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:08:28 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "cmd_id": "5322cd2a-1478-4598-a64d-2fbe3cf5529c",
+      "cmd_name": "query_history_slow_sql_records",
+      "cmd_type": "SQL",
+      "description": "查看指定时间区间内的历史慢SQL记录（时间参数为13位的时间戳）",
+      "call_type": "sync",
+      "category": "slow_sql",
+      "source": "default",
+      "action": "his_query",
+      "status": "enabled",
+      "limit_usage": [
+        "api"
+      ],
+      "creator": "admin",
+      "operator": "admin",
+      "create_time": 1793689816347,
+      "operate_time": 1793689816347,
+      "constraint_config": {
+        "cluster_mode": "All",
+        "limit_node_types": [
+          "master"
+        ],
+        "limit_component_types": [
+          "cn",
+          "dn"
+        ],
+        "db_version": {
+          "min_value": "3.100.0",
+          "max_value": null
+        },
+        "kernel_version": {
+          "min_value": "503",
+          "max_value": null
+        }
+      },
+      "param_config": {
+        "params": [
+          {
+            "param_id": "8f63dd98-17e6-4e26-95bf-12c6f2098ab9",
+            "param_name": "start_time_stamp",
+            "param_type": "single",
+            "data_type": "time_stamp",
+            "sensitive": false,
+            "required": true,
+            "default_value": null,
+            "min_value": null,
+            "max_value": null,
+            "max_size": null,
+            "enum_values": null,
+            "pattern": "^[\\d]{13}$",
+            "placeholder_wrapper": "origin",
+            "description": "起始时间戳"
+          },
+          {
+            "param_id": "b30cae0e-9eb9-4c7d-aec0-f5138a7b2049",
+            "param_name": "end_time_stamp",
+            "param_type": "single",
+            "data_type": "time_stamp",
+            "sensitive": false,
+            "required": true,
+            "default_value": null,
+            "min_value": null,
+            "max_value": null,
+            "max_size": null,
+            "enum_values": null,
+            "pattern": "^[\\d]{13}$",
+            "placeholder_wrapper": "origin",
+            "description": "截止时间戳"
+          }
+        ]
+      },
+      "exec_config": {
+        "params": [
+          {
+            "param_name": "switch_database",
+            "param_value": false,
+            "sensitive": null
+          },
+          {
+            "param_name": "database_field",
+            "param_value": null,
+            "sensitive": null
+          },
+          {
+            "param_name": "result_masks",
+            "param_value": [],
+            "sensitive": null
+          },
+          {
+            "param_name": "time_out",
+            "param_value": 30000,
+            "sensitive": null
+          }
+        ]
+      },
+      "output_config": {
+        "format": "json",
+        "mode": "array",
+        "type": "map",
+        "is_redirect": false,
+        "storage_mode": null,
+        "save_dir": null
+      },
+      "compare_config": {
+        "fields": [],
+        "is_support": false
+      },
+      "remark": "对于集中式形态实例节点，仅支持主节点下发，否则执行会报错。",
+      "cmd_content": "select db_name, schema_name, origin_node, user_name, application_name, client_addr, client_port, unique_query_id, debug_query_id, query, start_time, finish_time, slow_sql_threshold, transaction_id, thread_id, session_id, n_soft_parse, n_hard_parse, query_plan, n_returned_rows, n_tuples_fetched, n_tuples_returned, n_tuples_inserted, n_tuples_updated, n_tuples_deleted, n_blocks_fetched, n_blocks_hit, db_time, cpu_time, execution_time, parse_time, plan_time, rewrite_time, pl_execution_time, pl_compilation_time, data_io_time, net_send_info, net_recv_info, net_stream_send_info, net_stream_recv_info, lock_count, lock_time, lock_wait_count, lock_wait_time, lock_max_count, lwlock_count, lwlock_wait_count, lwlock_time, lwlock_wait_time, pg_catalog.statement_detail_decode(details, 'plaintext', true) as details, is_slow_sql, trace_id, advise, parent_unique_sql_id from dbe_perf.statement_history where user_name NOT IN ('rdsAdmin', 'rdsMetric', 'rdsBackup', 'rdsRepl', 'dbmind_monitor_agent', 'dbmind_monitor') and is_slow_sql=true and start_time between to_timestamp({start_time_stamp}/1000) and to_timestamp({end_time_stamp}/1000) order by start_time desc limit 100;"
+    }
+  }
+}

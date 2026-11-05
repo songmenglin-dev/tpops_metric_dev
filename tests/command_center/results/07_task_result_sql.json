@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/560ce18d-0804-4976-a35c-99ddf4a09a59/task-record/0a188836-153b-464f-8f80-bc0e41134970/detail"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "a850ccde-2d50-4317-a385-f45188ae7e97",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:21:00 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "node_id": "d5284a09d06c4b2798c8c713259fe705no14",
+      "node_name": "gauss-75a2_root_0",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "[{\"v\":\"gaussdb (GaussDB Kernel 507.0.0 build d791c80a) compiled at 2026-05-31 13:54:23 last mr 27222 release\",\"t\":\"2026-11-05 23:20:57.739874+08\"}]",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "download_file_id": null
+    }
+  },
+  "extra": {
+    "stage": "task-result",
+    "task_id": "0a188836-153b-464f-8f80-bc0e41134970"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/customer-commands?status=disabled&limit=1"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "225f5de7-ecc8-4c60-bbc3-5842ba8fdc67",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:22:13 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "total_count": 142,
+      "data": [
+        {
+          "cmd_id": "8efc83e4-b1a2-45e0-89d1-63a180b052ed",
+          "cmd_name": "DBS.After505.FULL.global_recycle_xid",
+          "cmd_type": "SHELL",
+          "description": "确认各DN日志中的global_recycle_xid值是否长时间不变化",
+          "call_type": "sync",
+          "category": "full_scenes",
+          "source": "default",
+          "action": "query",
+          "cluster_mode": "All",
+          "is_redirect": false,
+          "support_compare": false,
+          "status": "enabled",
+          "limit_usage": [
+            "api"
+          ],
+          "creator": "admin",
+          "operator": "admin",
+          "create_time": 1793689875551,
+          "operate_time": 1793689875551,
+          "cmd_content": "#!/bin/bash\nsu - Ruby\nsource /home/Ruby/gauss_env_file\ngs_ssh -c \"ls -ltr $GAUSSLOG/gs_log/dn_*/gaussdb-*|tail -10|awk '{print $9}'|xargs zgrep -i 'global_recycle_xid' 2>/dev/null | tail -20\"",
+          "remark": ""
+        }
+      ]
+    }
+  },
+  "extra": {
+    "case": "list_status_disabled",
+    "expectation": "平台无 disabled 命令时，过滤是否生效（实测返回全部 enabled）"
+  }
+}

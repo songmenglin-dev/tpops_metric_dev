@@ -1,0 +1,109 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/commands/b2d57172-0d3b-4903-b90f-d6bb0eb6f655"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "a0f81cf1-81de-4297-a059-7fb5d340776a",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:08:37 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "cmd_id": "b2d57172-0d3b-4903-b90f-d6bb0eb6f655",
+      "cmd_name": "query_session_memory",
+      "cmd_type": "SQL",
+      "description": "查看数据库进程所有session的内存上下文占用大小",
+      "call_type": "sync",
+      "category": "memory",
+      "source": "default",
+      "action": "query",
+      "status": "enabled",
+      "limit_usage": [
+        "api"
+      ],
+      "creator": "admin",
+      "operator": "admin",
+      "create_time": 1793689815979,
+      "operate_time": 1793689815979,
+      "constraint_config": {
+        "cluster_mode": "Ha",
+        "limit_node_types": [
+          "master",
+          "slave",
+          "readreplica"
+        ],
+        "limit_component_types": [
+          "dn"
+        ],
+        "db_version": {
+          "min_value": "3.100.0",
+          "max_value": null
+        },
+        "kernel_version": {
+          "min_value": "503",
+          "max_value": null
+        }
+      },
+      "param_config": {
+        "params": []
+      },
+      "exec_config": {
+        "params": [
+          {
+            "param_name": "switch_database",
+            "param_value": false,
+            "sensitive": null
+          },
+          {
+            "param_name": "database_field",
+            "param_value": null,
+            "sensitive": null
+          },
+          {
+            "param_name": "result_masks",
+            "param_value": [],
+            "sensitive": null
+          },
+          {
+            "param_name": "time_out",
+            "param_value": 30000,
+            "sensitive": null
+          }
+        ]
+      },
+      "output_config": {
+        "format": "json",
+        "mode": "array",
+        "type": "map",
+        "is_redirect": false,
+        "storage_mode": null,
+        "save_dir": null
+      },
+      "compare_config": {
+        "fields": [],
+        "is_support": false
+      },
+      "remark": null,
+      "cmd_content": "select contextname, sum(totalsize)/1024/1024 totalsize, sum(freesize)/1024/1024 freesize, count(1) sum from gs_session_memory_context group by contextname order by sum desc limit 10;"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/265cde3e-2a47-4c75-b22f-42bd56d503a3/batch-exec-job/1a1c483b-d40d-4a4f-b792-cc278c969f48/task-record/7a0a08c8-08c5-4a21-8bc5-659dc9aff020/detail"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "dbbfe6ad-8455-496b-a8b3-44df66431ea7",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:22:02 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "node_id": "d5284a09d06c4b2798c8c713259fe705no14",
+      "node_name": "gauss-75a2_root_0",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "true",
+      "out_format": "text",
+      "out_mode": "single",
+      "out_type": "bool",
+      "download_file_id": null
+    }
+  },
+  "extra": {
+    "stage": "task-result",
+    "task_id": "7a0a08c8-08c5-4a21-8bc5-659dc9aff020"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/customer-commands/7caa91e0-042f-426b-acdb-369be210c22d"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "X-TRACE-ID": "d8bf3776-b7a8-4b3b-9d28-a1d90c5dd2e4",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:22:10 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "job_id": "36c17895-1b82-41da-b08a-2f77604a6fd4",
+      "node_tasks": [
+        {
+          "task_id": "83c60daf-d830-4c99-a738-a433d3571b9a",
+          "node_id": "d5284a09d06c4b2798c8c713259fe705no14"
+        }
+      ]
+    }
+  },
+  "extra": {
+    "stage": "execute",
+    "cmd_id": "7caa91e0-042f-426b-acdb-369be210c22d"
+  }
+}

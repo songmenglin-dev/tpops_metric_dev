@@ -1,0 +1,125 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/commands/dedc3500-75e0-4331-9334-4b2e10ca94cb"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "126eb38e-cc22-4955-819a-35a767c66467",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:08:30 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "cmd_id": "dedc3500-75e0-4331-9334-4b2e10ca94cb",
+      "cmd_name": "query_long_transactions_distribute",
+      "cmd_type": "SQL",
+      "description": "查看是否有长事务",
+      "call_type": "sync",
+      "category": "transaction",
+      "source": "default",
+      "action": "query",
+      "status": "enabled",
+      "limit_usage": [
+        "api"
+      ],
+      "creator": "admin",
+      "operator": "admin",
+      "create_time": 1793689816387,
+      "operate_time": 1793689816387,
+      "constraint_config": {
+        "cluster_mode": "Distributed",
+        "limit_node_types": [
+          "master"
+        ],
+        "limit_component_types": [
+          "cn",
+          "dn"
+        ],
+        "db_version": {
+          "min_value": "3.100.0",
+          "max_value": null
+        },
+        "kernel_version": {
+          "min_value": "503",
+          "max_value": null
+        }
+      },
+      "param_config": {
+        "params": [
+          {
+            "param_id": "12b381e9-cab9-4c4d-a406-b26120a1b235",
+            "param_name": "threshold_seconds",
+            "param_type": "single",
+            "data_type": "string",
+            "sensitive": false,
+            "required": true,
+            "default_value": null,
+            "min_value": null,
+            "max_value": null,
+            "max_size": null,
+            "enum_values": null,
+            "pattern": "^[\\d]{1,8}$",
+            "placeholder_wrapper": "origin",
+            "description": "长事务阈值"
+          }
+        ]
+      },
+      "exec_config": {
+        "params": [
+          {
+            "param_name": "switch_database",
+            "param_value": false,
+            "sensitive": null
+          },
+          {
+            "param_name": "database_field",
+            "param_value": null,
+            "sensitive": null
+          },
+          {
+            "param_name": "result_masks",
+            "param_value": [],
+            "sensitive": null
+          },
+          {
+            "param_name": "time_out",
+            "param_value": 30000,
+            "sensitive": null
+          }
+        ]
+      },
+      "output_config": {
+        "format": "json",
+        "mode": "array",
+        "type": "map",
+        "is_redirect": false,
+        "storage_mode": null,
+        "save_dir": null
+      },
+      "compare_config": {
+        "fields": [],
+        "is_support": false
+      },
+      "remark": null,
+      "cmd_content": "select coorname,usename,timestamp_diff('second', COALESCE(xact_start, now()), now()) as runtime, pid, sessionid, unique_sql_id,substr(query,0,1000) from pgxc_stat_activity where 1 = 1 AND pid <> pg_backend_pid() AND state != 'idle' and runtime > {threshold_seconds} and usename NOT IN ('rdsAdmin', 'rdsMetric', 'rdsBackup', 'rdsRepl', 'dbmind_monitor_agent', 'dbmind_monitor') order by runtime desc limit 20;"
+    }
+  }
+}

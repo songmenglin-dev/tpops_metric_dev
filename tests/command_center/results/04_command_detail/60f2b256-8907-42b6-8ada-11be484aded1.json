@@ -1,0 +1,125 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/commands/60f2b256-8907-42b6-8ada-11be484aded1"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "d95e060c-082f-4ec1-9d23-071fd333aa87",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 05 Nov 2026 15:08:29 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "cmd_id": "60f2b256-8907-42b6-8ada-11be484aded1",
+      "cmd_name": "query_logic_replication_task",
+      "cmd_type": "SQL",
+      "description": "查询各个解码线程的读取日志队列和解码结果队列的长度",
+      "call_type": "sync",
+      "category": "slot",
+      "source": "default",
+      "action": "query",
+      "status": "enabled",
+      "limit_usage": [
+        "api"
+      ],
+      "creator": "admin",
+      "operator": "admin",
+      "create_time": 1793689816086,
+      "operate_time": 1793689816086,
+      "constraint_config": {
+        "cluster_mode": "All",
+        "limit_node_types": [
+          "master"
+        ],
+        "limit_component_types": [
+          "cn",
+          "dn"
+        ],
+        "db_version": {
+          "min_value": "3.100.0",
+          "max_value": null
+        },
+        "kernel_version": {
+          "min_value": "503",
+          "max_value": null
+        }
+      },
+      "param_config": {
+        "params": [
+          {
+            "param_id": "2ebbbe10-6425-4258-87f7-c0ded6d5adbc",
+            "param_name": "limit",
+            "param_type": "single",
+            "data_type": "integer",
+            "sensitive": false,
+            "required": true,
+            "default_value": null,
+            "min_value": "1",
+            "max_value": "1000",
+            "max_size": null,
+            "enum_values": null,
+            "pattern": "^(1000|[1-9]\\d{0,2})$",
+            "placeholder_wrapper": "origin",
+            "description": "返回的最大行数"
+          }
+        ]
+      },
+      "exec_config": {
+        "params": [
+          {
+            "param_name": "switch_database",
+            "param_value": false,
+            "sensitive": null
+          },
+          {
+            "param_name": "database_field",
+            "param_value": null,
+            "sensitive": null
+          },
+          {
+            "param_name": "result_masks",
+            "param_value": [],
+            "sensitive": null
+          },
+          {
+            "param_name": "time_out",
+            "param_value": 30000,
+            "sensitive": null
+          }
+        ]
+      },
+      "output_config": {
+        "format": "json",
+        "mode": "array",
+        "type": "map",
+        "is_redirect": false,
+        "storage_mode": null,
+        "save_dir": null
+      },
+      "compare_config": {
+        "fields": [],
+        "is_support": false
+      },
+      "remark": null,
+      "cmd_content": "select * from gs_get_parallel_decode_status() limit {limit};"
+    }
+  }
+}
