@@ -53,21 +53,49 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 18:59:42",
+    "tested_at": "2026-11-05 19:11:56",
     "method": "命令中心执行 SQL",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过",
-    "elapsed_seconds": 6.4,
+    "elapsed_seconds": 10.8,
     "row_count": 9,
     "error": null,
-    "sample": [
+    "actual_data": [
       {
         "datname": "templatea",
         "xact_rollback": "0"
       },
       {
         "datname": "template1",
+        "xact_rollback": "0"
+      },
+      {
+        "datname": "templatem",
+        "xact_rollback": "0"
+      },
+      {
+        "datname": "template0",
+        "xact_rollback": "0"
+      },
+      {
+        "datname": "postgres",
+        "xact_rollback": "35"
+      },
+      {
+        "datname": "atestdb",
+        "xact_rollback": "0"
+      },
+      {
+        "datname": "mtestdb",
+        "xact_rollback": "37"
+      },
+      {
+        "datname": "sun_db",
+        "xact_rollback": "29"
+      },
+      {
+        "datname": "sun_test",
         "xact_rollback": "0"
       }
     ]

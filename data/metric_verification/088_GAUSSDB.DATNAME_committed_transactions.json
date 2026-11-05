@@ -53,15 +53,15 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 18:59:30",
+    "tested_at": "2026-11-05 19:11:44",
     "method": "命令中心执行 SQL",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过",
-    "elapsed_seconds": 5.8,
+    "elapsed_seconds": 6.8,
     "row_count": 9,
     "error": null,
-    "sample": [
+    "actual_data": [
       {
         "datname": "templatea",
         "xact_commit": "0"
@@ -69,6 +69,34 @@
       {
         "datname": "template1",
         "xact_commit": "0"
+      },
+      {
+        "datname": "templatem",
+        "xact_commit": "0"
+      },
+      {
+        "datname": "template0",
+        "xact_commit": "0"
+      },
+      {
+        "datname": "postgres",
+        "xact_commit": "1714841"
+      },
+      {
+        "datname": "atestdb",
+        "xact_commit": "21000"
+      },
+      {
+        "datname": "mtestdb",
+        "xact_commit": "27120"
+      },
+      {
+        "datname": "sun_db",
+        "xact_commit": "22337"
+      },
+      {
+        "datname": "sun_test",
+        "xact_commit": "20632"
       }
     ]
   }

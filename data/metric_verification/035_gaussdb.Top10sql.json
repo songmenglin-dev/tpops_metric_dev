@@ -44,14 +44,14 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 18:54:58",
+    "tested_at": "2026-11-05 19:07:11",
     "method": "Top SQL 列表接口",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过（查询成功，当前无数据）",
-    "elapsed_seconds": 1.8,
+    "elapsed_seconds": 1.7,
     "row_count": 0,
     "error": null,
-    "sample": []
+    "actual_data": []
   }
 }

@@ -53,22 +53,50 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 18:58:35",
+    "tested_at": "2026-11-05 19:10:49",
     "method": "命令中心执行 SQL",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过",
-    "elapsed_seconds": 6.3,
+    "elapsed_seconds": 4.8,
     "row_count": 9,
     "error": null,
-    "sample": [
+    "actual_data": [
       {
         "datname": "postgres",
-        "size_bytes": "307339268"
+        "size_bytes": "307732484"
       },
       {
         "datname": "sun_db",
         "size_bytes": "28270596"
+      },
+      {
+        "datname": "sun_test",
+        "size_bytes": "28024836"
+      },
+      {
+        "datname": "atestdb",
+        "size_bytes": "27959300"
+      },
+      {
+        "datname": "templatea",
+        "size_bytes": "27787268"
+      },
+      {
+        "datname": "template0",
+        "size_bytes": "27451396"
+      },
+      {
+        "datname": "template1",
+        "size_bytes": "27451396"
+      },
+      {
+        "datname": "mtestdb",
+        "size_bytes": "22593540"
+      },
+      {
+        "datname": "templatem",
+        "size_bytes": "20578308"
       }
     ]
   }

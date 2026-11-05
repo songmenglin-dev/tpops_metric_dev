@@ -53,15 +53,15 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 18:58:10",
+    "tested_at": "2026-11-05 19:10:23",
     "method": "命令中心执行 SQL",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过",
-    "elapsed_seconds": 6.1,
+    "elapsed_seconds": 5.8,
     "row_count": 77,
     "error": null,
-    "sample": [
+    "actual_data": [
       {
         "schemaname": "snapshot",
         "relname": "snap_global_os_threads",
@@ -71,6 +71,381 @@
         "schemaname": "snapshot",
         "relname": "snap_summary_workload_transaction",
         "n_live_tup": "358"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_stat_bad_block",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_pagewriter_status",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_ckpt_status",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "dbe_pldeveloper",
+        "relname": "gs_errors",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_instance_time",
+        "n_live_tup": "530"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_stat_database_conflicts",
+        "n_live_tup": "464"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_class_vital_info",
+        "n_live_tup": "15966"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_memory_node_detail",
+        "n_live_tup": "1749"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_statio_all_sequences",
+        "n_live_tup": "338"
+      },
+      {
+        "schemaname": "dbe_profiler",
+        "relname": "pl_profiling_callgraph",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_double_write_status",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_file_redo_iostat",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_workload_sql_count",
+        "n_live_tup": "358"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_stat_user_functions",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "cotest",
+        "relname": "T_ID",
+        "n_live_tup": "2"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_stat_db_cu",
+        "n_live_tup": "464"
+      },
+      {
+        "schemaname": "dbe_profiler",
+        "relname": "pl_profiling_details",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snapshot",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_statio_all_tables",
+        "n_live_tup": "15909"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_rto_status",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_xlog_redo_stat",
+        "n_live_tup": "5539"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_rel_iostat",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_stat_database_conflicts",
+        "n_live_tup": "464"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_stat_bad_block",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "ods_new",
+        "relname": "t_id",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_wait_events",
+        "n_live_tup": "15603"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_shared_memory_detail",
+        "n_live_tup": "77880"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_replication_stat",
+        "n_live_tup": "105"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_statio_all_sequences",
+        "n_live_tup": "338"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_stat_database",
+        "n_live_tup": "464"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_rel_iostat",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_stat_database",
+        "n_live_tup": "464"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_statio_all_tables",
+        "n_live_tup": "15909"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_statement_count",
+        "n_live_tup": "1335"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "tables_snap_timestamp",
+        "n_live_tup": "6275"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_stat_all_indexes",
+        "n_live_tup": "24993"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_threadpool_status",
+        "n_live_tup": "106"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_query",
+        "n_live_tup": "1032"
+      },
+      {
+        "schemaname": "cotest",
+        "relname": "t_auto",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_user_login",
+        "n_live_tup": "431"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_record_reset_time",
+        "n_live_tup": "106"
+      },
+      {
+        "schemaname": "db4ai",
+        "relname": "snapshot",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_transactions_prepared_xacts",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_statio_all_indexes",
+        "n_live_tup": "27118"
+      },
+      {
+        "schemaname": "ods_new",
+        "relname": "t_auto",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_workload_sql_elapse_time",
+        "n_live_tup": "358"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_statement_responsetime_percentile",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_file_iostat",
+        "n_live_tup": "26716"
+      },
+      {
+        "schemaname": "cotest",
+        "relname": "T_AUTO",
+        "n_live_tup": "2"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_transactions_prepared_xacts",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "dbe_profiler",
+        "relname": "pl_profiling_trackinfo",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_plan",
+        "n_live_tup": "1057"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_kernel_info",
+        "n_live_tup": "1272"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_statio_all_indexes",
+        "n_live_tup": "27118"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_stat_all_indexes",
+        "n_live_tup": "24993"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_bgwriter_stat",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "dbe_profiler",
+        "relname": "pl_profiling_functions",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "cotest",
+        "relname": "t_id",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_os_runtime",
+        "n_live_tup": "1007"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_file_redo_iostat",
+        "n_live_tup": "53"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_transactions_running_xacts",
+        "n_live_tup": "3583"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_recovery_status",
+        "n_live_tup": "105"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_file_iostat",
+        "n_live_tup": "26714"
+      },
+      {
+        "schemaname": "cotest",
+        "relname": "t_id_renamed",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_replication_slots",
+        "n_live_tup": "105"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_workload_transaction",
+        "n_live_tup": "358"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_stat_all_tables",
+        "n_live_tup": "15762"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_redo_status",
+        "n_live_tup": "156"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_stat_user_functions",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "dbe_pldeveloper",
+        "relname": "gs_source",
+        "n_live_tup": "0"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_statement",
+        "n_live_tup": "19244"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_config_settings",
+        "n_live_tup": "64607"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_summary_stat_all_tables",
+        "n_live_tup": "15762"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_global_statement_count",
+        "n_live_tup": "1335"
+      },
+      {
+        "schemaname": "snapshot",
+        "relname": "snap_pdb_info",
+        "n_live_tup": "0"
       }
     ]
   }

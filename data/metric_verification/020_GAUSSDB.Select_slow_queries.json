@@ -45,14 +45,14 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 18:53:54",
+    "tested_at": "2026-11-05 19:06:06",
     "method": "慢SQL集合接口",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过（查询成功，当前无数据）",
-    "elapsed_seconds": 1.9,
+    "elapsed_seconds": 2.1,
     "row_count": 0,
     "error": null,
-    "sample": []
+    "actual_data": []
   }
 }

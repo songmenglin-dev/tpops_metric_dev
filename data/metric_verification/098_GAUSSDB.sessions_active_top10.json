@@ -53,15 +53,15 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 19:00:34",
+    "tested_at": "2026-11-05 19:12:50",
     "method": "命令中心执行 SQL",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过",
-    "elapsed_seconds": 5.8,
+    "elapsed_seconds": 5.7,
     "row_count": 7,
     "error": null,
-    "sample": [
+    "actual_data": [
       {
         "datname": "postgres",
         "usename": "rdsAdmin",
@@ -73,6 +73,36 @@
         "usename": "rdsAdmin",
         "query_start": "2026-11-04 09:34:13.472533+08",
         "query": "COMMStatusCheck has handled client disconnection."
+      },
+      {
+        "datname": "postgres",
+        "usename": "rdsAdmin",
+        "query_start": "2026-11-05 19:08:50.716597+08",
+        "query": "select * from (select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10) limit 100;"
+      },
+      {
+        "datname": "postgres",
+        "usename": "rdsAdmin",
+        "query_start": "",
+        "query": ""
+      },
+      {
+        "datname": "postgres",
+        "usename": "rdsAdmin",
+        "query_start": "",
+        "query": ""
+      },
+      {
+        "datname": "postgres",
+        "usename": "rdsAdmin",
+        "query_start": "",
+        "query": ""
+      },
+      {
+        "datname": "postgres",
+        "usename": "rdsAdmin",
+        "query_start": "",
+        "query": ""
       }
     ]
   }

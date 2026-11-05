@@ -164,10 +164,9 @@ def run_monitor(tpops, metric_name):
                 found.append({"instance_id": info.get("instance_id"),
                               "metric_name_cn": m.get("metric_name"),
                               "collection_frequency": m.get("collection_frequency"),
-                              "timestamps": len(m.get("timestamps") or []),
-                              "hosts": len(m.get("series") or {}),
-                              "sample": {k: (v[:3] if isinstance(v, list) else v)
-                                         for k, v in list((m.get("series") or {}).items())[:2]}})
+                              "time_interval": info.get("time_interval"),
+                              "timestamps": m.get("timestamps") or [],
+                              "series": m.get("series") or {}})
     if not found:
         return STATUS_FAIL, None, "响应中没有指标 %s" % metric_name, elapsed
     return (STATUS_PASS if found else STATUS_PASS_EMPTY), found, None, elapsed
@@ -260,7 +259,6 @@ def build_record(entry, category, status, result, err, elapsed, way, tested_at,
                  spec, node_name):
     """构造单个指标的实测记录，字段名与 customer_metric_query_plan.json 对齐。"""
     query = entry.get("query") or {}
-    sample = result[:2] if isinstance(result, list) else result
     return {
         "customer_metric": entry["customer_metric"],
         "customer_metric_name": entry["customer_metric_name"],
@@ -294,7 +292,7 @@ def build_record(entry, category, status, result, err, elapsed, way, tested_at,
             "elapsed_seconds": elapsed,
             "row_count": (len(result) if isinstance(result, list) else None),
             "error": err,
-            "sample": sample,
+            "actual_data": result,
         },
     }
 

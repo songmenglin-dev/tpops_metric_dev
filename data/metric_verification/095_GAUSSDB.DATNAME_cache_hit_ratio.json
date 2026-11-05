@@ -53,15 +53,15 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 19:00:12",
+    "tested_at": "2026-11-05 19:12:32",
     "method": "命令中心执行 SQL",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过",
-    "elapsed_seconds": 10.7,
+    "elapsed_seconds": 6.1,
     "row_count": 9,
     "error": null,
-    "sample": [
+    "actual_data": [
       {
         "datname": "templatea",
         "blks_hit": "0",
@@ -73,6 +73,48 @@
         "blks_hit": "0",
         "blks_read": "0",
         "cache_hit_ratio": "0"
+      },
+      {
+        "datname": "templatem",
+        "blks_hit": "0",
+        "blks_read": "0",
+        "cache_hit_ratio": "0"
+      },
+      {
+        "datname": "template0",
+        "blks_hit": "0",
+        "blks_read": "0",
+        "cache_hit_ratio": "0"
+      },
+      {
+        "datname": "postgres",
+        "blks_hit": "14290275",
+        "blks_read": "49317",
+        "cache_hit_ratio": "99.66"
+      },
+      {
+        "datname": "atestdb",
+        "blks_hit": "661530",
+        "blks_read": "1595",
+        "cache_hit_ratio": "99.76"
+      },
+      {
+        "datname": "mtestdb",
+        "blks_hit": "1864722",
+        "blks_read": "1979",
+        "cache_hit_ratio": "99.89"
+      },
+      {
+        "datname": "sun_db",
+        "blks_hit": "719743",
+        "blks_read": "1866",
+        "cache_hit_ratio": "99.74"
+      },
+      {
+        "datname": "sun_test",
+        "blks_hit": "651735",
+        "blks_read": "1624",
+        "cache_hit_ratio": "99.75"
       }
     ]
   }

@@ -53,17 +53,17 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 18:59:17",
+    "tested_at": "2026-11-05 19:11:31",
     "method": "命令中心执行 SQL",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过",
-    "elapsed_seconds": 6.4,
+    "elapsed_seconds": 6.0,
     "row_count": 1,
     "error": null,
-    "sample": [
+    "actual_data": [
       {
-        "checkpoints_timed": "3061"
+        "checkpoints_timed": "3073"
       }
     ]
   }

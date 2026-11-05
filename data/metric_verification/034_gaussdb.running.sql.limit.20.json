@@ -53,14 +53,14 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 18:54:52",
+    "tested_at": "2026-11-05 19:07:05",
     "method": "命令中心执行 SQL",
     "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
     "node_name": "gauss-75a2_root_0",
     "state": "通过（查询成功，当前无数据）",
-    "elapsed_seconds": 5.8,
+    "elapsed_seconds": 6.7,
     "row_count": 0,
     "error": null,
-    "sample": []
+    "actual_data": []
   }
 }
