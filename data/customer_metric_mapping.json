@@ -1,0 +1,1085 @@
+{
+  "inputs": {
+    "client_metrics": "高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx / 指标库",
+    "tpops_metrics": "data/tpops_all_metric.json"
+  },
+  "generated_by": "tools/build_customer_metric_mapping.py",
+  "total": 101,
+  "statistics": {
+    "total": 101,
+    "provided_by_tpops": 32,
+    "not_provided_by_tpops": 69,
+    "provided_ratio": 0.3168,
+    "by_match_level": {
+      "直接对应": 10,
+      "需换算": 6,
+      "近似对应": 16
+    },
+    "by_customer_category": {
+      "事务信息": {
+        "可提供": 4,
+        "无法提供": 14
+      },
+      "慢查询信息": {
+        "可提供": 1,
+        "无法提供": 2
+      },
+      "可用性": {
+        "可提供": 1,
+        "无法提供": 1
+      },
+      "锁信息": {
+        "可提供": 4,
+        "无法提供": 1
+      },
+      "性能信息": {
+        "可提供": 9,
+        "无法提供": 12
+      },
+      "连接情况": {
+        "可提供": 4,
+        "无法提供": 6
+      },
+      "基本信息": {
+        "可提供": 6,
+        "无法提供": 4
+      },
+      "表信息": {
+        "可提供": 0,
+        "无法提供": 11
+      },
+      "数据库统计信息": {
+        "可提供": 1,
+        "无法提供": 0
+      },
+      "Agent": {
+        "可提供": 0,
+        "无法提供": 1
+      },
+      "Bgwriter信息": {
+        "可提供": 0,
+        "无法提供": 8
+      },
+      "数据库信息": {
+        "可提供": 1,
+        "无法提供": 8
+      },
+      "会话信息": {
+        "可提供": 1,
+        "无法提供": 1
+      }
+    }
+  },
+  "items": [
+    {
+      "customer_metric": "GAUSSDB.Number_of_ansactions_mmitted_r_cond",
+      "customer_metric_name": "每秒提交事务数",
+      "customer_category": "事务信息",
+      "tpops_metric": "rds092_gaussv5_commit_counter",
+      "tpops_metric_name": "用户提交事务数/秒",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台另有 _SYS/_USER 拆分（系统用户/业务用户）"
+    },
+    {
+      "customer_metric": "GAUSSDB.Total_slow_queries",
+      "customer_metric_name": "慢查询总数",
+      "customer_category": "慢查询信息",
+      "tpops_metric": "rds146_gaussdbv5_slowquery_sys_SYS + rds146_gaussdbv5_slowquery_sys_USER + rds147_gaussdbv5_slowquery_user_SYS + rds147_gaussdbv5_slowquery_user_USER",
+      "tpops_metric_name": "系统库慢SQL数量(系统用户) + 系统库慢SQL数量(业务用户) + 用户库慢SQL数量(系统用户) + 用户库慢SQL数量(业务用户)",
+      "status": "可提供",
+      "match_level": "需换算",
+      "note": "平台按系统库/业务库 × 系统用户/业务用户四条序列，需求和得总数"
+    },
+    {
+      "customer_metric": "GAUSSDB.Select_slow_queries",
+      "customer_metric_name": "Select慢查询数",
+      "customer_category": "慢查询信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台慢 SQL 仅按系统库/业务库拆分，无 Select/DML 维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.DML_slow_queries",
+      "customer_metric_name": "DML慢查询数",
+      "customer_category": "慢查询信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "同上，平台无慢 SQL 的 DML 拆分"
+    },
+    {
+      "customer_metric": "GAUSSDB.Number_of_llback_ansactions_r_cond",
+      "customer_metric_name": "每秒回滚事务数",
+      "customer_category": "事务信息",
+      "tpops_metric": "rds093_gaussv5_rollback_counter",
+      "tpops_metric_name": "用户回滚事务数/秒",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台另有 _SYS/_USER 拆分"
+    },
+    {
+      "customer_metric": "GAUSSDB.Service_availability_testing",
+      "customer_metric_name": "服务可用性检测",
+      "customer_category": "可用性",
+      "tpops_metric": "gaussdb_instance_status",
+      "tpops_metric_name": "实例状态",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台无端口/服务探测指标，实例状态为最接近的可用量"
+    },
+    {
+      "customer_metric": "gaussdb.Deadlocks",
+      "customer_metric_name": "检测到的死锁次数",
+      "customer_category": "锁信息",
+      "tpops_metric": "rds091_gaussv5_deadlocks",
+      "tpops_metric_name": "死锁次数",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台另有 _SYS_db/_USER_db 按库拆分"
+    },
+    {
+      "customer_metric": "gaussdb.Xact_rollback",
+      "customer_metric_name": "回滚的事务总数",
+      "customer_category": "性能信息",
+      "tpops_metric": "rds093_gaussv5_rollback_counter",
+      "tpops_metric_name": "用户回滚事务数/秒",
+      "status": "可提供",
+      "match_level": "需换算",
+      "note": "平台为速率（次/秒），累计总数需按采样周期累加"
+    },
+    {
+      "customer_metric": "gaussdb.Idle_in_transaction_aborted",
+      "customer_metric_name": "事务中已中止的空闲连接数",
+      "customer_category": "连接情况",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 idle in transaction (aborted) 口径"
+    },
+    {
+      "customer_metric": "gaussdb.Tps",
+      "customer_metric_name": "TPS（每秒事务数）",
+      "customer_category": "性能信息",
+      "tpops_metric": "rds400_gaussv5_total_counter",
+      "tpops_metric_name": "用户总事务数/秒（TPS）",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台口径为用户总事务数/秒"
+    },
+    {
+      "customer_metric": "gaussdb.QPS",
+      "customer_metric_name": "QPS（每秒查询数）",
+      "customer_category": "性能信息",
+      "tpops_metric": "rds402_gaussv5_ddl_dml_dcl_count",
+      "tpops_metric_name": "平均SQL执行数（QPS）",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台口径为 DDL+DML+DCL 平均 SQL 执行数/秒"
+    },
+    {
+      "customer_metric": "gaussdb_{#PORT}port.status",
+      "customer_metric_name": "服务端口{#PORT}检测",
+      "customer_category": "可用性",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无端口探测类指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.PG_Service_Status",
+      "customer_metric_name": "GAUSSDB服务状态",
+      "customer_category": "基本信息",
+      "tpops_metric": "gaussdb_instance_status",
+      "tpops_metric_name": "实例状态",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为实例状态，非 pg_is_in_recovery 语义"
+    },
+    {
+      "customer_metric": "gaussdb.get.connections.sum",
+      "customer_metric_name": "获取连接信息",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "该项为 Agent 侧采集接口，非监控指标"
+    },
+    {
+      "customer_metric": "gaussdb.get.dbstat.sum",
+      "customer_metric_name": "获取db性能数据",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "该项为 Agent 侧采集接口，非监控指标"
+    },
+    {
+      "customer_metric": "gaussdb.get.lock.info",
+      "customer_metric_name": "获取数据库锁数据",
+      "customer_category": "锁信息",
+      "tpops_metric": "rds407_gaussv5_total_locks_count",
+      "tpops_metric_name": "锁总数",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为实例级锁总数（另有表级/行级/其他锁拆分），无按 DBNAME 维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.Number.lete.ples",
+      "customer_metric_name": "({#NAME})被删除的行总数（包括已回收行）",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.Starttime",
+      "customer_metric_name": "启动时间",
+      "customer_category": "基本信息",
+      "tpops_metric": "rds133_cn_startup_time",
+      "tpops_metric_name": "CN进程启动时刻",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为 CN 进程启动时刻(timestamp)，另含 DN/GTM/CMS/ETCD/CMA 进程"
+    },
+    {
+      "customer_metric": "gaussdb.Lockwaiting",
+      "customer_metric_name": "查看当前锁等待数量",
+      "customer_category": "锁信息",
+      "tpops_metric": "rds195_gaussv5_locks_session",
+      "tpops_metric_name": "等锁会话数量",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台口径为等锁会话数量；比率口径见 rds196_gaussv5_locks_ratio"
+    },
+    {
+      "customer_metric": "gaussdb.Uptimestr",
+      "customer_metric_name": "运行时长",
+      "customer_category": "基本信息",
+      "tpops_metric": "rds133_cn_startup_time",
+      "tpops_metric_name": "CN进程启动时刻",
+      "status": "可提供",
+      "match_level": "需换算",
+      "note": "平台无 uptime 指标，需用启动时刻与当前时间推算"
+    },
+    {
+      "customer_metric": "gaussdb.server_version",
+      "customer_metric_name": "版本",
+      "customer_category": "基本信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无实例版本指标"
+    },
+    {
+      "customer_metric": "gaussdb.running.sql.limit.20",
+      "customer_metric_name": "正在运行的SQL",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台仅提供 statement 数量（rds145_gaussdbv5_statement），无 SQL 明细"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.Number.ad.ples",
+      "customer_metric_name": "({#NAME})已删除但未回收的行数（死亡行）",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.Number.t.date.ples",
+      "customer_metric_name": "({#NAME})通过 HOT更新的行数",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.number.Of.index.scan",
+      "customer_metric_name": "({#NAME})索引扫描次数",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.number.Of.quential.ples.ad",
+      "customer_metric_name": "({#NAME})顺序扫描读取的行数",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.number.Of.dex.ples.ad",
+      "customer_metric_name": "({#NAME})通过索引扫描获取的行数",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.number.Of.insert.tuples",
+      "customer_metric_name": "({#NAME})插入的行数",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.number.Of.live.tuples",
+      "customer_metric_name": "({#NAME})当前活跃的行数",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.number.Of.update.tuples",
+      "customer_metric_name": "({#NAME})更新的行总数",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.number.Of.sequential.scan",
+      "customer_metric_name": "({#NAME})顺序扫描次数",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.locks.get_metrics[{#DBNAME}]",
+      "customer_metric_name": "DB [{#DBNAME}]: 获取锁信息",
+      "customer_category": "锁信息",
+      "tpops_metric": "rds407_gaussv5_total_locks_count",
+      "tpops_metric_name": "锁总数",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台按系统库/业务库统计，非按 DBNAME"
+    },
+    {
+      "customer_metric": "gaussdb.locks.accessexclusive[{#DBNAME}]",
+      "customer_metric_name": "DB [{#DBNAME}]: Num of accessexclusive locks",
+      "customer_category": "锁信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台只有锁类型大类（表级/行级/其他），无 accessexclusive 细分"
+    },
+    {
+      "customer_metric": "gaussdb.DBtsize[{#DATABASE_NAME}]",
+      "customer_metric_name": "[{#DATABASE_NAME}]库大小",
+      "customer_category": "数据库统计信息",
+      "tpops_metric": "rds128_user_database_size",
+      "tpops_metric_name": "用户数据库总大小",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为用户数据库总大小（聚合），非按 DBNAME；系统库见 rds127_sys_database_size"
+    },
+    {
+      "customer_metric": "gaussdb.{#NAME}.garbage.Ratio",
+      "customer_metric_name": "({#NAME})死亡行占比",
+      "customer_category": "表信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "gaussdb.Serverencoding",
+      "customer_metric_name": "字符集",
+      "customer_category": "基本信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无字符集指标"
+    },
+    {
+      "customer_metric": "gaussdb.Top10sql",
+      "customer_metric_name": "当前运行时间最长的Top10 SQL",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 SQL 明细/排行接口"
+    },
+    {
+      "customer_metric": "gaussdb.Status",
+      "customer_metric_name": "数据库状态",
+      "customer_category": "基本信息",
+      "tpops_metric": "gaussdb_instance_status",
+      "tpops_metric_name": "实例状态",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为实例状态"
+    },
+    {
+      "customer_metric": "gaussdb.Timezone",
+      "customer_metric_name": "时区",
+      "customer_category": "基本信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无时区指标（仅有时钟偏差 sys084_clock_synchronization_diff）"
+    },
+    {
+      "customer_metric": "gaussdb.Pagesize",
+      "customer_metric_name": "页大小",
+      "customer_category": "基本信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无页大小指标"
+    },
+    {
+      "customer_metric": "gaussdb.Idle_in_transaction",
+      "customer_metric_name": "事务中空闲的连接数",
+      "customer_category": "连接情况",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 idle in transaction 口径"
+    },
+    {
+      "customer_metric": "gaussdb.Blk_write_time",
+      "customer_metric_name": "写块的时间（毫秒）",
+      "customer_category": "性能信息",
+      "tpops_metric": "sys075_avg_disk_ms_per_write",
+      "tpops_metric_name": "数据磁盘单次写入花费的时间",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为数据磁盘单次写入平均耗时，非数据库 blk_write_time 口径"
+    },
+    {
+      "customer_metric": "gaussdb.Numbackends",
+      "customer_metric_name": "当前连接到数据库的后端进程数",
+      "customer_category": "性能信息",
+      "tpops_metric": "rds089_gaussv5_inuse_counter",
+      "tpops_metric_name": "CN连接数",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台口径为 CN 连接数；实例 c35b8d07 上该指标无数据"
+    },
+    {
+      "customer_metric": "gaussdb.Fastpath_function_call",
+      "customer_metric_name": "快路径函数调用的连接数",
+      "customer_category": "连接情况",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无快路径调用口径"
+    },
+    {
+      "customer_metric": "gaussdb.Total_conn",
+      "customer_metric_name": "总连接数",
+      "customer_category": "连接情况",
+      "tpops_metric": "rds089_gaussv5_inuse_counter",
+      "tpops_metric_name": "CN连接数",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "可用 rds143_gaussv5_online_session（在线会话数量）作为替代口径"
+    },
+    {
+      "customer_metric": "gaussdb.Temp_bytes",
+      "customer_metric_name": "临时文件大小",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无临时文件指标"
+    },
+    {
+      "customer_metric": "gaussdb.Blks_read",
+      "customer_metric_name": "从磁盘读取的块数",
+      "customer_category": "性能信息",
+      "tpops_metric": "rds411_gaussv5_blks_read_counter",
+      "tpops_metric_name": "磁盘读取block/秒",
+      "status": "可提供",
+      "match_level": "需换算",
+      "note": "平台为速率（block/秒），累计块数需累加"
+    },
+    {
+      "customer_metric": "gaussdb.Blks_hit",
+      "customer_metric_name": "从缓存命中读取的块数",
+      "customer_category": "性能信息",
+      "tpops_metric": "rds412_gaussv5_blks_hit_counter",
+      "tpops_metric_name": "缓存读取block/秒",
+      "status": "可提供",
+      "match_level": "需换算",
+      "note": "平台为速率（block/秒），累计块数需累加"
+    },
+    {
+      "customer_metric": "gaussdb.Tup_deleted",
+      "customer_metric_name": "删除的行数",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台仅有 DELETE 语句数量/秒（rds405_gaussv5_delete_sql_count），无行数口径"
+    },
+    {
+      "customer_metric": "gaussdb.Xact_commit",
+      "customer_metric_name": "提交的事务总数",
+      "customer_category": "性能信息",
+      "tpops_metric": "rds092_gaussv5_commit_counter",
+      "tpops_metric_name": "用户提交事务数/秒",
+      "status": "可提供",
+      "match_level": "需换算",
+      "note": "平台为速率（次/秒），累计总数需累加"
+    },
+    {
+      "customer_metric": "gaussdb.Tup_inserted",
+      "customer_metric_name": "插入的行数",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台仅有 INSERT 语句数量/秒（rds403_gaussv5_insert_sql_count），无行数口径"
+    },
+    {
+      "customer_metric": "gaussdb.Conflicts",
+      "customer_metric_name": "数据库操作冲突次数",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无冲突次数指标"
+    },
+    {
+      "customer_metric": "gaussdb.Tup_updated",
+      "customer_metric_name": "更新的行数",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台仅有 UPDATE 语句数量/秒（rds406_gaussv5_update_sql_count），无行数口径"
+    },
+    {
+      "customer_metric": "gaussdb.Tup_returned",
+      "customer_metric_name": "查询返回的行数",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无返回行数指标"
+    },
+    {
+      "customer_metric": "gaussdb.Temp_files",
+      "customer_metric_name": "生成的临时文件数",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无临时文件指标"
+    },
+    {
+      "customer_metric": "gaussdb.tup_fetched",
+      "customer_metric_name": "通过索引获取的行数",
+      "customer_category": "性能信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无索引取行数指标"
+    },
+    {
+      "customer_metric": "gaussdb.Active_conn",
+      "customer_metric_name": "活动连接数",
+      "customer_category": "连接情况",
+      "tpops_metric": "rds117_gaussv5_active_session",
+      "tpops_metric_name": "活跃会话数量",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台另有 _SYS/_USER 拆分"
+    },
+    {
+      "customer_metric": "gaussdb.Disabled_conn",
+      "customer_metric_name": "禁用的连接数",
+      "customer_category": "连接情况",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无禁用连接数口径"
+    },
+    {
+      "customer_metric": "gaussdb.Idle_conn",
+      "customer_metric_name": "空闲连接数",
+      "customer_category": "连接情况",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 idle 连接口径"
+    },
+    {
+      "customer_metric": "gaussdb.Waiting_conn",
+      "customer_metric_name": "等待资源的连接数",
+      "customer_category": "连接情况",
+      "tpops_metric": "rds118_gaussv5_wait_session",
+      "tpops_metric_name": "等待会话数量",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "平台口径为等待会话数量；比率口径见 rds085_gaussv5_wait_ratio"
+    },
+    {
+      "customer_metric": "gaussdb.Blk_read_time",
+      "customer_metric_name": "读块的时间（毫秒）",
+      "customer_category": "性能信息",
+      "tpops_metric": "sys076_avg_disk_ms_per_read",
+      "tpops_metric_name": "数据磁盘单次读取花费的时间",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为数据磁盘单次读取平均耗时，非数据库 blk_read_time 口径"
+    },
+    {
+      "customer_metric": "gaussdb.Total_pct",
+      "customer_metric_name": "连接使用率",
+      "customer_category": "连接情况",
+      "tpops_metric": "rds086_gaussv5_active_ratio",
+      "tpops_metric_name": "活跃会话率",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台口径为活跃会话率；在线会话率见 rds144_online_ratio"
+    },
+    {
+      "customer_metric": "gaussdb.Prepared",
+      "customer_metric_name": "预提交事务数",
+      "customer_category": "连接情况",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无预备事务（prepared transaction）指标"
+    },
+    {
+      "customer_metric": "gaussdb.sendAgentName",
+      "customer_metric_name": "发送设备名给Agent",
+      "customer_category": "Agent",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "Agent 侧行为，不是监控指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.Number.ad.ples",
+      "customer_metric_name": "({#NAME}) number of dead tuples",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.Number.lete.ples",
+      "customer_metric_name": "({#NAME}) number of delete tuples",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.garbage.Ratio",
+      "customer_metric_name": "({#NAME})Garbage ratio",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.Number.t.date.ples",
+      "customer_metric_name": "({#NAME}) number of hot update tuples",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.index.scan",
+      "customer_metric_name": "({#NAME})number of index scan",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
+      "customer_metric_name": "({#NAME})number of index tuples read",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.live.tuples",
+      "customer_metric_name": "({#NAME})number of live tuples",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
+      "customer_metric_name": "({#NAME})number of insert tuples",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
+      "customer_metric_name": "({#NAME})number of sequencial scan",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
+      "customer_metric_name": "({#NAME})number of sequencial tuples read",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.update.tuples",
+      "customer_metric_name": "({#NAME})number of update tuples",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "表级指标，平台无表维度"
+    },
+    {
+      "customer_metric": "GAUSSDB.Buffers_Alloc",
+      "customer_metric_name": "Buffers Alloc",
+      "customer_category": "Bgwriter信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 bgwriter 类指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.Buffers_Backend",
+      "customer_metric_name": "Buffers Backend",
+      "customer_category": "Bgwriter信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 bgwriter 类指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.Buffers_Backend_Fsync",
+      "customer_metric_name": "Buffers Backend Fsync",
+      "customer_category": "Bgwriter信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 bgwriter 类指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.Buffers_Checkpoint",
+      "customer_metric_name": "Buffers Checkpoint",
+      "customer_category": "Bgwriter信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 bgwriter 类指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.Buffers_Clean",
+      "customer_metric_name": "Buffers Clean",
+      "customer_category": "Bgwriter信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 bgwriter 类指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.Checkpoint_count_eckpoint_gments",
+      "customer_metric_name": "Checkpoint count (by checkpoint segments)",
+      "customer_category": "Bgwriter信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台仅有待落盘数据量/脏页数量（rds105/rds125），无 checkpoint 次数"
+    },
+    {
+      "customer_metric": "GAUSSDB.Checkpoint_count_eckpoint_meout",
+      "customer_metric_name": "Checkpoint count (by checkpoint timeout)",
+      "customer_category": "Bgwriter信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "同上"
+    },
+    {
+      "customer_metric": "GAUSSDB.Idle_in_transaction_connections",
+      "customer_metric_name": "Idle in transaction connections",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 idle in transaction 口径"
+    },
+    {
+      "customer_metric": "GAUSSDB.Idle_connections",
+      "customer_metric_name": "Idle connections",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 idle 连接口径"
+    },
+    {
+      "customer_metric": "GAUSSDB.Max_Written_Clean",
+      "customer_metric_name": "Max Written Clean",
+      "customer_category": "Bgwriter信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无 bgwriter 类指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.Standby_status",
+      "customer_metric_name": "Standby状态",
+      "customer_category": "基本信息",
+      "tpops_metric": "datanode_switch_status",
+      "tpops_metric_name": "DN主备状态",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为 DN 主备状态；备机 RTO/redo 进度见 rds080/rds083"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_committed_transactions",
+      "customer_metric_name": "[{#DATNAME}] Commited transactions",
+      "customer_category": "数据库信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无按 DBNAME 维度的事务计数"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_Active_connections",
+      "customer_metric_name": "[{#DATNAME}] Active connections",
+      "customer_category": "数据库信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无按 DBNAME 维度的连接数"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_rolled_back_transactions",
+      "customer_metric_name": "[{#DATNAME}] Rolled back transactions",
+      "customer_category": "数据库信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无按 DBNAME 维度的事务计数"
+    },
+    {
+      "customer_metric": "GAUSSDB.Current_number_of_connections",
+      "customer_metric_name": "当前连接数",
+      "customer_category": "事务信息",
+      "tpops_metric": "rds143_gaussv5_online_session",
+      "tpops_metric_name": "在线会话数量",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台口径为在线会话数量；另有 rds089_gaussv5_inuse_counter（CN连接数）"
+    },
+    {
+      "customer_metric": "GAUSSDB.maximum_connection",
+      "customer_metric_name": "最大连接数",
+      "customer_category": "事务信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台 rds416_gaussv5_max_active_session 是历史最高活跃会话数，不是配置上限"
+    },
+    {
+      "customer_metric": "GAUSSDB.Number_of_active_connections",
+      "customer_metric_name": "活跃连接数",
+      "customer_category": "事务信息",
+      "tpops_metric": "rds117_gaussv5_active_session",
+      "tpops_metric_name": "活跃会话数量",
+      "status": "可提供",
+      "match_level": "直接对应",
+      "note": "同 57 号客户指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_fetch_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Fetch记录数",
+      "customer_category": "数据库信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无按 DBNAME 维度的行数指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_insert_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Insert记录数",
+      "customer_category": "数据库信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无按 DBNAME 维度的行数指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_return_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Return记录数",
+      "customer_category": "数据库信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无按 DBNAME 维度的行数指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_update_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Update记录数",
+      "customer_category": "数据库信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无按 DBNAME 维度的行数指标"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_cache_hit_ratio",
+      "customer_metric_name": "[{#DATNAME}]缓存命中率",
+      "customer_category": "数据库信息",
+      "tpops_metric": "rds090_gaussv5_buffer_hit_ratio",
+      "tpops_metric_name": "buffer命中率",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为实例级命中率，非按 DBNAME"
+    },
+    {
+      "customer_metric": "GAUSSDB.session_usage",
+      "customer_metric_name": "连接数使用率",
+      "customer_category": "会话信息",
+      "tpops_metric": "rds144_online_ratio",
+      "tpops_metric_name": "在线会话率",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台口径为在线会话率"
+    },
+    {
+      "customer_metric": "GAUSSDB.sessions_active_top10",
+      "customer_metric_name": "会话时间TOP10",
+      "customer_category": "会话信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无会话明细/排行接口"
+    },
+    {
+      "customer_metric": "GAUSSDB.Primary_status",
+      "customer_metric_name": "Primary状态",
+      "customer_category": "基本信息",
+      "tpops_metric": "datanode_switch_status",
+      "tpops_metric_name": "DN主备状态",
+      "status": "可提供",
+      "match_level": "近似对应",
+      "note": "平台为 DN 主备状态"
+    },
+    {
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_delete_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Delete记录数",
+      "customer_category": "数据库信息",
+      "tpops_metric": null,
+      "tpops_metric_name": null,
+      "status": "无法提供",
+      "match_level": "",
+      "note": "平台无按 DBNAME 维度的行数指标"
+    }
+  ]
+}
