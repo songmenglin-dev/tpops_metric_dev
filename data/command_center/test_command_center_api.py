@@ -24,16 +24,16 @@
 
 用法：
     export TPOPS_USER=sml TPOPS_PASSWORD='...'
-    python tests/command_center/test_command_center_api.py
+    python data/command_center/test_command_center_api.py
 
     # 只跑列表与详情（不执行任何命令，无需担心副作用）
-    python tests/command_center/test_command_center_api.py --list-only
+    python data/command_center/test_command_center_api.py --list-only
 
     # 指定实例与节点
-    python tests/command_center/test_command_center_api.py \\
+    python data/command_center/test_command_center_api.py \\
         --instance-id <iid> --node-id <nid>
 
-输出（tests/command_center/results/）：
+输出（data/command_center/results/）：
     00_auth.json                 认证响应（含 token 所在位置，不含 token 明文）
     01_instances.json            实例列表
     02_nodes_<instance_id>.json  节点清单

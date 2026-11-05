@@ -31,7 +31,7 @@
 
 ```bash
 export TPOPS_USER=sml TPOPS_PASSWORD='...'
-python tests/command_center/test_command_center_api.py
+python data/command_center/test_command_center_api.py
 ```
 
 常用参数：

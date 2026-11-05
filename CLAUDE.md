@@ -44,8 +44,9 @@ tpops_kafka/
     └── serializer.py# JSON 序列化
 
 tools/     # 现有离线取数脚本 + 参考实现，保留
-data/      # 离线样本（指标侧：目录、映射、查询方案、实测结果）
-│  └── alarm/   # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
+data/      # 离线样本
+│  ├── alarm/           # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
+│  └── command_center/  # 统一命令中心 API 实测（5 个接口全量真实调用 + 速查表）
 docs/      # 文档
 │  ├── api/            # TPOPS API 参考（由 CHM 转换，未增补）
 │  ├── *.chm           # GaussDB 产品文档原始包（312 MB，未入库）

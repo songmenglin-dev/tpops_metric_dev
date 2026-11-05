@@ -12,7 +12,7 @@ results/ 下按"每次调用一个文件"留档，共 197 个文件，便于逐�
 输出 API速查.md —— 10 个接口一页看完。
 
 用法：
-    python tests/command_center/build_api_quickref.py
+    python data/command_center/build_api_quickref.py
 """
 
 import json
