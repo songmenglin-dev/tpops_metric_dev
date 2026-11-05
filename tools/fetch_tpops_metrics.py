@@ -5,6 +5,8 @@ Every output file is the (raw, unmodified) JSON body returned by one TPOPS API
 call. `data/manifest.json` records which API produced which file and with what
 request parameters.
 
+All outputs are gitignored — they are reproducible from the platform.
+
 Usage:
     export TPOPS_USER=sml TPOPS_PASSWORD='...'
     python tools/fetch_tpops_metrics.py [--hours 24]

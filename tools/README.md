@@ -102,9 +102,10 @@ The default run produces three data files:
 Pass `--hours 24` for a full-day series (11 MB) when you need trends.
 
 These exports are all **reproducible from the platform** and are therefore gitignored:
-`metrics_series_*.json`, `metrics_latest.json`, `metric_catalog.json`, plus the two
-files derived from them (`tpops_all_metric.json`, `metric_names.csv`, see below).
-`instances.json` and `manifest.json` are kept as a committed baseline.
+`metrics_series_*.json`, `metrics_latest.json`, `metric_catalog.json`, `manifest.json`
+(the provenance record for the fetch itself), plus the two files derived from them
+(`tpops_all_metric.json`, `metric_names.csv`, see below).
+`instances.json` is kept as a committed baseline.
 
 ### Rebuilding the metric dictionary
 

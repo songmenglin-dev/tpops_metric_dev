@@ -47,7 +47,7 @@ python tools/fetch_tpops_alarms.py
 
 ## 与指标侧的关系
 
-- 指标侧数据在 `data/` 根目录（`manifest.json`、`instances.json`、`customer_metric_mapping.json` 等）
+- 指标侧数据在 `data/` 根目录（`instances.json`、`customer_metric_mapping.json`、`customer_metric_query_plan.json` 等）
 - **按 `alarm_id` 关联**（平台自身给的，最可靠）：`GET /rds/v3/monitor/metrics/series` 返回的
   `metrics[].alarm_id` 与 `catalog_metric.json` 的「告警ID」是同一套 ID —— 实测 28 个平台指标带
   `alarm_id`，其中 23 个能在告警目录中找到同 ID 的告警定义。这条路径不依赖名称推断。
