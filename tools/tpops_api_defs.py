@@ -62,7 +62,7 @@ APIS["GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"] = {
 APIS["POST /rds/v3/monitor/metrics"] = {
     "uri": "/rds/v3/monitor/metrics",
     "method": "POST",
-    "purpose": "拉取监控指标时间序列（平台原生指标，共 234 个，16 个指标分组）",
+    "purpose": "拉取监控指标时间序列（平台原生监控指标，12 个指标分组；分组码见 docs/api/API参考-监控大盘.md）",
     "headers": {"X-Mini-Token": "<token>", "X-Language": "zh-cn", "Content-Type": "application/json"},
     "path_params": {},
     "query_params": {},

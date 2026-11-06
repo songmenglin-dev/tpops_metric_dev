@@ -14,9 +14,10 @@
 
 ```
 Scheduler(窗口 + 水位)
+   → 采集器（按获取方法分五路：A 监控指标 / B 命令中心 SQL / C 诊断优化 / D 实例 / E 告警）
    → TPOPS Client  (mini-token 认证)
    → Normalizer    (TPOPS 原始结构 → 内部统一 DTO)
-   → FieldMapper   (按映射表转成客户字段)
+   → FieldMapper   (按映射表 + 取值规则转成客户字段)
    → Serializer    (唯一序列化出口，JSON)
    → Kafka Producer(PLAINTEXT)
    → 推进水位
@@ -24,7 +25,11 @@ Scheduler(窗口 + 水位)
 
 一次循环：拉取 → 转换 → 投递 → **成功后才推进水位**。投递失败不推进水位，重启后从水位续传（至少一次语义）。
 
+五路采集器的划分与依据见 [`docs/开发方案-GaussDB指标与告警采集.md`](docs/开发方案-GaussDB指标与告警采集.md) §1.2 与 §3.2。
+
 ## 目录结构
+
+`tpops_kafka/` 是**待建**的采集端 —— 本仓库当前只有调研产物与离线脚本：
 
 ```
 tpops_kafka/
@@ -33,25 +38,38 @@ tpops_kafka/
 ├── scheduler.py     # 轮询循环、水位推进、重试退避、优雅退出
 ├── models.py        # 跨模块 DTO（frozen dataclass / NamedTuple）
 ├── tpops/
-│   ├── client.py    # TPOPS HTTP 客户端（从 tools/tpops_client.py 提炼）
-│   ├── metrics.py   # 指标拉取、窗口与 end_time 计算
-│   └── alarms.py    # 告警拉取（active/history × 收敛/明细）
+│   ├── client.py        # TPOPS HTTP 客户端（从 tools/tpops_client.py 提炼）
+│   ├── metrics.py       # A 类：监控指标拉取、窗口与 end_time 计算
+│   ├── command_center.py# B 类：命令中心三跳、批量下发、SQL 合并
+│   ├── diagnostic.py    # C 类：slow-sql-list / top-sql-list
+│   ├── instances.py     # D 类：实例元数据
+│   └── alarms.py        # E 类：告警拉取（active/history × 收敛/明细）
 ├── mapping/
 │   ├── table.py     # 映射表加载与查表（表驱动，映射不写死在代码里）
 │   └── rules.py     # 字段级转换规则（类型、单位、缺省值）
 └── kafka/
     ├── producer.py  # PLAINTEXT 生产者
     └── serializer.py# JSON 序列化
+```
 
+```
 tools/     # 现有离线取数脚本 + 参考实现，保留
-data/      # 离线样本
-│  ├── alarm/           # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
-│  └── command_center/  # 统一命令中心 API 实测（5 个接口全量真实调用 + 速查表）
+data/      # 离线样本与调研产物
+│  ├── alarm/               # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
+│  ├── command_center/      # 统一命令中心 API 实测（5 个接口全量真实调用 + 速查表）
+│  ├── metric_verification/ # 逐指标真实调用留档（98/98 通过），可直接当回归样本
+│  ├── customer_metric_mapping.json    # 101 客户指标 → TPOPS 可提供性判定
+│  ├── customer_metric_query_plan.json # 逐指标查询方案与真实响应
+│  ├── tpops_api_catalog.json          # TPOPS API 目录
+│  └── customer_metric_unsupported.csv # 无法提供清单
 docs/      # 文档
 │  ├── api/            # TPOPS API 参考（由 CHM 转换，未增补）
 │  ├── *.chm           # GaussDB 产品文档原始包（312 MB，未入库）
 │  └── *.docx          # 客户监控平台接入指引（走 Agent，非本项目路径）
 ```
+
+`data/tpops_all_metric.json`（TPOPS 原始指标字典）**已删除且不再需要**：可提供性结论已固化在
+`customer_metric_mapping.json` 里，不重建源字典。
 
 ## 运行
 
@@ -66,11 +84,14 @@ python -m tpops_kafka.main
 | 变量 | 说明 |
 |---|---|
 | `TPOPS_USER` / `TPOPS_PASSWORD` / `TPOPS_BASE_URL` | TPOPS 认证与地址 |
-| `KAFKA_BOOTSTRAP_SERVERS` | Kafka 地址，逗号分隔 |
-| `KAFKA_TOPIC_METRICS` / `KAFKA_TOPIC_ALARMS` | Topic 名（待客户确认） |
+| `KAFKA_BOOTSTRAP_SERVERS` | Kafka 地址，逗号分隔（**待客户确认**） |
+| `KAFKA_TOPIC_METRICS` / `KAFKA_TOPIC_ALARMS` | Topic 名（**待客户确认**） |
 | `POLL_INTERVAL_SECONDS` | 轮询间隔 |
 | `METRIC_WINDOW_HOURS` | 指标查询窗口，**不得小于 1** |
 | `METRIC_END_LAG_MINUTES` | end_time 回退量，默认 5 |
+
+`.env.example` 目前只有 `TPOPS_USER` / `TPOPS_PASSWORD` / `TPOPS_BASE_URL` 三项，
+`KAFKA_*` 与调度参数在采集端落地时补齐。
 
 ## Python 3.7.9 红线
 
@@ -89,7 +110,7 @@ python -m tpops_kafka.main
 
 ```
 kafka-python==2.0.2    # 纯 Python；2.1+ 不再支持 3.7
-requests>=2.25,<3
+requests>=2.25,<2.32   # 2.32 起要求 Python ≥3.8（2.32.5 要 ≥3.9）
 pytest>=7,<8
 pytest-cov<5
 ```
@@ -98,8 +119,12 @@ pytest-cov<5
 
 ## TPOPS 接口要点（均已实测，勿凭直觉改）
 
-1. **路径前缀是 `/rds/`**（根路径），不是文档里的 `/gaussdb/`——后者只适用于 SPA 控制台。实例列表：`GET /rds/v3.2/instances`。
-2. 认证：`POST /rds/v3/auth/mini-token`，Token 在**响应头** `X-Mini-Token`；服务端 session_timeout 1440 分钟，需按需刷新。**登录失败会累计 `login_failed_attempts` 并锁号**。
+1. **平台有两个命名空间，不能混**：
+   - `/rds/v3/…` —— 认证、实例列表、监控指标、告警记录
+   - `/rds/gaussdb/v3/…` —— **数据库诊断优化接口集 + 统一命令中心**
+   少一段前缀就 404（不是"接口没实现"）。**86 个客户指标靠 `/rds/gaussdb/v3/` 这一路**，
+   去掉 `gaussdb` 段等于把最大的那块指标全丢掉。实例列表：`GET /rds/v3.2/instances`。
+2. 认证：`POST /rds/v3/auth/mini-token`，Token 在**响应头** `X-Mini-Token`；服务端 session_timeout 1440 分钟，需按需刷新。**登录失败会累计 `login_failed_attempts` 并锁号**（认证失败不要盲目重试）。
 3. 平台用**自签证书** → `verify_tls=False`。
 4. 指标查询窗口 **≥ 1 小时**才能覆盖 3600s 采集周期的指标（5 分钟窗口覆盖 0/21）。
 5. **数据入库滞后约 5 分钟** → `end_time` 必须回退，否则尾部大量 null（5 分钟窗口实测 null 率 77.5%）。
@@ -107,34 +132,79 @@ pytest-cov<5
 7. **12 个指标分组码必须硬编码**（平台没有枚举接口）：`CPUMEMORY CONNECTION SYNCSTAT PROCESSRESOURCE NETWORK TRANSACTION IOSTORAGE LOCK INSTATUS FORDR AGENTSTATUS COREMETRICS`。分组名写错返回 **200 + 空 series**，不报错，只能靠"空分组告警"发现。
 8. 告警 `POST /rds/v3/alarm/records`：`is_active`（活动/历史）、`is_convergence`（收敛列表/明细行）必传，`limit` ≤ 100 需分页；**历史告警仅保留 30 天**，停机超 30 天会丢告警，日志要显式告警。
 9. 指标目录（name/unit/alarm_id）：`GET /rds/v3/monitor/metrics/series?name=<GROUP>`。
+10. **指标中文名只在数据响应**的 `metric_name` 字段里，目录接口 `series` 不带中文名。
+
+### 统一命令中心（82/101 客户指标的主通道）
+
+`general_single_sql_query`（`cmd_id = 73722acc-bff6-4d04-adc0-bc1e1fa1eb7d`，平台内置命令）
+的模板是 `select * from ({sql_text}) limit {limit}` —— **平台提供执行器，我们提供 SQL**，
+可直接查 `pg_stat_database` / `pg_stat_user_tables` / `pg_stat_activity` / `pg_locks` /
+`pg_stat_bgwriter` / `pg_settings` / `pg_database` / `pg_prepared_xacts`。
+
+**三跳链路**（异步任务模型）：
+
+```
+POST …/customer-commands/{cmd_id}              → {job_id, node_tasks:[{task_id, node_id}]}（不含数据）
+GET  …/batch-exec-job/task-records?job_id=     → {job_status, statistics:{running,…}, tasks:[…]}
+GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, result, …}
+```
+
+硬约束（都是实测踩过的）：
+
+- **结束判据用 `statistics.running == 0`，不能看 `job_status`** —— 实测节点任务已 `succeed`
+  而 `job_status` 仍停在 `running`。
+- **`result` 是 JSON 字符串**，要二次 `json.loads` 才是行列表。
+- **只能在 master 节点执行**，一次下发多节点会失败；下发前先
+  `GET /rds/gaussdb/v3/instances/{id}/key-view-execute-node` 取 master 的 `node_id`。
+- 单次往返 **3~8 秒**；实测 50 条 SQL 有 **3 条偶发失败**（重试即成功）→ **必须做重试**。
+- **GaussDB 方言是 PG 9.2 级**：**无 `FILTER` 子句**（用 `CASE WHEN`）；
+  **`state <> ''` 恒为假**（排除后台进程要用 `state is not null`）。
+- 命令返回的是**当前快照，不是时序** —— 累计计数类指标（`xact_commit` 等）要**自己差分算速率**，
+  并处理实例重启导致的计数归零。
+- `sql_text` 在任务记录里被掩码为 `******`（执行不受影响，但不能靠任务记录回读 SQL）。
+- 一次下发多指标要**合并 SQL**（现有 50 条 → 合并为 10 条），否则一轮要 3~7 分钟，撑不住采集周期。
 
 ## 编码约定
 
 - **凭据只走环境变量**，禁止硬编码、禁止写入日志、禁止入库（`.env` 已 gitignore）。
 - **不可变数据**：跨模块传递用 frozen dataclass / NamedTuple，不原地修改。
 - 错误显式处理：捕获后包装成自定义异常并带上下文，**不静默吞异常**；用 `logging`，不用 `print`。
-- 单文件 < 400 行、函数 < 50 行；按功能分模块，不堆大文件。
+- 采集端代码单文件 < 400 行、函数 < 50 行；按功能分模块，不堆大文件。
+  （`tools/` 下有几个离线脚本超 400 行，是历史产物；采集端按上面的新结构写，不沿用。）
 - 测试用 pytest：映射、窗口计算、序列化写单元测试；TPOPS 与 Kafka 一律 mock。目标覆盖率 80%。
+  `data/metric_verification/` 里的 98 份实测留档可直接当回归样本回放。
 - 提交信息用 conventional commits（`feat:` / `fix:` / `docs:` / `refactor:` / `test:` / `chore:`），正文中文。
 
 ## 待定事项（客户未最终确认，先按可配置实现）
 
-1. **客户 JSON 字段定义** —— 字段名以客户指标库《高斯DB-指标明细.xlsx》（101 个指标）为准。该表英文名存在 OCR 错字（如 `GAUSSDB.Number_of_ansactions_mmitted_r_cond`），需与客户核对正确拼写。
-2. **TPOPS 指标 → 客户指标映射表** —— 待补充。落在 `tpops_kafka/mapping/` 的数据文件里，**表驱动，不要写死在代码中**；未匹配的 TPOPS 指标丢弃并计数上报。
+1. **客户 JSON 字段定义** —— 字段名以客户指标库
+   `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` 的「指标库」sheet（101 个指标）为准。
+   该表英文名存在 OCR 错字（如 `GAUSSDB.Number_of_ansactions_mmitted_r_cond`），需与客户核对正确拼写。
+   可提供性**已判定：98 可提供 / 3 无法提供**，逐指标真实调用 **98/98 通过**。
+2. **客户指标 → 取数方法的映射表已建好** —— `data/customer_metric_query_plan.json`
+   （101 条逐指标查询方案与真实响应），另加 sheet「指标库-指标获取方法」标注每个指标走哪条通道
+   （命令中心SQL 82 / 监控指标接口 11 / 诊断优化接口 4 / 实例接口 1 / 无法提供 3）。
+   采集端落地为 `tpops_kafka/mapping/` 下的**表驱动数据文件，不要写死在代码中**；
+   3 个无法提供的指标丢弃并计数上报。
 3. **Topic 命名与分区策略**。
 4. **指标与告警是否同 topic**。
 5. 客户指标库里的「数据更新周期 / 采集更新周期单位」与 TPOPS `collection_frequency` 的对齐口径。
+6. **告警字段规范** —— 客户未给；当前设想是收敛列表作主条目、明细行挂 `details`。
+7. **慢 SQL 的 `sql_text` 是否可外发** —— 含业务 SQL 文本，默认脱敏或截断，需客户书面确认。
 
 ## 相关资料
 
 | 文件 | 内容 |
 |---|---|
-| `docs/开发方案-GaussDB指标与告警采集.md` | **开发方案**：指标按获取方法分类、API 调研、实现方法、代码设计、持续运行机制 |
+| `docs/开发方案-GaussDB指标与告警采集.md` | **开发方案**：指标按获取方法分类、API 调研、实现方法、代码设计、持续运行机制、风险 |
 | `docs/README.md` | 文档总索引 |
 | `docs/api/API参考-监控大盘.md` | 指标查询接口定义 |
 | `docs/api/API参考-告警管理.md` | 告警接口定义 |
 | `docs/api/API参考-登录.md` | mini-token 认证流程 |
+| `data/customer_metric_query_plan.json` | 逐指标查询方案与真实响应（采集端的实现依据） |
+| `data/metric_verification/` | 逐指标真实调用留档（98/98 通过），回归样本 |
+| `data/alarm/README.md` | 告警侧数据结构与抓取产物说明 |
 | `tools/README.md` | 离线取数脚本用法（`tools/tpops_client.py` 是可用参考实现） |
-| `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` | 客户指标库（101 个指标，映射的基准） |
+| `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` | 客户指标库（101 个指标，映射的基准；含「指标库-指标获取方法」sheet） |
 | `docs/广东电网ITSCADA系统监控接入操作指引（数据库）V0.4.docx` | 客户监控平台接入指引（其余数据库走 Agent 方式，非 Kafka） |
 | `docs/06_GaussDB V2.0-26.861.1 产品文档(for 轻量化部署形态) 01.chm` | GaussDB 产品文档原始包（312 MB，未入库） |
