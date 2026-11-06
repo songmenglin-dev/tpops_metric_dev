@@ -24,6 +24,9 @@ import time
 import requests
 import urllib3
 
+# 命令中心三跳的 API 描述（含实测真实响应）：tools/cmd_center_flow.py
+from cmd_center_flow import live_apis
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -93,7 +96,14 @@ def sanitize(name):
 
 
 def run_sql(tpops, node_id, sql, limit=100):
-    """命令中心执行 SQL，返回 (状态, 结果, 错误信息, 耗时秒)。"""
+    """命令中心执行 SQL（异步三跳），返回 (状态, 结果, 错误信息, 耗时秒, 调用轨迹)。
+
+    三跳：① POST 下发 → job_id/task_id；② GET task-records 轮询；
+         ③ GET task-record/{task_id}/detail 取结果（result 是 JSON 字符串，需二次解析）。
+
+    轮询结束判据用 statistics.running == 0，不看 job_status —— 实测节点任务已 succeed
+    而 job_status 仍停在 running。
+    """
     cmd_id = "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"   # general_single_sql_query
     last_err = None
     started = time.time()
@@ -114,34 +124,71 @@ def run_sql(tpops, node_id, sql, limit=100):
             last_err = "下发未返回 job_id: %s" % resp.text[:200]
             time.sleep(2)
             continue
+        trace = {"cmd_id": cmd_id, "node_id": node_id, "job_id": job, "task_id": task,
+                 "steps": [], "execute_body": body}
+        trace["steps"].append({"n": 1, "name": "下发命令",
+                                "method": "POST",
+                                "uri": "/rds/gaussdb/v3/command-center/customer-commands/%s" % cmd_id,
+                                "status_code": resp.status_code})
         done = None
+        polls = 0
+        records_body = None
         for _ in range(20):
             time.sleep(2.5)
+            polls += 1
             rr = tpops.session.get(
                 BASE_URL + "/rds/gaussdb/v3/command-center/command/%s/batch-exec-job/task-records" % cmd_id,
                 params={"job_id": job}, headers=tpops.headers(), timeout=60)
-            tasks = (rr.json() or {}).get("tasks") or []
-            if tasks and all(t.get("status") not in ("running", "pending") for t in tasks):
+            payload = rr.json() or {}
+            tasks = payload.get("tasks") or []
+            stat = payload.get("statistics") or {}
+            if stat.get("running", 0) == 0 and tasks:
                 done = tasks[0]
+                records_body = payload
+                trace["steps"].append({
+                    "n": 2, "name": "轮询任务状态", "method": "GET",
+                    "uri": ("/rds/gaussdb/v3/command-center/command/%s"
+                            "/batch-exec-job/task-records" % cmd_id),
+                    "status_code": rr.status_code,
+                    "polls": polls,
+                    "job_status": payload.get("job_status"),
+                    "statistics": stat,
+                    "node_status": [t.get("status") for t in tasks],
+                })
                 break
         if done is None:
             last_err = "轮询超时"
+            time.sleep(2)
             continue
         if done.get("status") != "succeed":
             last_err = (done.get("error_msg") or "")[:300]
             time.sleep(2)
             continue
-        detail = tpops.session.get(
+        detail_resp = tpops.session.get(
             BASE_URL + ("/rds/gaussdb/v3/command-center/command/%s/batch-exec-job/%s"
                         "/task-record/%s/detail" % (cmd_id, job, task)),
-            headers=tpops.headers(), timeout=60).json()
+            headers=tpops.headers(), timeout=60)
+        detail = detail_resp.json()
+        trace["steps"].append({
+            "n": 3, "name": "取任务结果", "method": "GET",
+            "uri": ("/rds/gaussdb/v3/command-center/command/%s/batch-exec-job/%s"
+                    "/task-record/%s/detail" % (cmd_id, job, task)),
+            "status_code": detail_resp.status_code,
+            "status": detail.get("status"),
+            "out_format": detail.get("out_format"),
+            "out_mode": detail.get("out_mode"),
+            "out_type": detail.get("out_type"),
+            "result_is_json_string": True,
+        })
+        trace["records_body"] = records_body
+        trace["result_body"] = detail
         raw = detail.get("result")
         try:
             rows = json.loads(raw) if raw else []
         except ValueError:
             rows = raw
-        return STATUS_PASS, rows, None, round(time.time() - started, 1)
-    return STATUS_FAIL, None, last_err, round(time.time() - started, 1)
+        return STATUS_PASS, rows, None, round(time.time() - started, 1), trace
+    return STATUS_FAIL, None, last_err, round(time.time() - started, 1), None
 
 
 def run_monitor(tpops, metric_name):
@@ -212,10 +259,10 @@ def run_top_sql(tpops, node_ids):
 
 
 def test_metric(tpops, entry, node_id, node_ids):
-    """按方案执行一次，返回 (状态, 结果, 错误, 耗时, 实际调用说明)。"""
+    """按方案执行一次，返回 (状态, 结果, 错误, 耗时, 调用说明, 调用轨迹)。"""
     query = entry.get("query")
     if not query:
-        return STATUS_FAIL, None, "无查询方案", 0, ""
+        return STATUS_FAIL, None, "无查询方案", 0, "", None
     api = query["api"]
     body = query["request"].get("body") or {}
     if api.endswith("command-center/customer-commands/{cmd_id}"):
@@ -224,17 +271,17 @@ def test_metric(tpops, entry, node_id, node_ids):
             if p.get("param_name") == "sql_text":
                 sql = p.get("param_value")
         if not sql:
-            return STATUS_FAIL, None, "方案中无 sql_text", 0, ""
-        st, rows, err, el = run_sql(tpops, node_id, sql)
+            return STATUS_FAIL, None, "方案中无 sql_text", 0, "", None
+        st, rows, err, el, trace = run_sql(tpops, node_id, sql)
         if st == STATUS_PASS and isinstance(rows, list) and not rows:
             st = STATUS_PASS_EMPTY
-        return st, rows, err, el, "命令中心执行 SQL"
+        return st, rows, err, el, "命令中心执行 SQL（下发→轮询→取结果）", trace
     if api == "POST /rds/v3/monitor/metrics":
         st, rows, err, el = run_monitor(tpops, entry["tpops_metric"])
-        return st, rows, err, el, "监控指标接口"
+        return st, rows, err, el, "监控指标接口", None
     if api.endswith("/slow-sql-list"):
         st, rows, err, el = run_slow_sql(tpops, node_id)
-        return st, rows, err, el, "慢SQL集合接口"
+        return st, rows, err, el, "慢SQL集合接口", None
     if api == "GET /rds/v3.2/instances":
         started = time.time()
         resp = tpops.session.get(BASE_URL + "/rds/v3.2/instances",
@@ -242,24 +289,37 @@ def test_metric(tpops, entry, node_id, node_ids):
                                  headers=tpops.headers(), timeout=60)
         elapsed = round(time.time() - started, 1)
         if resp.status_code != 200:
-            return STATUS_FAIL, None, "HTTP %s %s" % (resp.status_code, resp.text[:200]), elapsed, ""
+            return STATUS_FAIL, None, "HTTP %s %s" % (resp.status_code, resp.text[:200]), elapsed, "", None
         rows = [{"id": i.get("id"), "name": i.get("name"), "mode": i.get("mode"),
                  "engine_name": i.get("engine_name"), "engine_version": i.get("engine_version"),
                  "instance_status": i.get("instance_status")} for i in resp.json().get("instances", [])]
         if not rows or not rows[0].get("engine_version"):
-            return STATUS_FAIL, None, "响应中无 engine_version", elapsed, ""
-        return STATUS_PASS, rows, None, elapsed, "实例列表接口"
+            return STATUS_FAIL, None, "响应中无 engine_version", elapsed, "", None
+        return STATUS_PASS, rows, None, elapsed, "实例列表接口", None
     if api.endswith("/top-sql-list"):
         st, rows, err, el = run_top_sql(tpops, node_ids)
-        return st, rows, err, el, "Top SQL 列表接口"
-    return STATUS_FAIL, None, "未支持的 API: %s" % api, 0, ""
+        return st, rows, err, el, "Top SQL 列表接口", None
+    return STATUS_FAIL, None, "未支持的 API: %s" % api, 0, "", None
 
 
 def build_record(entry, category, status, result, err, elapsed, way, tested_at,
-                 spec, node_name):
+                 spec, node_name, trace=None):
     """构造单个指标的实测记录，字段名与 customer_metric_query_plan.json 对齐。"""
     query = entry.get("query") or {}
-    return {
+    query_out = {
+        "api": query.get("api"),
+        "method": query.get("method"),
+        "uri": query.get("uri"),
+        "request": query.get("request"),
+        "expected_result": query.get("expected_result"),
+    }
+    # 异步多跳才有 flow/apis，单跳来源不写这两个空字段
+    if query.get("flow"):
+        query_out["flow"] = query["flow"]
+    if query.get("apis"):
+        query_out["apis"] = query["apis"]
+    query_out["related_apis"] = query.get("related_apis")
+    record = {
         "customer_metric": entry["customer_metric"],
         "customer_metric_name": entry["customer_metric_name"],
         "customer_category": category,
@@ -275,14 +335,7 @@ def build_record(entry, category, status, result, err, elapsed, way, tested_at,
             "collect_cycle_unit": spec.get("采集更新周期单位"),
             "metric_unit": spec.get("指标单位"),
         },
-        "query": {
-            "api": query.get("api"),
-            "method": query.get("method"),
-            "uri": query.get("uri"),
-            "request": query.get("request"),
-            "expected_result": query.get("expected_result"),
-            "related_apis": query.get("related_apis"),
-        },
+        "query": query_out,
         "verification": {
             "tested_at": tested_at,
             "method": way,
@@ -295,6 +348,25 @@ def build_record(entry, category, status, result, err, elapsed, way, tested_at,
             "actual_data": result,
         },
     }
+    if trace:
+        record["verification"]["job_id"] = trace.get("job_id")
+        record["verification"]["task_id"] = trace.get("task_id")
+        record["verification"]["call_trace"] = trace.get("steps")
+        # 把 api2/3/4 的响应替换成本次实测的真实响应（api1 各指标相同，保留样本）
+        apis = query_out.get("apis")
+        if apis and trace.get("records_body") is not None:
+            sql_text = ""
+            limit = "100"
+            for p in (trace.get("execute_body") or {}).get("params", []):
+                if p.get("param_name") == "sql_text":
+                    sql_text = p.get("param_value")
+                elif p.get("param_name") == "limit":
+                    limit = p.get("param_value")
+            query_out["apis"] = live_apis(
+                sql_text, limit, trace.get("execute_body"),
+                trace.get("records_body"), trace.get("result_body"),
+                trace.get("job_id"), trace.get("task_id"), trace.get("node_id"))
+    return record
 
 
 def main():
@@ -340,11 +412,11 @@ def main():
     failed = []
     for idx, (cat, entry) in enumerate(targets, start=1):
         tested_at = time.strftime("%Y-%m-%d %H:%M:%S")
-        status, result, err, elapsed, way = test_metric(tpops, entry, node_id, node_ids)
+        status, result, err, elapsed, way, trace = test_metric(tpops, entry, node_id, node_ids)
         if status in (STATUS_PASS, STATUS_PASS_EMPTY):
             ok += 1
             rec = build_record(entry, cat, status, result, err, elapsed, way, tested_at,
-                               xlsx_fields.get(entry["customer_metric"], {}), node_name)
+                               xlsx_fields.get(entry["customer_metric"], {}), node_name, trace)
             fname = "%03d_%s.json" % (idx, sanitize(entry["customer_metric"]))
             with open(os.path.join(args.out_dir, fname), "w", encoding="utf-8") as fh:
                 json.dump(rec, fh, ensure_ascii=False, indent=2)

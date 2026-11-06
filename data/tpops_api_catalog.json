@@ -116,6 +116,8 @@
       "purpose": "取实例节点清单（node_id / component_id / role / type），是命令下发与 SQL 采集的前置",
       "covers_metrics": 0,
       "is_prerequisite": true,
+      "flow_step": 1,
+      "flow_of": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
       "request": {
         "headers": {
           "X-Mini-Token": "<token>",
@@ -139,7 +141,7 @@
           }
         ]
       },
-      "notes": "命令只允许在 master 节点执行；集中式实例 3 个 CN 均为 master，HA 实例只有 1 个 master DN"
+      "notes": "命令只允许在 master 节点执行；集中式实例 3 个 CN 均为 master，HA 实例只有 1 个 master DN。一次下发多节点会失败，须逐节点下发"
     },
     {
       "id": "POST /rds/v3/monitor/metrics",
@@ -331,9 +333,11 @@
       "id": "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
       "uri": "/rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
       "method": "GET",
-      "purpose": "轮询命令执行任务状态与错误信息",
+      "purpose": "轮询命令执行任务状态与错误信息（命令中心三跳的第 2 跳）",
       "covers_metrics": 0,
       "is_prerequisite": true,
+      "flow_step": 2,
+      "flow_of": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
       "request": {
         "headers": {
           "X-Mini-Token": "<token>",
@@ -343,12 +347,21 @@
           "cmd_id": "命令 ID"
         },
         "query_params": {
-          "job_id": "任务 ID（来自下发接口返回）"
+          "job_id": "任务 ID（来自下发接口返回）",
+          "offset": 0,
+          "limit": 100
         },
         "body": null
       },
       "response": {
         "total_count": "任务数",
+        "statistics": {
+          "total": "任务总数",
+          "succeed": "成功数",
+          "failed": "失败数",
+          "running": "运行中数",
+          "other": "其它状态数"
+        },
         "job_status": "running/succeed/failed",
         "tasks": [
           {
@@ -363,15 +376,17 @@
           }
         ]
       },
-      "notes": "实测单次往返约 10~20 秒"
+      "notes": "结束判据用 statistics.running == 0，不要看 job_status —— 实测节点任务已 succeed 而 job_status 仍停在 running；单次往返 3~8 秒（节点执行 2.3~6.6 秒 + 下发与轮询开销）"
     },
     {
       "id": "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
       "uri": "/rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
       "method": "GET",
-      "purpose": "取命令执行结果",
+      "purpose": "取命令执行结果（命令中心三跳的第 3 跳，业务数据在此返回）",
       "covers_metrics": 0,
       "is_prerequisite": true,
+      "flow_step": 3,
+      "flow_of": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
       "request": {
         "headers": {
           "X-Mini-Token": "<token>",
@@ -395,7 +410,7 @@
         "out_type": "map",
         "download_file_id": "转储文件 ID（大结果集）"
       },
-      "notes": "result 需二次 json.loads 解析"
+      "notes": "result 是 JSON 字符串，需二次 json.loads 解析；列名取自 SQL 的 as 别名，自定义 SQL 需显式写别名"
     },
     {
       "id": "GET /rds/v3.2/instances",

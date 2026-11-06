@@ -78,6 +78,58 @@ The CHM product guide also documents alarm *integration* APIs — `POST`/`PUT
 `CPUMEMORY`, `CONNECTION`, `SYNCSTAT`, `PROCESSRESOURCE`, `NETWORK`, `TRANSACTION`,
 `IOSTORAGE`, `LOCK`, `INSTATUS`, `FORDR`, `AGENTSTATUS`, `COREMETRICS`
 
+## Customer metric mapping & verification
+
+Three scripts produce the customer-facing deliverables in `data/`:
+
+| Script | Output | Purpose |
+|---|---|---|
+| `build_customer_metric_mapping.py` | `data/customer_metric_mapping.json` | 客户 101 个指标 → TPOPS 可提供性判定与映射关系 |
+| `build_metric_query_plan.py` | `data/customer_metric_query_plan.json`、`data/tpops_api_catalog.json` | 逐指标的查询方案与 API 目录 |
+| `verify_metric_sources.py` | `data/metric_verification/*.json` | **逐指标真实调用**，通过后才落盘 |
+
+```bash
+python tools/build_customer_metric_mapping.py   # 需要先建 tpops_all_metric.json
+python tools/build_metric_query_plan.py
+python tools/verify_metric_sources.py           # 需 TPOPS_USER / TPOPS_PASSWORD
+```
+
+`build_metric_query_plan.py` imports the API catalogue from `tools/tpops_api_defs.py`
+(data only — no logic), keeping both files under the size limit.
+
+### The command center is an async three-hop
+
+82 of the 101 customer metrics are pg_stat-style values that the platform does **not**
+expose as monitoring metrics. They are fetched by running SQL through the platform's
+built-in command `general_single_sql_query` (`cmd_id`
+`73722acc-bff6-4d04-adc0-bc1e1fa1eb7d`, `source=default`, created by platform admin).
+Its template is `select * from ({sql_text}) limit {limit};` — **the platform supplies the
+executor, we supply the SQL**.
+
+The platform is an async job model, so one metric needs three calls:
+
+| # | API | Purpose |
+|---|---|---|
+| 1 | `POST .../customer-commands/{cmd_id}` | submit the SQL → returns `job_id` + `task_id` (no data) |
+| 2 | `GET .../batch-exec-job/task-records?job_id=` | poll until `statistics.running == 0` |
+| 3 | `GET .../batch-exec-job/{job_id}/task-record/{task_id}/detail` | fetch the data |
+
+Gotchas confirmed by live measurement:
+
+- **`job_status` is unreliable** — node tasks are already `succeed` while `job_status`
+  still reads `running`. Use `statistics.running == 0`.
+- **`result` is a JSON string** — it needs a second `json.loads`.
+- Column names come from the SQL `as` aliases, so custom SQL must alias explicitly.
+- Commands run on **master nodes only**; submitting to multiple nodes at once fails.
+- One round trip takes 3–8 s. 82 metrics need only 50 distinct SQL statements.
+- GaussDB's dialect is PG 9.2 level: no `FILTER` (use `CASE WHEN`), and
+  `state <> ''` is always false (use `state is not null` to exclude background
+  processes).
+
+See `data/metric_verification/README.md` for the shape of the per-metric records,
+including the persisted `job_id`/`task_id` (which can be used to re-fetch the original
+result from the platform).
+
 ## Output (`data/`)
 
 All outputs are JSON — each file is the raw JSON body returned by one API call.
