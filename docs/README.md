@@ -4,6 +4,7 @@
 
 | 路径 | 内容 |
 |---|---|
+| [`开发方案-GaussDB指标与告警采集.md`](开发方案-GaussDB指标与告警采集.md) | **开发方案**：指标调研（101 个客户指标按获取方法分四类）、API 调研、实现方法、代码设计、持续运行机制、风险 |
 | [`api/`](api/) | TPOPS API 参考（由 CHM 转换，未增补），含各接口的 URI、入参、出参 |
 | `06_GaussDB V2.0-26.861.1 产品文档(for 轻量化部署形态) 01.chm` | GaussDB 产品文档原始包（312 MB，未入库，`.gitignore` 排除 `*.chm`）。`api/` 下的 Markdown 由它转换而来 |
 | `广东电网ITSCADA系统监控接入操作指引（数据库）V0.4.docx` | 客户监控平台接入指引。注意：该指引覆盖达梦/Oracle/MySQL/SQLServer/ClickHouse/TiDB 等，**走主机 Agent 采集，不涉及 GaussDB 与 Kafka**；对本项目仅作背景参考 |
