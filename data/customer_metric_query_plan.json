@@ -4181,7 +4181,7 @@
             ]
           },
           "not_provided_reason": null,
-          "note": "另可用 GET /rds/health-status 探测服务健康"
+          "note": "实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含实例信息，不能作为本指标的数据源；可用性改用 instances[].instance_status 或 gaussdb_instance_status"
         },
         {
           "customer_metric": "gaussdb_{#PORT}port.status",
@@ -4425,7 +4425,7 @@
             ]
           },
           "not_provided_reason": null,
-          "note": "仅能取到端口号，可用性探测需 GET /rds/health-status"
+          "note": "实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含端口/实例信息，不能用于可用性探测；本指标仅能取到端口号，可用性需另找来源"
         }
       ]
     },

@@ -142,7 +142,7 @@
       "source": "监控指标接口",
       "status": "可提供",
       "match_level": "近似对应",
-      "note": "另可用 GET /rds/health-status 探测服务健康"
+      "note": "实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含实例信息，不能作为本指标的数据源；可用性改用 instances[].instance_status 或 gaussdb_instance_status"
     },
     {
       "customer_metric": "gaussdb.Deadlocks",
@@ -208,7 +208,7 @@
       "source": "命令中心SQL",
       "status": "可提供",
       "match_level": "近似对应",
-      "note": "仅能取到端口号，可用性探测需 GET /rds/health-status"
+      "note": "实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含端口/实例信息，不能用于可用性探测；本指标仅能取到端口号，可用性需另找来源"
     },
     {
       "customer_metric": "GAUSSDB.PG_Service_Status",

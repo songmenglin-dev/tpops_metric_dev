@@ -141,7 +141,7 @@
           }
         ]
       },
-      "notes": "命令只允许在 master 节点执行；集中式实例 3 个 CN 均为 master，HA 实例只有 1 个 master DN。一次下发多节点会失败，须逐节点下发"
+      "notes": "命令只允许在 master 节点执行（constraint_config.limit_node_types=[master]）；集中式实例 3 个 CN 均为 master，HA 实例只有 1 个 master DN。【2026-11-06 实测修正】一次下发多个 master 节点**成功**（HTTP 200，3 个 node_tasks 全部 succeed）——原『一次下发多节点会失败』的结论源自 SHELL 命令的 'Failed to execute command on all nodes.'，被错误推广到 SQL 命令"
     },
     {
       "id": "POST /rds/v3/monitor/metrics",
@@ -305,7 +305,7 @@
         "query_params": {},
         "body": {
           "instance_id": "实例 ID",
-          "node_ids": "节点 ID 数组（只能 master 节点；实测一次下发多节点会失败，须逐节点下发）",
+          "node_ids": "节点 ID 数组（只能 master 节点；2026-11-06 实测：一次下发多个 master 节点成功，返回多条 node_tasks）",
           "params": [
             {
               "param_name": "sql_text",

@@ -1,0 +1,19 @@
+{
+  "health_status.json": {
+    "api": "健康检查",
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/health-status",
+    "query": {},
+    "headers": "none required (probed both with and without X-Mini-Token)",
+    "probes": [
+      "no_auth",
+      "with_token",
+      "bare_prefix"
+    ]
+  },
+  "_meta": {
+    "generated_at": "2026-11-06 22:55:30 +0800",
+    "base_url": "https://172.16.103.193:8002",
+    "note": "探针留档：该接口在开发方案中被引用为可用性探测手段，但此前从未被真实调用过。"
+  }
+}

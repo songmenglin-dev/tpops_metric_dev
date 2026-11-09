@@ -1,0 +1,873 @@
+{
+  "generated_at": "2026-11-07 00:25:37 +0800",
+  "command": {
+    "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+    "cmd_name": "general_single_sql_query",
+    "constraint_config": {
+      "limit_node_types": [
+        "master"
+      ]
+    }
+  },
+  "execution_mode": "sequential + retry(3)",
+  "instances": {
+    "83cd68f2e4cb40b4b7e69240479ffa26in14": {
+      "instance_name": "gauss-6374",
+      "instance_mode": "Combined",
+      "master_count": 3,
+      "master_nodes": [
+        "gauss-6374_gaussdbv5_hcs2-0_0",
+        "gauss-6374_gaussdbv5_hcs2-0_1",
+        "gauss-6374_gaussdbv5_hcs2-0_2"
+      ],
+      "round_seconds": 70.72,
+      "retries": 1,
+      "failed": [],
+      "batches": [
+        {
+          "sql_key": "stat_database",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 5,
+              "columns": [
+                "blk_read_time",
+                "blk_write_time",
+                "blks_hit",
+                "blks_read",
+                "cache_hit_ratio",
+                "conflicts",
+                "datname",
+                "deadlocks",
+                "numbackends",
+                "temp_bytes",
+                "temp_files",
+                "tup_deleted",
+                "tup_fetched",
+                "tup_inserted",
+                "tup_returned",
+                "tup_updated",
+                "xact_commit",
+                "xact_rollback"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 5,
+              "columns": [
+                "blk_read_time",
+                "blk_write_time",
+                "blks_hit",
+                "blks_read",
+                "cache_hit_ratio",
+                "conflicts",
+                "datname",
+                "deadlocks",
+                "numbackends",
+                "temp_bytes",
+                "temp_files",
+                "tup_deleted",
+                "tup_fetched",
+                "tup_inserted",
+                "tup_returned",
+                "tup_updated",
+                "xact_commit",
+                "xact_rollback"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 5,
+              "columns": [
+                "blk_read_time",
+                "blk_write_time",
+                "blks_hit",
+                "blks_read",
+                "cache_hit_ratio",
+                "conflicts",
+                "datname",
+                "deadlocks",
+                "numbackends",
+                "temp_bytes",
+                "temp_files",
+                "tup_deleted",
+                "tup_fetched",
+                "tup_inserted",
+                "tup_returned",
+                "tup_updated",
+                "xact_commit",
+                "xact_rollback"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "stat_user_tables",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 68,
+              "columns": [
+                "dead_tup_ratio",
+                "idx_scan",
+                "idx_tup_fetch",
+                "n_dead_tup",
+                "n_live_tup",
+                "n_tup_del",
+                "n_tup_hot_upd",
+                "n_tup_ins",
+                "n_tup_upd",
+                "relname",
+                "schemaname",
+                "seq_scan",
+                "seq_tup_read"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 68,
+              "columns": [
+                "dead_tup_ratio",
+                "idx_scan",
+                "idx_tup_fetch",
+                "n_dead_tup",
+                "n_live_tup",
+                "n_tup_del",
+                "n_tup_hot_upd",
+                "n_tup_ins",
+                "n_tup_upd",
+                "relname",
+                "schemaname",
+                "seq_scan",
+                "seq_tup_read"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 68,
+              "columns": [
+                "dead_tup_ratio",
+                "idx_scan",
+                "idx_tup_fetch",
+                "n_dead_tup",
+                "n_live_tup",
+                "n_tup_del",
+                "n_tup_hot_upd",
+                "n_tup_ins",
+                "n_tup_upd",
+                "relname",
+                "schemaname",
+                "seq_scan",
+                "seq_tup_read"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "activity_agg",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 2,
+              "columns": [
+                "cnt",
+                "datname",
+                "state"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 2,
+              "columns": [
+                "cnt",
+                "datname",
+                "state"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 2,
+              "columns": [
+                "cnt",
+                "datname",
+                "state"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "activity_running",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 4,
+              "columns": [
+                "datname",
+                "query",
+                "query_start",
+                "state",
+                "usename"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 4,
+              "columns": [
+                "datname",
+                "query",
+                "query_start",
+                "state",
+                "usename"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 4,
+              "columns": [
+                "datname",
+                "query",
+                "query_start",
+                "state",
+                "usename"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "activity_top10",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 7,
+              "columns": [
+                "datname",
+                "query",
+                "query_start",
+                "usename"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 6,
+              "columns": [
+                "datname",
+                "query",
+                "query_start",
+                "usename"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 6,
+              "columns": [
+                "datname",
+                "query",
+                "query_start",
+                "usename"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "locks",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "cnt",
+                "datname",
+                "locktype",
+                "mode"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "cnt",
+                "datname",
+                "locktype",
+                "mode"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "cnt",
+                "datname",
+                "locktype",
+                "mode"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "bgwriter",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "buffers_alloc",
+                "buffers_backend",
+                "buffers_backend_fsync",
+                "buffers_checkpoint",
+                "buffers_clean",
+                "checkpoints_req",
+                "checkpoints_timed",
+                "maxwritten_clean"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "buffers_alloc",
+                "buffers_backend",
+                "buffers_backend_fsync",
+                "buffers_checkpoint",
+                "buffers_clean",
+                "checkpoints_req",
+                "checkpoints_timed",
+                "maxwritten_clean"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "buffers_alloc",
+                "buffers_backend",
+                "buffers_backend_fsync",
+                "buffers_checkpoint",
+                "buffers_clean",
+                "checkpoints_req",
+                "checkpoints_timed",
+                "maxwritten_clean"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "settings",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 4,
+              "columns": [
+                "name",
+                "setting",
+                "unit"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 4,
+              "columns": [
+                "name",
+                "setting",
+                "unit"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 4,
+              "columns": [
+                "name",
+                "setting",
+                "unit"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "database",
+          "attempts": 2,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 5,
+              "columns": [
+                "datname",
+                "encoding",
+                "size_bytes"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 5,
+              "columns": [
+                "datname",
+                "encoding",
+                "size_bytes"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 5,
+              "columns": [
+                "datname",
+                "encoding",
+                "size_bytes"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "prepared_xacts",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "prepared_xacts"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "prepared_xacts"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "prepared_xacts"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "dbstat_sum",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "status": "succeed",
+              "row_count": 72,
+              "columns": [
+                "blks_hit",
+                "blks_read",
+                "datname",
+                "idx_scan",
+                "n_dead_tup",
+                "n_live_tup",
+                "n_tup_del",
+                "n_tup_ins",
+                "n_tup_upd",
+                "numbackends",
+                "relname",
+                "schemaname",
+                "seq_scan",
+                "xact_commit",
+                "xact_rollback"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "status": "succeed",
+              "row_count": 72,
+              "columns": [
+                "blks_hit",
+                "blks_read",
+                "datname",
+                "idx_scan",
+                "n_dead_tup",
+                "n_live_tup",
+                "n_tup_del",
+                "n_tup_ins",
+                "n_tup_upd",
+                "numbackends",
+                "relname",
+                "schemaname",
+                "seq_scan",
+                "xact_commit",
+                "xact_rollback"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            },
+            {
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "status": "succeed",
+              "row_count": 72,
+              "columns": [
+                "blks_hit",
+                "blks_read",
+                "datname",
+                "idx_scan",
+                "n_dead_tup",
+                "n_live_tup",
+                "n_tup_del",
+                "n_tup_ins",
+                "n_tup_upd",
+                "numbackends",
+                "relname",
+                "schemaname",
+                "seq_scan",
+                "xact_commit",
+                "xact_rollback"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        }
+      ]
+    },
+    "c35b8d078cae4a9eb05d616ed5cf032fin14": {
+      "instance_name": "gauss-75a2",
+      "instance_mode": "Ha",
+      "master_count": 1,
+      "master_nodes": [
+        "gauss-75a2_root_0"
+      ],
+      "round_seconds": 54.98,
+      "retries": 0,
+      "failed": [],
+      "batches": [
+        {
+          "sql_key": "stat_database",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 9,
+              "columns": [
+                "blk_read_time",
+                "blk_write_time",
+                "blks_hit",
+                "blks_read",
+                "cache_hit_ratio",
+                "conflicts",
+                "datname",
+                "deadlocks",
+                "numbackends",
+                "temp_bytes",
+                "temp_files",
+                "tup_deleted",
+                "tup_fetched",
+                "tup_inserted",
+                "tup_returned",
+                "tup_updated",
+                "xact_commit",
+                "xact_rollback"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "stat_user_tables",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 79,
+              "columns": [
+                "dead_tup_ratio",
+                "idx_scan",
+                "idx_tup_fetch",
+                "n_dead_tup",
+                "n_live_tup",
+                "n_tup_del",
+                "n_tup_hot_upd",
+                "n_tup_ins",
+                "n_tup_upd",
+                "relname",
+                "schemaname",
+                "seq_scan",
+                "seq_tup_read"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "activity_agg",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 2,
+              "columns": [
+                "cnt",
+                "datname",
+                "state"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "activity_running",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 0,
+              "columns": [],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "activity_top10",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 7,
+              "columns": [
+                "datname",
+                "query",
+                "query_start",
+                "usename"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "locks",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "cnt",
+                "datname",
+                "locktype",
+                "mode"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "bgwriter",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "buffers_alloc",
+                "buffers_backend",
+                "buffers_backend_fsync",
+                "buffers_checkpoint",
+                "buffers_clean",
+                "checkpoints_req",
+                "checkpoints_timed",
+                "maxwritten_clean"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "settings",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 4,
+              "columns": [
+                "name",
+                "setting",
+                "unit"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "database",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 9,
+              "columns": [
+                "datname",
+                "encoding",
+                "size_bytes"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "prepared_xacts",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 1,
+              "columns": [
+                "prepared_xacts"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        },
+        {
+          "sql_key": "dbstat_sum",
+          "attempts": 1,
+          "nodes": [
+            {
+              "node_name": "gauss-75a2_root_0",
+              "status": "succeed",
+              "row_count": 87,
+              "columns": [
+                "blks_hit",
+                "blks_read",
+                "datname",
+                "idx_scan",
+                "n_dead_tup",
+                "n_live_tup",
+                "n_tup_del",
+                "n_tup_ins",
+                "n_tup_upd",
+                "numbackends",
+                "relname",
+                "schemaname",
+                "seq_scan",
+                "xact_commit",
+                "xact_rollback"
+              ],
+              "parse_ok": true,
+              "error_msg": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
