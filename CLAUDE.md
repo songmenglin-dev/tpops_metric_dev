@@ -9,6 +9,10 @@
 - 形态：**常驻进程**，持续循环运行，不是一次性脚本
 - 语言：**Python 3.7.9**（见下方红线，语法必须兼容）
 - 投递：Kafka，**PLAINTEXT**，消息体为 **JSON**
+- **时间线**：需求 2026-11-01 下达，**第一版 2026-12-15 交付**；
+  阶段划分与各阶段退出准则见开发方案 §7.1.1（含投入核算与范围裁剪预案）。
+  **当前处于 P1（11-09~11-13）方案修订**：先关闭评审的 12 条 BLOCKER + 12 条 MAJOR、
+  机械重生成映射表，再进入编码。
 
 ## 架构 / 数据流
 
@@ -25,7 +29,7 @@ Scheduler(窗口 + 水位)
 
 一次循环：拉取 → 转换 → 投递 → **成功后才推进水位**。投递失败不推进水位，重启后从水位续传（至少一次语义）。
 
-五路采集器的划分与依据见 [`docs/开发方案-GaussDB指标与告警采集.md`](docs/开发方案-GaussDB指标与告警采集.md) §1.2 与 §3.2。
+五路采集器的划分与依据见 [`docs/开发方案-GaussDB指标与告警采集.md`](docs/开发方案-GaussDB指标与告警采集.md) §2.3（调研结论）与 §4.3（逐指标取数方法）。
 
 ## 目录结构
 
@@ -154,7 +158,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 - **结束判据用 `statistics.running == 0`，不能看 `job_status`** —— 实测节点任务已 `succeed`
   而 `job_status` 仍停在 `running`。
 - **`result` 是 JSON 字符串**，要二次 `json.loads` 才是行列表。
-- **只能在 master 节点执行**，一次下发多节点会失败；下发前先
+- **只能在 master 节点执行**（`constraint_config.limit_node_types=["master"]`）；**一次下发多个 master 节点实测成功**（2026-11-06：HTTP 200，多条 node_tasks 全部 succeed）；下发前先
   `GET /rds/gaussdb/v3/instances/{id}/key-view-execute-node` 取 master 的 `node_id`。
 - 单次往返 **3~8 秒**；实测 50 条 SQL 有 **3 条偶发失败**（重试即成功）→ **必须做重试**。
 - **GaussDB 方言是 PG 9.2 级**：**无 `FILTER` 子句**（用 `CASE WHEN`）；
@@ -177,6 +181,10 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 
 ## 待定事项（客户未最终确认，先按可配置实现）
 
+> 开发方案 v2.1 §3.9 已为下列各项**冻结默认值**（消息信封、Topic 名、周期分档、告警字段、
+> 脱敏策略），并说明各自通过「映射表 / 环境变量」吸收客户后续调整 —— **均不阻塞编码启动**。
+> 本清单与该节保持同步。
+
 1. **客户 JSON 字段定义** —— 字段名以客户指标库
    `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` 的「指标库」sheet（101 个指标）为准。
    该表英文名存在 OCR 错字（如 `GAUSSDB.Number_of_ansactions_mmitted_r_cond`），需与客户核对正确拼写。
@@ -196,7 +204,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 
 | 文件 | 内容 |
 |---|---|
-| `docs/开发方案-GaussDB指标与告警采集.md` | **开发方案**：指标按获取方法分类、API 调研、实现方法、代码设计、持续运行机制、风险 |
+| `docs/开发方案-GaussDB指标与告警采集.md` | **开发方案 v2.1**（v2.0 重写版 + §7.1.1 里程碑时间线）：需求分析 → 调研 → 需求定稿（消息模型/Topic/周期/口径/脱敏已冻结）→ 技术设计（API 详解 + 逐指标取数 + 10 条合并 SQL）→ 代码设计 → 测试策略 → 里程碑与时间线 → 风险登记册 |
 | `docs/README.md` | 文档总索引 |
 | `docs/api/API参考-监控大盘.md` | 指标查询接口定义 |
 | `docs/api/API参考-告警管理.md` | 告警接口定义 |
