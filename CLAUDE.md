@@ -204,6 +204,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 
 | 文件 | 内容 |
 |---|---|
+| `docs/GaussDB指标至ItScada指标开发.md` | **项目概要**：需求简介 / 时间线 / API 调研（12 个接口、每个接口承担多少指标）/ 指标取数情况（98 可提供 + 3 无法提供） |
 | `docs/开发方案-GaussDB指标与告警采集.md` | **开发方案 v2.1**（v2.0 重写版 + §7.1.1 里程碑时间线）：需求分析 → 调研 → 需求定稿（消息模型/Topic/周期/口径/脱敏已冻结）→ 技术设计（API 详解 + 逐指标取数 + 10 条合并 SQL）→ 代码设计 → 测试策略 → 里程碑与时间线 → 风险登记册 |
 | `docs/README.md` | 文档总索引 |
 | `docs/api/API参考-监控大盘.md` | 指标查询接口定义 |
