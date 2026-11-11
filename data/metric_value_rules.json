@@ -1,0 +1,1277 @@
+{
+  "version": "1.0",
+  "generated_by": "tools/build_metric_value_rules.py",
+  "generated_from": "docs/开发方案-GaussDB指标与告警采集.md §4.3",
+  "sql_key_by_number": {
+    "SQL-1": "stat_database",
+    "SQL-2": "stat_user_tables",
+    "SQL-3": "activity_agg",
+    "SQL-4": "activity_running",
+    "SQL-5": "locks",
+    "SQL-6": "bgwriter",
+    "SQL-7": "settings",
+    "SQL-8": "database",
+    "SQL-9": "prepared_xacts",
+    "SQL-10": "dbstat_sum"
+  },
+  "sql_key_override": {
+    "GAUSSDB.sessions_active_top10": "activity_top10",
+    "gaussdb.running.sql.limit.20": "activity_running",
+    "gaussdb.get.connections.sum": "activity_agg"
+  },
+  "counts": {
+    "A": 11,
+    "B": 82,
+    "C": 4,
+    "D": 1,
+    "total": 98
+  },
+  "metrics": {
+    "GAUSSDB.Number_of_ansactions_mmitted_r_cond": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "rds092_gaussv5_commit_counter",
+      "match_level": "直接对应",
+      "plan_value_expr": "`series[host_ip][i]`，平台已是速率口径",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Number_of_llback_ansactions_r_cond": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "rds093_gaussv5_rollback_counter",
+      "match_level": "直接对应",
+      "plan_value_expr": "同上",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Tps": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "rds400_gaussv5_total_counter",
+      "match_level": "直接对应",
+      "plan_value_expr": "同上",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.QPS": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "rds402_gaussv5_ddl_dml_dcl_count",
+      "match_level": "直接对应",
+      "plan_value_expr": "同上",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Service_availability_testing": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "gaussdb_instance_status",
+      "match_level": "近似对应",
+      "plan_value_expr": "状态值 → 客户枚举（`enum_map`）",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.PG_Service_Status": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "gaussdb_instance_status",
+      "match_level": "近似对应",
+      "plan_value_expr": "同上",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Status": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "gaussdb_instance_status",
+      "match_level": "近似对应",
+      "plan_value_expr": "同上（**30 秒档的唯一指标**）",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Standby_status": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "datanode_switch_status",
+      "match_level": "近似对应",
+      "plan_value_expr": "同上",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Primary_status": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "datanode_switch_status",
+      "match_level": "近似对应",
+      "plan_value_expr": "同上",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Starttime": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "rds133_cn_startup_time",
+      "match_level": "近似对应",
+      "plan_value_expr": "时间戳原值",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Uptimestr": {
+      "channel": "A",
+      "channel_label": "监控指标接口",
+      "tpops_metric": "rds133_cn_startup_time",
+      "match_level": "需换算",
+      "plan_value_expr": "`now - 启动时间`（`gauge`）",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Current_number_of_connections": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "numbackends",
+      "sql_key": "stat_database",
+      "source_expr": "numbackends",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.[{#DATNAME}]_cache_hit_ratio": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "blks_hit/(blks_hit+blks_read)",
+      "sql_key": "stat_database",
+      "source_expr": "blks_hit/(blks_hit+blks_read)",
+      "plan_rule": "ratio",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.[{#DATNAME}]_committed_transactions": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "xact_commit",
+      "sql_key": "stat_database",
+      "source_expr": "xact_commit",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "按 datname 取累计值"
+    },
+    "GAUSSDB.[{#DATNAME}]_delete_records_per_second": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_deleted",
+      "sql_key": "stat_database",
+      "source_expr": "tup_deleted",
+      "plan_rule": "counter_delta",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "累计值，每秒速率需按周期差分"
+    },
+    "GAUSSDB.[{#DATNAME}]_fetch_records_per_second": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_fetched",
+      "sql_key": "stat_database",
+      "source_expr": "tup_fetched",
+      "plan_rule": "counter_delta",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "累计值，每秒速率需按周期差分"
+    },
+    "GAUSSDB.[{#DATNAME}]_insert_records_per_second": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_inserted",
+      "sql_key": "stat_database",
+      "source_expr": "tup_inserted",
+      "plan_rule": "counter_delta",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "累计值，每秒速率需按周期差分"
+    },
+    "GAUSSDB.[{#DATNAME}]_return_records_per_second": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_returned",
+      "sql_key": "stat_database",
+      "source_expr": "tup_returned",
+      "plan_rule": "counter_delta",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "累计值，每秒速率需按周期差分"
+    },
+    "GAUSSDB.[{#DATNAME}]_rolled_back_transactions": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "xact_rollback",
+      "sql_key": "stat_database",
+      "source_expr": "xact_rollback",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "按 datname 取累计值"
+    },
+    "GAUSSDB.[{#DATNAME}]_update_records_per_second": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_updated",
+      "sql_key": "stat_database",
+      "source_expr": "tup_updated",
+      "plan_rule": "counter_delta",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "累计值，每秒速率需按周期差分"
+    },
+    "gaussdb.Blk_read_time": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "blk_read_time",
+      "sql_key": "stat_database",
+      "source_expr": "blk_read_time",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "累计读块耗时，口径与客户一致"
+    },
+    "gaussdb.Blk_write_time": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "blk_write_time",
+      "sql_key": "stat_database",
+      "source_expr": "blk_write_time",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "累计写块耗时，口径与客户一致"
+    },
+    "gaussdb.Blks_hit": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "blks_hit",
+      "sql_key": "stat_database",
+      "source_expr": "blks_hit",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Blks_read": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "blks_read",
+      "sql_key": "stat_database",
+      "source_expr": "blks_read",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Conflicts": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "conflicts",
+      "sql_key": "stat_database",
+      "source_expr": "conflicts",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Deadlocks": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "deadlocks",
+      "sql_key": "stat_database",
+      "source_expr": "deadlocks",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "平台另有 rds091_gaussv5_deadlocks"
+    },
+    "gaussdb.Numbackends": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "numbackends",
+      "sql_key": "stat_database",
+      "source_expr": "numbackends",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Temp_bytes": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "temp_bytes",
+      "sql_key": "stat_database",
+      "source_expr": "temp_bytes",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Temp_files": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "temp_files",
+      "sql_key": "stat_database",
+      "source_expr": "temp_files",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Total_conn": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "numbackends",
+      "sql_key": "stat_database",
+      "source_expr": "numbackends",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Tup_deleted": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_deleted",
+      "sql_key": "stat_database",
+      "source_expr": "tup_deleted",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Tup_inserted": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_inserted",
+      "sql_key": "stat_database",
+      "source_expr": "tup_inserted",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Tup_returned": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_returned",
+      "sql_key": "stat_database",
+      "source_expr": "tup_returned",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Tup_updated": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_updated",
+      "sql_key": "stat_database",
+      "source_expr": "tup_updated",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Xact_commit": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "xact_commit",
+      "sql_key": "stat_database",
+      "source_expr": "xact_commit",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb.Xact_rollback": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "xact_rollback",
+      "sql_key": "stat_database",
+      "source_expr": "xact_rollback",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "累计回滚事务数"
+    },
+    "gaussdb.tup_fetched": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "tup_fetched",
+      "sql_key": "stat_database",
+      "source_expr": "tup_fetched",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.Number.ad.ples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_dead_tup",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_dead_tup",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.Number.lete.ples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_tup_del",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_tup_del",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.Number.t.date.ples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_tup_hot_upd",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_tup_hot_upd",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.garbage.Ratio": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
+      "plan_rule": "ratio",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.number.Of.dex.ples.ad": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "idx_tup_fetch",
+      "sql_key": "stat_user_tables",
+      "source_expr": "idx_tup_fetch",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.number.Of.index.scan": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "idx_scan",
+      "sql_key": "stat_user_tables",
+      "source_expr": "idx_scan",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.number.Of.insert.tuples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_tup_ins",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_tup_ins",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.number.Of.live.tuples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_live_tup",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_live_tup",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.number.Of.quential.ples.ad": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "seq_tup_read",
+      "sql_key": "stat_user_tables",
+      "source_expr": "seq_tup_read",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.number.Of.sequential.scan": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "seq_scan",
+      "sql_key": "stat_user_tables",
+      "source_expr": "seq_scan",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.{#NAME}.number.Of.update.tuples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_tup_upd",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_tup_upd",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.Number.ad.ples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_dead_tup",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_dead_tup",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.Number.lete.ples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_tup_del",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_tup_del",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "累计删除行数"
+    },
+    "gaussdb.{#NAME}.Number.t.date.ples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_tup_hot_upd",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_tup_hot_upd",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.garbage.Ratio": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
+      "plan_rule": "ratio",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.number.Of.dex.ples.ad": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "idx_tup_fetch",
+      "sql_key": "stat_user_tables",
+      "source_expr": "idx_tup_fetch",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.number.Of.index.scan": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "idx_scan",
+      "sql_key": "stat_user_tables",
+      "source_expr": "idx_scan",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.number.Of.insert.tuples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_tup_ins",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_tup_ins",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.number.Of.live.tuples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_live_tup",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_live_tup",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.number.Of.quential.ples.ad": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "seq_tup_read",
+      "sql_key": "stat_user_tables",
+      "source_expr": "seq_tup_read",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.number.Of.sequential.scan": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "seq_scan",
+      "sql_key": "stat_user_tables",
+      "source_expr": "seq_scan",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "gaussdb.{#NAME}.number.Of.update.tuples": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "n_tup_upd",
+      "sql_key": "stat_user_tables",
+      "source_expr": "n_tup_upd",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": ""
+    },
+    "GAUSSDB.Idle_connections": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state='idle'"
+    },
+    "GAUSSDB.Idle_in_transaction_connections": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state='idle in transaction'"
+    },
+    "GAUSSDB.Number_of_active_connections": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state='active'"
+    },
+    "GAUSSDB.[{#DATNAME}]_Active_connections": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "—",
+      "sql_key": "activity_agg",
+      "source_expr": "—",
+      "plan_rule": "raw_rows",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "按 datname 统计活跃会话"
+    },
+    "GAUSSDB.session_usage": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "pg_stat_activity.state",
+      "sql_key": "activity_agg",
+      "source_expr": "pg_stat_activity.state",
+      "plan_rule": "approx",
+      "dimensions": [],
+      "plan_note": "在线会话数 / 总连接数"
+    },
+    "gaussdb.Active_conn": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state='active'；平台另有 rds117"
+    },
+    "gaussdb.Idle_conn": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state='idle'"
+    },
+    "gaussdb.Idle_in_transaction": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state='idle in transaction'"
+    },
+    "gaussdb.Idle_in_transaction_aborted": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state='idle in transaction (aborted)'"
+    },
+    "gaussdb.Lockwaiting": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state 含 lock 相关会话"
+    },
+    "gaussdb.Total_pct": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "pg_stat_activity.state",
+      "sql_key": "activity_agg",
+      "source_expr": "pg_stat_activity.state",
+      "plan_rule": "approx",
+      "dimensions": [],
+      "plan_note": "活跃会话数 / 总连接数"
+    },
+    "gaussdb.Waiting_conn": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "state",
+      "sql_key": "activity_agg",
+      "source_expr": "state",
+      "plan_rule": "aggregate",
+      "dimensions": [],
+      "plan_note": "state 含 wait 类会话"
+    },
+    "GAUSSDB.sessions_active_top10": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "query_start",
+      "sql_key": "activity_top10",
+      "source_expr": "query_start",
+      "plan_rule": "top_n",
+      "dimensions": [],
+      "plan_note": "按 query_start 排序取 Top N"
+    },
+    "gaussdb.get.connections.sum": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "—",
+      "sql_key": "activity_agg",
+      "source_expr": "—",
+      "plan_rule": "raw_rows",
+      "dimensions": [],
+      "plan_note": "会话清单（27 个字段）"
+    },
+    "gaussdb.running.sql.limit.20": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "query",
+      "sql_key": "activity_running",
+      "source_expr": "query",
+      "plan_rule": "top_n",
+      "dimensions": [],
+      "plan_note": "会话当前执行的 SQL 文本"
+    },
+    "gaussdb.get.lock.info": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "—",
+      "sql_key": "locks",
+      "source_expr": "—",
+      "plan_rule": "raw_rows",
+      "dimensions": [],
+      "plan_note": "pg_locks 全量锁视图"
+    },
+    "gaussdb.locks.accessexclusive[{#DBNAME}]": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "mode",
+      "sql_key": "locks",
+      "source_expr": "mode",
+      "plan_rule": "aggregate",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "mode='AccessExclusiveLock' 按库聚合"
+    },
+    "gaussdb.locks.get_metrics[{#DBNAME}]": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "pg_locks",
+      "sql_key": "locks",
+      "source_expr": "pg_locks",
+      "plan_rule": "approx",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "按 datname 聚合，平台无按 DBNAME 的锁指标"
+    },
+    "GAUSSDB.Buffers_Alloc": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "buffers_alloc",
+      "sql_key": "bgwriter",
+      "source_expr": "buffers_alloc",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Buffers_Backend": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "buffers_backend",
+      "sql_key": "bgwriter",
+      "source_expr": "buffers_backend",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Buffers_Backend_Fsync": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "buffers_backend_fsync",
+      "sql_key": "bgwriter",
+      "source_expr": "buffers_backend_fsync",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Buffers_Checkpoint": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "buffers_checkpoint",
+      "sql_key": "bgwriter",
+      "source_expr": "buffers_checkpoint",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Buffers_Clean": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "buffers_clean",
+      "sql_key": "bgwriter",
+      "source_expr": "buffers_clean",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.Checkpoint_count_eckpoint_gments": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "checkpoints_req",
+      "sql_key": "bgwriter",
+      "source_expr": "checkpoints_req",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "按需触发（requested）的 checkpoint 次数"
+    },
+    "GAUSSDB.Checkpoint_count_eckpoint_meout": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "checkpoints_timed",
+      "sql_key": "bgwriter",
+      "source_expr": "checkpoints_timed",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "按超时触发的 checkpoint 次数"
+    },
+    "GAUSSDB.Max_Written_Clean": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "maxwritten_clean",
+      "sql_key": "bgwriter",
+      "source_expr": "maxwritten_clean",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "GAUSSDB.maximum_connection": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "setting",
+      "sql_key": "settings",
+      "source_expr": "setting",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "实测 200"
+    },
+    "gaussdb.Pagesize": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "setting",
+      "sql_key": "settings",
+      "source_expr": "setting",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "实测 8192"
+    },
+    "gaussdb.Timezone": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "setting",
+      "sql_key": "settings",
+      "source_expr": "setting",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": ""
+    },
+    "gaussdb_{#PORT}port.status": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "pg_settings.port",
+      "sql_key": "settings",
+      "source_expr": "pg_settings.port",
+      "plan_rule": "approx",
+      "dimensions": [
+        "PORT"
+      ],
+      "plan_note": "实测 2026-11-06：`GET /rds/health-status` 返回 200 但**响应体为空**（Content-Length: 0），只反映 open-api 服务存活、不含端口/实例信息，**不能用于可用性探测**；本指标仅能取到端口号，可用性需另找来源"
+    },
+    "gaussdb.DBtsize[{#DATABASE_NAME}]": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "size_bytes",
+      "sql_key": "database",
+      "source_expr": "size_bytes",
+      "plan_rule": "raw",
+      "dimensions": [
+        "NAME"
+      ],
+      "plan_note": "平台另有 rds128 聚合值"
+    },
+    "gaussdb.Serverencoding": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "encoding",
+      "sql_key": "database",
+      "source_expr": "encoding",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "pg_encoding_to_char()"
+    },
+    "gaussdb.Prepared": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "prepared_xacts",
+      "sql_key": "prepared_xacts",
+      "source_expr": "prepared_xacts",
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "count(*) 统计预备事务"
+    },
+    "gaussdb.get.dbstat.sum": {
+      "channel": "B",
+      "channel_label": "命令中心SQL",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "—",
+      "sql_key": "dbstat_sum",
+      "source_expr": "—",
+      "plan_rule": "raw_rows",
+      "dimensions": [],
+      "plan_note": "库级 + 表级统计视图"
+    },
+    "GAUSSDB.Total_slow_queries": {
+      "channel": "C",
+      "channel_label": "诊断优化接口",
+      "tpops_metric": null,
+      "match_level": "可统计",
+      "plan_value_expr": "`len(slow_sql_infos)`",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "collection",
+      "dimensions": [],
+      "plan_note": "集合条数"
+    },
+    "GAUSSDB.Select_slow_queries": {
+      "channel": "C",
+      "channel_label": "诊断优化接口",
+      "tpops_metric": null,
+      "match_level": "可统计",
+      "plan_value_expr": "按 `sql_text` 前缀统计（`select`/`with`）",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "collection",
+      "dimensions": [],
+      "plan_note": "文本判定"
+    },
+    "GAUSSDB.DML_slow_queries": {
+      "channel": "C",
+      "channel_label": "诊断优化接口",
+      "tpops_metric": null,
+      "match_level": "可统计",
+      "plan_value_expr": "按 `sql_text` 前缀统计（`insert`/`update`/`delete`）",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "collection",
+      "dimensions": [],
+      "plan_note": "文本判定"
+    },
+    "gaussdb.Top10sql": {
+      "channel": "C",
+      "channel_label": "诊断优化接口",
+      "tpops_metric": null,
+      "match_level": "可统计",
+      "plan_value_expr": "`top_sql_infos` 按 `total_elapse_time` 排序取前 10",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "collection",
+      "dimensions": [],
+      "plan_note": "**含 SQL 文本 → 脱敏**"
+    },
+    "gaussdb.server_version": {
+      "channel": "D",
+      "channel_label": "实例接口",
+      "tpops_metric": null,
+      "match_level": "直接对应",
+      "plan_value_expr": "`instances[].engine_version`（如 `V2.0-10.0.0`）",
+      "sql_key": null,
+      "source_expr": null,
+      "plan_rule": "raw",
+      "dimensions": [],
+      "plan_note": "1 小时"
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "category": "C",
+  "name": "诊断优化接口",
+  "api": "POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list、.../top-sql-list",
+  "tpops_fields": [
+    {
+      "field": "slow_sql_infos[].sql_id",
+      "desc": "慢 SQL 唯一标识"
+    },
+    {
+      "field": "slow_sql_infos[].sql_text",
+      "desc": "慢 SQL 文本（含业务 SQL，外发前要脱敏）"
+    },
+    {
+      "field": "slow_sql_infos[].calls",
+      "desc": "执行次数"
+    },
+    {
+      "field": "slow_sql_infos[].db_name",
+      "desc": "所属数据库"
+    },
+    {
+      "field": "top_sql_infos[].sql_id",
+      "desc": "SQL 唯一标识"
+    },
+    {
+      "field": "top_sql_infos[].sql_text",
+      "desc": "SQL 文本（需脱敏）"
+    },
+    {
+      "field": "top_sql_infos[].total_elapse_time",
+      "desc": "总耗时，用于排 Top N"
+    },
+    {
+      "field": "instances[].name",
+      "desc": "实例名"
+    }
+  ],
+  "field_mapping": [
+    {
+      "customer_field": "metricName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "把 {#XXX} 换成维度实际值",
+      "source_field": "metric_name",
+      "source_lookup": "用接口与集合名（slow_sql_infos / top_sql_infos）匹配"
+    },
+    {
+      "customer_field": "metricCode",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "把 {#XXX} 换成维度实际值",
+      "source_field": "metric_code",
+      "source_lookup": "用接口与集合名（slow_sql_infos / top_sql_infos）匹配"
+    },
+    {
+      "customer_field": "resourceName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "assembled",
+      "source": "instances[].name",
+      "transform": "实例级接口，没有节点维度，只用实例名",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    },
+    {
+      "customer_field": "value",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "tpops",
+      "source": "slow_sql_infos[] / top_sql_infos[]",
+      "transform": "按 value_rule 执行：集合条数 / 按 sql_text 前缀计数（Select、DML）/ 按 total_elapse_time 取前 10 条",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "unit",
+      "customer_type": "String",
+      "required": false,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "客户指标表【指标单位】，为空则 null",
+      "source_field": "unit",
+      "source_lookup": "用接口与集合名（slow_sql_infos / top_sql_infos）匹配"
+    },
+    {
+      "customer_field": "clock",
+      "customer_type": "Long",
+      "required": true,
+      "source_type": "assembled",
+      "source": "本轮采集完成时刻",
+      "transform": "接口返回的是当前快照，没有自己的时间戳",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    },
+    {
+      "customer_field": "tags",
+      "customer_type": "JSON",
+      "required": false,
+      "source_type": "assembled",
+      "source": "instances[]",
+      "transform": "instance_id、instance_name、node_id、component_id、host_ip、dimension_values",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    }
+  ]
+}

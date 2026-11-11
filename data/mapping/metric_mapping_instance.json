@@ -1,0 +1,99 @@
+{
+  "category": "D",
+  "name": "实例接口",
+  "api": "GET /rds/v3.2/instances",
+  "tpops_fields": [
+    {
+      "field": "instances[].id",
+      "desc": "实例 ID"
+    },
+    {
+      "field": "instances[].name",
+      "desc": "实例名，如 gauss-75a2"
+    },
+    {
+      "field": "instances[].mode",
+      "desc": "部署形态，Combined / Ha"
+    },
+    {
+      "field": "instances[].engine_version",
+      "desc": "引擎版本，如 V2.0-10.0.0"
+    },
+    {
+      "field": "instances[].instance_status",
+      "desc": "实例状态，normal 等"
+    }
+  ],
+  "field_mapping": [
+    {
+      "customer_field": "metricName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "把 {#XXX} 换成维度实际值",
+      "source_field": "metric_name",
+      "source_lookup": "实例接口只有 1 个指标：gaussdb.server_version"
+    },
+    {
+      "customer_field": "metricCode",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "把 {#XXX} 换成维度实际值",
+      "source_field": "metric_code",
+      "source_lookup": "实例接口只有 1 个指标：gaussdb.server_version"
+    },
+    {
+      "customer_field": "resourceName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "tpops",
+      "source": "instances[].name",
+      "transform": "实例级接口，没有节点维度，直接用实例名",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "value",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "tpops",
+      "source": "instances[].engine_version",
+      "transform": "原样（字符型指标）",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "unit",
+      "customer_type": "String",
+      "required": false,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "客户指标表【指标单位】，为空则 null",
+      "source_field": "unit",
+      "source_lookup": "实例接口只有 1 个指标：gaussdb.server_version"
+    },
+    {
+      "customer_field": "clock",
+      "customer_type": "Long",
+      "required": true,
+      "source_type": "assembled",
+      "source": "本轮采集完成时刻",
+      "transform": "接口返回的是当前快照，没有自己的时间戳",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    },
+    {
+      "customer_field": "tags",
+      "customer_type": "JSON",
+      "required": false,
+      "source_type": "assembled",
+      "source": "instances[]",
+      "transform": "instance_id、instance_name、node_id、component_id、host_ip、dimension_values",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    }
+  ]
+}

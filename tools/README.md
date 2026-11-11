@@ -87,11 +87,26 @@ Three scripts produce the customer-facing deliverables in `data/`:
 | `build_customer_metric_mapping.py` | `data/customer_metric_mapping.json` | 客户 101 个指标 → TPOPS 可提供性判定与映射关系 |
 | `build_metric_query_plan.py` | `data/customer_metric_query_plan.json`、`data/tpops_api_catalog.json` | 逐指标的查询方案与 API 目录 |
 | `verify_metric_sources.py` | `data/metric_verification/*.json` | **逐指标真实调用**，通过后才落盘 |
+| `build_metric_value_rules.py` | `data/metric_value_rules.json` | 开发方案 §4.3 的逐指标取值规则 → 机器可读 |
+| `build_itscada_mapping.py` | `data/mapping/*.json` | ITSCADA 映射规则（字段映射 / 指标规则 / 告警规则） |
 
 ```bash
 python tools/build_customer_metric_mapping.py   # 需要先建 tpops_all_metric.json
 python tools/build_metric_query_plan.py
 python tools/verify_metric_sources.py           # 需 TPOPS_USER / TPOPS_PASSWORD
+```
+
+### ITSCADA 映射层
+
+`tools/mappings/` 是规则执行代码（加载查表、取值规则引擎、消息组装），
+规则数据在 `data/mapping/`。用法见 [`tools/mappings/README.md`](mappings/README.md)。
+
+```python
+import sys
+sys.path.insert(0, 'tools')
+from mappings import MappingTable
+
+table = MappingTable.load()   # 默认读 data/mapping/
 ```
 
 `build_metric_query_plan.py` imports the API catalogue from `tools/tpops_api_defs.py`

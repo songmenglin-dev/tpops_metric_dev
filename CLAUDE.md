@@ -33,10 +33,10 @@ Scheduler(窗口 + 水位)
 
 ## 目录结构
 
-`tpops_kafka/` 是**待建**的采集端 —— 本仓库当前只有调研产物与离线脚本：
+`tpops_kafka/` 是**待建**的采集端 —— 本仓库当前只有调研产物、映射规则与离线脚本：
 
 ```
-tpops_kafka/
+tpops_kafka/              # 待建：采集端（编码阶段落地）
 ├── main.py          # 入口：装配依赖、启动调度循环、信号处理
 ├── config.py        # 配置加载（环境变量 + 可选配置文件）
 ├── scheduler.py     # 轮询循环、水位推进、重试退避、优雅退出
@@ -48,15 +48,33 @@ tpops_kafka/
 │   ├── diagnostic.py    # C 类：slow-sql-list / top-sql-list
 │   ├── instances.py     # D 类：实例元数据
 │   └── alarms.py        # E 类：告警拉取（active/history × 收敛/明细）
-├── mapping/
-│   ├── table.py     # 映射表加载与查表（表驱动，映射不写死在代码里）
-│   └── rules.py     # 字段级转换规则（类型、单位、缺省值）
 └── kafka/
     ├── producer.py  # PLAINTEXT 生产者
     └── serializer.py# JSON 序列化
 ```
 
+**映射层当前在 `tools/` 下**（规则数据 + 执行代码，采集端落地时搬进 `tpops_kafka/`）：
+
 ```
+data/mapping/             # 映射规则数据（**表驱动，不写死在代码里**）
+├── metric_mapping_monitor_metrics.json   # A 类 监控指标接口的字段映射
+├── metric_mapping_command_center_sql.json # B 类 命令中心 SQL 的字段映射
+├── metric_mapping_diagnostic.json         # C 类 诊断优化接口的字段映射
+├── metric_mapping_instance.json           # D 类 实例接口的字段映射
+├── alarm_mapping.json                     # 告警的字段映射
+├── itscada_field_map.json   # 客户消息的字段清单（哪些字段、必填与否）
+├── metric_rules.json        # 101 条指标规则（98 可提供 + 3 丢弃）
+├── alarm_rules.json         # 告警规则 + 257 条告警定义
+└── open_items.json          # 待客户确认的 7 项
+
+tools/mappings/           # 映射层执行代码
+├── table.py     # 映射表加载与查表
+├── rules.py     # 字段级转换规则（类型、单位、缺省值）
+└── message.py   # 按 ITSCADA 字段规范组装消息
+```
+
+```
+tests/     # 映射层单元测试（pytest）；TPOPS 与 Kafka 一律 mock
 tools/     # 现有离线取数脚本 + 参考实现，保留
 data/      # 离线样本与调研产物
 │  ├── alarm/               # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
@@ -64,6 +82,7 @@ data/      # 离线样本与调研产物
 │  ├── metric_verification/ # 逐指标真实调用留档（98/98 通过），可直接当回归样本
 │  ├── customer_metric_mapping.json    # 101 客户指标 → TPOPS 可提供性判定
 │  ├── customer_metric_query_plan.json # 逐指标查询方案与真实响应
+│  ├── metric_value_rules.json         # 开发方案 §4.3 的逐指标取值规则（生成物）
 │  ├── tpops_api_catalog.json          # TPOPS API 目录
 │  └── customer_metric_unsupported.csv # 无法提供清单
 docs/      # 文档
@@ -185,20 +204,29 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 > 脱敏策略），并说明各自通过「映射表 / 环境变量」吸收客户后续调整 —— **均不阻塞编码启动**。
 > 本清单与该节保持同步。
 
-1. **客户 JSON 字段定义** —— 字段名以客户指标库
-   `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` 的「指标库」sheet（101 个指标）为准。
-   该表英文名存在 OCR 错字（如 `GAUSSDB.Number_of_ansactions_mmitted_r_cond`），需与客户核对正确拼写。
-   可提供性**已判定：98 可提供 / 3 无法提供**，逐指标真实调用 **98/98 通过**。
+1. **客户 JSON 字段定义** —— **已到客户对接方案**（`docs/ITSCADA第三方指标数据接入对接方案V2.docx`
+   与 `docs/ITSCADA第三方告警数据接入对接方案V2.docx`），字段集合以两份方案的字段表为准，
+   指标名以客户指标库 `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` 的「指标库」sheet
+   （101 个指标）为准。该表英文名存在 OCR 错字（如 `GAUSSDB.Number_of_ansactions_mmitted_r_cond`），
+   需与客户核对正确拼写。可提供性**已判定：98 可提供 / 3 无法提供**，逐指标真实调用 **98/98 通过**。
+   落地：`data/mapping/itscada_field_map.json`（字段级映射）+ `data/mapping/metric_rules.json`（逐指标规则）。
 2. **客户指标 → 取数方法的映射表已建好** —— `data/customer_metric_query_plan.json`
    （101 条逐指标查询方案与真实响应），另加 sheet「指标库-指标获取方法」标注每个指标走哪条通道
    （命令中心SQL 82 / 监控指标接口 11 / 诊断优化接口 4 / 实例接口 1 / 无法提供 3）。
-   采集端落地为 `tpops_kafka/mapping/` 下的**表驱动数据文件，不要写死在代码中**；
+   采集端落地为 `data/mapping/` 下的**表驱动数据文件，不要写死在代码中**；
    3 个无法提供的指标丢弃并计数上报。
 3. **Topic 命名与分区策略**。
 4. **指标与告警是否同 topic**。
 5. 客户指标库里的「数据更新周期 / 采集更新周期单位」与 TPOPS `collection_frequency` 的对齐口径。
-6. **告警字段规范** —— 客户未给；当前设想是收敛列表作主条目、明细行挂 `details`。
+6. **告警字段规范** —— 已按 ITSCADA 告警对接方案 §3.2 落地（`alarm_rules.json`）；
+   仍待客户确认的是**告警→指标的挂载口径**：257 条平台告警里只有 3 条能对应到客户指标
+   （都指向 `gaussdb.Tps`），其余 254 条事件类告警用 `gaussdb.alarm.<alarm_id>` 自造指标名。
 7. **慢 SQL 的 `sql_text` 是否可外发** —— 含业务 SQL 文本，默认脱敏或截断，需客户书面确认。
+8. **`resourceName` 与客户台账的对齐** —— 文档要求与 ITSCADA 台账录入的资源名称完全一致；
+   当前按 `{instance_name}_{node_id}` 生成（`itscada_field_map.json` 的 `resource_name` 段），
+   台账命名规则待客户提供后核对。
+9. **`value` 的线格式** —— 两份方案的字段表写 String，指标样例是数字、告警样例是字符串；
+   当前按客户指标表【数据类型】序列化，需客户确认。
 
 ## 相关资料
 
@@ -211,6 +239,10 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 | `docs/api/API参考-告警管理.md` | 告警接口定义 |
 | `docs/api/API参考-登录.md` | mini-token 认证流程 |
 | `data/customer_metric_query_plan.json` | 逐指标查询方案与真实响应（采集端的实现依据） |
+| `docs/ITSCADA第三方指标数据接入对接方案V2.docx` | **客户侧指标接入规范**：字段表、占位符规则、指标表模板 |
+| `docs/ITSCADA第三方告警数据接入对接方案V2.docx` | **客户侧告警接入规范**：字段表、告警压缩规则 |
+| `tools/mappings/README.md` | 映射规则文件说明：字段含义、取值规则类型、怎么改 |
+| `docs/映射表-ITSCADA字段对照.md` | **开发依据**：两张字段级映射表（指标 / 告警），原始字段 → ITSCADA 客户字段 |
 | `data/metric_verification/` | 逐指标真实调用留档（98/98 通过），回归样本 |
 | `data/alarm/README.md` | 告警侧数据结构与抓取产物说明 |
 | `tools/README.md` | 离线取数脚本用法（`tools/tpops_client.py` 是可用参考实现） |

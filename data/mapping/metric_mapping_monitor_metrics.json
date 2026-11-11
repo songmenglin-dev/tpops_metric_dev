@@ -1,0 +1,123 @@
+{
+  "category": "A",
+  "name": "监控指标接口",
+  "api": "POST /rds/v3/monitor/metrics",
+  "tpops_fields": [
+    {
+      "field": "metric_infos[].metrics[].series",
+      "desc": "维度键 → 数值数组，值可能是 null"
+    },
+    {
+      "field": "metric_infos[].metrics[].timestamps",
+      "desc": "时间戳数组，与 series 同下标对应"
+    },
+    {
+      "field": "metric_infos[].metrics[].name",
+      "desc": "平台指标英文 id，如 rds092_gaussv5_commit_counter"
+    },
+    {
+      "field": "metric_infos[].metrics[].metric_name_cn",
+      "desc": "平台中文名，如「用户提交事务数/秒」"
+    },
+    {
+      "field": "metric_infos[].metrics[].collection_frequency",
+      "desc": "平台采集周期（秒）"
+    },
+    {
+      "field": "metric_infos[].instance_id",
+      "desc": "实例 ID"
+    },
+    {
+      "field": "metric_infos[].time_interval",
+      "desc": "采样间隔（秒）"
+    },
+    {
+      "field": "nodes[].component_id",
+      "desc": "节点清单里的组件 ID，用来把 series 的键换算成 node_id"
+    },
+    {
+      "field": "nodes[].node_id",
+      "desc": "节点 ID，拼 resourceName 用"
+    },
+    {
+      "field": "nodes[].node_ip",
+      "desc": "节点 IP，写进 tags"
+    },
+    {
+      "field": "instances[].name",
+      "desc": "实例名，如 gauss-75a2"
+    }
+  ],
+  "field_mapping": [
+    {
+      "customer_field": "metricName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "把 {#XXX} 换成维度实际值",
+      "source_field": "metric_name",
+      "source_lookup": "用 TPOPS 返回的 metrics[].name 去匹配该条目的 source.tpops_metric"
+    },
+    {
+      "customer_field": "metricCode",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "把 {#XXX} 换成维度实际值",
+      "source_field": "metric_code",
+      "source_lookup": "用 TPOPS 返回的 metrics[].name 去匹配该条目的 source.tpops_metric"
+    },
+    {
+      "customer_field": "resourceName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "assembled",
+      "source": "instances[].name + nodes[].node_id",
+      "transform": "series 的键取 component_id（去掉 ip 前缀）→ 节点清单换算 node_id → 拼 {instance_name}_{node_id}；键是 value 时为实例级，只用实例名",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    },
+    {
+      "customer_field": "value",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "tpops",
+      "source": "metric_infos[].metrics[].series[<维度键>][i]",
+      "transform": "取最后一个非空点；该点是 null 就不产出这条消息（不填 0）",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "unit",
+      "customer_type": "String",
+      "required": false,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "客户指标表【指标单位】，为空则 null",
+      "source_field": "unit",
+      "source_lookup": "用 TPOPS 返回的 metrics[].name 去匹配该条目的 source.tpops_metric"
+    },
+    {
+      "customer_field": "clock",
+      "customer_type": "Long",
+      "required": true,
+      "source_type": "tpops",
+      "source": "metric_infos[].metrics[].timestamps[i]",
+      "transform": "i 与 value 取到的点是同一下标",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "tags",
+      "customer_type": "JSON",
+      "required": false,
+      "source_type": "assembled",
+      "source": "instances[] / nodes[] / series 的键",
+      "transform": "instance_id、instance_name、node_id、component_id、host_ip、dimension_values",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    }
+  ]
+}

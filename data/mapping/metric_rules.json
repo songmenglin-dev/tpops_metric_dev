@@ -1,0 +1,3836 @@
+{
+  "version": "1.0",
+  "generated_by": "tools/build_itscada_mapping.py",
+  "sources": [
+    "高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx / 指标库",
+    "data/customer_metric_mapping.json",
+    "data/metric_value_rules.json",
+    "data/merged_sql/merged_sql.json"
+  ],
+  "field_map_ref": "itscada_field_map.json",
+  "counts": {
+    "total": 101,
+    "enabled": 98,
+    "disabled": 3,
+    "needs_confirmation": 5
+  },
+  "rules": [
+    {
+      "metric_code": "GAUSSDB.Number_of_ansactions_mmitted_r_cond",
+      "metric_name": "每秒提交事务数",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "tps",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "rds092_gaussv5_commit_counter",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台为速率口径；累计值见 pg_stat_database.xact_commit",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Total_slow_queries",
+      "metric_name": "慢查询总数",
+      "resource_type": "GAUSSDB实例",
+      "category": "慢查询信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "可统计",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list",
+        "source": "diagnostic",
+        "tpops_source": "slow-sql-list.sql_id",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "诊断优化接口"
+      },
+      "value_rule": {
+        "type": "collection_count",
+        "params": {
+          "collection": "slow_sql_infos"
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "慢SQL集合条数统计",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Select_slow_queries",
+      "metric_name": "Select慢查询数",
+      "resource_type": "GAUSSDB实例",
+      "category": "慢查询信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "可统计",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list",
+        "source": "diagnostic",
+        "tpops_source": "slow-sql-list.sql_text",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "诊断优化接口"
+      },
+      "value_rule": {
+        "type": "text_prefix_count",
+        "params": {
+          "collection": "slow_sql_infos",
+          "field": "sql_text",
+          "prefixes": [
+            "select",
+            "with"
+          ]
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "按 sql_text 统计 SELECT 类慢查询",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.DML_slow_queries",
+      "metric_name": "DML慢查询数",
+      "resource_type": "GAUSSDB实例",
+      "category": "慢查询信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "可统计",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list",
+        "source": "diagnostic",
+        "tpops_source": "slow-sql-list.sql_text",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "诊断优化接口"
+      },
+      "value_rule": {
+        "type": "text_prefix_count",
+        "params": {
+          "collection": "slow_sql_infos",
+          "field": "sql_text",
+          "prefixes": [
+            "insert",
+            "update",
+            "delete"
+          ]
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "按 sql_text 统计 DML 类慢查询",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Number_of_llback_ansactions_r_cond",
+      "metric_name": "每秒回滚事务数",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "tps",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "rds093_gaussv5_rollback_counter",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台为速率口径",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Service_availability_testing",
+      "metric_name": "服务可用性检测",
+      "resource_type": "GAUSSDB实例",
+      "category": "可用性",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "gaussdb_instance_status",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "enum_map",
+        "params": {
+          "mapping": {
+            "1": "正常",
+            "0": "异常"
+          },
+          "default": "passthrough",
+          "confirmed": false
+        },
+        "note": "平台实例状态实测 1=正常；展示值转义为建议值，需客户确认",
+        "needs_confirmation": true
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含实例信息，不能作为本指标的数据源；可用性改用 instances[].instance_status 或 gaussdb_instance_status",
+      "needs_confirmation": true
+    },
+    {
+      "metric_code": "gaussdb.Deadlocks",
+      "metric_name": "检测到的死锁次数",
+      "resource_type": "GAUSSDB实例",
+      "category": "锁信息",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.deadlocks",
+        "value_source_expr": "deadlocks",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "deadlocks",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台另有 rds091_gaussv5_deadlocks",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Xact_rollback",
+      "metric_name": "回滚的事务总数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.xact_rollback",
+        "value_source_expr": "xact_rollback",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "xact_rollback",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "累计回滚事务数",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Idle_in_transaction_aborted",
+      "metric_name": "事务中已中止的空闲连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state": "idle in transaction (aborted)"
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state='idle in transaction (aborted)'"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state='idle in transaction (aborted)'",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Tps",
+      "metric_name": "TPS（每秒事务数）",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "浮点",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "rds400_gaussv5_total_counter",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台为用户总事务数/秒",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.QPS",
+      "metric_name": "QPS（每秒查询数）",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "浮点",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "rds402_gaussv5_ddl_dml_dcl_count",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台口径为 DDL+DML+DCL 平均SQL执行数/秒",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb_{#PORT}port.status",
+      "metric_name": "服务端口{#PORT}检测",
+      "resource_type": "GAUSSDB实例",
+      "category": "可用性",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_settings.port",
+        "value_source_expr": "pg_settings.port",
+        "sql_key": "settings",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw_filtered",
+        "params": {
+          "filter": {
+            "name": "port"
+          },
+          "column": "setting",
+          "cast": "int"
+        },
+        "note": "只能取到端口号；健康检查接口 GET /rds/health-status 响应体为空，不能做可用性探测"
+      },
+      "placeholders": [
+        "PORT"
+      ],
+      "dimension_bindings": {
+        "PORT": "setting"
+      },
+      "note": "实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含端口/实例信息，不能用于可用性探测；本指标仅能取到端口号，可用性需另找来源",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.PG_Service_Status",
+      "metric_name": "GAUSSDB服务状态",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "gaussdb_instance_status",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        },
+        "note": "平台枚举值原样透传（实测 1=正常/0=异常），客户展示值转义待确认",
+        "needs_confirmation": true
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台为实例状态，非 pg_is_in_recovery 语义",
+      "needs_confirmation": true
+    },
+    {
+      "metric_code": "gaussdb.get.connections.sum",
+      "metric_name": "获取连接信息",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity",
+        "value_source_expr": "—",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw_rows",
+        "params": {},
+        "note": "开发方案描述为 27 字段会话清单，实际合并 SQL 返回的是按库+状态聚合的三列，需另加 SQL 才能取到完整清单"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "会话清单（27 个字段）",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.get.dbstat.sum",
+      "metric_name": "获取db性能数据",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database + pg_stat_user_tables",
+        "value_source_expr": "—",
+        "sql_key": "dbstat_sum",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw_rows",
+        "params": {},
+        "note": ""
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "库级 + 表级统计视图",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.get.lock.info",
+      "metric_name": "获取数据库锁数据",
+      "resource_type": "GAUSSDB实例",
+      "category": "锁信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_locks",
+        "value_source_expr": "—",
+        "sql_key": "locks",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw_rows",
+        "params": {},
+        "note": ""
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "pg_locks 全量锁视图",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.Number.lete.ples",
+      "metric_name": "({#NAME})被删除的行总数（包括已回收行）",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_tup_del",
+        "value_source_expr": "n_tup_del",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_tup_del",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "累计删除行数",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Starttime",
+      "metric_name": "启动时间",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 60,
+        "unit": "秒"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "rds133_cn_startup_time",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台为 CN 进程启动时刻(timestamp)",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Lockwaiting",
+      "metric_name": "查看当前锁等待数量",
+      "resource_type": "GAUSSDB实例",
+      "category": "锁信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 60,
+        "unit": "秒"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state_contains": [
+              "lock"
+            ]
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state 含 lock 相关会话"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state 含 lock 相关会话",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Uptimestr",
+      "metric_name": "运行时长",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 60,
+        "unit": "秒"
+      },
+      "status": "可提供",
+      "match_level": "需换算",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "rds133_cn_startup_time",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "gauge",
+        "params": {
+          "column": "rds133_cn_startup_time",
+          "unit": "秒"
+        },
+        "note": "运行时长 = 当前时刻 - CN 进程启动时刻"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台无 uptime 指标，用启动时刻与当前时间推算",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.server_version",
+      "metric_name": "版本",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "时"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "GET /rds/v3.2/instances",
+        "source": "instance",
+        "tpops_source": "instances.engine_version",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "实例接口"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "field": "engine_version"
+        },
+        "note": "GET /rds/v3.2/instances[].engine_version"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "GET /rds/v3.2/instances；另有 GET /rds/v3/version-info",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.running.sql.limit.20",
+      "metric_name": "正在运行的SQL",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.query",
+        "value_source_expr": "query",
+        "sql_key": "activity_running",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "top_n",
+        "params": {
+          "sort_by": "query_start",
+          "order": "desc",
+          "limit": 20,
+          "columns": [
+            "datname",
+            "usename",
+            "state",
+            "query_start",
+            "query"
+          ]
+        },
+        "note": "正在运行的 SQL 文本，需按 §3.8 脱敏"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "会话当前执行的 SQL 文本",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.Number.ad.ples",
+      "metric_name": "({#NAME})已删除但未回收的行数（死亡行）",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_dead_tup",
+        "value_source_expr": "n_dead_tup",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_dead_tup",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.Number.t.date.ples",
+      "metric_name": "({#NAME})通过 HOT更新的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": "%",
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_tup_hot_upd",
+        "value_source_expr": "n_tup_hot_upd",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_tup_hot_upd",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.number.Of.index.scan",
+      "metric_name": "({#NAME})索引扫描次数",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.idx_scan",
+        "value_source_expr": "idx_scan",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "idx_scan",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.number.Of.quential.ples.ad",
+      "metric_name": "({#NAME})顺序扫描读取的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.seq_tup_read",
+        "value_source_expr": "seq_tup_read",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "seq_tup_read",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.number.Of.dex.ples.ad",
+      "metric_name": "({#NAME})通过索引扫描获取的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.idx_tup_fetch",
+        "value_source_expr": "idx_tup_fetch",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "idx_tup_fetch",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.number.Of.insert.tuples",
+      "metric_name": "({#NAME})插入的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_tup_ins",
+        "value_source_expr": "n_tup_ins",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_tup_ins",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.number.Of.live.tuples",
+      "metric_name": "({#NAME})当前活跃的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_live_tup",
+        "value_source_expr": "n_live_tup",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_live_tup",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.number.Of.update.tuples",
+      "metric_name": "({#NAME})更新的行总数",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_tup_upd",
+        "value_source_expr": "n_tup_upd",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_tup_upd",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.number.Of.sequential.scan",
+      "metric_name": "({#NAME})顺序扫描次数",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.seq_scan",
+        "value_source_expr": "seq_scan",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "seq_scan",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.locks.get_metrics[{#DBNAME}]",
+      "metric_name": "DB [{#DBNAME}]: 获取锁信息",
+      "resource_type": "GAUSSDB实例",
+      "category": "锁信息",
+      "value_type": "字符",
+      "unit": "MB",
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_locks",
+        "value_source_expr": "pg_locks",
+        "sql_key": "locks",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "group_by": [
+            "datname"
+          ],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "按库聚合锁数量；客户表单位标 MB，实际是锁个数，口径待客户确认"
+      },
+      "placeholders": [
+        "DBNAME"
+      ],
+      "dimension_bindings": {
+        "DBNAME": "datname"
+      },
+      "note": "按 datname 聚合，平台无按 DBNAME 的锁指标",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.locks.accessexclusive[{#DBNAME}]",
+      "metric_name": "DB [{#DBNAME}]: Num of accessexclusive locks",
+      "resource_type": "GAUSSDB实例",
+      "category": "锁信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_locks.mode",
+        "value_source_expr": "mode",
+        "sql_key": "locks",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "mode": "AccessExclusiveLock"
+          },
+          "group_by": [
+            "datname"
+          ],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "mode='AccessExclusiveLock' 按库聚合"
+      },
+      "placeholders": [
+        "DBNAME"
+      ],
+      "dimension_bindings": {
+        "DBNAME": "datname"
+      },
+      "note": "mode='AccessExclusiveLock' 按库聚合",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.DBtsize[{#DATABASE_NAME}]",
+      "metric_name": "[{#DATABASE_NAME}]库大小",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库统计信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_database_size(datname)",
+        "value_source_expr": "size_bytes",
+        "sql_key": "database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "size_bytes",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        },
+        "note": ""
+      },
+      "placeholders": [
+        "DATABASE_NAME"
+      ],
+      "dimension_bindings": {
+        "DATABASE_NAME": "datname"
+      },
+      "note": "平台另有 rds128 聚合值",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.{#NAME}.garbage.Ratio",
+      "metric_name": "({#NAME})死亡行占比",
+      "resource_type": "GAUSSDB实例",
+      "category": "表信息",
+      "value_type": "浮点",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_dead_tup/(n_live_tup+n_dead_tup)",
+        "value_source_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "dead_tup_ratio",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        },
+        "note": "比率已在合并 SQL 内用 CASE WHEN 算好（dead_tup_ratio）"
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Serverencoding",
+      "metric_name": "字符集",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 24,
+        "unit": "时"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_database.encoding",
+        "value_source_expr": "encoding",
+        "sql_key": "database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "encoding",
+          "row_policy": "first",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "pg_encoding_to_char()",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Top10sql",
+      "metric_name": "当前运行时间最长的Top10 SQL",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "字符",
+      "unit": null,
+      "collect_cycle": {
+        "value": 2,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/instances/{instance_id}/top-sql-list",
+        "source": "diagnostic",
+        "tpops_source": "top-sql-list.total_elapse_time",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "诊断优化接口"
+      },
+      "value_rule": {
+        "type": "top_n",
+        "params": {
+          "collection": "top_sql_infos",
+          "sort_by": "total_elapse_time",
+          "order": "desc",
+          "limit": 10
+        },
+        "note": "含 SQL 文本，需按 §3.8 脱敏"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "按 total_elapse_time 排序取 Top N",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Status",
+      "metric_name": "数据库状态",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 30,
+        "unit": "秒"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "gaussdb_instance_status",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        },
+        "note": "平台枚举值原样透传（实测 1=正常/0=异常），客户展示值转义待确认",
+        "needs_confirmation": true
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台为实例状态",
+      "needs_confirmation": true
+    },
+    {
+      "metric_code": "gaussdb.Timezone",
+      "metric_name": "时区",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "字符",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 24,
+        "unit": "时"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_settings.TimeZone",
+        "value_source_expr": "setting",
+        "sql_key": "settings",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw_filtered",
+        "params": {
+          "filter": {
+            "name": "TimeZone"
+          },
+          "column": "setting"
+        },
+        "note": "客户表单位标「个」，与时区语义不符，待客户确认"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Pagesize",
+      "metric_name": "页大小",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_settings.block_size",
+        "value_source_expr": "setting",
+        "sql_key": "settings",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw_filtered",
+        "params": {
+          "filter": {
+            "name": "block_size"
+          },
+          "column": "setting",
+          "cast": "int"
+        },
+        "note": "实测 8192"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "实测 8192",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Idle_in_transaction",
+      "metric_name": "事务中空闲的连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state": "idle in transaction"
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state='idle in transaction'"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state='idle in transaction'",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Blk_write_time",
+      "metric_name": "写块的时间（毫秒）",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": "ms",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.blk_write_time",
+        "value_source_expr": "blk_write_time",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "blk_write_time",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "累计写块耗时，口径与客户一致",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Numbackends",
+      "metric_name": "当前连接到数据库的后端进程数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.numbackends",
+        "value_source_expr": "numbackends",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "numbackends",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Fastpath_function_call",
+      "metric_name": "快路径函数调用的连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "无法提供",
+      "match_level": "",
+      "enabled": false,
+      "source": {
+        "api": null,
+        "source": null,
+        "tpops_source": null,
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "无法提供"
+      },
+      "value_rule": null,
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "PG 侧无 fastpath 计数器；pg_settings 仅有 gsi_fastpath_level 开关",
+      "needs_confirmation": false,
+      "unsupported_reason": "PG 侧无 fastpath 计数器；pg_settings 仅有 gsi_fastpath_level 开关"
+    },
+    {
+      "metric_code": "gaussdb.Total_conn",
+      "metric_name": "总连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.numbackends",
+        "value_source_expr": "numbackends",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "numbackends",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Temp_bytes",
+      "metric_name": "临时文件大小",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.temp_bytes",
+        "value_source_expr": "temp_bytes",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "temp_bytes",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Blks_read",
+      "metric_name": "从磁盘读取的块数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.blks_read",
+        "value_source_expr": "blks_read",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "blks_read",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Blks_hit",
+      "metric_name": "从缓存命中读取的块数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.blks_hit",
+        "value_source_expr": "blks_hit",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "blks_hit",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Tup_deleted",
+      "metric_name": "删除的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_deleted",
+        "value_source_expr": "tup_deleted",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "tup_deleted",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Xact_commit",
+      "metric_name": "提交的事务总数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.xact_commit",
+        "value_source_expr": "xact_commit",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "xact_commit",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Tup_inserted",
+      "metric_name": "插入的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_inserted",
+        "value_source_expr": "tup_inserted",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "tup_inserted",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Conflicts",
+      "metric_name": "数据库操作冲突次数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": "ms",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.conflicts",
+        "value_source_expr": "conflicts",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "conflicts",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Tup_updated",
+      "metric_name": "更新的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_updated",
+        "value_source_expr": "tup_updated",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "tup_updated",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Tup_returned",
+      "metric_name": "查询返回的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_returned",
+        "value_source_expr": "tup_returned",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "tup_returned",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Temp_files",
+      "metric_name": "生成的临时文件数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": "b",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.temp_files",
+        "value_source_expr": "temp_files",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "temp_files",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.tup_fetched",
+      "metric_name": "通过索引获取的行数",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_fetched",
+        "value_source_expr": "tup_fetched",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "tup_fetched",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Active_conn",
+      "metric_name": "活动连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state": "active"
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state='active'；平台另有 rds117"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state='active'；平台另有 rds117",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Disabled_conn",
+      "metric_name": "禁用的连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "无法提供",
+      "match_level": "",
+      "enabled": false,
+      "source": {
+        "api": null,
+        "source": null,
+        "tpops_source": null,
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "无法提供"
+      },
+      "value_rule": null,
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "PG 无「禁用连接」概念；pg_settings 仅有 reserved_connections 等预留连接",
+      "needs_confirmation": false,
+      "unsupported_reason": "PG 无「禁用连接」概念；pg_settings 仅有 reserved_connections 等预留连接"
+    },
+    {
+      "metric_code": "gaussdb.Idle_conn",
+      "metric_name": "空闲连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state": "idle"
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state='idle'"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state='idle'",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Waiting_conn",
+      "metric_name": "等待资源的连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "%",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state_contains": [
+              "wait"
+            ]
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state 含 wait 类会话"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state 含 wait 类会话",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Blk_read_time",
+      "metric_name": "读块的时间（毫秒）",
+      "resource_type": "GAUSSDB实例",
+      "category": "性能信息",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.blk_read_time",
+        "value_source_expr": "blk_read_time",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "blk_read_time",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "累计读块耗时，口径与客户一致",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Total_pct",
+      "metric_name": "连接使用率",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "浮点",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "pg_stat_activity.state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "ratio_across",
+        "params": {
+          "numerator": {
+            "sql_key": "activity_agg",
+            "fn": "sum",
+            "value_column": "cnt"
+          },
+          "denominator": {
+            "sql_key": "stat_database",
+            "fn": "sum",
+            "value_column": "numbackends"
+          }
+        },
+        "note": "连接使用率：分子=activity_agg 全部会话数，分母=stat_database 各库 numbackends 之和"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "活跃会话数 / 总连接数",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.Prepared",
+      "metric_name": "预提交事务数",
+      "resource_type": "GAUSSDB实例",
+      "category": "连接情况",
+      "value_type": "整数",
+      "unit": "个",
+      "collect_cycle": {
+        "value": 1,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_prepared_xacts",
+        "value_source_expr": "prepared_xacts",
+        "sql_key": "prepared_xacts",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "prepared_xacts",
+          "row_policy": "first",
+          "group_by": []
+        },
+        "note": "count(*) 统计预备事务"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "count(*) 统计预备事务",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "gaussdb.sendAgentName",
+      "metric_name": "发送设备名给Agent",
+      "resource_type": "GAUSSDB实例",
+      "category": "Agent",
+      "value_type": "文本",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "无法提供",
+      "match_level": "",
+      "enabled": false,
+      "source": {
+        "api": null,
+        "source": null,
+        "tpops_source": null,
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "无法提供"
+      },
+      "value_rule": null,
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "Agent 侧行为，不是数据库可查询的监控指标",
+      "needs_confirmation": false,
+      "unsupported_reason": "Agent 侧行为，不是数据库可查询的监控指标"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.Number.ad.ples",
+      "metric_name": "({#NAME}) number of dead tuples",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_dead_tup",
+        "value_source_expr": "n_dead_tup",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_dead_tup",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.Number.lete.ples",
+      "metric_name": "({#NAME}) number of delete tuples",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "tuples/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_tup_del",
+        "value_source_expr": "n_tup_del",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_tup_del",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.garbage.Ratio",
+      "metric_name": "({#NAME})Garbage ratio",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "浮点",
+      "unit": "%",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_dead_tup/(n_live_tup+n_dead_tup)",
+        "value_source_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "dead_tup_ratio",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        },
+        "note": "比率已在合并 SQL 内用 CASE WHEN 算好（dead_tup_ratio）"
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.Number.t.date.ples",
+      "metric_name": "({#NAME}) number of hot update tuples",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "tuples/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_tup_hot_upd",
+        "value_source_expr": "n_tup_hot_upd",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_tup_hot_upd",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.index.scan",
+      "metric_name": "({#NAME})number of index scan",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "scans/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.idx_scan",
+        "value_source_expr": "idx_scan",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "idx_scan",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
+      "metric_name": "({#NAME})number of index tuples read",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "tuples/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.idx_tup_fetch",
+        "value_source_expr": "idx_tup_fetch",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "idx_tup_fetch",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.live.tuples",
+      "metric_name": "({#NAME})number of live tuples",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_live_tup",
+        "value_source_expr": "n_live_tup",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_live_tup",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
+      "metric_name": "({#NAME})number of insert tuples",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "tuples/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_tup_ins",
+        "value_source_expr": "n_tup_ins",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_tup_ins",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
+      "metric_name": "({#NAME})number of sequencial scan",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "scans/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.seq_scan",
+        "value_source_expr": "seq_scan",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "seq_scan",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
+      "metric_name": "({#NAME})number of sequencial tuples read",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "tuples/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.seq_tup_read",
+        "value_source_expr": "seq_tup_read",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "seq_tup_read",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.update.tuples",
+      "metric_name": "({#NAME})number of update tuples",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": "tuples/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_user_tables.n_tup_upd",
+        "value_source_expr": "n_tup_upd",
+        "sql_key": "stat_user_tables",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "n_tup_upd",
+          "row_policy": "per_row",
+          "group_by": [
+            "relname"
+          ]
+        }
+      },
+      "placeholders": [
+        "NAME"
+      ],
+      "dimension_bindings": {
+        "NAME": "relname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Buffers_Alloc",
+      "metric_name": "Buffers Alloc",
+      "resource_type": "GAUSSDB实例",
+      "category": "Bgwriter信息",
+      "value_type": "整数",
+      "unit": "buffers/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_bgwriter.buffers_alloc",
+        "value_source_expr": "buffers_alloc",
+        "sql_key": "bgwriter",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "buffers_alloc",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Buffers_Backend",
+      "metric_name": "Buffers Backend",
+      "resource_type": "GAUSSDB实例",
+      "category": "Bgwriter信息",
+      "value_type": "整数",
+      "unit": "buffers/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_bgwriter.buffers_backend",
+        "value_source_expr": "buffers_backend",
+        "sql_key": "bgwriter",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "buffers_backend",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Buffers_Backend_Fsync",
+      "metric_name": "Buffers Backend Fsync",
+      "resource_type": "GAUSSDB实例",
+      "category": "Bgwriter信息",
+      "value_type": "整数",
+      "unit": "buffers/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_bgwriter.buffers_backend_fsync",
+        "value_source_expr": "buffers_backend_fsync",
+        "sql_key": "bgwriter",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "buffers_backend_fsync",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Buffers_Checkpoint",
+      "metric_name": "Buffers Checkpoint",
+      "resource_type": "GAUSSDB实例",
+      "category": "Bgwriter信息",
+      "value_type": "整数",
+      "unit": "buffers/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_bgwriter.buffers_checkpoint",
+        "value_source_expr": "buffers_checkpoint",
+        "sql_key": "bgwriter",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "buffers_checkpoint",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Buffers_Clean",
+      "metric_name": "Buffers Clean",
+      "resource_type": "GAUSSDB实例",
+      "category": "Bgwriter信息",
+      "value_type": "整数",
+      "unit": "buffers/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_bgwriter.buffers_clean",
+        "value_source_expr": "buffers_clean",
+        "sql_key": "bgwriter",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "buffers_clean",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Checkpoint_count_eckpoint_gments",
+      "metric_name": "Checkpoint count (by checkpoint segments)",
+      "resource_type": "GAUSSDB实例",
+      "category": "Bgwriter信息",
+      "value_type": "整数",
+      "unit": "cps",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_bgwriter.checkpoints_req",
+        "value_source_expr": "checkpoints_req",
+        "sql_key": "bgwriter",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "checkpoints_req",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "按需触发（requested）的 checkpoint 次数",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Checkpoint_count_eckpoint_meout",
+      "metric_name": "Checkpoint count (by checkpoint timeout)",
+      "resource_type": "GAUSSDB实例",
+      "category": "Bgwriter信息",
+      "value_type": "整数",
+      "unit": "cps",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_bgwriter.checkpoints_timed",
+        "value_source_expr": "checkpoints_timed",
+        "sql_key": "bgwriter",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "checkpoints_timed",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "按超时触发的 checkpoint 次数",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Idle_in_transaction_connections",
+      "metric_name": "Idle in transaction connections",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state": "idle in transaction"
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state='idle in transaction'"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state='idle in transaction'",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Idle_connections",
+      "metric_name": "Idle connections",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state": "idle"
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state='idle'"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state='idle'",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Max_Written_Clean",
+      "metric_name": "Max Written Clean",
+      "resource_type": "GAUSSDB实例",
+      "category": "Bgwriter信息",
+      "value_type": "整数",
+      "unit": "buffers/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_bgwriter.maxwritten_clean",
+        "value_source_expr": "maxwritten_clean",
+        "sql_key": "bgwriter",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "maxwritten_clean",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Standby_status",
+      "metric_name": "Standby状态",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "datanode_switch_status",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        },
+        "note": "平台枚举值原样透传（实测 1=正常/0=异常），客户展示值转义待确认",
+        "needs_confirmation": true
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台为 DN 主备状态",
+      "needs_confirmation": true
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_committed_transactions",
+      "metric_name": "[{#DATNAME}] Commited transactions",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "整数",
+      "unit": "tps",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.xact_commit",
+        "value_source_expr": "xact_commit",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "xact_commit",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        }
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "按 datname 取累计值",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_Active_connections",
+      "metric_name": "[{#DATNAME}] Active connections",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity",
+        "value_source_expr": "—",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state": "active"
+          },
+          "group_by": [
+            "datname"
+          ],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "开发方案标注为 raw_rows，实际语义是「按库统计活跃会话」，按聚合实现"
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "按 datname 统计活跃会话",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_rolled_back_transactions",
+      "metric_name": "[{#DATNAME}] Rolled back transactions",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "整数",
+      "unit": "tps",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.xact_rollback",
+        "value_source_expr": "xact_rollback",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "xact_rollback",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        }
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "按 datname 取累计值",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Current_number_of_connections",
+      "metric_name": "当前连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.numbackends",
+        "value_source_expr": "numbackends",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "numbackends",
+          "row_policy": "sum",
+          "group_by": []
+        }
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.maximum_connection",
+      "metric_name": "最大连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_settings.max_connections",
+        "value_source_expr": "setting",
+        "sql_key": "settings",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw_filtered",
+        "params": {
+          "filter": {
+            "name": "max_connections"
+          },
+          "column": "setting",
+          "cast": "int"
+        },
+        "note": ""
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "实测 200",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Number_of_active_connections",
+      "metric_name": "活跃连接数",
+      "resource_type": "GAUSSDB实例",
+      "category": "事务信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "aggregate",
+        "params": {
+          "filter": {
+            "state": "active"
+          },
+          "group_by": [],
+          "fn": "sum",
+          "value_column": "cnt"
+        },
+        "note": "state='active'"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "state='active'",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_fetch_records_per_second",
+      "metric_name": "[{#DATNAME}]每秒Fetch记录数",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "整数",
+      "unit": "tup/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "需换算",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_fetched",
+        "value_source_expr": "tup_fetched",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "counter_delta",
+        "params": {
+          "column": "tup_fetched",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        },
+        "note": "累计值差分为速率；首轮无基线、实例重启归零时产出 null"
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "累计值，每秒速率需按周期差分",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_insert_records_per_second",
+      "metric_name": "[{#DATNAME}]每秒Insert记录数",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "整数",
+      "unit": "tup/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "需换算",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_inserted",
+        "value_source_expr": "tup_inserted",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "counter_delta",
+        "params": {
+          "column": "tup_inserted",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        },
+        "note": "累计值差分为速率；首轮无基线、实例重启归零时产出 null"
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "累计值，每秒速率需按周期差分",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_return_records_per_second",
+      "metric_name": "[{#DATNAME}]每秒Return记录数",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "整数",
+      "unit": "tup/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "需换算",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_returned",
+        "value_source_expr": "tup_returned",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "counter_delta",
+        "params": {
+          "column": "tup_returned",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        },
+        "note": "累计值差分为速率；首轮无基线、实例重启归零时产出 null"
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "累计值，每秒速率需按周期差分",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_update_records_per_second",
+      "metric_name": "[{#DATNAME}]每秒Update记录数",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "整数",
+      "unit": "tup/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "需换算",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_updated",
+        "value_source_expr": "tup_updated",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "counter_delta",
+        "params": {
+          "column": "tup_updated",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        },
+        "note": "累计值差分为速率；首轮无基线、实例重启归零时产出 null"
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "累计值，每秒速率需按周期差分",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_cache_hit_ratio",
+      "metric_name": "[{#DATNAME}]缓存命中率",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "浮点",
+      "unit": "%",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.blks_hit/(blks_hit+blks_read)",
+        "value_source_expr": "blks_hit/(blks_hit+blks_read)",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "raw",
+        "params": {
+          "column": "cache_hit_ratio",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        },
+        "note": "比率已在合并 SQL 内用 CASE WHEN 算好（cache_hit_ratio）"
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.session_usage",
+      "metric_name": "连接数使用率",
+      "resource_type": "GAUSSDB实例",
+      "category": "会话信息",
+      "value_type": "浮点",
+      "unit": "%",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.state",
+        "value_source_expr": "pg_stat_activity.state",
+        "sql_key": "activity_agg",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "ratio_across",
+        "params": {
+          "numerator": {
+            "sql_key": "activity_agg",
+            "fn": "sum",
+            "value_column": "cnt"
+          },
+          "denominator": {
+            "sql_key": "stat_database",
+            "fn": "sum",
+            "value_column": "numbackends"
+          }
+        },
+        "note": "在线会话数 / 总连接数：分子=activity_agg 全部会话数，分母=stat_database 各库 numbackends 之和"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "在线会话数 / 总连接数",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.sessions_active_top10",
+      "metric_name": "会话时间TOP10",
+      "resource_type": "GAUSSDB实例",
+      "category": "会话信息",
+      "value_type": "文本",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "直接对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_activity.query_start",
+        "value_source_expr": "query_start",
+        "sql_key": "activity_top10",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "top_n",
+        "params": {
+          "sort_by": "query_start",
+          "order": "asc",
+          "limit": 10,
+          "columns": [
+            "datname",
+            "usename",
+            "query_start"
+          ]
+        },
+        "note": "会话时长最长 = 最早开始，SQL 已按 query_start 升序"
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "按 query_start 排序取 Top N",
+      "needs_confirmation": false
+    },
+    {
+      "metric_code": "GAUSSDB.Primary_status",
+      "metric_name": "Primary状态",
+      "resource_type": "GAUSSDB实例",
+      "category": "基本信息",
+      "value_type": "整数",
+      "unit": null,
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "近似对应",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/v3/monitor/metrics",
+        "source": "monitor_metrics",
+        "tpops_source": "datanode_switch_status",
+        "value_source_expr": null,
+        "sql_key": null,
+        "method": "监控指标接口"
+      },
+      "value_rule": {
+        "type": "series_point",
+        "params": {
+          "position": "last_non_null"
+        },
+        "note": "平台枚举值原样透传（实测 1=正常/0=异常），客户展示值转义待确认",
+        "needs_confirmation": true
+      },
+      "placeholders": [],
+      "dimension_bindings": {},
+      "note": "平台为 DN 主备状态",
+      "needs_confirmation": true
+    },
+    {
+      "metric_code": "GAUSSDB.[{#DATNAME}]_delete_records_per_second",
+      "metric_name": "[{#DATNAME}]每秒Delete记录数",
+      "resource_type": "GAUSSDB实例",
+      "category": "数据库信息",
+      "value_type": "整数",
+      "unit": "tup/s",
+      "collect_cycle": {
+        "value": 5,
+        "unit": "分"
+      },
+      "status": "可提供",
+      "match_level": "需换算",
+      "enabled": true,
+      "source": {
+        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "source": "command_center_sql",
+        "tpops_source": "pg_stat_database.tup_deleted",
+        "value_source_expr": "tup_deleted",
+        "sql_key": "stat_database",
+        "method": "命令中心SQL"
+      },
+      "value_rule": {
+        "type": "counter_delta",
+        "params": {
+          "column": "tup_deleted",
+          "row_policy": "per_row",
+          "group_by": [
+            "datname"
+          ]
+        },
+        "note": "累计值差分为速率；首轮无基线、实例重启归零时产出 null"
+      },
+      "placeholders": [
+        "DATNAME"
+      ],
+      "dimension_bindings": {
+        "DATNAME": "datname"
+      },
+      "note": "累计值，每秒速率需按周期差分",
+      "needs_confirmation": false
+    }
+  ]
+}

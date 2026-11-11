@@ -55,5 +55,6 @@ python tools/fetch_tpops_alarms.py
 - **按 `metric_id` 关联**（`catalog_metric.json` 里的匹配字段）：这是按告警名称推断出来的，
   `exact` 才可信，`candidate` 需人工确认。
 - 告警目录 85 行对应 54 个唯一告警ID（同一告警可按不同指标配置多条规则）。
-- 客户侧的告警字段规范**尚未确认**（见 CLAUDE.md 待定事项），当前这些文件是接口返回的
-  原始结构，尚未做客户字段映射。
+- 客户侧的告警字段规范**已到**（`docs/ITSCADA第三方告警数据接入对接方案V2.docx`），
+  字段级映射落地在 `data/mapping/alarm_rules.json`（等级/状态映射 + 257 条告警定义
+  → 客户指标的挂载）；这些文件仍是接口返回的**原始结构**，供规则回放与回归用。

@@ -1,0 +1,332 @@
+{
+  "name": "告警",
+  "api": "POST /rds/v3/alarm/records",
+  "records": {
+    "convergence": {
+      "request": "is_convergence=true",
+      "desc": "收敛条目：一条 = 实例 + alarm_id，作主条目"
+    },
+    "detail": {
+      "request": "is_convergence=false",
+      "desc": "明细行：每节点一行，补节点与描述"
+    }
+  },
+  "note": "两种记录的 JSON 形状相同，都是 records[] 数组；区别只在请求参数。下表的 in 列标明字段在哪一种记录里。",
+  "tpops_fields": [
+    {
+      "field": "records[].alarm_id",
+      "in": "convergence",
+      "desc": "告警 ID，ITSCADA 用它去重与跟踪状态"
+    },
+    {
+      "field": "records[].alarm_name",
+      "in": "convergence",
+      "desc": "告警名，如「节点NTP状态异常」"
+    },
+    {
+      "field": "records[].severity",
+      "in": "convergence",
+      "desc": "告警等级：critical / major / minor / notice"
+    },
+    {
+      "field": "records[].status",
+      "in": "convergence",
+      "desc": "告警状态：activated / recovered / cleared"
+    },
+    {
+      "field": "records[].alarm_type",
+      "in": "convergence",
+      "desc": "metric / event / system-metric / system-event / system"
+    },
+    {
+      "field": "records[].alarm_category",
+      "in": "convergence",
+      "desc": "告警分类，如「节点状态」"
+    },
+    {
+      "field": "records[].engine",
+      "in": "convergence",
+      "desc": "引擎名，如 gaussdb"
+    },
+    {
+      "field": "records[].instance_id",
+      "in": "convergence",
+      "desc": "实例 ID"
+    },
+    {
+      "field": "records[].instance_name",
+      "in": "convergence",
+      "desc": "实例名"
+    },
+    {
+      "field": "records[].alarm_items_sum",
+      "in": "convergence",
+      "desc": "命中的节点数"
+    },
+    {
+      "field": "records[].first_alarm_time",
+      "in": "convergence",
+      "desc": "首次触发时间（13 位毫秒）"
+    },
+    {
+      "field": "records[].last_alarm_time",
+      "in": "convergence",
+      "desc": "最近触发时间（13 位毫秒）"
+    },
+    {
+      "field": "records[].clear_alarm_time",
+      "in": "convergence",
+      "desc": "恢复时间（13 位毫秒），只有历史告警有"
+    },
+    {
+      "field": "records[].alarm_duration",
+      "in": "convergence",
+      "desc": "持续时长描述，如「4小时5分钟」"
+    },
+    {
+      "field": "records[].cause",
+      "in": "convergence",
+      "desc": "原因描述"
+    },
+    {
+      "field": "records[].component_name",
+      "in": "convergence",
+      "desc": "告警归属组件，如「实例管理」"
+    },
+    {
+      "field": "records[].node_id",
+      "in": "detail",
+      "desc": "节点 ID"
+    },
+    {
+      "field": "records[].host_ip",
+      "in": "detail",
+      "desc": "节点 IP"
+    },
+    {
+      "field": "records[].description",
+      "in": "detail",
+      "desc": "告警描述"
+    },
+    {
+      "field": "records[].impaction",
+      "in": "detail",
+      "desc": "影响"
+    },
+    {
+      "field": "records[].possible_causes",
+      "in": "detail",
+      "desc": "可能原因"
+    },
+    {
+      "field": "records[].processing_steps",
+      "in": "detail",
+      "desc": "处理步骤"
+    },
+    {
+      "field": "records[].alarm_detail_raise_count",
+      "in": "detail",
+      "desc": "触发次数"
+    },
+    {
+      "field": "records[].notify_status",
+      "in": "detail",
+      "desc": "通知状态"
+    },
+    {
+      "field": "records[].automatic_clear",
+      "in": "detail",
+      "desc": "是否可自动清除"
+    },
+    {
+      "field": "records[].resource_id",
+      "in": "detail",
+      "desc": "资源标识（实例ID-节点ID-告警标识）"
+    },
+    {
+      "field": "records[].alarm_remarks",
+      "in": "detail",
+      "desc": "告警说明"
+    },
+    {
+      "field": "records[].paramFillList",
+      "in": "detail",
+      "desc": "参数列表"
+    }
+  ],
+  "field_mapping": [
+    {
+      "customer_field": "alarmId",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "tpops",
+      "source": "records[].alarm_id",
+      "source_in": "convergence",
+      "transform": "原样",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "alarmName",
+      "customer_type": "String",
+      "required": false,
+      "source_type": "tpops",
+      "source": "records[].alarm_name",
+      "source_in": "convergence",
+      "transform": "原样",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "alarmContent",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "tpops",
+      "source": [
+        "records[].description",
+        "records[].cause",
+        "records[].alarm_name"
+      ],
+      "source_in": "detail 优先，没有明细行时用 convergence",
+      "transform": "按这个顺序取第一个非空",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "priority",
+      "customer_type": "Integer",
+      "required": true,
+      "source_type": "tpops",
+      "source": "records[].severity",
+      "source_in": "convergence",
+      "transform": "critical→1（紧急）/ major→2（重要）/ minor→3（一般）/ notice→4（预警）；severity 缺失时用告警定义里的默认等级",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "alarmTime",
+      "customer_type": "Long",
+      "required": true,
+      "source_type": "tpops",
+      "source": "records[].first_alarm_time",
+      "source_in": "convergence",
+      "transform": "原样",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "status",
+      "customer_type": "Integer",
+      "required": true,
+      "source_type": "tpops",
+      "source": "records[].status",
+      "source_in": "convergence",
+      "transform": "activated→1（告警）/ recovered、cleared→0（恢复）",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "recoverTime",
+      "customer_type": "Long",
+      "required": "conditional",
+      "source_type": "tpops",
+      "source": "records[].clear_alarm_time",
+      "source_in": "convergence",
+      "transform": "status=0（恢复）时必填；status=1（告警）时输出 null",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "resourceName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "assembled",
+      "source": [
+        "records[].instance_name",
+        "records[].node_id"
+      ],
+      "source_in": "instance_name 取 convergence，node_id 取 detail",
+      "transform": "拼 {instance_name}_{node_id}；拿不到 node_id 时只用实例名",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    },
+    {
+      "customer_field": "metricName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/alarm_rules.json",
+      "source_in": "按 alarm_id 查表",
+      "transform": "能对应到客户指标的告警用客户指标中文名；其余用告警名",
+      "source_field": "metric_name",
+      "source_lookup": "用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id]"
+    },
+    {
+      "customer_field": "metricCode",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/alarm_rules.json",
+      "source_in": "按 alarm_id 查表",
+      "transform": "能对应到客户指标的告警用客户指标英文名；其余用 gaussdb.alarm.<alarm_id>",
+      "source_field": "metric_code",
+      "source_lookup": "用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id]"
+    },
+    {
+      "customer_field": "value",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "tpops",
+      "source": "records[].alarm_items_sum",
+      "source_in": "convergence",
+      "transform": "事件类告警取命中节点数；指标类告警取该客户指标最近一次采样值（取不到则 null，不填 0）",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "unit",
+      "customer_type": "String",
+      "required": false,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "source_in": "按挂到的客户指标查表",
+      "transform": "挂到客户指标的告警取该指标单位；事件类告警为 null",
+      "source_field": "unit",
+      "source_lookup": "按挂到的客户指标查该条目的 unit"
+    },
+    {
+      "customer_field": "tags",
+      "customer_type": "Object",
+      "required": false,
+      "source_type": "assembled",
+      "source": [
+        "records[].instance_id",
+        "records[].instance_name",
+        "records[].node_id",
+        "records[].host_ip",
+        "records[].alarm_category",
+        "records[].alarm_type",
+        "records[].engine",
+        "records[].alarm_duration",
+        "records[]（明细行整行）"
+      ],
+      "source_in": "两者都取",
+      "transform": "前 8 个平铺，明细行整行放 details[]",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    }
+  ],
+  "unused_raw_fields": {
+    "impaction": "ITSCADA 告警字段表没有对应字段 → 放进 tags.details",
+    "possible_causes": "同上",
+    "processing_steps": "同上",
+    "alarm_detail_raise_count": "同上",
+    "notify_status": "同上",
+    "automatic_clear": "同上",
+    "last_alarm_time": "同上（ITSCADA 用 alarmTime 表示触发时间）",
+    "resource_id": "同上",
+    "alarm_remarks": "同上",
+    "component_name": "同上",
+    "paramFillList": "同上"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "version": "1.2",
+  "note": "客户 Kafka 消息的字段清单。各字段的来源与转换规则按分类拆在同目录：metric_mapping_*.json（指标四类）、alarm_mapping.json（告警）",
+  "source_documents": {
+    "metric": "docs/ITSCADA第三方指标数据接入对接方案V2.docx",
+    "alarm": "docs/ITSCADA第三方告警数据接入对接方案V2.docx"
+  },
+  "metric_message": {
+    "doc_ref": "指标方案 §6.2",
+    "fields": [
+      {"name": "metricName", "type": "String", "required": true},
+      {"name": "metricCode", "type": "String", "required": true},
+      {"name": "resourceName", "type": "String", "required": true},
+      {"name": "value", "type": "String", "required": true},
+      {"name": "unit", "type": "String", "required": false},
+      {"name": "clock", "type": "Long", "required": true},
+      {"name": "tags", "type": "JSON", "required": false}
+    ],
+    "required_fields": ["metricName", "metricCode", "resourceName", "value", "clock"]
+  },
+  "alarm_message": {
+    "doc_ref": "告警方案 §3.2",
+    "fields": [
+      {"name": "alarmId", "type": "String", "required": true},
+      {"name": "alarmName", "type": "String", "required": false},
+      {"name": "alarmContent", "type": "String", "required": true},
+      {"name": "priority", "type": "Integer", "required": true},
+      {"name": "alarmTime", "type": "Long", "required": true},
+      {"name": "status", "type": "Integer", "required": true},
+      {"name": "recoverTime", "type": "Long", "required": "conditional"},
+      {"name": "resourceName", "type": "String", "required": true},
+      {"name": "metricName", "type": "String", "required": true},
+      {"name": "metricCode", "type": "String", "required": true},
+      {"name": "value", "type": "String", "required": true},
+      {"name": "unit", "type": "String", "required": false},
+      {"name": "tags", "type": "Object", "required": false}
+    ],
+    "required_fields": [
+      "alarmId",
+      "alarmContent",
+      "priority",
+      "alarmTime",
+      "status",
+      "resourceName",
+      "metricName",
+      "metricCode",
+      "value"
+    ]
+  },
+  "resource_name": {
+    "template": "{instance_name}_{node_id}",
+    "fallback_template": "{instance_name}"
+  },
+  "tags": {
+    "metric": ["instance_id", "instance_name", "node_id", "component_id", "host_ip", "dimension_values"],
+    "alarm": [
+      "instance_id",
+      "instance_name",
+      "node_id",
+      "host_ip",
+      "alarm_category",
+      "alarm_type",
+      "engine",
+      "alarm_duration",
+      "details"
+    ]
+  }
+}

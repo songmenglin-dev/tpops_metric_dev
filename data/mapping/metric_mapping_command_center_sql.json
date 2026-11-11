@@ -1,0 +1,99 @@
+{
+  "category": "B",
+  "name": "命令中心 SQL",
+  "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}（三跳取结果）",
+  "tpops_fields": [
+    {
+      "field": "result",
+      "desc": "JSON 字符串，要二次 json.loads 才是行数组；行里的值全是字符串"
+    },
+    {
+      "field": "node_id",
+      "desc": "执行该 SQL 的节点 ID"
+    },
+    {
+      "field": "node_name",
+      "desc": "节点名"
+    },
+    {
+      "field": "rows[].<列名>",
+      "desc": "SQL 结果行里的列，列名 = SQL 的 as 别名。stat_database 18 列：datname、numbackends、xact_commit、xact_rollback、deadlocks、conflicts、blks_read、blks_hit、blk_read_time、blk_write_time、tup_inserted、tup_updated、tup_deleted、tup_returned、tup_fetched、temp_files、temp_bytes、cache_hit_ratio"
+    },
+    {
+      "field": "instances[].name",
+      "desc": "实例名"
+    }
+  ],
+  "field_mapping": [
+    {
+      "customer_field": "metricName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "把 {#XXX} 换成维度实际值",
+      "source_field": "metric_name",
+      "source_lookup": "用合并 SQL 的 sql_key + 结果列名，匹配该条目的 source.sql_key 与 value_rule.params.column"
+    },
+    {
+      "customer_field": "metricCode",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "把 {#XXX} 换成维度实际值",
+      "source_field": "metric_code",
+      "source_lookup": "用合并 SQL 的 sql_key + 结果列名，匹配该条目的 source.sql_key 与 value_rule.params.column"
+    },
+    {
+      "customer_field": "resourceName",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "assembled",
+      "source": "instances[].name + node_id",
+      "transform": "拼 {instance_name}_{node_id}；取不到 node_id 时只用实例名",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    },
+    {
+      "customer_field": "value",
+      "customer_type": "String",
+      "required": true,
+      "source_type": "tpops",
+      "source": "result → 行数组 → metric_rules[].value_rule 指定的列",
+      "transform": "按 value_rule 执行（raw / aggregate / counter_delta / ratio_across …）；原始值是字符串，按客户表【数据类型】转型；row_policy 决定逐行出还是跨行求和",
+      "source_field": null,
+      "source_lookup": "TPOPS 响应里直接取"
+    },
+    {
+      "customer_field": "unit",
+      "customer_type": "String",
+      "required": false,
+      "source_type": "mapping_table",
+      "source": "data/mapping/metric_rules.json",
+      "transform": "客户指标表【指标单位】，为空则 null",
+      "source_field": "unit",
+      "source_lookup": "用合并 SQL 的 sql_key + 结果列名，匹配该条目的 source.sql_key 与 value_rule.params.column"
+    },
+    {
+      "customer_field": "clock",
+      "customer_type": "Long",
+      "required": true,
+      "source_type": "assembled",
+      "source": "本轮采集完成时刻",
+      "transform": "命令中心返回的是当前快照，没有自己的时间戳",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    },
+    {
+      "customer_field": "tags",
+      "customer_type": "JSON",
+      "required": false,
+      "source_type": "assembled",
+      "source": "instances[] / node_id / 行里的维度列",
+      "transform": "instance_id、instance_name、node_id、component_id、host_ip、dimension_values",
+      "source_field": null,
+      "source_lookup": "由上面几个字段组装"
+    }
+  ]
+}
