@@ -42,6 +42,12 @@
       "topic": "慢 SQL 的 sql_text 能否外发",
       "default": "默认脱敏：字面量替换为 ?，并截断到 512 字符",
       "detail": "含业务 SQL 文本，需客户书面确认。"
+    },
+    {
+      "id": "a-class-multi-series",
+      "topic": "A 类多 series 的归集口径",
+      "default": "暂按逐组件各出一条消息（现状实现），维度键 COMPONENT_ID 归入 tags",
+      "detail": "A 类 11 个客户指标都是实例级一条消息，但平台按组件给出多条 series（rds092/rds093/rds400 各 3 条 CN、rds402 6 条 CN+DN、rds133 3 条 CN、gaussdb_instance_status 1 条 value、datanode_switch_status 9 条 DN）。合成方式属业务口径：速率类可求和，启动时刻可取最早，主备状态可按 DN 展开或归集为布尔。确认后由 metric_rules.json 的 value_rule 承载，不改消息信封。"
     }
   ]
 }

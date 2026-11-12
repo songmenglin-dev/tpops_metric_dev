@@ -13,7 +13,6 @@
 """
 
 import argparse
-import csv
 import glob
 import json
 import os
@@ -32,7 +31,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(ROOT, "data")
 PLAN = os.path.join(DATA_DIR, "customer_metric_query_plan.json")
-MAPPING = os.path.join(DATA_DIR, "customer_metric_mapping.json")
 
 BASE_URL = os.environ.get("TPOPS_BASE_URL", "https://172.16.103.193:8002").rstrip("/")
 TPOPS_USER = os.environ.get("TPOPS_USER", "")
@@ -405,10 +403,6 @@ def main():
         sys.exit("缺少 %s，请先运行 tools/build_metric_query_plan.py" % PLAN)
     with open(PLAN, encoding="utf-8") as fh:
         plan = json.load(fh)
-    with open(MAPPING, encoding="utf-8") as fh:
-        mapping = json.load(fh)
-    mapping_by_name = dict((m["customer_metric_name"], m) for m in mapping["items"])
-
     # 客户 Excel 的补充字段（数据类型/周期/单位）
     xlsx_fields = {}
     for path in glob.glob(os.path.join(ROOT, "*.xlsx")):

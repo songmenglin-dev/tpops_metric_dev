@@ -294,8 +294,8 @@ TPOPS（源） → 采集（Pull） → 归一化（Normalize） → 映射（Ma
 |---|---|
 | 接口 | `POST /rds/v3/monitor/metrics` |
 | 请求 | `start_time`/`end_time`（**13 位毫秒**）、`is_latest_point_only`、`instances[]{instance_id}`、`metric_names[]`（**数组，支持批量**） |
-| 响应 | `metric_infos[]`（**一项一个实例**）→ 每个含 `metric_name`（**中文名只在这里**）、`collection_frequency`、`time_interval`、`timestamps[]`、`series{}` |
-| **series 的 key** | 是**节点名**（如 `cn_5001`/`cn_5002`/`cn_5003`、`dn_6001`），**不是主机 IP**；且平台**不提供** series key → node_id 的映射，而 ITSCADA 的 `resourceName` 要 `{instance_name}_{node_id}` → **待客户确认口径** |
+| 响应 | `metric_infos[]`（**一项一个实例**）→ 含 `instance_id`、`time_interval`、`metrics[]`；每个 `metrics[]` 含 `name`、`metric_name`（**中文名只在这里**）、`collection_frequency`、`node_id`、`timestamps[]`、`series{}` |
+| **series 的 key** | 是**组件 ID**（如 `cn_5001`/`cn_5002`/`cn_5003`、`dn_6001`），DN 侧是 `<主机IP>-<组件ID>`（如 `172.16.103.126-dn_6005`），**不是主机 IP**；key 里**不含 node_id**，需经节点清单接口的 `component_id` 反查，而 ITSCADA 的 `resourceName` 要 `{instance_name}_{node_id}` → **待客户确认口径**（见 §4.2.4） |
 | **取数口径** | **取最新点**：① `is_latest_point_only=true`（只要最新点）② `is_latest_point_only=false` + ≥1h 窗口（补真实时间戳）；两次用同一个 `end_time`，最新点即时序末尾那点 |
 | **实例范围** | 一次**只查一个实例**（与命令中心通道同一个分布式实例）；命令中心无法一次带多实例 → 采集端**按实例循环** |
 | **窗口约束** | **≥ 1 小时**才能覆盖 `collection_frequency=3600` 的指标；5 分钟窗口覆盖 0/21 |
@@ -725,8 +725,14 @@ select * from ({sql_text}) limit {limit}
 | 6 | 客户指标英文名的 OCR 错字是否更正 | **原样保留** | 映射表加 `alias` 字段，一行内两种写法同时输出 |
 | 7 | 慢 SQL 文本能否外发 | **默认脱敏** | 环境变量 `SQL_MASKING_ENABLED` |
 | 8 | 告警明细字段的最终取舍 | §3.1.2 全字段 | 映射表裁剪 |
+| 9 | **A 类多 series 的归集口径**（一个客户指标对应多个组件 series，见 §4.2.4） | **暂按逐组件各出一条消息**（现状行为），维度键 `COMPONENT_ID` 归入 `tags` | 映射表 `value_rule` 增加聚合参数 + 改 `rules.py` 的 `series_point` 实现 |
 
-> **结论：以上 8 项均不阻塞编码。** 开发按默认值实现，映射表与配置留出调整位。
+> **结论：前 8 项均不阻塞编码。** 开发按默认值实现，映射表与配置留出调整位。
+>
+> **第 9 项需要单独说明**：它不改变消息信封与字段规范，但**直接影响 A 类 11 个指标的取值实现**
+> ——客户指标是实例级一条，平台是每组件一条 series，合成方式（求和 / 取最早 / 按组件展开）
+> 属业务口径，须客户确认。A 类通道的采集代码按「先按 series 产出、再按映射表聚合」的两段式写，
+> 聚合环节默认关闭，确认后只改映射表即可启用。
 
 ---
 
@@ -946,15 +952,59 @@ Content-Type: application/json
   "metric_infos": [
     {
       "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-      "metric_name_cn": "实例状态",
-      "collection_frequency": 30,
       "time_interval": 60,
-      "timestamps": [1793869271000.0, 1793869331000.0, "…"],
-      "series": { "172.16.103.151": [1, 1, "…"] }
+      "metrics": [
+        {
+          "name": "rds092_gaussv5_commit_counter",
+          "metric_name": "用户提交事务数/秒",
+          "collection_frequency": 60,
+          "node_id": null,
+          "tenant_id": null,
+          "pdb_name": null,
+          "timestamps": [1793869271000.0, 1793869331000.0, "…"],
+          "series": {
+            "cn_5001": [10.0, 9.0, "…"],
+            "cn_5002": [11.0, 10.0, "…"],
+            "cn_5003": [11.0, 11.0, "…"]
+          }
+        }
+      ]
     }
   ]
 }
 ```
+
+> **结构来源**：`docs/api/API参考-监控大盘.md` 表5/表6 + 实测留档 `data/metric_response/`（98 份原生响应）。
+>
+> ⚠️ **不要按拍平的写法取值**。早期版本的本文把响应写成
+> `metric_infos[].metric_name_cn / series / timestamps`，那是
+> `tools/verify_metric_sources.py` 的**重塑输出**（脚本自己把平台的 `metric_name` 改名成
+> `metric_name_cn`，见该脚本 `run_monitor()`）—— **平台并不返回 `metric_name_cn` 这个字段名**，
+> 照拍平写法取值会 KeyError。真实层级是 `metric_infos[] → metrics[]`，
+> `collection_frequency` 在 `metrics[]` 上，`time_interval` 在 `metric_infos[]` 上。
+
+**`series` 的形态（实测）**
+
+`series` 的 key 是**组件维度**，不是主机 IP：
+
+| key 形态 | 例子 | 出现在 |
+|---|---|---|
+| CN 组件 ID | `cn_5001` `cn_5002` `cn_5003` | rds092 / rds093 / rds400 / rds402 / rds133 |
+| DN 组件 ID | `dn_6001` `dn_6004` `dn_6007` | rds402（QPS） |
+| `<IP>-<component_id>` | `172.16.103.126-dn_6005` | datanode_switch_status（9 个 DN） |
+| 单值 | `value` | gaussdb_instance_status |
+
+**一个平台指标对应多条 series**（每个组件一条）：
+
+| 平台指标 | series 条数 | 组成 |
+|---|---|---|
+| `rds092_gaussv5_commit_counter` | 3 | 3 个 CN |
+| `rds093_gaussv5_rollback_counter` | 3 | 3 个 CN |
+| `rds400_gaussv5_total_counter` | 3 | 3 个 CN |
+| `rds402_gaussv5_ddl_dml_dcl_count` | 6 | 3 CN + 3 DN |
+| `rds133_cn_startup_time` | 3 | 3 个 CN |
+| `gaussdb_instance_status` | 1 | 单值（key = `value`） |
+| `datanode_switch_status` | 9 | 9 个 DN |
 
 **关键约束（全部实测）**
 
@@ -962,11 +1012,11 @@ Content-Type: application/json
 |---|---|---|---|
 | 1 | **窗口 ≥ 1 小时** | 5 分钟窗口覆盖 `collection_frequency=3600` 的指标数 = **0/21** | `METRIC_WINDOW_HOURS` 默认 **2**，**下限强制 1** |
 | 2 | **入库滞后约 5 分钟** | 5 分钟窗口实测尾部 null 率 **77.5%** | `end_time = now - METRIC_END_LAG_MINUTES`（默认 5） |
-| 3 | **`is_latest_point_only` 必须是字符串 `"false"`** | 用 `true` 时约 **74%** 指标 `timestamp=0`（值对、时间丢） | 硬编码 `"false"` 字符串，不传布尔 |
+| 3 | **`is_latest_point_only` 必须是字符串 `"false"`** | 用 `true` 时约 **74%** 指标 `timestamps=[0.0]`（值对、时间丢） | 硬编码 `"false"` 字符串，不传布尔 |
 | 4 | 时间戳是 **13 位毫秒** | `timestamps` 为浮点数 | 转 `int` 使用 |
 | 5 | **`metric_names` 是数组，支持批量** | 11 个 A 类指标**一次调用取完** | 按"该档到期的 A 类指标"分组批量取 |
-| 6 | **中文名只在数据响应里** | 目录接口 `series` 不带中文名 | `metric_name_cn` 从 `metric_infos[].metric_name_cn` 取 |
-| 7 | `series` 按**主机 IP** 展开 | key 是 IP 字符串 | 需要按节点归集时用 `host_ip` 对齐 |
+| 6 | **中文名在 `metrics[].metric_name`** | 目录接口 `series` 不带中文名 | 从 `metric_infos[].metrics[].metric_name` 取（**不是** `metric_name_cn`） |
+| 7 | `series` 按**组件**展开 | key 是组件 ID / `<IP>-<component_id>` / `value` | 需要按节点归集时用 `component_id` 对齐；主机 IP 在节点清单接口里 |
 
 **数据切片规则（关键）**
 
@@ -974,12 +1024,35 @@ Content-Type: application/json
 
 ```
 for 每个 metric_info:
-    for i, ts in enumerate(timestamps):
-        if ts > now - 该指标的档位周期 - 端点容差:     # 只取本档需要的新点
-            value = series[host_ip][i]
-            if value is None: 跳过（平台未入库）
-            产出 MetricPoint(timestamp=ts, value=value)
+    for 每个 m in metric_info.metrics:          # 一次调用可返回多个平台指标
+        for 每个 (key, values) in m.series.items():   # 每个组件一条 series
+            for i, ts in enumerate(m.timestamps):     # timestamps 与 values 等长同序
+                if ts > now - 该指标的档位周期 - 端点容差:   # 只取本档需要的新点
+                    value = values[i]
+                    if value is None: 跳过（平台未入库）
+                    产出 MetricPoint(timestamp=int(ts), value=value, series_key=key)
 ```
+
+**⚠️ 未定义：多 series → 一个客户指标怎么合成**
+
+客户这 11 个指标的适用资源类型都是 `GAUSSDB实例`（**实例级，一条消息**），
+而平台按组件给出多条 series —— **两者的归集口径至今没有定义**（评审 B-01 未关闭）。
+
+现状：`tools/mappings/rules.py` 的 `series_point` 规则**逐 series 产出一条消息**，
+维度键 `COMPONENT_ID`；而 `tools/mappings/message.py` 又把 `COMPONENT_ID` 归进 `tags`
+（不作为客户维度）—— 于是客户侧会收到**多条同名、同 resourceName、值不同的指标消息**。
+
+候选口径（**待客户确认**，已登记为 `data/mapping/open_items.json` 的 `a-class-multi-series`）：
+
+| 平台指标 | 客户指标语义 | 候选口径 |
+|---|---|---|
+| rds092 / rds093 / rds400 / rds402 | 实例级速率 | **求和**（各 CN / DN 分担流量） |
+| rds133_cn_startup_time | 实例启动时刻 / 运行时长 | **取最早（min）** 的启动时刻 |
+| gaussdb_instance_status | 实例状态 | 直接取（单 series） |
+| datanode_switch_status | 实例主备状态 | **按 DN 展开**（资源名带组件）或归集为布尔 |
+
+**确认前不要写死在代码里** —— 归集口径由 `data/mapping/metric_rules.json` 的 `value_rule`
+承载，客户确认后改表 + 改规则实现即可。
 
 > **为什么不能取"最后一个点"**：同一批次里不同指标的 `collection_frequency` 不同
 > （10s/30s/60s/300s/3600s），最后一次采样时间也不同。按时间戳切片才能保证每个指标
@@ -1298,7 +1371,7 @@ notify_status, automatic_clear
 
 | 客户指标 | 中文名 | TPOPS 指标 | 匹配 | 取值方式 |
 |---|---|---|---|---|
-| `GAUSSDB.Number_of_ansactions_mmitted_r_cond` | 每秒提交事务数 | `rds092_gaussv5_commit_counter` | 直接对应 | `series[host_ip][i]`，平台已是速率口径 |
+| `GAUSSDB.Number_of_ansactions_mmitted_r_cond` | 每秒提交事务数 | `rds092_gaussv5_commit_counter` | 直接对应 | `metrics[].series[组件ID][i]`，平台已是速率口径；**多 series 归集口径待确认，见 §4.2.4** |
 | `GAUSSDB.Number_of_llback_ansactions_r_cond` | 每秒回滚事务数 | `rds093_gaussv5_rollback_counter` | 直接对应 | 同上 |
 | `gaussdb.Tps` | TPS | `rds400_gaussv5_total_counter` | 直接对应 | 同上 |
 | `gaussdb.QPS` | QPS | `rds402_gaussv5_ddl_dml_dcl_count` | 直接对应 | 同上 |
@@ -1846,7 +1919,7 @@ tpops_kafka/
 │   └── data/
 │       ├── metric_map.json      # 101 指标 → 取值规则（含占位符、维度绑定、口径 note）
 │       ├── field_map.json       # 内部 DTO 字段 → 客户 JSON 字段名
-│       ├── sql_batches.json     # 10 条合并 SQL + 覆盖指标 + 刷新周期
+│       ├── sql_batches.json     # 11 条合并 SQL + 覆盖指标 + 刷新周期
 │       ├── alarm_catalog.json   # 告警定义目录（catalog_metric + catalog_event 合并）
 │       └── unsupported.json     # 3 个不可提供指标及理由
 ├── kafka/               # ── 投递层
@@ -2384,7 +2457,7 @@ pytest-cov<5
 | **M1** | 骨架 + 配置 + 异常体系 + DTO + Kafka 生产者 + 序列化 + 健康端点 | 可启动、能收信号、空跑不报错 | `python -m tpops_kafka.main` 起停正常；序列化快照测试通过 |
 | **M2** | `tpops/client.py` + 认证 + 错误分类 + 重试框架 | 平台层可用 | 认证失败不重试（T16）；错误分类单测通过 |
 | **M3** | **A 类采集器**（11 指标） | 11 个指标上 Kafka | 与 `data/metric_verification` 的 A 类留档**逐条比对一致** |
-| **M4** | **命令中心客户端**（三跳 + 并发 + 重试）+ 10 条合并 SQL | B 类基础设施 | 三跳解析回归 R2~R5 通过；单条 SQL 3~8 秒内返回 |
+| **M4** | **命令中心客户端**（三跳 + 并发 + 重试）+ 11 条合并 SQL | B 类基础设施 | 三跳解析回归 R2~R5 通过；单条 SQL 3~8 秒内返回 |
 | **M5** | **规则引擎 + B 类采集器**（82 指标） | 82 个指标上 Kafka | 回归 R1 全通过；一轮墙钟 ≤ 25 秒 |
 | **M6** | C/D 类采集器 + 告警采集器 + 幂等去重 | 4+1 指标 + 告警上 Kafka | T18/T20/T21 通过；告警明细正确挂载 |
 | **M7** | 调度器 + 水位 + 差分基线 + 优雅退出 + 健康端点 | 持续运行 | T13~T15/T19 通过；杀进程重启无重复无丢失 |
@@ -2537,7 +2610,7 @@ TPOPS 可提供性（结论 **98 可提供 / 3 无法提供**）；11-05~11-07 �
 | W10 | A 类：窗口计算 + 时间戳切片 | W06 W08 | `tpops/metrics.py` |
 | W11 | A 类采集器 | W10 W08 | `collectors/monitor.py` |
 | W12 | 命令中心三跳客户端 | W06 W03 | `tpops/command_center.py` |
-| W13 | 10 条合并 SQL 数据文件 | W07 | `mapping/data/sql_batches.json` |
+| W13 | 11 条合并 SQL 数据文件 | W07 | `mapping/data/sql_batches.json` |
 | W14 | B 类采集器（含缓存与派生） | W12 W13 W08 | `collectors/command_center.py` |
 | W15 | C 类（slow-sql / top-sql） | W06 W08 | `tpops/diagnostic.py` `collectors/diagnostic.py` |
 | W16 | D 类（实例元数据） | W06 W08 | `tpops/instances.py` `collectors/instance.py` |

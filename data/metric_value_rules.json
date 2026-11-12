@@ -32,7 +32,7 @@
       "channel_label": "监控指标接口",
       "tpops_metric": "rds092_gaussv5_commit_counter",
       "match_level": "直接对应",
-      "plan_value_expr": "`series[host_ip][i]`，平台已是速率口径",
+      "plan_value_expr": "`metrics[].series[组件ID][i]`，平台已是速率口径；**多 series 归集口径待确认，见 §4.2.4**",
       "sql_key": null,
       "source_expr": null,
       "plan_rule": "raw",

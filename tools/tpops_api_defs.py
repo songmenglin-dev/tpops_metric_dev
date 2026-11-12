@@ -52,7 +52,10 @@ APIS["GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"] = {
         ]
     },
     "notes": "命令只允许在 master 节点执行；分布式实例（mode=Combined）3 个 CN 均为 master，集中式实例（mode=Ha）只有 1 个 master DN。"
-             "一次下发多节点会失败，须逐节点下发",
+             "一次下发全部 master 节点实测成功（2026-11-06，HTTP 200，3 条 node_tasks 全部 succeed，见 "
+             "data/command_center/results/05_execute_sql_6374.json 与 data/multi_master_probe/）；"
+             "节点清单里同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），"
+             "下发前必须按 node_id 去重，否则会报「节点数量超出限制」",
     "covers_metrics": 0,
     "is_prerequisite": True,
     "flow_step": 1,
@@ -167,7 +170,8 @@ APIS["POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}"] = {
     "query_params": {},
     "body": {
         "instance_id": "实例 ID",
-        "node_ids": "节点 ID 数组（只能 master 节点；实测一次下发多节点会失败，须逐节点下发）",
+        "node_ids": "节点 ID 数组（只能 master 节点；一次下发全部 master 实测成功，"
+                    "但必须先按 node_id 去重 —— 节点清单里同一 node_id 会以 CN / DN 各出现一次）",
         "params": [
             {"param_name": "sql_text", "param_value": "要执行的 SQL；模板为 select * from ({sql_text}) limit {limit}"},
             {"param_name": "limit", "param_value": "返回行数上限"},

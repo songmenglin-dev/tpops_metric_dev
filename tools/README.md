@@ -138,8 +138,13 @@ Gotchas confirmed by live measurement:
   still reads `running`. Use `statistics.running == 0`.
 - **`result` is a JSON string** — it needs a second `json.loads`.
 - Column names come from the SQL `as` aliases, so custom SQL must alias explicitly.
-- Commands run on **master nodes only**; submitting to multiple nodes at once fails.
-- One round trip takes 3–8 s. 82 metrics need only 50 distinct SQL statements.
+- Commands run on **master nodes only**. Submitting to **all** master nodes at once
+  works (verified 2026-11-06: HTTP 200, every `node_tasks` entry succeeded) — but the
+  node list returns each `node_id` twice (once as CN, once as DN), so **dedupe by
+  `node_id` before submitting**, otherwise the platform rejects the request with
+  "node count exceeds limit".
+- One round trip takes 3–8 s. The 82 command-center metrics are covered by **11 merged
+  SQL statements** (`data/merged_sql/merged_sql.json`), not 50 separate ones.
 - GaussDB's dialect is PG 9.2 level: no `FILTER` (use `CASE WHEN`), and
   `state <> ''` is always false (use `state is not null` to exclude background
   processes).

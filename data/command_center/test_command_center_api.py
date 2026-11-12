@@ -554,7 +554,7 @@ def main():
     resp = client.session.post(client.base_url + "/rds/v3/auth/mini-token",
                                 json={"username": args.user, "password": args.password},
                                 timeout=HTTP_TIMEOUT, verify=False)
-    auth_body = record_response(os.path.join(RESULTS, "00_auth.json"), resp)
+    record_response(os.path.join(RESULTS, "00_auth.json"), resp)
     summary["interfaces"]["mini-token"] = {"status_code": resp.status_code}
     client.token()
     print("    HTTP %d，取到 X-Mini-Token" % resp.status_code)

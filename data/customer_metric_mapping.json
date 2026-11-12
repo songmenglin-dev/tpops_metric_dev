@@ -1,7 +1,7 @@
 {
   "inputs": {
     "client_metrics": "高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx / 指标库",
-    "tpops_metrics": "data/tpops_all_metric.json"
+    "tpops_metrics": "data/customer_metric_mapping.json"
   },
   "generated_by": "tools/build_customer_metric_mapping.py",
   "total": 101,

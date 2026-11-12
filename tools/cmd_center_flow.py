@@ -85,7 +85,9 @@ def sample_apis(sql_text, limit="100"):
             "response": resp1,
             "response_source": "实测留档 data/command_center/results/02_nodes_%s.json" % SAMPLE_INSTANCE,
             "note": "取 role=master 的节点（上面返回里第 1 个 %s 即 master，"
-                    "node_id=%s）。一次下发多节点会失败，须逐节点下发。"
+                    "node_id=%s）。同一 node_id 会以 CN / DN 各出现一次"
+                    "（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），"
+                    "下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
                     % (resp1["nodes"][0]["node_name"], node_id),
         },
         "api2": {

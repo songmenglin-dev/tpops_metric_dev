@@ -214,9 +214,40 @@ def _build_metrics(text):
     return metrics
 
 
+def _merged_sql_keys():
+    """data/merged_sql/merged_sql.json 里的权威 sql_key 集合。"""
+    path = os.path.join(BASE_DIR, 'data', 'merged_sql', 'merged_sql.json')
+    if not os.path.exists(path):
+        sys.exit('找不到 %s —— 合并 SQL 目录是本脚本的输入，缺了无法校验' % path)
+    with io.open(path, encoding='utf-8') as handle:
+        payload = json.load(handle)
+    return set(batch['sql_key'] for batch in payload.get('batches', []))
+
+
+def check_sql_key_consistency(metrics):
+    """本脚本的 sql_key 体系必须与 merged_sql.json 完全一致。
+
+    §4.3.2 把会话明细归在 SQL-4，§4.4 把它拆成 activity_agg / activity_running / activity_top10
+    三条合并 SQL，所以 sql_key 有 11 个而 SQL 序号只有 10 个；这里显式校验两边一致，
+    避免「改了 merged_sql 忘了改这里」或反之。
+    """
+    authority = _merged_sql_keys()
+    declared = set(SQL_KEY_BY_NUMBER.values()) | set(SQL_KEY_OVERRIDE.values())
+    used = set(m['sql_key'] for m in metrics.values() if m.get('sql_key'))
+    if used - authority:
+        sys.exit('ERROR: 这些 sql_key 不在 merged_sql.json 里：%s' % sorted(used - authority))
+    if authority - declared:
+        sys.exit('ERROR: merged_sql.json 里的 sql_key 没有在本脚本声明：%s（请补 SQL_KEY_BY_NUMBER / SQL_KEY_OVERRIDE）'
+                 % sorted(authority - declared))
+    if authority - used:
+        sys.exit('ERROR: 这些 sql_key 没有被任何指标用到：%s' % sorted(authority - used))
+    return authority
+
+
 def main():
     text = _read_plan()
     metrics = _build_metrics(text)
+    check_sql_key_consistency(metrics)
     payload = {
         'version': '1.0',
         'generated_by': 'tools/build_metric_value_rules.py',

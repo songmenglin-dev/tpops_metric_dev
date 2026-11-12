@@ -213,4 +213,5 @@
 | 5 | 状态类指标的展示值转义 | 平台枚举值原样透传（实测 1=正常、0=异常） | 5 条状态类指标（实例状态、主备状态）的客户展示值转义未定义。 |
 | 6 | 告警挂到哪个客户指标 | 257 条告警里只有 3 条能对应上客户指标（都指向 gaussdb.Tps），其余用 gaussdb.alarm.<alarm_id> 自造指标名 | 事件类告警没有对应的客户指标，需要客户确认这种挂法是否可接受。 |
 | 7 | 慢 SQL 的 sql_text 能否外发 | 默认脱敏：字面量替换为 ?，并截断到 512 字符 | 含业务 SQL 文本，需客户书面确认。 |
+| 8 | A 类多 series 的归集口径 | 暂按逐组件各出一条消息（现状实现），维度键 COMPONENT_ID 归入 tags | A 类 11 个客户指标都是实例级一条消息，但平台按组件给出多条 series（rds092/rds093/rds400 各 3 条 CN、rds402 6 条 CN+DN、rds133 3 条 CN、gaussdb_instance_status 1 条 value、datanode_switch_status 9 条 DN）。合成方式属业务口径：速率类可求和，启动时刻可取最早，主备状态可按 DN 展开或归集为布尔。确认后由 metric_rules.json 的 value_rule 承载，不改消息信封。 |
 

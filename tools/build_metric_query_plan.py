@@ -151,10 +151,10 @@ CMD_NODES_API = "GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-no
 
 
 MONITOR_EXPECT = {
-    "rds092_gaussv5_commit_counter": "series 按主机 IP 给出「用户提交事务数/秒」时序值",
-    "rds093_gaussv5_rollback_counter": "series 按主机 IP 给出「用户回滚事务数/秒」时序值",
-    "rds400_gaussv5_total_counter": "series 按主机 IP 给出「用户总事务数/秒（TPS）」时序值",
-    "rds402_gaussv5_ddl_dml_dcl_count": "series 按主机 IP 给出「平均SQL执行数（QPS）」时序值",
+    "rds092_gaussv5_commit_counter": "series 按组件 ID（cn_xxxx / dn_xxxx）给出「用户提交事务数/秒」时序值，每个组件一条 series",
+    "rds093_gaussv5_rollback_counter": "series 按组件 ID（cn_xxxx / dn_xxxx）给出「用户回滚事务数/秒」时序值，每个组件一条 series",
+    "rds400_gaussv5_total_counter": "series 按组件 ID（cn_xxxx / dn_xxxx）给出「用户总事务数/秒（TPS）」时序值，每个组件一条 series",
+    "rds402_gaussv5_ddl_dml_dcl_count": "series 按组件 ID（cn_xxxx / dn_xxxx）给出「平均SQL执行数（QPS）」时序值，每个组件一条 series",
     "gaussdb_instance_status": "series 给出「实例状态」取值（0=正常，非 0 为异常态）",
     "datanode_switch_status": "series 给出「DN主备状态」取值",
     "rds133_cn_startup_time": "series 给出 CN 进程启动时刻（timestamp，毫秒）",
@@ -163,6 +163,16 @@ MONITOR_EXPECT = {
     "rds195_gaussv5_locks_session": "series 给出「等锁会话数量」时序值",
     "rds407_gaussv5_total_locks_count": "series 给出「锁总数」时序值",
 }
+
+# A 类响应结构（实测 + docs/api/API参考-监控大盘.md 表5/表6）：
+#   metric_infos[] → metrics[] → {name, metric_name, series, timestamps, collection_frequency, node_id}
+# series 的 key 是**组件 ID**（cn_5002 / dn_6001 / <IP>-<component_id> / value），不是主机 IP；
+# 一个客户指标对应多条 series（每个组件一条），合成口径见开发方案 §4.2.4。
+MONITOR_RESPONSE_SHAPE_NOTE = (
+    "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；"
+    "series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；"
+    "一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集"
+)
 
 
 def sql_for(field):
@@ -264,6 +274,7 @@ def build_query(item):
                 },
             },
             "expected_result": MONITOR_EXPECT.get(field, "series 给出该指标的时间序列值"),
+            "response_shape": MONITOR_RESPONSE_SHAPE_NOTE,
             "related_apis": [MONITOR_API],
         }
     if src == "实例接口":

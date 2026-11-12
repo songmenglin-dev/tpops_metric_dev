@@ -49,7 +49,8 @@
                 ]
               }
             },
-            "expected_result": "series 按主机 IP 给出「用户提交事务数/秒」时序值",
+            "expected_result": "series 按组件 ID（cn_xxxx / dn_xxxx）给出「用户提交事务数/秒」时序值，每个组件一条 series",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -89,7 +90,8 @@
                 ]
               }
             },
-            "expected_result": "series 按主机 IP 给出「用户回滚事务数/秒」时序值",
+            "expected_result": "series 按组件 ID（cn_xxxx / dn_xxxx）给出「用户回滚事务数/秒」时序值，每个组件一条 series",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -279,7 +281,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -675,7 +677,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -1071,7 +1073,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -1467,7 +1469,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -1863,7 +1865,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -2259,7 +2261,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -2655,7 +2657,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -3051,7 +3053,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -3447,7 +3449,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -3843,7 +3845,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -4239,7 +4241,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -4635,7 +4637,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -5031,7 +5033,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -5427,7 +5429,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -5823,7 +5825,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -6219,7 +6221,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -6608,6 +6610,7 @@
               }
             },
             "expected_result": "series 给出「实例状态」取值（0=正常，非 0 为异常态）",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -6797,7 +6800,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -7201,7 +7204,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -7597,7 +7600,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -7993,7 +7996,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -8389,7 +8392,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -8785,7 +8788,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -9189,7 +9192,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -9435,7 +9438,8 @@
                 ]
               }
             },
-            "expected_result": "series 按主机 IP 给出「用户总事务数/秒（TPS）」时序值",
+            "expected_result": "series 按组件 ID（cn_xxxx / dn_xxxx）给出「用户总事务数/秒（TPS）」时序值，每个组件一条 series",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -9475,7 +9479,8 @@
                 ]
               }
             },
-            "expected_result": "series 按主机 IP 给出「平均SQL执行数（QPS）」时序值",
+            "expected_result": "series 按组件 ID（cn_xxxx / dn_xxxx）给出「平均SQL执行数（QPS）」时序值，每个组件一条 series",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -9665,7 +9670,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -10061,7 +10066,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -10457,7 +10462,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -10893,7 +10898,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -11289,7 +11294,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -11685,7 +11690,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -12081,7 +12086,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -12477,7 +12482,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -12873,7 +12878,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -13269,7 +13274,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -13665,7 +13670,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -14061,7 +14066,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -14457,7 +14462,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -14853,7 +14858,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -15249,7 +15254,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -15645,7 +15650,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -16041,7 +16046,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -16445,7 +16450,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -16841,7 +16846,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -17249,7 +17254,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -17645,7 +17650,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -18053,7 +18058,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -18449,7 +18454,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -18845,7 +18850,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -19241,7 +19246,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -19496,6 +19501,7 @@
               }
             },
             "expected_result": "series 给出「实例状态」取值（0=正常，非 0 为异常态）",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -19536,6 +19542,7 @@
               }
             },
             "expected_result": "series 给出 CN 进程启动时刻（timestamp，毫秒）",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -19576,6 +19583,7 @@
               }
             },
             "expected_result": "series 给出 CN 进程启动时刻（timestamp，毫秒）",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -19795,7 +19803,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -20042,6 +20050,7 @@
               }
             },
             "expected_result": "series 给出「实例状态」取值（0=正常，非 0 为异常态）",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -20231,7 +20240,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -20627,7 +20636,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -20874,6 +20883,7 @@
               }
             },
             "expected_result": "series 给出「DN主备状态」取值",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -20914,6 +20924,7 @@
               }
             },
             "expected_result": "series 给出「DN主备状态」取值",
+            "response_shape": "响应结构 metric_infos[].metrics[]，中文名在 metrics[].metric_name；series 的 key 是组件 ID（cn_xxxx / dn_xxxx / <IP>-<component_id> / value），不是主机 IP；一个客户指标对应多条 series（每个组件一条），采集端需按业务口径归集",
             "related_apis": [
               "POST /rds/v3/monitor/metrics"
             ]
@@ -21111,7 +21122,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -21507,7 +21518,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -21903,7 +21914,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -22299,7 +22310,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -22695,7 +22706,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -23091,7 +23102,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -23487,7 +23498,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -23883,7 +23894,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -24279,7 +24290,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -24675,7 +24686,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -25071,7 +25082,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -25475,7 +25486,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -25899,7 +25910,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -26295,7 +26306,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -26691,7 +26702,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -27087,7 +27098,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -27483,7 +27494,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -27879,7 +27890,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -28275,7 +28286,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -28671,7 +28682,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -29075,7 +29086,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -29471,7 +29482,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -29867,7 +29878,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -30263,7 +30274,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -30659,7 +30670,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -31055,7 +31066,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -31451,7 +31462,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -31847,7 +31858,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -32243,7 +32254,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -32647,7 +32658,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",
@@ -33043,7 +33054,7 @@
                   ]
                 },
                 "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
-                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。"
+                "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。同一 node_id 会以 CN / DN 各出现一次（gauss-6374：12 条条目 / 3 个唯一 node_id / 6 条 role=master），下发前必须按 node_id 去重；去重后一次下发全部 master 实测成功。"
               },
               "api2": {
                 "name": "下发命令（传入自定义 SQL）",

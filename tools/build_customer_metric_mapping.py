@@ -4,6 +4,7 @@
 输入：
   - 高斯DB-指标明细*.xlsx    客户要求的 101 个指标（含中文名/英文名/字段规范）
   - data/tpops_all_metric.json  TPOPS 平台指标字典（metric / metric_name / unit ...）
+                                可选：可再生产物、已从仓库移除；缺失时脚本走**离线模式**
 
 输出：
   - data/customer_metric_mapping.json    逐条判定结论 + 统计
@@ -15,9 +16,14 @@
 用法：
     python tools/build_customer_metric_mapping.py
 
-前置：data/tpops_all_metric.json 是可再生产物，缺失时先重建
-    python tools/fetch_tpops_metrics.py --hours 2
-    python tools/build_tpops_metric_dict.py
+两种模式：
+  * 在线模式（有 data/tpops_all_metric.json）：能做 has_data 校验，结论最完整。
+      python tools/fetch_tpops_metrics.py --hours 2
+      python tools/build_tpops_metric_dict.py
+  * 离线模式（默认）：平台字典缺失时，用已冻结的 data/customer_metric_mapping.json
+    （上一轮判定结论）重建「平台指标 → 中文名」对照。脚本可离线跑通，
+    但**不再校验平台指标是否真有数据**（has_data 一律按 True 处理）。
+    客户改了指标库时，建议先跑一次在线模式再定稿。
 """
 
 import csv
@@ -29,6 +35,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(ROOT, "data")
 TPOPS_DICT = os.path.join(DATA_DIR, "tpops_all_metric.json")
+FROZEN_MAPPING = os.path.join(DATA_DIR, "customer_metric_mapping.json")
 OUT_JSON = os.path.join(DATA_DIR, "customer_metric_mapping.json")
 OUT_CSV = os.path.join(DATA_DIR, "customer_metric_unsupported.csv")
 
@@ -382,13 +389,47 @@ def read_client_rows():
 
 
 def load_tpops_dict():
-    if not os.path.exists(TPOPS_DICT):
-        sys.exit("找不到 %s\n"
-                 "该字典是可再生产物，需先抓取平台数据再重建：\n"
+    """加载平台指标字典。
+
+    在线模式：data/tpops_all_metric.json 存在时直接用（含 has_data，可校验）。
+    离线模式：该文件是可再生产物且已从仓库移除，缺失时改用已冻结的
+    data/customer_metric_mapping.json 重建「平台指标 → 中文名」对照。
+    """
+    if os.path.exists(TPOPS_DICT):
+        with open(TPOPS_DICT, encoding="utf-8") as fh:
+            return json.load(fh)
+    if not os.path.exists(FROZEN_MAPPING):
+        sys.exit("找不到 %s，且没有可回退的 %s\n"
+                 "在线模式请先抓取平台数据再重建平台指标字典：\n"
                  "    python tools/fetch_tpops_metrics.py --hours 2\n"
-                 "    python tools/build_tpops_metric_dict.py" % TPOPS_DICT)
-    with open(TPOPS_DICT, encoding="utf-8") as fh:
-        return json.load(fh)
+                 "    python tools/build_tpops_metric_dict.py"
+                 % (TPOPS_DICT, FROZEN_MAPPING))
+    sys.stderr.write(
+        "WARNING: 找不到 %s —— 改用离线模式（平台字典取自 %s）。\n"
+        "         离线模式不校验平台指标是否真有数据（has_data 一律按 True 处理）。\n"
+        "         需要完整校验请先跑 fetch_tpops_metrics.py + build_tpops_metric_dict.py。\n"
+        % (TPOPS_DICT, os.path.relpath(FROZEN_MAPPING, ROOT)))
+    return {"metrics": _metrics_from_frozen(), "source": FROZEN_MAPPING}
+
+
+def _metrics_from_frozen():
+    """从已冻结的判定结论重建平台指标字典（离线模式）。
+
+    frozen items 里 tpops_metric 与 tpops_metric_name 都是用 " + " 并列的，
+    两者一一对应，拆开即可还原「平台指标 → 中文名」。
+    """
+    with open(FROZEN_MAPPING, encoding="utf-8") as fh:
+        payload = json.load(fh)
+    metrics = {}
+    for item in payload.get("items", []):
+        names = item.get("tpops_metric")
+        titles = item.get("tpops_metric_name")
+        if not names or not titles:
+            continue
+        for one, title in zip(names.split(" + "), titles.split(" + ")):
+            if one not in metrics:
+                metrics[one] = {"metric": one, "metric_name": title, "has_data": True}
+    return list(metrics.values())
 
 
 def check_against_excel(rows):
@@ -458,11 +499,11 @@ def summarize(items):
     return by_status, by_level, by_source, by_category
 
 
-def write_json(items, by_status, by_level, by_source, by_category):
+def write_json(items, by_status, by_level, by_source, by_category, tpops_source):
     payload = {
         "inputs": {
             "client_metrics": "高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx / 指标库",
-            "tpops_metrics": "data/tpops_all_metric.json",
+            "tpops_metrics": tpops_source,
         },
         "generated_by": "tools/build_customer_metric_mapping.py",
         "total": len(items),
@@ -504,11 +545,12 @@ def main():
         sys.exit("客户 Excel 表头与预期不一致: %r" % (header,))
     tpops = load_tpops_dict()
     TP_OPS_BY_ID = dict((m["metric"], m) for m in tpops["metrics"])
+    tpops_source = os.path.relpath(tpops.get("source") or TPOPS_DICT, ROOT)
 
     check_against_excel(client_rows)
     items = build(client_rows)
     by_status, by_level, by_source, by_category = summarize(items)
-    payload = write_json(items, by_status, by_level, by_source, by_category)
+    write_json(items, by_status, by_level, by_source, by_category, tpops_source)
     unsupported_idx = write_unsupported_csv(client_rows)
 
     print("客户指标 %d 条" % len(items))
