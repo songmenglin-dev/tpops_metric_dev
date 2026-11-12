@@ -1,0 +1,58 @@
+[
+  {
+    "api": "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list",
+    "response_body": {
+      "slow_sql_infos": [
+        {
+          "db_name": "postgres",
+          "schema_name": "\"$user\",public",
+          "sql_id": "24214886",
+          "user_name": "rdsAdmin",
+          "sql_text": "create database lz;",
+          "query_plan": "Check the reported query_plan time is 2026-11-11 17:43:46.252179+08, at this time the SQL is not slow.",
+          "query_plan_optimize": " id |                                               operation                                                \n----+--------------------------------------------------------------------------------------------------------\n  1 | Check the reported query_plan time is 2026-11-11 17:43:46.252179+08, at this time the SQL is not slow. \n",
+          "calls": 1,
+          "avg_exec_time": "7.7806",
+          "avg_cpu_time": "0.1062",
+          "avg_io_time": "0.0009",
+          "avg_returned_rows": 0,
+          "sql": "",
+          "avg_fetched_rows": 0,
+          "buffer_hit_ratio": "0.00",
+          "sql_hit_ratio": "0",
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "component_name": "cn_5002",
+          "total_cost_time": "7.7806",
+          "total_returned_rows": "0",
+          "total_fetched_rows": "0"
+        },
+        {
+          "db_name": "xzl",
+          "schema_name": "\"$user\",public",
+          "sql_id": "1011577308",
+          "user_name": "xzl",
+          "sql_text": "INSERT INTO mk_ca_cf_mp_pq (dist_code, wo_no, area_code, amt_ym, other_col)\nSELECT\n    \n    CASE WHEN random() < ? THEN ? ELSE lpad((floor(random()*?)::int)::text,?,?) END AS dist_code,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS wo_no,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS area_code,\n    \n    (ARRAY[?,?,?,?,?,?])[floor(random()*?)+?] AS amt_ym,\n    \n    ? || md5(random()::text) AS other_col\nFROM generate_series(?, ?);",
+          "query_plan": "Coordinator Name: cn_5001\nInsert on mk_ca_cf_mp_pq  (cost=0.00..97.50 rows=1000 width=160)\n  Node/s: All datanodes\n  Node expr: dist_code\n  ->  Function Scan on generate_series  (cost=0.00..87.50 rows=1000 width=0)\n",
+          "query_plan_optimize": "Coordinator Name: cn_5001\n id |               operation                |    cost     | rows | width \n----+----------------------------------------+-------------+------+-------\n  1 | Insert on mk_ca_cf_mp_pq               | 0.00..97.50 | 1000 |   160 \n  2 |   ->  Function Scan on generate_series | 0.00..87.50 | 1000 |     0 \n\n Predicate Information (identified by plan id) \n-----------------------------------------------\n 1 --Insert on mk_ca_cf_mp_pq \n       Node/s: All datanodes \n       Node expr: dist_code ",
+          "calls": 1,
+          "avg_exec_time": "67.5556",
+          "avg_cpu_time": "13.2053",
+          "avg_io_time": "0.0003",
+          "avg_returned_rows": 0,
+          "sql": "",
+          "avg_fetched_rows": 0,
+          "buffer_hit_ratio": "0.00",
+          "sql_hit_ratio": "0",
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "component_name": "cn_5001",
+          "total_cost_time": "67.5556",
+          "total_returned_rows": "0",
+          "total_fetched_rows": "0"
+        }
+      ],
+      "total": 2
+    }
+  }
+]

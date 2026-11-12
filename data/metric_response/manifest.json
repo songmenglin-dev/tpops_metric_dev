@@ -1,0 +1,1596 @@
+{
+  "generated_at": "2026-11-12 10:19:38 +0800",
+  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+  "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+  "elapsed_seconds": 106.9,
+  "note": "命令中心 SQL 走 11 条合并 SQL，同一批指标共用同一次调用的响应",
+  "metrics": [
+    {
+      "seq": 1,
+      "customer_metric": "GAUSSDB.Number_of_ansactions_mmitted_r_cond",
+      "customer_metric_name": "每秒提交事务数",
+      "customer_category": "事务信息",
+      "channel": "监控指标接口",
+      "file": "001_GAUSSDB.Number_of_ansactions_mmitted_r_cond.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 2,
+      "customer_metric": "GAUSSDB.Number_of_llback_ansactions_r_cond",
+      "customer_metric_name": "每秒回滚事务数",
+      "customer_category": "事务信息",
+      "channel": "监控指标接口",
+      "file": "002_GAUSSDB.Number_of_llback_ansactions_r_cond.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 3,
+      "customer_metric": "GAUSSDB.{#NAME}.Number.ad.ples",
+      "customer_metric_name": "({#NAME}) number of dead tuples",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "003_GAUSSDB.NAME.Number.ad.ples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 4,
+      "customer_metric": "GAUSSDB.{#NAME}.Number.lete.ples",
+      "customer_metric_name": "({#NAME}) number of delete tuples",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "004_GAUSSDB.NAME.Number.lete.ples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 5,
+      "customer_metric": "GAUSSDB.{#NAME}.garbage.Ratio",
+      "customer_metric_name": "({#NAME})Garbage ratio",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "005_GAUSSDB.NAME.garbage.Ratio.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 6,
+      "customer_metric": "GAUSSDB.{#NAME}.Number.t.date.ples",
+      "customer_metric_name": "({#NAME}) number of hot update tuples",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "006_GAUSSDB.NAME.Number.t.date.ples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 7,
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.index.scan",
+      "customer_metric_name": "({#NAME})number of index scan",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "007_GAUSSDB.NAME.number.Of.index.scan.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 8,
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
+      "customer_metric_name": "({#NAME})number of index tuples read",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "008_GAUSSDB.NAME.number.Of.dex.ples.ad.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 9,
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.live.tuples",
+      "customer_metric_name": "({#NAME})number of live tuples",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "009_GAUSSDB.NAME.number.Of.live.tuples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 10,
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
+      "customer_metric_name": "({#NAME})number of insert tuples",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "010_GAUSSDB.NAME.number.Of.insert.tuples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 11,
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
+      "customer_metric_name": "({#NAME})number of sequencial scan",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "011_GAUSSDB.NAME.number.Of.sequential.scan.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 12,
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
+      "customer_metric_name": "({#NAME})number of sequencial tuples read",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "012_GAUSSDB.NAME.number.Of.quential.ples.ad.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 13,
+      "customer_metric": "GAUSSDB.{#NAME}.number.Of.update.tuples",
+      "customer_metric_name": "({#NAME})number of update tuples",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "013_GAUSSDB.NAME.number.Of.update.tuples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 14,
+      "customer_metric": "GAUSSDB.Idle_in_transaction_connections",
+      "customer_metric_name": "Idle in transaction connections",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "014_GAUSSDB.Idle_in_transaction_connections.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 15,
+      "customer_metric": "GAUSSDB.Idle_connections",
+      "customer_metric_name": "Idle connections",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "015_GAUSSDB.Idle_connections.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 16,
+      "customer_metric": "GAUSSDB.Current_number_of_connections",
+      "customer_metric_name": "当前连接数",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "016_GAUSSDB.Current_number_of_connections.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 17,
+      "customer_metric": "GAUSSDB.maximum_connection",
+      "customer_metric_name": "最大连接数",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "017_GAUSSDB.maximum_connection.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7478c879-a62b-4f0f-b592-5a32239fc637",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/61ed6334-cf54-4b34-ba49-6ce2640f389e/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/ec4d5db2-b860-4dff-bdc1-4dc8cc2fd180/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/627e4596-f28c-463a-befb-adab8d7b3c6d/detail"
+      ]
+    },
+    {
+      "seq": 18,
+      "customer_metric": "GAUSSDB.Number_of_active_connections",
+      "customer_metric_name": "活跃连接数",
+      "customer_category": "事务信息",
+      "channel": "命令中心SQL",
+      "file": "018_GAUSSDB.Number_of_active_connections.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 19,
+      "customer_metric": "GAUSSDB.Total_slow_queries",
+      "customer_metric_name": "慢查询总数",
+      "customer_category": "慢查询信息",
+      "channel": "诊断优化接口",
+      "file": "019_GAUSSDB.Total_slow_queries.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list"
+      ]
+    },
+    {
+      "seq": 20,
+      "customer_metric": "GAUSSDB.Select_slow_queries",
+      "customer_metric_name": "Select慢查询数",
+      "customer_category": "慢查询信息",
+      "channel": "诊断优化接口",
+      "file": "020_GAUSSDB.Select_slow_queries.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list"
+      ]
+    },
+    {
+      "seq": 21,
+      "customer_metric": "GAUSSDB.DML_slow_queries",
+      "customer_metric_name": "DML慢查询数",
+      "customer_category": "慢查询信息",
+      "channel": "诊断优化接口",
+      "file": "021_GAUSSDB.DML_slow_queries.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list"
+      ]
+    },
+    {
+      "seq": 22,
+      "customer_metric": "GAUSSDB.Service_availability_testing",
+      "customer_metric_name": "服务可用性检测",
+      "customer_category": "可用性",
+      "channel": "监控指标接口",
+      "file": "022_GAUSSDB.Service_availability_testing.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 23,
+      "customer_metric": "gaussdb_{#PORT}port.status",
+      "customer_metric_name": "服务端口{#PORT}检测",
+      "customer_category": "可用性",
+      "channel": "命令中心SQL",
+      "file": "023_gaussdb_PORTport.status.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7478c879-a62b-4f0f-b592-5a32239fc637",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/61ed6334-cf54-4b34-ba49-6ce2640f389e/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/ec4d5db2-b860-4dff-bdc1-4dc8cc2fd180/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/627e4596-f28c-463a-befb-adab8d7b3c6d/detail"
+      ]
+    },
+    {
+      "seq": 24,
+      "customer_metric": "gaussdb.Deadlocks",
+      "customer_metric_name": "检测到的死锁次数",
+      "customer_category": "锁信息",
+      "channel": "命令中心SQL",
+      "file": "024_gaussdb.Deadlocks.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 25,
+      "customer_metric": "gaussdb.get.lock.info",
+      "customer_metric_name": "获取数据库锁数据",
+      "customer_category": "锁信息",
+      "channel": "命令中心SQL",
+      "file": "025_gaussdb.get.lock.info.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=fbf57a29-06d3-43a2-9841-37cbcaf701ec",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/9400eb00-1367-4801-9852-31c25f06c164/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/a3de17b1-a461-442b-b278-248b9ae19d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/422676a9-fa23-486c-b600-5fa1492c91c9/detail"
+      ]
+    },
+    {
+      "seq": 26,
+      "customer_metric": "gaussdb.Lockwaiting",
+      "customer_metric_name": "查看当前锁等待数量",
+      "customer_category": "锁信息",
+      "channel": "命令中心SQL",
+      "file": "026_gaussdb.Lockwaiting.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 27,
+      "customer_metric": "gaussdb.locks.get_metrics[{#DBNAME}]",
+      "customer_metric_name": "DB [{#DBNAME}]: 获取锁信息",
+      "customer_category": "锁信息",
+      "channel": "命令中心SQL",
+      "file": "027_gaussdb.locks.get_metricsDBNAME.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=fbf57a29-06d3-43a2-9841-37cbcaf701ec",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/9400eb00-1367-4801-9852-31c25f06c164/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/a3de17b1-a461-442b-b278-248b9ae19d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/422676a9-fa23-486c-b600-5fa1492c91c9/detail"
+      ]
+    },
+    {
+      "seq": 28,
+      "customer_metric": "gaussdb.locks.accessexclusive[{#DBNAME}]",
+      "customer_metric_name": "DB [{#DBNAME}]: Num of accessexclusive locks",
+      "customer_category": "锁信息",
+      "channel": "命令中心SQL",
+      "file": "028_gaussdb.locks.accessexclusiveDBNAME.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=fbf57a29-06d3-43a2-9841-37cbcaf701ec",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/9400eb00-1367-4801-9852-31c25f06c164/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/a3de17b1-a461-442b-b278-248b9ae19d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/fbf57a29-06d3-43a2-9841-37cbcaf701ec/task-record/422676a9-fa23-486c-b600-5fa1492c91c9/detail"
+      ]
+    },
+    {
+      "seq": 29,
+      "customer_metric": "gaussdb.Xact_rollback",
+      "customer_metric_name": "回滚的事务总数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "029_gaussdb.Xact_rollback.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 30,
+      "customer_metric": "gaussdb.Tps",
+      "customer_metric_name": "TPS（每秒事务数）",
+      "customer_category": "性能信息",
+      "channel": "监控指标接口",
+      "file": "030_gaussdb.Tps.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 31,
+      "customer_metric": "gaussdb.QPS",
+      "customer_metric_name": "QPS（每秒查询数）",
+      "customer_category": "性能信息",
+      "channel": "监控指标接口",
+      "file": "031_gaussdb.QPS.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 32,
+      "customer_metric": "gaussdb.get.connections.sum",
+      "customer_metric_name": "获取连接信息",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "032_gaussdb.get.connections.sum.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 33,
+      "customer_metric": "gaussdb.get.dbstat.sum",
+      "customer_metric_name": "获取db性能数据",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "033_gaussdb.get.dbstat.sum.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=d64b41de-6eea-4403-9109-9bb7f5520dec",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/d64b41de-6eea-4403-9109-9bb7f5520dec/task-record/65497d6c-1925-4ddc-a066-44088454fd1c/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/d64b41de-6eea-4403-9109-9bb7f5520dec/task-record/228aa4c9-1864-4362-9f42-96d04144a37c/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/d64b41de-6eea-4403-9109-9bb7f5520dec/task-record/7954ca53-cb6c-41c0-83c5-8658f8027a94/detail"
+      ]
+    },
+    {
+      "seq": 34,
+      "customer_metric": "gaussdb.running.sql.limit.20",
+      "customer_metric_name": "正在运行的SQL",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "034_gaussdb.running.sql.limit.20.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=572d93f4-b6fc-43e3-8112-9ae357f198fe",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/572d93f4-b6fc-43e3-8112-9ae357f198fe/task-record/46c42c52-e8de-451e-a103-396ece2c0bce/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/572d93f4-b6fc-43e3-8112-9ae357f198fe/task-record/b6824a58-e447-483c-a089-32e9b520e6b6/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/572d93f4-b6fc-43e3-8112-9ae357f198fe/task-record/3948b221-dd77-4ab7-bf7b-c208a45d041b/detail"
+      ]
+    },
+    {
+      "seq": 35,
+      "customer_metric": "gaussdb.Top10sql",
+      "customer_metric_name": "当前运行时间最长的Top10 SQL",
+      "customer_category": "性能信息",
+      "channel": "诊断优化接口",
+      "file": "035_gaussdb.Top10sql.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/top-sql-list"
+      ]
+    },
+    {
+      "seq": 36,
+      "customer_metric": "gaussdb.Blk_write_time",
+      "customer_metric_name": "写块的时间（毫秒）",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "036_gaussdb.Blk_write_time.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 37,
+      "customer_metric": "gaussdb.Numbackends",
+      "customer_metric_name": "当前连接到数据库的后端进程数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "037_gaussdb.Numbackends.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 38,
+      "customer_metric": "gaussdb.Temp_bytes",
+      "customer_metric_name": "临时文件大小",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "038_gaussdb.Temp_bytes.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 39,
+      "customer_metric": "gaussdb.Blks_read",
+      "customer_metric_name": "从磁盘读取的块数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "039_gaussdb.Blks_read.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 40,
+      "customer_metric": "gaussdb.Blks_hit",
+      "customer_metric_name": "从缓存命中读取的块数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "040_gaussdb.Blks_hit.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 41,
+      "customer_metric": "gaussdb.Tup_deleted",
+      "customer_metric_name": "删除的行数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "041_gaussdb.Tup_deleted.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 42,
+      "customer_metric": "gaussdb.Xact_commit",
+      "customer_metric_name": "提交的事务总数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "042_gaussdb.Xact_commit.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 43,
+      "customer_metric": "gaussdb.Tup_inserted",
+      "customer_metric_name": "插入的行数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "043_gaussdb.Tup_inserted.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 44,
+      "customer_metric": "gaussdb.Conflicts",
+      "customer_metric_name": "数据库操作冲突次数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "044_gaussdb.Conflicts.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 45,
+      "customer_metric": "gaussdb.Tup_updated",
+      "customer_metric_name": "更新的行数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "045_gaussdb.Tup_updated.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 46,
+      "customer_metric": "gaussdb.Tup_returned",
+      "customer_metric_name": "查询返回的行数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "046_gaussdb.Tup_returned.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 47,
+      "customer_metric": "gaussdb.Temp_files",
+      "customer_metric_name": "生成的临时文件数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "047_gaussdb.Temp_files.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 48,
+      "customer_metric": "gaussdb.tup_fetched",
+      "customer_metric_name": "通过索引获取的行数",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "048_gaussdb.tup_fetched.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 49,
+      "customer_metric": "gaussdb.Blk_read_time",
+      "customer_metric_name": "读块的时间（毫秒）",
+      "customer_category": "性能信息",
+      "channel": "命令中心SQL",
+      "file": "049_gaussdb.Blk_read_time.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 50,
+      "customer_metric": "gaussdb.Idle_in_transaction_aborted",
+      "customer_metric_name": "事务中已中止的空闲连接数",
+      "customer_category": "连接情况",
+      "channel": "命令中心SQL",
+      "file": "050_gaussdb.Idle_in_transaction_aborted.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 51,
+      "customer_metric": "gaussdb.Idle_in_transaction",
+      "customer_metric_name": "事务中空闲的连接数",
+      "customer_category": "连接情况",
+      "channel": "命令中心SQL",
+      "file": "051_gaussdb.Idle_in_transaction.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 52,
+      "customer_metric": "gaussdb.Total_conn",
+      "customer_metric_name": "总连接数",
+      "customer_category": "连接情况",
+      "channel": "命令中心SQL",
+      "file": "052_gaussdb.Total_conn.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 53,
+      "customer_metric": "gaussdb.Active_conn",
+      "customer_metric_name": "活动连接数",
+      "customer_category": "连接情况",
+      "channel": "命令中心SQL",
+      "file": "053_gaussdb.Active_conn.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 54,
+      "customer_metric": "gaussdb.Idle_conn",
+      "customer_metric_name": "空闲连接数",
+      "customer_category": "连接情况",
+      "channel": "命令中心SQL",
+      "file": "054_gaussdb.Idle_conn.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 55,
+      "customer_metric": "gaussdb.Waiting_conn",
+      "customer_metric_name": "等待资源的连接数",
+      "customer_category": "连接情况",
+      "channel": "命令中心SQL",
+      "file": "055_gaussdb.Waiting_conn.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 56,
+      "customer_metric": "gaussdb.Total_pct",
+      "customer_metric_name": "连接使用率",
+      "customer_category": "连接情况",
+      "channel": "命令中心SQL",
+      "file": "056_gaussdb.Total_pct.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 57,
+      "customer_metric": "gaussdb.Prepared",
+      "customer_metric_name": "预提交事务数",
+      "customer_category": "连接情况",
+      "channel": "命令中心SQL",
+      "file": "057_gaussdb.Prepared.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=87eb7a59-4906-4aa1-8822-17528408a3be",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/87eb7a59-4906-4aa1-8822-17528408a3be/task-record/c20f701b-46f3-44ee-8e63-7ebe97c325ed/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/87eb7a59-4906-4aa1-8822-17528408a3be/task-record/9a233227-94a8-4761-8eb7-5631f3725ca4/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/87eb7a59-4906-4aa1-8822-17528408a3be/task-record/4b1c7fdc-277a-4981-9049-9415b25b03bf/detail"
+      ]
+    },
+    {
+      "seq": 58,
+      "customer_metric": "GAUSSDB.PG_Service_Status",
+      "customer_metric_name": "GAUSSDB服务状态",
+      "customer_category": "基本信息",
+      "channel": "监控指标接口",
+      "file": "058_GAUSSDB.PG_Service_Status.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 59,
+      "customer_metric": "gaussdb.Starttime",
+      "customer_metric_name": "启动时间",
+      "customer_category": "基本信息",
+      "channel": "监控指标接口",
+      "file": "059_gaussdb.Starttime.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 60,
+      "customer_metric": "gaussdb.Uptimestr",
+      "customer_metric_name": "运行时长",
+      "customer_category": "基本信息",
+      "channel": "监控指标接口",
+      "file": "060_gaussdb.Uptimestr.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 61,
+      "customer_metric": "gaussdb.server_version",
+      "customer_metric_name": "版本",
+      "customer_category": "基本信息",
+      "channel": "实例接口",
+      "file": "061_gaussdb.server_version.json",
+      "api_count": 1,
+      "apis": [
+        "GET /rds/v3.2/instances?limit=100&offset=0"
+      ]
+    },
+    {
+      "seq": 62,
+      "customer_metric": "gaussdb.Serverencoding",
+      "customer_metric_name": "字符集",
+      "customer_category": "基本信息",
+      "channel": "命令中心SQL",
+      "file": "062_gaussdb.Serverencoding.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=4b168474-57f8-4026-b767-c356d50336fd",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b168474-57f8-4026-b767-c356d50336fd/task-record/35a03e2a-c616-4b2d-ab0a-50aac750a80d/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b168474-57f8-4026-b767-c356d50336fd/task-record/5934a4ac-09ba-467e-b16a-31dcff440ea0/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b168474-57f8-4026-b767-c356d50336fd/task-record/2267a753-5d77-4936-975c-2f773c901cbc/detail"
+      ]
+    },
+    {
+      "seq": 63,
+      "customer_metric": "gaussdb.Status",
+      "customer_metric_name": "数据库状态",
+      "customer_category": "基本信息",
+      "channel": "监控指标接口",
+      "file": "063_gaussdb.Status.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 64,
+      "customer_metric": "gaussdb.Timezone",
+      "customer_metric_name": "时区",
+      "customer_category": "基本信息",
+      "channel": "命令中心SQL",
+      "file": "064_gaussdb.Timezone.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7478c879-a62b-4f0f-b592-5a32239fc637",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/61ed6334-cf54-4b34-ba49-6ce2640f389e/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/ec4d5db2-b860-4dff-bdc1-4dc8cc2fd180/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/627e4596-f28c-463a-befb-adab8d7b3c6d/detail"
+      ]
+    },
+    {
+      "seq": 65,
+      "customer_metric": "gaussdb.Pagesize",
+      "customer_metric_name": "页大小",
+      "customer_category": "基本信息",
+      "channel": "命令中心SQL",
+      "file": "065_gaussdb.Pagesize.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7478c879-a62b-4f0f-b592-5a32239fc637",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/61ed6334-cf54-4b34-ba49-6ce2640f389e/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/ec4d5db2-b860-4dff-bdc1-4dc8cc2fd180/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7478c879-a62b-4f0f-b592-5a32239fc637/task-record/627e4596-f28c-463a-befb-adab8d7b3c6d/detail"
+      ]
+    },
+    {
+      "seq": 66,
+      "customer_metric": "GAUSSDB.Standby_status",
+      "customer_metric_name": "Standby状态",
+      "customer_category": "基本信息",
+      "channel": "监控指标接口",
+      "file": "066_GAUSSDB.Standby_status.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 67,
+      "customer_metric": "GAUSSDB.Primary_status",
+      "customer_metric_name": "Primary状态",
+      "customer_category": "基本信息",
+      "channel": "监控指标接口",
+      "file": "067_GAUSSDB.Primary_status.json",
+      "api_count": 1,
+      "apis": [
+        "POST /rds/v3/monitor/metrics"
+      ]
+    },
+    {
+      "seq": 68,
+      "customer_metric": "gaussdb.{#NAME}.Number.lete.ples",
+      "customer_metric_name": "({#NAME})被删除的行总数（包括已回收行）",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "068_gaussdb.NAME.Number.lete.ples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 69,
+      "customer_metric": "gaussdb.{#NAME}.Number.ad.ples",
+      "customer_metric_name": "({#NAME})已删除但未回收的行数（死亡行）",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "069_gaussdb.NAME.Number.ad.ples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 70,
+      "customer_metric": "gaussdb.{#NAME}.Number.t.date.ples",
+      "customer_metric_name": "({#NAME})通过 HOT更新的行数",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "070_gaussdb.NAME.Number.t.date.ples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 71,
+      "customer_metric": "gaussdb.{#NAME}.number.Of.index.scan",
+      "customer_metric_name": "({#NAME})索引扫描次数",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "071_gaussdb.NAME.number.Of.index.scan.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 72,
+      "customer_metric": "gaussdb.{#NAME}.number.Of.quential.ples.ad",
+      "customer_metric_name": "({#NAME})顺序扫描读取的行数",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "072_gaussdb.NAME.number.Of.quential.ples.ad.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 73,
+      "customer_metric": "gaussdb.{#NAME}.number.Of.dex.ples.ad",
+      "customer_metric_name": "({#NAME})通过索引扫描获取的行数",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "073_gaussdb.NAME.number.Of.dex.ples.ad.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 74,
+      "customer_metric": "gaussdb.{#NAME}.number.Of.insert.tuples",
+      "customer_metric_name": "({#NAME})插入的行数",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "074_gaussdb.NAME.number.Of.insert.tuples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 75,
+      "customer_metric": "gaussdb.{#NAME}.number.Of.live.tuples",
+      "customer_metric_name": "({#NAME})当前活跃的行数",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "075_gaussdb.NAME.number.Of.live.tuples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 76,
+      "customer_metric": "gaussdb.{#NAME}.number.Of.update.tuples",
+      "customer_metric_name": "({#NAME})更新的行总数",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "076_gaussdb.NAME.number.Of.update.tuples.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 77,
+      "customer_metric": "gaussdb.{#NAME}.number.Of.sequential.scan",
+      "customer_metric_name": "({#NAME})顺序扫描次数",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "077_gaussdb.NAME.number.Of.sequential.scan.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 78,
+      "customer_metric": "gaussdb.{#NAME}.garbage.Ratio",
+      "customer_metric_name": "({#NAME})死亡行占比",
+      "customer_category": "表信息",
+      "channel": "命令中心SQL",
+      "file": "078_gaussdb.NAME.garbage.Ratio.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/10b94ac5-954f-486b-bc6a-d701b8f04d48/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/73982ae3-24d8-4ad9-a6aa-f7e1792ccfb8/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e227df7b-e9a8-40aa-a0bd-f8f2a8ffc8c9/task-record/f8f85031-6d96-475f-8535-9aecc0a54657/detail"
+      ]
+    },
+    {
+      "seq": 79,
+      "customer_metric": "gaussdb.DBtsize[{#DATABASE_NAME}]",
+      "customer_metric_name": "[{#DATABASE_NAME}]库大小",
+      "customer_category": "数据库统计信息",
+      "channel": "命令中心SQL",
+      "file": "079_gaussdb.DBtsizeDATABASE_NAME.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=4b168474-57f8-4026-b767-c356d50336fd",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b168474-57f8-4026-b767-c356d50336fd/task-record/35a03e2a-c616-4b2d-ab0a-50aac750a80d/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b168474-57f8-4026-b767-c356d50336fd/task-record/5934a4ac-09ba-467e-b16a-31dcff440ea0/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b168474-57f8-4026-b767-c356d50336fd/task-record/2267a753-5d77-4936-975c-2f773c901cbc/detail"
+      ]
+    },
+    {
+      "seq": 80,
+      "customer_metric": "GAUSSDB.Buffers_Alloc",
+      "customer_metric_name": "Buffers Alloc",
+      "customer_category": "Bgwriter信息",
+      "channel": "命令中心SQL",
+      "file": "080_GAUSSDB.Buffers_Alloc.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7eabb4c3-f789-4172-ba82-81ae429bbc4c",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/1da80f92-e127-4d0f-9648-9ceec7fedc47/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/42f66e0e-5177-4103-90d2-c7b01a609897/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/eb033c01-6b42-4a04-82d2-6246d0e4c1ba/detail"
+      ]
+    },
+    {
+      "seq": 81,
+      "customer_metric": "GAUSSDB.Buffers_Backend",
+      "customer_metric_name": "Buffers Backend",
+      "customer_category": "Bgwriter信息",
+      "channel": "命令中心SQL",
+      "file": "081_GAUSSDB.Buffers_Backend.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7eabb4c3-f789-4172-ba82-81ae429bbc4c",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/1da80f92-e127-4d0f-9648-9ceec7fedc47/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/42f66e0e-5177-4103-90d2-c7b01a609897/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/eb033c01-6b42-4a04-82d2-6246d0e4c1ba/detail"
+      ]
+    },
+    {
+      "seq": 82,
+      "customer_metric": "GAUSSDB.Buffers_Backend_Fsync",
+      "customer_metric_name": "Buffers Backend Fsync",
+      "customer_category": "Bgwriter信息",
+      "channel": "命令中心SQL",
+      "file": "082_GAUSSDB.Buffers_Backend_Fsync.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7eabb4c3-f789-4172-ba82-81ae429bbc4c",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/1da80f92-e127-4d0f-9648-9ceec7fedc47/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/42f66e0e-5177-4103-90d2-c7b01a609897/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/eb033c01-6b42-4a04-82d2-6246d0e4c1ba/detail"
+      ]
+    },
+    {
+      "seq": 83,
+      "customer_metric": "GAUSSDB.Buffers_Checkpoint",
+      "customer_metric_name": "Buffers Checkpoint",
+      "customer_category": "Bgwriter信息",
+      "channel": "命令中心SQL",
+      "file": "083_GAUSSDB.Buffers_Checkpoint.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7eabb4c3-f789-4172-ba82-81ae429bbc4c",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/1da80f92-e127-4d0f-9648-9ceec7fedc47/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/42f66e0e-5177-4103-90d2-c7b01a609897/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/eb033c01-6b42-4a04-82d2-6246d0e4c1ba/detail"
+      ]
+    },
+    {
+      "seq": 84,
+      "customer_metric": "GAUSSDB.Buffers_Clean",
+      "customer_metric_name": "Buffers Clean",
+      "customer_category": "Bgwriter信息",
+      "channel": "命令中心SQL",
+      "file": "084_GAUSSDB.Buffers_Clean.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7eabb4c3-f789-4172-ba82-81ae429bbc4c",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/1da80f92-e127-4d0f-9648-9ceec7fedc47/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/42f66e0e-5177-4103-90d2-c7b01a609897/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/eb033c01-6b42-4a04-82d2-6246d0e4c1ba/detail"
+      ]
+    },
+    {
+      "seq": 85,
+      "customer_metric": "GAUSSDB.Checkpoint_count_eckpoint_gments",
+      "customer_metric_name": "Checkpoint count (by checkpoint segments)",
+      "customer_category": "Bgwriter信息",
+      "channel": "命令中心SQL",
+      "file": "085_GAUSSDB.Checkpoint_count_eckpoint_gments.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7eabb4c3-f789-4172-ba82-81ae429bbc4c",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/1da80f92-e127-4d0f-9648-9ceec7fedc47/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/42f66e0e-5177-4103-90d2-c7b01a609897/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/eb033c01-6b42-4a04-82d2-6246d0e4c1ba/detail"
+      ]
+    },
+    {
+      "seq": 86,
+      "customer_metric": "GAUSSDB.Checkpoint_count_eckpoint_meout",
+      "customer_metric_name": "Checkpoint count (by checkpoint timeout)",
+      "customer_category": "Bgwriter信息",
+      "channel": "命令中心SQL",
+      "file": "086_GAUSSDB.Checkpoint_count_eckpoint_meout.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7eabb4c3-f789-4172-ba82-81ae429bbc4c",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/1da80f92-e127-4d0f-9648-9ceec7fedc47/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/42f66e0e-5177-4103-90d2-c7b01a609897/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/eb033c01-6b42-4a04-82d2-6246d0e4c1ba/detail"
+      ]
+    },
+    {
+      "seq": 87,
+      "customer_metric": "GAUSSDB.Max_Written_Clean",
+      "customer_metric_name": "Max Written Clean",
+      "customer_category": "Bgwriter信息",
+      "channel": "命令中心SQL",
+      "file": "087_GAUSSDB.Max_Written_Clean.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=7eabb4c3-f789-4172-ba82-81ae429bbc4c",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/1da80f92-e127-4d0f-9648-9ceec7fedc47/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/42f66e0e-5177-4103-90d2-c7b01a609897/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/7eabb4c3-f789-4172-ba82-81ae429bbc4c/task-record/eb033c01-6b42-4a04-82d2-6246d0e4c1ba/detail"
+      ]
+    },
+    {
+      "seq": 88,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_committed_transactions",
+      "customer_metric_name": "[{#DATNAME}] Commited transactions",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "088_GAUSSDB.DATNAME_committed_transactions.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 89,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_Active_connections",
+      "customer_metric_name": "[{#DATNAME}] Active connections",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "089_GAUSSDB.DATNAME_Active_connections.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 90,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_rolled_back_transactions",
+      "customer_metric_name": "[{#DATNAME}] Rolled back transactions",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "090_GAUSSDB.DATNAME_rolled_back_transactions.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 91,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_fetch_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Fetch记录数",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "091_GAUSSDB.DATNAME_fetch_records_per_second.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 92,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_insert_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Insert记录数",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "092_GAUSSDB.DATNAME_insert_records_per_second.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 93,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_return_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Return记录数",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "093_GAUSSDB.DATNAME_return_records_per_second.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 94,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_update_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Update记录数",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "094_GAUSSDB.DATNAME_update_records_per_second.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 95,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_cache_hit_ratio",
+      "customer_metric_name": "[{#DATNAME}]缓存命中率",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "095_GAUSSDB.DATNAME_cache_hit_ratio.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 96,
+      "customer_metric": "GAUSSDB.[{#DATNAME}]_delete_records_per_second",
+      "customer_metric_name": "[{#DATNAME}]每秒Delete记录数",
+      "customer_category": "数据库信息",
+      "channel": "命令中心SQL",
+      "file": "096_GAUSSDB.DATNAME_delete_records_per_second.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=1c383de9-c213-47c9-8ed9-d7c4861edbba",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/9c136be3-aa9b-4fec-b42e-f8a49563f260/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/5928edad-4d3f-4783-b219-8dbeb54ba7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/1c383de9-c213-47c9-8ed9-d7c4861edbba/task-record/b9336be5-696a-4aa3-8736-3a89e7a32b9d/detail"
+      ]
+    },
+    {
+      "seq": 97,
+      "customer_metric": "GAUSSDB.session_usage",
+      "customer_metric_name": "连接数使用率",
+      "customer_category": "会话信息",
+      "channel": "命令中心SQL",
+      "file": "097_GAUSSDB.session_usage.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail"
+      ]
+    },
+    {
+      "seq": 98,
+      "customer_metric": "GAUSSDB.sessions_active_top10",
+      "customer_metric_name": "会话时间TOP10",
+      "customer_category": "会话信息",
+      "channel": "命令中心SQL",
+      "file": "098_GAUSSDB.sessions_active_top10.json",
+      "api_count": 6,
+      "apis": [
+        "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+        "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=4b2312aa-85b3-4c81-9213-64728dd091c0",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b2312aa-85b3-4c81-9213-64728dd091c0/task-record/902fc17c-1fb7-4596-99ba-47b873a5961c/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b2312aa-85b3-4c81-9213-64728dd091c0/task-record/6041c6ca-6640-4486-969f-33b429d89d5d/detail",
+        "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b2312aa-85b3-4c81-9213-64728dd091c0/task-record/f631bca1-86a2-4607-8605-a09487ecff6f/detail"
+      ]
+    }
+  ],
+  "metric_count": 98
+}

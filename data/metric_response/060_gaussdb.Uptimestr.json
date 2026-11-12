@@ -1,0 +1,46 @@
+[
+  {
+    "api": "POST /rds/v3/monitor/metrics",
+    "response_body": {
+      "metric_infos": [
+        {
+          "metrics": [
+            {
+              "name": "rds133_cn_startup_time",
+              "series": {
+                "cn_5002": [
+                  1793617643.0,
+                  1793617313.0
+                ],
+                "cn_5001": [
+                  1793617803.0,
+                  1793617479.0
+                ],
+                "cn_5003": [
+                  1793617643.0,
+                  1793617313.0
+                ]
+              },
+              "timestamps": [
+                1794442477000.0,
+                1794446077000.0
+              ],
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14,40abc563810e462a97b065e718189a59no14,5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+              "tenant_id": null,
+              "pdb_name": null,
+              "metric_name": "CN进程启动时刻",
+              "collection_frequency": 3600
+            }
+          ],
+          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+          "time_interval": 60
+        },
+        {
+          "metrics": [],
+          "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+          "time_interval": 60
+        }
+      ]
+    }
+  }
+]

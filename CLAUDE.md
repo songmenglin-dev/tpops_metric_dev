@@ -80,6 +80,7 @@ data/      # 离线样本与调研产物
 │  ├── alarm/               # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
 │  ├── command_center/      # 统一命令中心 API 实测（5 个接口全量真实调用 + 速查表）
 │  ├── metric_verification/ # 逐指标真实调用留档（98/98 通过），可直接当回归样本
+│  ├── metric_response/     # 逐指标**原生 API 响应体**（98 个文件，命令中心走 11 条合并 SQL）
 │  ├── customer_metric_mapping.json    # 101 客户指标 → TPOPS 可提供性判定
 │  ├── customer_metric_query_plan.json # 逐指标查询方案与真实响应
 │  ├── metric_value_rules.json         # 开发方案 §4.3 的逐指标取值规则（生成物）
@@ -244,6 +245,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 | `tools/mappings/README.md` | 映射规则文件说明：字段含义、取值规则类型、怎么改 |
 | `docs/映射表-ITSCADA字段对照.md` | **开发依据**：两张字段级映射表（指标 / 告警），原始字段 → ITSCADA 客户字段 |
 | `data/metric_verification/` | 逐指标真实调用留档（98/98 通过），回归样本 |
+| `data/metric_response/README.md` | 逐指标**原生 API 响应体**留档（98 个文件）：格式、通道构成、重抓命令 |
 | `data/alarm/README.md` | 告警侧数据结构与抓取产物说明 |
 | `tools/README.md` | 离线取数脚本用法（`tools/tpops_client.py` 是可用参考实现） |
 | `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` | 客户指标库（101 个指标，映射的基准；含「指标库-指标获取方法」sheet） |

@@ -1,0 +1,288 @@
+[
+  {
+    "api": "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+    "response_body": {
+      "nodes": [
+        {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "role": "master",
+          "type": "CN",
+          "distributed_id": "",
+          "component_id": "cn_5001",
+          "node_ip": "172.16.103.126",
+          "detail": ""
+        },
+        {
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "role": "master",
+          "type": "CN",
+          "distributed_id": "",
+          "component_id": "cn_5002",
+          "node_ip": "172.16.103.127",
+          "detail": ""
+        },
+        {
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "role": "master",
+          "type": "CN",
+          "distributed_id": "",
+          "component_id": "cn_5003",
+          "node_ip": "172.16.103.128",
+          "detail": ""
+        },
+        {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "role": "master",
+          "type": "DN",
+          "distributed_id": "60011",
+          "component_id": "dn_6001",
+          "node_ip": "172.16.103.126",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60011",
+          "component_id": "dn_6002",
+          "node_ip": "172.16.103.127",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60011",
+          "component_id": "dn_6003",
+          "node_ip": "172.16.103.128",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "role": "master",
+          "type": "DN",
+          "distributed_id": "60042",
+          "component_id": "dn_6004",
+          "node_ip": "172.16.103.127",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60042",
+          "component_id": "dn_6005",
+          "node_ip": "172.16.103.126",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60042",
+          "component_id": "dn_6006",
+          "node_ip": "172.16.103.128",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "role": "master",
+          "type": "DN",
+          "distributed_id": "60073",
+          "component_id": "dn_6007",
+          "node_ip": "172.16.103.128",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60073",
+          "component_id": "dn_6008",
+          "node_ip": "172.16.103.127",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60073",
+          "component_id": "dn_6009",
+          "node_ip": "172.16.103.126",
+          "detail": "Normal"
+        }
+      ]
+    }
+  },
+  {
+    "api": "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+    "response_body": {
+      "job_id": "572d93f4-b6fc-43e3-8112-9ae357f198fe",
+      "node_tasks": [
+        {
+          "task_id": "46c42c52-e8de-451e-a103-396ece2c0bce",
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14"
+        },
+        {
+          "task_id": "b6824a58-e447-483c-a089-32e9b520e6b6",
+          "node_id": "40abc563810e462a97b065e718189a59no14"
+        },
+        {
+          "task_id": "3948b221-dd77-4ab7-bf7b-c208a45d041b",
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
+        }
+      ]
+    }
+  },
+  {
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=572d93f4-b6fc-43e3-8112-9ae357f198fe",
+    "response_body": {
+      "total_count": 3,
+      "statistics": {
+        "total": 3,
+        "succeed": 3,
+        "failed": 0,
+        "running": 0,
+        "other": 0
+      },
+      "job_status": "running",
+      "tasks": [
+        {
+          "task_id": "46c42c52-e8de-451e-a103-396ece2c0bce",
+          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+          "instance_name": "gauss-6374",
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "agent_req_id": "ComOmCmd-46c42c52-e8de-451e-a103-396ece2c0bce",
+          "status": "succeed",
+          "params": [
+            {
+              "param_name": "limit",
+              "param_value": "1000",
+              "sensitive": false
+            },
+            {
+              "param_name": "sql_text",
+              "param_value": "******",
+              "sensitive": true
+            }
+          ],
+          "is_redirect": false,
+          "download_file_id": null,
+          "error_msg": null,
+          "start_time": 1794449649890,
+          "finish_time": 1794449654813,
+          "expire_time": 1794708849889
+        },
+        {
+          "task_id": "b6824a58-e447-483c-a089-32e9b520e6b6",
+          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+          "instance_name": "gauss-6374",
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "agent_req_id": "ComOmCmd-b6824a58-e447-483c-a089-32e9b520e6b6",
+          "status": "succeed",
+          "params": [
+            {
+              "param_name": "limit",
+              "param_value": "1000",
+              "sensitive": false
+            },
+            {
+              "param_name": "sql_text",
+              "param_value": "******",
+              "sensitive": true
+            }
+          ],
+          "is_redirect": false,
+          "download_file_id": null,
+          "error_msg": null,
+          "start_time": 1794449649890,
+          "finish_time": 1794449654825,
+          "expire_time": 1794708849889
+        },
+        {
+          "task_id": "3948b221-dd77-4ab7-bf7b-c208a45d041b",
+          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+          "instance_name": "gauss-6374",
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "agent_req_id": "ComOmCmd-3948b221-dd77-4ab7-bf7b-c208a45d041b",
+          "status": "succeed",
+          "params": [
+            {
+              "param_name": "limit",
+              "param_value": "1000",
+              "sensitive": false
+            },
+            {
+              "param_name": "sql_text",
+              "param_value": "******",
+              "sensitive": true
+            }
+          ],
+          "is_redirect": false,
+          "download_file_id": null,
+          "error_msg": null,
+          "start_time": 1794449649890,
+          "finish_time": 1794449655347,
+          "expire_time": 1794708849889
+        }
+      ]
+    }
+  },
+  {
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/572d93f4-b6fc-43e3-8112-9ae357f198fe/task-record/46c42c52-e8de-451e-a103-396ece2c0bce/detail",
+    "response_body": {
+      "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+      "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-12 10:14:14.575432+08\",\"query\":\"select * from (select datname, usename, state, query_start, query from pg_stat_activity where state = 'active' and query <> '' order by query_start desc limit 20) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:02:36.550997+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:01:42.727494+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:01:42.581241+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"}]",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "download_file_id": null
+    }
+  },
+  {
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/572d93f4-b6fc-43e3-8112-9ae357f198fe/task-record/b6824a58-e447-483c-a089-32e9b520e6b6/detail",
+    "response_body": {
+      "node_id": "40abc563810e462a97b065e718189a59no14",
+      "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-12 10:14:14.607478+08\",\"query\":\"select * from (select datname, usename, state, query_start, query from pg_stat_activity where state = 'active' and query <> '' order by query_start desc limit 20) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:02:32.141429+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:01:40.932486+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:01:40.867011+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"}]",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "download_file_id": null
+    }
+  },
+  {
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/572d93f4-b6fc-43e3-8112-9ae357f198fe/task-record/3948b221-dd77-4ab7-bf7b-c208a45d041b/detail",
+    "response_body": {
+      "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+      "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-12 10:14:15.300415+08\",\"query\":\"select * from (select datname, usename, state, query_start, query from pg_stat_activity where state = 'active' and query <> '' order by query_start desc limit 20) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:02:03.036965+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:01:41.460439+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"state\":\"active\",\"query_start\":\"2026-11-03 16:01:41.192637+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"}]",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "download_file_id": null
+    }
+  }
+]

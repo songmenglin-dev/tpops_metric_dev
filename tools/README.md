@@ -89,11 +89,14 @@ Three scripts produce the customer-facing deliverables in `data/`:
 | `verify_metric_sources.py` | `data/metric_verification/*.json` | **逐指标真实调用**，通过后才落盘 |
 | `build_metric_value_rules.py` | `data/metric_value_rules.json` | 开发方案 §4.3 的逐指标取值规则 → 机器可读 |
 | `build_itscada_mapping.py` | `data/mapping/*.json` | ITSCADA 映射规则（字段映射 / 指标规则 / 告警规则） |
+| `capture_metric_response.py` | `data/metric_response/*.json` | **逐指标抓原生 API 响应体**（一个指标一个文件，命令中心走 11 条合并 SQL） |
+| `build_metric_sql_column.py` | 客户指标明细表 xlsx | 回填「指标库-指标获取方法」sheet 的「使用的SQL」列 |
 
 ```bash
 python tools/build_customer_metric_mapping.py   # 需要先建 tpops_all_metric.json
 python tools/build_metric_query_plan.py
 python tools/verify_metric_sources.py           # 需 TPOPS_USER / TPOPS_PASSWORD
+python tools/capture_metric_response.py         # 需 TPOPS_USER / TPOPS_PASSWORD
 ```
 
 ### ITSCADA 映射层
