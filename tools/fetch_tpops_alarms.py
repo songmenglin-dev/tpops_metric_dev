@@ -11,7 +11,7 @@ Outputs (under data/alarm/):
     active_detail.json     active alarms, one row per node (with causes/steps)
     history.json           recovered/cleared alarms, grouped
     history_detail.json    recovered/cleared alarms, one row per node
-    manifest.json          provenance: which API produced which file
+    000manifest.json       provenance: which API produced which file
 
 告警目录（告警定义表）不在此脚本产出，见 data/alarm/README.md。
 """
@@ -87,7 +87,7 @@ def main():
         "base_url": client.base_url,
         "note": "历史告警默认保留 30 天",
     }
-    write_json("manifest.json", manifest)
+    write_json("000manifest.json", manifest)
 
 
 if __name__ == "__main__":

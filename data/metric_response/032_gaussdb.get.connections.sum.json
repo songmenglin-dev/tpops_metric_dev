@@ -1,6 +1,20 @@
 [
   {
     "api": "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+      "path_params": {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "nodes": [
         {
@@ -128,26 +142,74 @@
   },
   {
     "api": "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+    "request": {
+      "api": "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "method": "POST",
+      "uri": "/rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "query_params": {},
+      "body": {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "node_ids": [
+          "3881c04403394ee1b36a2bf873e69007no14",
+          "40abc563810e462a97b065e718189a59no14",
+          "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select datname, state, count(*) as cnt from pg_stat_activity where state is not null group by datname, state order by datname, state"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "1000"
+          }
+        ]
+      },
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      }
+    },
     "response_body": {
-      "job_id": "0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+      "job_id": "07f80240-657b-42ff-af54-9d65fb5083b3",
       "node_tasks": [
         {
-          "task_id": "061925bb-bb30-4583-91ac-d0317d0ce7cc",
+          "task_id": "23d78fd6-1d4e-4f39-be69-6a716bccf68e",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14"
         },
         {
-          "task_id": "768519e2-4930-4685-993b-349d106c04ac",
+          "task_id": "62a66059-7b21-4ead-82db-7c7fbec2d37f",
           "node_id": "40abc563810e462a97b065e718189a59no14"
         },
         {
-          "task_id": "465cb308-e429-40ae-bf3d-c8c0b44e4493",
+          "task_id": "c73b8490-4203-4358-b103-76837764c02a",
           "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
         }
       ]
     }
   },
   {
-    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=0dd6a640-629b-48eb-a305-a2e8cdbd84a6",
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=07f80240-657b-42ff-af54-9d65fb5083b3",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=07f80240-657b-42ff-af54-9d65fb5083b3",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "query_params": {
+        "job_id": "07f80240-657b-42ff-af54-9d65fb5083b3"
+      },
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "total_count": 3,
       "statistics": {
@@ -160,12 +222,12 @@
       "job_status": "running",
       "tasks": [
         {
-          "task_id": "061925bb-bb30-4583-91ac-d0317d0ce7cc",
+          "task_id": "23d78fd6-1d4e-4f39-be69-6a716bccf68e",
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-          "agent_req_id": "ComOmCmd-061925bb-bb30-4583-91ac-d0317d0ce7cc",
+          "agent_req_id": "ComOmCmd-23d78fd6-1d4e-4f39-be69-6a716bccf68e",
           "status": "succeed",
           "params": [
             {
@@ -182,17 +244,17 @@
           "is_redirect": false,
           "download_file_id": null,
           "error_msg": null,
-          "start_time": 1794449643377,
-          "finish_time": 1794449648306,
-          "expire_time": 1794708843376
+          "start_time": 1794453110980,
+          "finish_time": 1794453116029,
+          "expire_time": 1794712310980
         },
         {
-          "task_id": "768519e2-4930-4685-993b-349d106c04ac",
+          "task_id": "62a66059-7b21-4ead-82db-7c7fbec2d37f",
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "40abc563810e462a97b065e718189a59no14",
           "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
-          "agent_req_id": "ComOmCmd-768519e2-4930-4685-993b-349d106c04ac",
+          "agent_req_id": "ComOmCmd-62a66059-7b21-4ead-82db-7c7fbec2d37f",
           "status": "succeed",
           "params": [
             {
@@ -209,17 +271,17 @@
           "is_redirect": false,
           "download_file_id": null,
           "error_msg": null,
-          "start_time": 1794449643377,
-          "finish_time": 1794449648221,
-          "expire_time": 1794708843376
+          "start_time": 1794453110980,
+          "finish_time": 1794453115977,
+          "expire_time": 1794712310980
         },
         {
-          "task_id": "465cb308-e429-40ae-bf3d-c8c0b44e4493",
+          "task_id": "c73b8490-4203-4358-b103-76837764c02a",
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
           "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
-          "agent_req_id": "ComOmCmd-465cb308-e429-40ae-bf3d-c8c0b44e4493",
+          "agent_req_id": "ComOmCmd-c73b8490-4203-4358-b103-76837764c02a",
           "status": "succeed",
           "params": [
             {
@@ -236,21 +298,37 @@
           "is_redirect": false,
           "download_file_id": null,
           "error_msg": null,
-          "start_time": 1794449643377,
-          "finish_time": 1794449648362,
-          "expire_time": 1794708843376
+          "start_time": 1794453110980,
+          "finish_time": 1794453116144,
+          "expire_time": 1794712310980
         }
       ]
     }
   },
   {
-    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/061925bb-bb30-4583-91ac-d0317d0ce7cc/detail",
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/23d78fd6-1d4e-4f39-be69-6a716bccf68e/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/23d78fd6-1d4e-4f39-be69-6a716bccf68e/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/23d78fd6-1d4e-4f39-be69-6a716bccf68e/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "07f80240-657b-42ff-af54-9d65fb5083b3",
+        "task_id": "23d78fd6-1d4e-4f39-be69-6a716bccf68e"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "node_id": "3881c04403394ee1b36a2bf873e69007no14",
       "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
       "status": "succeed",
       "is_redirect": false,
-      "result": "[{\"datname\":\"postgres\",\"state\":\"active\",\"cnt\":\"8\"},{\"datname\":\"postgres\",\"state\":\"idle\",\"cnt\":\"11\"}]",
+      "result": "[{\"datname\":\"postgres\",\"state\":\"active\",\"cnt\":\"7\"},{\"datname\":\"postgres\",\"state\":\"idle\",\"cnt\":\"11\"}]",
       "out_format": "json",
       "out_mode": "array",
       "out_type": "map",
@@ -258,7 +336,23 @@
     }
   },
   {
-    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/768519e2-4930-4685-993b-349d106c04ac/detail",
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/62a66059-7b21-4ead-82db-7c7fbec2d37f/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/62a66059-7b21-4ead-82db-7c7fbec2d37f/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/62a66059-7b21-4ead-82db-7c7fbec2d37f/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "07f80240-657b-42ff-af54-9d65fb5083b3",
+        "task_id": "62a66059-7b21-4ead-82db-7c7fbec2d37f"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "node_id": "40abc563810e462a97b065e718189a59no14",
       "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
@@ -272,7 +366,23 @@
     }
   },
   {
-    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/0dd6a640-629b-48eb-a305-a2e8cdbd84a6/task-record/465cb308-e429-40ae-bf3d-c8c0b44e4493/detail",
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/c73b8490-4203-4358-b103-76837764c02a/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/c73b8490-4203-4358-b103-76837764c02a/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/07f80240-657b-42ff-af54-9d65fb5083b3/task-record/c73b8490-4203-4358-b103-76837764c02a/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "07f80240-657b-42ff-af54-9d65fb5083b3",
+        "task_id": "c73b8490-4203-4358-b103-76837764c02a"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
       "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",

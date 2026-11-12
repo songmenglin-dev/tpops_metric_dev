@@ -7,7 +7,7 @@ Usage:
 
 Outputs (under data/api_probe/):
     health_status.json   the raw request/response records for every probe
-    manifest.json         provenance: which URL produced which record
+    000manifest.json        provenance: which URL produced which record
 
 Why this exists
 ---------------
@@ -147,10 +147,10 @@ def main():
                     "但此前从未被真实调用过。",
         },
     }
-    path = os.path.join(OUT_DIR, "manifest.json")
+    path = os.path.join(OUT_DIR, "000manifest.json")
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(manifest, fh, ensure_ascii=False, indent=2)
-    print("  wrote data/api_probe/manifest.json")
+    print("  wrote data/api_probe/000manifest.json")
 
     for line in payload["findings"]:
         print("  finding: {}".format(line))

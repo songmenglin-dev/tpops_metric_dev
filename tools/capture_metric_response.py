@@ -2,22 +2,32 @@
 # -*- coding: utf-8 -*-
 """实测抓取每个客户指标的**原生 API 响应**，落盘到 data/metric_response/。
 
-一个指标一个文件，内容是该指标取数链路上各接口的**平台原生响应体**，
+一个指标一个文件，内容是该指标取数链路上各接口的**完整请求对象 + 平台原生响应体**，
 按调用顺序排列：
 
     [
       {"api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-       "response_body": { ...平台原样返回的 JSON... }},
-      {"api": "GET  /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records?job_id=...",
-       "response_body": { ... }}
+       "request": {
+         "api": "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-...",
+         "method": "POST",
+         "uri": "/rds/gaussdb/v3/command-center/customer-commands/73722acc-...",
+         "path_params": {"cmd_id": "73722acc-..."},
+         "query_params": {},
+         "body": {"instance_id": "...", "node_ids": ["..."], "params": [...]},
+         "headers": {"X-Mini-Token": "<token>", "X-Language": "zh-cn",
+                     "Content-Type": "application/json"}
+       },
+       "response_body": { ...平台原样返回的 JSON... }}
     ]
+
+headers 只留接口必须的那几个，**token 用占位符 <token>，不落盘真实 token**。
 
 通道与文件数：
 
 | 通道 | 文件数 | 每文件里的 API |
 |---|---|---|
 | 命令中心 SQL | 82 | ① 取可执行节点 ② 下发命令 ③ 轮询任务状态 ④ 取任务结果（每个 master 一条） |
-| 监控指标接口 | 11 | ① POST /rds/v3/monitor/metrics |
+| 监控指标接口 | 11 | ① 取最新点（is_latest_point_only=true）② 取时序（false + ≥1h 窗口，带真实时间戳） |
 | 诊断优化接口 | 4 | ① slow-sql-list（3 个）/ top-sql-list（1 个） |
 | 实例接口 | 1 | ① GET /rds/v3.2/instances |
 
@@ -116,14 +126,40 @@ class Tpops(object):
         return resp
 
 
-def step(api, response):
-    return {'api': api, 'response_body': response}
+def build_request(method, uri, path_params=None, query_params=None, body=None):
+    """构造请求对象。
+
+    headers 只保留接口必须的几个（X-Mini-Token / X-Language，POST 再加
+    Content-Type），token 用占位符 <token> —— **不落盘真实 token**。
+    """
+    headers = {'X-Mini-Token': '<token>', 'X-Language': 'zh-cn'}
+    if body is not None:
+        headers['Content-Type'] = 'application/json'
+    api = '%s %s' % (method, uri)
+    if query_params:
+        api = '%s %s?%s' % (method, uri, '&'.join(
+            '%s=%s' % (k, v) for k, v in query_params.items()))
+    return {
+        'api': api,
+        'method': method,
+        'uri': uri,
+        'path_params': path_params or {},
+        'query_params': query_params or {},
+        'body': body,
+        'headers': headers,
+    }
+
+
+def step(request, response):
+    """一次调用 = 请求对象 + 平台原生响应体。"""
+    return {'api': request['api'], 'request': request, 'response_body': response}
 
 
 def capture_nodes(tp, instance_id):
     """取可执行节点（命令只允许在 master 节点执行）。"""
-    path = '/rds/gaussdb/v3/instances/%s/key-view-execute-node' % instance_id
-    resp = tp.get(path)
+    uri = '/rds/gaussdb/v3/instances/%s/key-view-execute-node' % instance_id
+    request = build_request('GET', uri, path_params={'instance_id': instance_id})
+    resp = tp.get(uri)
     nodes = resp.json().get('nodes') or []
     masters = []
     seen = set()
@@ -131,32 +167,34 @@ def capture_nodes(tp, instance_id):
         if node.get('role') == 'master' and node.get('node_id') not in seen:
             seen.add(node.get('node_id'))
             masters.append(node)
-    return step('GET %s' % path, resp.json()), masters
+    return step(request, resp.json()), masters
 
 
 def capture_dispatch(tp, instance_id, node_ids, batch):
-    """下发命令，返回 (job_id, 响应体)。"""
-    path = '/rds/gaussdb/v3/command-center/customer-commands/%s' % CMD_ID
+    """下发命令，返回 (job_id, 步骤)。"""
+    uri = '/rds/gaussdb/v3/command-center/customer-commands/%s' % CMD_ID
     body = {'instance_id': instance_id, 'node_ids': list(node_ids),
             'params': [{'param_name': 'sql_text', 'param_value': batch['sql']},
                        {'param_name': 'limit', 'param_value': str(batch['limit'])}]}
-    resp = tp.post(path, body)
+    request = build_request('POST', uri, path_params={'cmd_id': CMD_ID}, body=body)
+    resp = tp.post(uri, body)
     payload = resp.json()
-    return payload.get('job_id'), step('POST %s' % path, payload)
+    return payload.get('job_id'), step(request, payload)
 
 
 def capture_task_records(tp, job_id):
     """轮询任务状态，结束判据用 statistics.running == 0（不看 job_status）。"""
-    path = ('/rds/gaussdb/v3/command-center/command/%s/batch-exec-job/task-records' % CMD_ID)
+    uri = '/rds/gaussdb/v3/command-center/command/%s/batch-exec-job/task-records' % CMD_ID
+    request = build_request('GET', uri, path_params={'cmd_id': CMD_ID},
+                            query_params={'job_id': job_id})
     payload = None
     for _ in range(120):
-        resp = tp.get(path, params={'job_id': job_id})
+        resp = tp.get(uri, params={'job_id': job_id})
         payload = resp.json()
         if (payload.get('statistics') or {}).get('running', 1) == 0:
             break
         time.sleep(0.5)
-    api = 'GET %s?job_id=%s' % (path, job_id)
-    return payload, step(api, payload)
+    return payload, step(request, payload)
 
 
 def capture_task_details(tp, job_id, records):
@@ -164,10 +202,12 @@ def capture_task_details(tp, job_id, records):
     steps = []
     for task in records.get('tasks') or []:
         task_id = task.get('task_id')
-        path = ('/rds/gaussdb/v3/command-center/command/%s/batch-exec-job/%s'
-                '/task-record/%s/detail' % (CMD_ID, job_id, task_id))
-        resp = tp.get(path)
-        steps.append(step('GET %s' % path, resp.json()))
+        uri = ('/rds/gaussdb/v3/command-center/command/%s/batch-exec-job/%s'
+               '/task-record/%s/detail' % (CMD_ID, job_id, task_id))
+        request = build_request('GET', uri, path_params={
+            'cmd_id': CMD_ID, 'job_id': job_id, 'task_id': task_id})
+        resp = tp.get(uri)
+        steps.append(step(request, resp.json()))
     return steps
 
 
@@ -192,42 +232,59 @@ def capture_command_center(tp, instance_id, node_ids, batch):
 
 
 def capture_monitor(tp, metric_name):
-    """监控指标接口：取时间序列。"""
+    """监控指标接口：取最新点 + 取带真实时间戳的时序。
+
+    ① `is_latest_point_only=true` —— 平台只返回**最新点**（值对，但多数指标
+       timestamp=0，实测 6 个指标里 5 个如此）
+    ② `is_latest_point_only=false` + ≥1h 窗口 —— 完整时序，末尾即同一个最新点，
+       但带真实时间戳
+
+    两次都用同一个 end_time，所以两个响应里"最新点"的值一致；两个响应都是平台原生响应，
+    不做任何裁剪。
+    """
+    uri = '/rds/v3/monitor/metrics'
     end = int(time.time() * 1000) - MONITOR_END_LAG_MS
-    body = {'start_time': end - MONITOR_WINDOW_MS, 'end_time': end,
-            'is_latest_point_only': 'false',
+    base = {'start_time': end - MONITOR_WINDOW_MS, 'end_time': end,
             'instances': [{'instance_id': i} for i in MONITOR_INSTANCES],
             'metric_names': [metric_name]}
-    resp = tp.post('/rds/v3/monitor/metrics', body)
-    return [step('POST /rds/v3/monitor/metrics', resp.json())]
+    steps = []
+    for latest_only in ('true', 'false'):
+        body = dict(base, is_latest_point_only=latest_only)
+        request = build_request('POST', uri, body=body)
+        resp = tp.post(uri, body)
+        steps.append(step(request, resp.json()))
+    return steps
 
 
 def capture_slow_sql(tp, instance_id, node_ids):
     """慢 SQL 集合接口。"""
-    path = '/rds/gaussdb/v3/instances/%s/slow-sql-list' % instance_id
+    uri = '/rds/gaussdb/v3/instances/%s/slow-sql-list' % instance_id
     end = int(time.time() * 1000)
     body = {'start_time': end - SLOW_SQL_WINDOW_MS, 'end_time': end,
             'instance_id': instance_id, 'threshold': 1000, 'threshold_unit': 'ms',
             'node_ids': list(node_ids)}
-    resp = tp.post(path, body)
-    return [step('POST %s' % path, resp.json())]
+    request = build_request('POST', uri, path_params={'instance_id': instance_id}, body=body)
+    resp = tp.post(uri, body)
+    return [step(request, resp.json())]
 
 
 def capture_top_sql(tp, instance_id, node_ids):
     """Top SQL 列表接口。"""
-    path = '/rds/gaussdb/v3/instances/%s/top-sql-list' % instance_id
+    uri = '/rds/gaussdb/v3/instances/%s/top-sql-list' % instance_id
     end = int(time.time() * 1000)
     body = {'instance_id': instance_id, 'node_ids': list(node_ids),
             'start_time': end - TOP_SQL_WINDOW_MS, 'end_time': end}
-    resp = tp.post(path, body)
-    return [step('POST %s' % path, resp.json())]
+    request = build_request('POST', uri, path_params={'instance_id': instance_id}, body=body)
+    resp = tp.post(uri, body)
+    return [step(request, resp.json())]
 
 
 def capture_instances(tp):
     """实例列表接口。"""
-    path = '/rds/v3.2/instances'
-    resp = tp.get(path, params={'limit': 100, 'offset': 0})
-    return [step('GET %s?limit=100&offset=0' % path, resp.json())]
+    uri = '/rds/v3.2/instances'
+    request = build_request('GET', uri, query_params={'limit': 100, 'offset': 0})
+    resp = tp.get(uri, params={'limit': 100, 'offset': 0})
+    return [step(request, resp.json())]
 
 
 def load_json(path):
@@ -304,10 +361,11 @@ def write_outputs(captures, plan, out_dir, meta):
             'file': filename,
             'api_count': len(chain),
             'apis': [s['api'] for s in chain],
+            'requests': [s['request'] for s in chain],
         })
     meta['metrics'] = manifest
     meta['metric_count'] = len(manifest)
-    with open(os.path.join(out_dir, 'manifest.json'), 'w') as fp:
+    with open(os.path.join(out_dir, '000manifest.json'), 'w') as fp:
         json.dump(meta, fp, ensure_ascii=False, indent=2)
     return manifest
 

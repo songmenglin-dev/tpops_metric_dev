@@ -2,7 +2,7 @@
 """Fetch all TPOPS instance metric data and write it to data/ as JSON.
 
 Every output file is the (raw, unmodified) JSON body returned by one TPOPS API
-call. `data/manifest.json` records which API produced which file and with what
+call. `data/000manifest.json` records which API produced which file and with what
 request parameters.
 
 All outputs are gitignored — they are reproducible from the platform.
@@ -12,7 +12,7 @@ Usage:
     python tools/fetch_tpops_metrics.py [--hours 24]
 
 Outputs (under data/):
-    manifest.json          provenance: file -> API call + request parameters
+    000manifest.json         provenance: file -> API call + request parameters
     instances.json         raw return of GET  /rds/v3.2/instances
     metric_catalog.json    merged return of GET /rds/v3/monitor/metrics/series
     metrics_latest.json    raw return of POST /rds/v3/monitor/metrics (latest point)
@@ -179,7 +179,7 @@ def main():
         "instances": {i["id"]: i["name"] for i in instances},
         "metric_count": len(all_names),
     }
-    write_json("manifest.json", manifest)
+    write_json("000manifest.json", manifest)
 
 
 if __name__ == "__main__":

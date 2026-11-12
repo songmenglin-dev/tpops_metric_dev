@@ -154,7 +154,7 @@ All outputs are JSON — each file is the raw JSON body returned by one API call
 
 | File | Source API | Contents |
 |---|---|---|
-| `manifest.json` | — | provenance: which API produced which file, with the exact request parameters |
+| `000manifest.json` | — | provenance: which API produced which file, with the exact request parameters |
 | `instances.json` | `GET /rds/v3.2/instances` | instance list; `instances[].id` feeds the metrics calls |
 | `metric_catalog.json` | `GET /rds/v3/monitor/metrics/series` | metric catalogue per group (12 groups, one request); `metrics[].name` feeds `metric_names` |
 | `metrics_latest.json` | `POST /rds/v3/monitor/metrics` | current snapshot (`is_latest_point_only: "true"`) |
@@ -172,7 +172,7 @@ The default run produces three data files:
 Pass `--hours 24` for a full-day series (11 MB) when you need trends.
 
 These exports are all **reproducible from the platform** and are therefore gitignored:
-`metrics_series_*.json`, `metrics_latest.json`, `metric_catalog.json`, `manifest.json`
+`metrics_series_*.json`, `metrics_latest.json`, `metric_catalog.json`, `000manifest.json`
 (the provenance record for the fetch itself), plus the two files derived from them
 (`tpops_all_metric.json`, `metric_names.csv`, see below).
 `instances.json` is kept as a committed baseline.

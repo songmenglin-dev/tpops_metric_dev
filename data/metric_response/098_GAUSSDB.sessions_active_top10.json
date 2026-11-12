@@ -1,6 +1,20 @@
 [
   {
     "api": "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+      "path_params": {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "nodes": [
         {
@@ -128,26 +142,74 @@
   },
   {
     "api": "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+    "request": {
+      "api": "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "method": "POST",
+      "uri": "/rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "query_params": {},
+      "body": {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "node_ids": [
+          "3881c04403394ee1b36a2bf873e69007no14",
+          "40abc563810e462a97b065e718189a59no14",
+          "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "1000"
+          }
+        ]
+      },
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      }
+    },
     "response_body": {
-      "job_id": "4b2312aa-85b3-4c81-9213-64728dd091c0",
+      "job_id": "136253db-1791-42dc-a649-5fa17304021d",
       "node_tasks": [
         {
-          "task_id": "902fc17c-1fb7-4596-99ba-47b873a5961c",
+          "task_id": "aa213f90-b1e0-47fe-8f39-dbe098ea2303",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14"
         },
         {
-          "task_id": "6041c6ca-6640-4486-969f-33b429d89d5d",
+          "task_id": "0ff86613-b88c-4adc-9b25-4722fed12b51",
           "node_id": "40abc563810e462a97b065e718189a59no14"
         },
         {
-          "task_id": "f631bca1-86a2-4607-8605-a09487ecff6f",
+          "task_id": "fe4dfbda-8083-4ff5-9161-40b4c55f98e5",
           "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
         }
       ]
     }
   },
   {
-    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=4b2312aa-85b3-4c81-9213-64728dd091c0",
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=136253db-1791-42dc-a649-5fa17304021d",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=136253db-1791-42dc-a649-5fa17304021d",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "query_params": {
+        "job_id": "136253db-1791-42dc-a649-5fa17304021d"
+      },
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "total_count": 3,
       "statistics": {
@@ -160,12 +222,12 @@
       "job_status": "running",
       "tasks": [
         {
-          "task_id": "902fc17c-1fb7-4596-99ba-47b873a5961c",
+          "task_id": "aa213f90-b1e0-47fe-8f39-dbe098ea2303",
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-          "agent_req_id": "ComOmCmd-902fc17c-1fb7-4596-99ba-47b873a5961c",
+          "agent_req_id": "ComOmCmd-aa213f90-b1e0-47fe-8f39-dbe098ea2303",
           "status": "succeed",
           "params": [
             {
@@ -182,17 +244,17 @@
           "is_redirect": false,
           "download_file_id": null,
           "error_msg": null,
-          "start_time": 1794449657138,
-          "finish_time": 1794449655641,
-          "expire_time": 1794708857137
+          "start_time": 1794453124444,
+          "finish_time": 1794453129691,
+          "expire_time": 1794712324443
         },
         {
-          "task_id": "6041c6ca-6640-4486-969f-33b429d89d5d",
+          "task_id": "0ff86613-b88c-4adc-9b25-4722fed12b51",
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "40abc563810e462a97b065e718189a59no14",
           "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
-          "agent_req_id": "ComOmCmd-6041c6ca-6640-4486-969f-33b429d89d5d",
+          "agent_req_id": "ComOmCmd-0ff86613-b88c-4adc-9b25-4722fed12b51",
           "status": "succeed",
           "params": [
             {
@@ -209,17 +271,17 @@
           "is_redirect": false,
           "download_file_id": null,
           "error_msg": null,
-          "start_time": 1794449657138,
-          "finish_time": 1794449655721,
-          "expire_time": 1794708857137
+          "start_time": 1794453124444,
+          "finish_time": 1794453129692,
+          "expire_time": 1794712324443
         },
         {
-          "task_id": "f631bca1-86a2-4607-8605-a09487ecff6f",
+          "task_id": "fe4dfbda-8083-4ff5-9161-40b4c55f98e5",
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
           "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
-          "agent_req_id": "ComOmCmd-f631bca1-86a2-4607-8605-a09487ecff6f",
+          "agent_req_id": "ComOmCmd-fe4dfbda-8083-4ff5-9161-40b4c55f98e5",
           "status": "succeed",
           "params": [
             {
@@ -236,21 +298,37 @@
           "is_redirect": false,
           "download_file_id": null,
           "error_msg": null,
-          "start_time": 1794449657138,
-          "finish_time": 1794449656166,
-          "expire_time": 1794708857137
+          "start_time": 1794453124444,
+          "finish_time": 1794453129668,
+          "expire_time": 1794712324443
         }
       ]
     }
   },
   {
-    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b2312aa-85b3-4c81-9213-64728dd091c0/task-record/902fc17c-1fb7-4596-99ba-47b873a5961c/detail",
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/aa213f90-b1e0-47fe-8f39-dbe098ea2303/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/aa213f90-b1e0-47fe-8f39-dbe098ea2303/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/aa213f90-b1e0-47fe-8f39-dbe098ea2303/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "136253db-1791-42dc-a649-5fa17304021d",
+        "task_id": "aa213f90-b1e0-47fe-8f39-dbe098ea2303"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "node_id": "3881c04403394ee1b36a2bf873e69007no14",
       "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
       "status": "succeed",
       "is_redirect": false,
-      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:42.581241+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:42.727494+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:02:36.550997+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-12 10:14:15.428392+08\",\"query\":\"select * from (select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"}]",
+      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:42.581241+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:42.727494+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:02:36.550997+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-12 11:12:09.474056+08\",\"query\":\"select * from (select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"}]",
       "out_format": "json",
       "out_mode": "array",
       "out_type": "map",
@@ -258,13 +336,29 @@
     }
   },
   {
-    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b2312aa-85b3-4c81-9213-64728dd091c0/task-record/6041c6ca-6640-4486-969f-33b429d89d5d/detail",
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/0ff86613-b88c-4adc-9b25-4722fed12b51/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/0ff86613-b88c-4adc-9b25-4722fed12b51/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/0ff86613-b88c-4adc-9b25-4722fed12b51/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "136253db-1791-42dc-a649-5fa17304021d",
+        "task_id": "0ff86613-b88c-4adc-9b25-4722fed12b51"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "node_id": "40abc563810e462a97b065e718189a59no14",
       "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
       "status": "succeed",
       "is_redirect": false,
-      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:40.867011+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:40.932486+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:02:32.141429+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-12 10:14:15.430786+08\",\"query\":\"select * from (select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"}]",
+      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:40.867011+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:40.932486+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:02:32.141429+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-12 11:12:09.394029+08\",\"query\":\"select * from (select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"}]",
       "out_format": "json",
       "out_mode": "array",
       "out_type": "map",
@@ -272,13 +366,29 @@
     }
   },
   {
-    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/4b2312aa-85b3-4c81-9213-64728dd091c0/task-record/f631bca1-86a2-4607-8605-a09487ecff6f/detail",
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/fe4dfbda-8083-4ff5-9161-40b4c55f98e5/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/fe4dfbda-8083-4ff5-9161-40b4c55f98e5/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/136253db-1791-42dc-a649-5fa17304021d/task-record/fe4dfbda-8083-4ff5-9161-40b4c55f98e5/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "136253db-1791-42dc-a649-5fa17304021d",
+        "task_id": "fe4dfbda-8083-4ff5-9161-40b4c55f98e5"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
       "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
       "status": "succeed",
       "is_redirect": false,
-      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:41.192637+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:41.460439+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:02:03.036965+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-12 10:14:16.064726+08\",\"query\":\"select * from (select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"}]",
+      "result": "[{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:41.192637+08\",\"query\":\"COMMStatusCheck has handled client disconnection.\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:01:41.460439+08\",\"query\":\"WLM monitor update and verify local info\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-03 16:02:03.036965+08\",\"query\":\"WLM fetch collect info from data nodes\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"2026-11-12 11:12:09.548651+08\",\"query\":\"select * from (select datname, usename, query_start, query from pg_stat_activity where state = 'active' order by query_start limit 10) limit 1000;\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"},{\"datname\":\"postgres\",\"usename\":\"rdsAdmin\",\"query_start\":\"\",\"query\":\"\"}]",
       "out_format": "json",
       "out_mode": "array",
       "out_type": "map",

@@ -10,7 +10,7 @@ python tools/fetch_tpops_alarms.py
 
 | 文件 | 来源 | 内容 |
 |---|---|---|
-| `manifest.json` | — | 出处记录：哪个 API 产生了哪个文件，含确切请求参数 |
+| `000manifest.json` | — | 出处记录：哪个 API 产生了哪个文件，含确切请求参数 |
 | `statistic.json` | `GET /rds/v3/alarm/records/statistic` | 按等级（severity）统计的告警条数，分系统侧与实例侧 |
 | `active.json` | `POST /rds/v3/alarm/records` | **活动告警**，收敛列表：每条 = 实例 + alarm_id 一行 |
 | `active_detail.json` | 同上 | **活动告警**，明细行：每节点一行，含 `description` / `possible_causes` / `processing_steps` |

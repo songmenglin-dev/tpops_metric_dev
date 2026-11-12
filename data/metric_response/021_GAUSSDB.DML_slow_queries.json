@@ -1,6 +1,32 @@
 [
   {
     "api": "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list",
+    "request": {
+      "api": "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list",
+      "method": "POST",
+      "uri": "/rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list",
+      "path_params": {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14"
+      },
+      "query_params": {},
+      "body": {
+        "start_time": 1794367024251,
+        "end_time": 1794453424251,
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "threshold": 1000,
+        "threshold_unit": "ms",
+        "node_ids": [
+          "3881c04403394ee1b36a2bf873e69007no14",
+          "40abc563810e462a97b065e718189a59no14",
+          "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
+        ]
+      },
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      }
+    },
     "response_body": {
       "slow_sql_infos": [
         {
@@ -26,33 +52,9 @@
           "total_cost_time": "7.7806",
           "total_returned_rows": "0",
           "total_fetched_rows": "0"
-        },
-        {
-          "db_name": "xzl",
-          "schema_name": "\"$user\",public",
-          "sql_id": "1011577308",
-          "user_name": "xzl",
-          "sql_text": "INSERT INTO mk_ca_cf_mp_pq (dist_code, wo_no, area_code, amt_ym, other_col)\nSELECT\n    \n    CASE WHEN random() < ? THEN ? ELSE lpad((floor(random()*?)::int)::text,?,?) END AS dist_code,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS wo_no,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS area_code,\n    \n    (ARRAY[?,?,?,?,?,?])[floor(random()*?)+?] AS amt_ym,\n    \n    ? || md5(random()::text) AS other_col\nFROM generate_series(?, ?);",
-          "query_plan": "Coordinator Name: cn_5001\nInsert on mk_ca_cf_mp_pq  (cost=0.00..97.50 rows=1000 width=160)\n  Node/s: All datanodes\n  Node expr: dist_code\n  ->  Function Scan on generate_series  (cost=0.00..87.50 rows=1000 width=0)\n",
-          "query_plan_optimize": "Coordinator Name: cn_5001\n id |               operation                |    cost     | rows | width \n----+----------------------------------------+-------------+------+-------\n  1 | Insert on mk_ca_cf_mp_pq               | 0.00..97.50 | 1000 |   160 \n  2 |   ->  Function Scan on generate_series | 0.00..87.50 | 1000 |     0 \n\n Predicate Information (identified by plan id) \n-----------------------------------------------\n 1 --Insert on mk_ca_cf_mp_pq \n       Node/s: All datanodes \n       Node expr: dist_code ",
-          "calls": 1,
-          "avg_exec_time": "67.5556",
-          "avg_cpu_time": "13.2053",
-          "avg_io_time": "0.0003",
-          "avg_returned_rows": 0,
-          "sql": "",
-          "avg_fetched_rows": 0,
-          "buffer_hit_ratio": "0.00",
-          "sql_hit_ratio": "0",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-          "component_name": "cn_5001",
-          "total_cost_time": "67.5556",
-          "total_returned_rows": "0",
-          "total_fetched_rows": "0"
         }
       ],
-      "total": 2
+      "total": 1
     }
   }
 ]

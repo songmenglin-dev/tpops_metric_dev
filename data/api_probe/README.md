@@ -12,7 +12,7 @@
 | 文件 | 内容 |
 |---|---|
 | `health_status.json` | 三次探针的完整请求/响应留档 + 自动结论 |
-| `manifest.json` | 出处记录：哪个 URL 产生了哪个文件 |
+| `000manifest.json` | 出处记录：哪个 URL 产生了哪个文件 |
 
 抓取方式：
 

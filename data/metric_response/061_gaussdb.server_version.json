@@ -1,6 +1,21 @@
 [
   {
     "api": "GET /rds/v3.2/instances?limit=100&offset=0",
+    "request": {
+      "api": "GET /rds/v3.2/instances?limit=100&offset=0",
+      "method": "GET",
+      "uri": "/rds/v3.2/instances",
+      "path_params": {},
+      "query_params": {
+        "limit": 100,
+        "offset": 0
+      },
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
     "response_body": {
       "total_count": 2,
       "instances": [
