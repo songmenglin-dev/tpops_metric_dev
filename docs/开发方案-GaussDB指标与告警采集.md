@@ -347,7 +347,7 @@ select * from ({sql_text}) limit {limit}
 | 慢 SQL 集合 | `POST /rds/gaussdb/v3/instances/{id}/slow-sql-list`；body 含 `start_time`/`end_time`/`instance_id`/`threshold`/`threshold_unit`/`node_ids` |
 | 慢 SQL 窗口 | **上限 24 小时**（超出 48h/7d/30d 一律 400「参数错误」） |
 | 慢 SQL 阈值 | `threshold` **必传**（ms 取 1~99000，s 取 1~99），`threshold_unit` 可选（ms/s） |
-| Top SQL 列表 | `POST /rds/gaussdb/v3/instances/{id}/top-sql-list`；**需传全部 CN 节点 id**（不是只传 master） |
+| Top SQL 列表 | `POST /rds/gaussdb/v3/instances/{id}/top-sql-list`；**需传全部 CN 节点 id**（不是只传 master），且**必须按 node_id 去重**（否则报 `DBS.06030136 节点数量超出限制`） |
 | 实测结果 | 两个接口均 **HTTP 200**，但当前实例**无慢 SQL 数据**（`slow_sql_infos[]` / `top_sql_infos[]` 为空） |
 
 > 说明：早前方案记录过 slow-sql-list 返回 400 的现象；2026-11-05 的实测留档显示
@@ -359,7 +359,7 @@ select * from ({sql_text}) limit {limit}
 `GET /rds/v3.2/instances?limit=100&offset=0` → `total_count` + `instances[]`
 （`id`/`name`/`mode`/`created_at`/`instance_status`/`engine_name`/`engine_version`/`agent_info`）。
 
-实测环境有 2 个实例：`gauss-6374`（Combined）、`gauss-75a2`（Ha），均为 `V2.0-10.0.0`。
+实测环境有 2 个实例：`gauss-6374`（Combined，**分布式版**，3 个 CN 均为 master）、`gauss-75a2`（Ha，集中式版，1 个 master DN），均为 `V2.0-10.0.0`。**本项目的目标实例是 `gauss-6374`**（命令中心、监控指标、诊断优化、逐指标实测留档全部用它）。
 
 #### 2.2.7 告警接口（E 类）
 
@@ -465,7 +465,7 @@ select * from ({sql_text}) limit {limit}
 |---|---|
 | 总数 / 通过 / 失败 | **98 / 98 / 0**（`data/metric_verification/_summary.json`） |
 | 实测时间 | 2026-11-05 |
-| 实测实例 | `c35b8d078cae4a9eb05d616ed5cf032fin14`（gauss-75a2，master 节点 `gauss-75a2_root_0`） |
+| 实测实例 | `83cd68f2e4cb40b4b7e69240479ffa26in14`（gauss-6374，分布式版，master 节点 `gauss-6374_gaussdbv5_hcs2-0_0` 等 3 个） |
 | **查询成功但无数据** | **6 个**：慢查询总数/Select慢查询数/DML慢查询数（无慢 SQL）、accessexclusive 锁（无该类锁）、正在运行的 SQL（无活跃会话）、Top10 SQL（无数据） |
 
 这 6 个属于**环境性空数据**，不是接口不可用——采集端实现时必须区分"接口失败"与"查询成功但为空"，
@@ -499,8 +499,8 @@ select * from ({sql_text}) limit {limit}
 {
   "msg_type": "metric",
   "schema_version": "1.0",
-  "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
-  "instance_name": "gauss-75a2",
+  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+  "instance_name": "gauss-6374",
   "metric_name": "GAUSSDB.[{#DATNAME}]_committed_transactions",
   "metric_name_cn": "[{#DATNAME}] Commited transactions",
   "metric_category": "数据库信息",
@@ -519,7 +519,7 @@ select * from ({sql_text}) limit {limit}
 | `msg_type` | string | ✓ | 固定 `"metric"` |
 | `schema_version` | string | ✓ | 固定 `"1.0"`，格式演进时递增 |
 | `instance_id` | string | ✓ | TPOPS 实例 ID |
-| `instance_name` | string | ✓ | TPOPS 实例名（如 `gauss-75a2`） |
+| `instance_name` | string | ✓ | TPOPS 实例名（如 `gauss-6374`） |
 | `metric_name` | string | ✓ | **客户指标英文名，原样保留（含 OCR 错字）** |
 | `metric_name_cn` | string | ✓ | 客户指标中文名 |
 | `metric_category` | string | ✓ | 客户指标分类（13 类之一） |
@@ -879,22 +879,32 @@ X-Language: zh-cn
 **请求**
 
 ```http
-GET /rds/gaussdb/v3/instances/c35b8d078cae4a9eb05d616ed5cf032fin14/key-view-execute-node
+GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node
 ```
 
-**响应**
+**响应**（实测样本，gauss-6374 分布式版共 **12 条**条目，此处节选）
 
 ```json
 {
   "nodes": [
-    { "node_id": "d5284a09d06c4b2798c8c713259fe705no14", "node_name": "gauss-75a2_root_0",
-      "role": "master", "type": "DN", "distributed_id": "60011", "component_id": "dn_6001",
-      "node_ip": "172.16.103.151", "detail": "Normal" },
-    { "node_id": "e2ffdaba060b4246b07c8a01c4512c2dno14", "node_name": "gauss-75a2_root_1",
-      "role": "slave",  "type": "DN", "…": "…" }
+    { "node_id": "3881c04403394ee1b36a2bf873e69007no14", "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+      "role": "master", "type": "CN", "distributed_id": "", "component_id": "cn_5001",
+      "node_ip": "172.16.103.126", "detail": "Normal" },
+    { "node_id": "40abc563810e462a97b065e718189a59no14", "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+      "role": "master", "type": "CN", "distributed_id": "", "component_id": "cn_5002",
+      "node_ip": "172.16.103.127", "detail": "Normal" },
+    { "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14", "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+      "role": "master", "type": "CN", "distributed_id": "", "component_id": "cn_5003",
+      "node_ip": "172.16.103.128", "detail": "Normal" },
+    { "node_id": "3881c04403394ee1b36a2bf873e69007no14", "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+      "role": "slave",  "type": "DN", "distributed_id": "60011", "…": "…" }
   ]
 }
 ```
+
+> ⚠️ 同一个 `node_id` 会以 **CN** 和**各 distributed_id 的 DN** 重复出现（12 条条目只有 **3 个唯一 node_id**）。
+> **下发命令前必须按 node_id 去重**，否则会重复下发。
+> 完整留档：`data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json`
 
 **用途**：命令中心下发前**必须**取 `role == "master"` 的 `node_id`。
 
@@ -920,7 +930,7 @@ Content-Type: application/json
   "start_time": 1793866451000,
   "end_time":   1793871351000,
   "is_latest_point_only": "false",
-  "instances": [{"instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14"}],
+  "instances": [{"instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14"}],
   "metric_names": [
     "rds092_gaussv5_commit_counter",
     "rds133_cn_startup_time",
@@ -1037,7 +1047,7 @@ POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc
 Content-Type: application/json
 
 {
-  "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
   "node_ids": ["d5284a09d06c4b2798c8c713259fe705no14"],
   "params": [
     {"param_name": "sql_text", "param_value": "select schemaname, relname, n_dead_tup from pg_stat_user_tables"},
@@ -1107,7 +1117,7 @@ GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task
 ```json
 {
   "node_id": "d5284a09d06c4b2798c8c713259fe705no14",
-  "node_name": "gauss-75a2_root_0",
+  "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
   "status": "succeed",
   "is_redirect": false,
   "result": "[{\"v\":\"gaussdb (GaussDB Kernel 507.0.0 build d791c80a) compi…",
@@ -1152,12 +1162,12 @@ rows  = json.loads(wait.tasks[0].detail["result"])              # 第 3 跳
 ##### 慢 SQL 集合 `POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list`
 
 ```http
-POST /rds/gaussdb/v3/instances/c35b8d078cae4a9eb05d616ed5cf032fin14/slow-sql-list
+POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list
 
 {
   "start_time": 1793784651000,
   "end_time":   1793871051000,
-  "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
   "threshold": 1000,
   "threshold_unit": "ms",
   "node_ids": ["d5284a09d06c4b2798c8c713259fe705no14"]
@@ -1180,7 +1190,7 @@ POST /rds/gaussdb/v3/instances/c35b8d078cae4a9eb05d616ed5cf032fin14/slow-sql-lis
 POST /rds/gaussdb/v3/instances/{instance_id}/top-sql-list
 
 {
-  "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
   "node_ids": ["<cn1>", "<cn2>", "…"],
   "start_time": 1793784651000,
   "end_time":   1793871051000
@@ -1189,7 +1199,7 @@ POST /rds/gaussdb/v3/instances/{instance_id}/top-sql-list
 
 **响应**：`top_sql_infos[]`，按 `total_elapse_time` 排序。
 
-**约束**：`node_ids` **需传全部 CN 节点 id**（不是只传 master）。
+**约束**：`node_ids` **需传全部 CN 节点 id**（不是只传 master），且**必须按 node_id 去重** —— 节点清单里同一个 node_id 会以 CN 和各 distributed_id 的 DN 重复出现，不去重会重复下发，平台报 `DBS.06030136 节点数量超出限制`（实测：gauss-6374 去重前 6 个 id，去重后 3 个）。
 本项目从节点清单里筛出所有 `type == "CN"` 的节点。
 
 #### 4.2.7 告警接口（E 类）

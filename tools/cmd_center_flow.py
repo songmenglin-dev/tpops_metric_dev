@@ -22,14 +22,14 @@ RESULTS = os.path.join(ROOT, "data", "command_center", "results")
 
 CMD_SQL_ID = "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"   # general_single_sql_query
 
-# 实测用的实例（HA 形态）与 master 节点，与留档中的响应一致
-SAMPLE_INSTANCE = "c35b8d078cae4a9eb05d616ed5cf032fin14"
+# 实测用的实例（分布式版，mode=Combined，3 个 CN 均为 master）与 master 节点，与留档中的响应一致
+SAMPLE_INSTANCE = "83cd68f2e4cb40b4b7e69240479ffa26in14"
 
 _CAPTURES = {
     "api1": "02_nodes_%s.json" % SAMPLE_INSTANCE,
-    "api2": "05_execute_sql.json",
-    "api3": "06_task_records_sql.json",
-    "api4": "07_task_result_sql.json",
+    "api2": "05_execute_sql_6374.json",
+    "api3": "06_task_records_sql_6374.json",
+    "api4": "07_task_result_sql_6374.json",
 }
 
 _HEADERS = {"X-Mini-Token": "<token>", "X-Language": "zh-cn"}

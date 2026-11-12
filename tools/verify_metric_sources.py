@@ -38,9 +38,10 @@ BASE_URL = os.environ.get("TPOPS_BASE_URL", "https://172.16.103.193:8002").rstri
 TPOPS_USER = os.environ.get("TPOPS_USER", "")
 TPOPS_PASSWORD = os.environ.get("TPOPS_PASSWORD", "")
 
-# 实测用的实例（HA 形态，含真实业务数据）
-TEST_INSTANCE = "c35b8d078cae4a9eb05d616ed5cf032fin14"
-BOTH_INSTANCES = ["83cd68f2e4cb40b4b7e69240479ffa26in14", "c35b8d078cae4a9eb05d616ed5cf032fin14"]
+# 实测用的实例（分布式版，mode=Combined，3 个 CN 均为 master，含真实业务数据）
+# 与 data/metric_response/ 的留档、合并 SQL 实测用同一个实例
+TEST_INSTANCE = "83cd68f2e4cb40b4b7e69240479ffa26in14"
+BOTH_INSTANCES = ["83cd68f2e4cb40b4b7e69240479ffa26in14"]
 MAX_RETRY = 3
 
 STATUS_PASS = "通过"
@@ -73,13 +74,24 @@ class Tpops(object):
                 "Content-Type": "application/json"}
 
     def master_nodes(self, instance_id):
-        """取实例上可执行命令的 master 节点。"""
+        """取实例上可执行命令的 master 节点（**按 node_id 去重**）。
+
+        同一个 node_id 会以 CN 和各 distributed_id 的 DN 重复出现
+        （gauss-6374 有 6 条 role=master 条目但只有 3 个唯一 node_id），
+        不去重会把重复的 node_id 发给平台 → top-sql-list 报「节点数量超出限制」。
+        """
         resp = self.session.get(
             BASE_URL + "/rds/gaussdb/v3/instances/%s/key-view-execute-node" % instance_id,
             headers=self.headers(), timeout=30)
         if resp.status_code != 200:
             raise RuntimeError("key-view-execute-node HTTP %s" % resp.status_code)
-        nodes = [n for n in resp.json().get("nodes", []) if n.get("role") == "master"]
+        nodes = []
+        seen = set()
+        for n in resp.json().get("nodes", []):
+            if n.get("role") != "master" or n.get("node_id") in seen:
+                continue
+            seen.add(n.get("node_id"))
+            nodes.append(n)
         if not nodes:
             raise RuntimeError("实例 %s 无 master 节点" % instance_id)
         return nodes
@@ -113,7 +125,7 @@ def run_sql(tpops, node_id, sql, limit=100):
                            {"param_name": "limit", "param_value": str(limit)}]}
         resp = tpops.session.post(
             BASE_URL + "/rds/gaussdb/v3/command-center/customer-commands/%s" % cmd_id,
-            json=body, headers=tpops.headers(), timeout=120)
+            json=body, headers=tpops.headers(), timeout=60)
         if resp.status_code != 200:
             last_err = "下发 HTTP %s %s" % (resp.status_code, resp.text[:200])
             time.sleep(2)
@@ -369,6 +381,21 @@ def build_record(entry, category, status, result, err, elapsed, way, tested_at,
     return record
 
 
+def call_with_retry(tpops, entry, node_id, node_ids, attempts=3):
+    """逐指标调用带兜底 —— 平台偶发读超时/挂起，不能让整轮实测中断。
+
+    命令中心下发请求实测遇到过 120 秒读超时（平台侧无响应），重试即恢复。
+    """
+    last_err = None
+    for _ in range(attempts):
+        try:
+            return test_metric(tpops, entry, node_id, node_ids)
+        except Exception as exc:                      # noqa: BLE001 - 转成失败项
+            last_err = exc
+            time.sleep(3)
+    return STATUS_FAIL, None, "调用异常（重试 %d 次）: %s" % (attempts, last_err), 0, "", None
+
+
 def main():
     ap = argparse.ArgumentParser(description="逐指标实测获取方法，通过后落盘 JSON")
     ap.add_argument("--out-dir", default=os.path.join(DATA_DIR, "metric_verification"))
@@ -412,7 +439,7 @@ def main():
     failed = []
     for idx, (cat, entry) in enumerate(targets, start=1):
         tested_at = time.strftime("%Y-%m-%d %H:%M:%S")
-        status, result, err, elapsed, way, trace = test_metric(tpops, entry, node_id, node_ids)
+        status, result, err, elapsed, way, trace = call_with_retry(tpops, entry, node_id, node_ids)
         if status in (STATUS_PASS, STATUS_PASS_EMPTY):
             ok += 1
             rec = build_record(entry, cat, status, result, err, elapsed, way, tested_at,

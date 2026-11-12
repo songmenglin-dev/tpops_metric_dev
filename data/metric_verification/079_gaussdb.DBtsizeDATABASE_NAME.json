@@ -45,6 +45,291 @@
       }
     },
     "expected_result": "每库一行：datname + size_bytes",
+    "flow": "async_job",
+    "apis": {
+      "api1": {
+        "name": "取可执行节点",
+        "purpose": "命令只允许在 master 节点执行，下发前必须先拿到 master 的 node_id",
+        "method": "GET",
+        "uri": "/rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node",
+        "request": {
+          "headers": {
+            "X-Mini-Token": "<token>",
+            "X-Language": "zh-cn"
+          },
+          "path_params": {
+            "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14"
+          },
+          "query_params": {},
+          "body": null
+        },
+        "response": {
+          "nodes": [
+            {
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "role": "master",
+              "type": "CN",
+              "distributed_id": "",
+              "component_id": "cn_5001",
+              "node_ip": "172.16.103.126",
+              "detail": ""
+            },
+            {
+              "node_id": "40abc563810e462a97b065e718189a59no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "role": "master",
+              "type": "CN",
+              "distributed_id": "",
+              "component_id": "cn_5002",
+              "node_ip": "172.16.103.127",
+              "detail": ""
+            },
+            {
+              "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "role": "master",
+              "type": "CN",
+              "distributed_id": "",
+              "component_id": "cn_5003",
+              "node_ip": "172.16.103.128",
+              "detail": ""
+            },
+            {
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "role": "master",
+              "type": "DN",
+              "distributed_id": "60011",
+              "component_id": "dn_6001",
+              "node_ip": "172.16.103.126",
+              "detail": "Normal"
+            },
+            {
+              "node_id": "40abc563810e462a97b065e718189a59no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "role": "slave",
+              "type": "DN",
+              "distributed_id": "60011",
+              "component_id": "dn_6002",
+              "node_ip": "172.16.103.127",
+              "detail": "Normal"
+            },
+            {
+              "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "role": "slave",
+              "type": "DN",
+              "distributed_id": "60011",
+              "component_id": "dn_6003",
+              "node_ip": "172.16.103.128",
+              "detail": "Normal"
+            },
+            {
+              "node_id": "40abc563810e462a97b065e718189a59no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "role": "master",
+              "type": "DN",
+              "distributed_id": "60042",
+              "component_id": "dn_6004",
+              "node_ip": "172.16.103.127",
+              "detail": "Normal"
+            },
+            {
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "role": "slave",
+              "type": "DN",
+              "distributed_id": "60042",
+              "component_id": "dn_6005",
+              "node_ip": "172.16.103.126",
+              "detail": "Normal"
+            },
+            {
+              "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "role": "slave",
+              "type": "DN",
+              "distributed_id": "60042",
+              "component_id": "dn_6006",
+              "node_ip": "172.16.103.128",
+              "detail": "Normal"
+            },
+            {
+              "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "role": "master",
+              "type": "DN",
+              "distributed_id": "60073",
+              "component_id": "dn_6007",
+              "node_ip": "172.16.103.128",
+              "detail": "Normal"
+            },
+            {
+              "node_id": "40abc563810e462a97b065e718189a59no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "role": "slave",
+              "type": "DN",
+              "distributed_id": "60073",
+              "component_id": "dn_6008",
+              "node_ip": "172.16.103.127",
+              "detail": "Normal"
+            },
+            {
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "role": "slave",
+              "type": "DN",
+              "distributed_id": "60073",
+              "component_id": "dn_6009",
+              "node_ip": "172.16.103.126",
+              "detail": "Normal"
+            }
+          ]
+        },
+        "response_source": "实测留档 data/command_center/results/02_nodes_83cd68f2e4cb40b4b7e69240479ffa26in14.json",
+        "note": "取 role=master 的节点（上面返回里第 1 个 gauss-6374_gaussdbv5_hcs2-0_0 即 master，node_id=3881c04403394ee1b36a2bf873e69007no14）。一次下发多节点会失败，须逐节点下发。本次实测所用节点即上面这个 master 节点（node_id=3881c04403394ee1b36a2bf873e69007no14）。"
+      },
+      "api2": {
+        "name": "下发命令（传入自定义 SQL）",
+        "purpose": "把自定义 SQL 交给平台内置命令 general_single_sql_query 执行",
+        "method": "POST",
+        "uri": "/rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
+        "request": {
+          "headers": {
+            "X-Mini-Token": "<token>",
+            "X-Language": "zh-cn",
+            "Content-Type": "application/json"
+          },
+          "path_params": {
+            "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+          },
+          "query_params": {},
+          "body": {
+            "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+            "node_ids": [
+              "3881c04403394ee1b36a2bf873e69007no14"
+            ],
+            "params": [
+              {
+                "param_name": "sql_text",
+                "param_value": "select datname, pg_database_size(datname) as size_bytes from pg_database order by size_bytes desc"
+              },
+              {
+                "param_name": "limit",
+                "param_value": "100"
+              }
+            ]
+          }
+        },
+        "response": {
+          "job_id": "e0bbadbb-6815-4317-a7b5-ac7a33cd1cff",
+          "node_tasks": [
+            {
+              "task_id": "28f49d98-3b0d-4fa9-b21f-a9c10f5f4ea4",
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14"
+            }
+          ]
+        },
+        "response_source": "本指标本次实测",
+        "note": "cmd_id 是平台内置命令 general_single_sql_query 的 id（source=default，平台 admin 创建），模板为 select * from ({sql_text}) limit {limit}; —— 平台提供执行器，SQL 由我们填。本步响应只含 job_id 与 task_id，**不含数据**。上面 response 是样本（该次执行的 sql_text 为 `select version() as v, now() as t`）；本指标的 sql_text 见 request.body.params[0]。"
+      },
+      "api3": {
+        "name": "轮询任务状态",
+        "purpose": "等命令执行完，并取节点任务状态与失败原因",
+        "method": "GET",
+        "uri": "/rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
+        "request": {
+          "headers": {
+            "X-Mini-Token": "<token>",
+            "X-Language": "zh-cn"
+          },
+          "path_params": {
+            "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+          },
+          "query_params": {
+            "job_id": "e0bbadbb-6815-4317-a7b5-ac7a33cd1cff",
+            "offset": 0,
+            "limit": 100
+          },
+          "body": null
+        },
+        "response": {
+          "total_count": 1,
+          "statistics": {
+            "total": 1,
+            "succeed": 1,
+            "failed": 0,
+            "running": 0,
+            "other": 0
+          },
+          "job_status": "running",
+          "tasks": [
+            {
+              "task_id": "28f49d98-3b0d-4fa9-b21f-a9c10f5f4ea4",
+              "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+              "instance_name": "gauss-6374",
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "agent_req_id": "ComOmCmd-28f49d98-3b0d-4fa9-b21f-a9c10f5f4ea4",
+              "status": "succeed",
+              "params": [
+                {
+                  "param_name": "limit",
+                  "param_value": "100",
+                  "sensitive": false
+                },
+                {
+                  "param_name": "sql_text",
+                  "param_value": "******",
+                  "sensitive": true
+                }
+              ],
+              "is_redirect": false,
+              "download_file_id": null,
+              "error_msg": null,
+              "start_time": 1794463980974,
+              "finish_time": 1794463986080,
+              "expire_time": 1794723180973
+            }
+          ]
+        },
+        "response_source": "本指标本次实测",
+        "note": "结束判据用 statistics.running == 0，**不要看 job_status** —— 上面真实响应里 job_status 仍是 running，但 statistics.running 已是 0、节点状态已是 succeed。单次往返 3~8 秒。注意 tasks[].params 里的 sql_text 被掩码为 ******（执行不受影响）。"
+      },
+      "api4": {
+        "name": "取任务结果",
+        "purpose": "取回 SQL 的执行结果 —— 业务数据在这里",
+        "method": "GET",
+        "uri": "/rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/{job_id}/task-record/{task_id}/detail",
+        "request": {
+          "headers": {
+            "X-Mini-Token": "<token>",
+            "X-Language": "zh-cn"
+          },
+          "path_params": {
+            "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+            "job_id": "e0bbadbb-6815-4317-a7b5-ac7a33cd1cff",
+            "task_id": "28f49d98-3b0d-4fa9-b21f-a9c10f5f4ea4"
+          },
+          "query_params": {},
+          "body": null
+        },
+        "response": {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "status": "succeed",
+          "is_redirect": false,
+          "result": "[{\"datname\":\"postgres\",\"size_bytes\":\"1739636748\"},{\"datname\":\"xzl\",\"size_bytes\":\"106545164\"},{\"datname\":\"templatea\",\"size_bytes\":\"91144204\"},{\"datname\":\"lz\",\"size_bytes\":\"90955788\"},{\"datname\":\"template1\",\"size_bytes\":\"90578956\"},{\"datname\":\"template0\",\"size_bytes\":\"89841676\"},{\"datname\":\"templatem\",\"size_bytes\":\"71958540\"}]",
+          "out_format": "json",
+          "out_mode": "array",
+          "out_type": "map",
+          "download_file_id": null
+        },
+        "response_source": "本指标本次实测",
+        "note": "result 是 **JSON 字符串**，必须二次 json.loads 解析才是行列表。列名取自 SQL 的 as 别名，所以自定义 SQL 必须显式写别名。上面 response 是本指标本次实测的真实结果。"
+      }
+    },
     "related_apis": [
       "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
       "GET /rds/gaussdb/v3/command-center/command/{cmd_id}/batch-exec-job/task-records",
@@ -53,50 +338,84 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 19:10:49",
-    "method": "命令中心执行 SQL",
-    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
-    "node_name": "gauss-75a2_root_0",
+    "tested_at": "2026-11-12 14:17:10",
+    "method": "命令中心执行 SQL（下发→轮询→取结果）",
+    "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+    "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
     "state": "通过",
-    "elapsed_seconds": 4.8,
-    "row_count": 9,
+    "elapsed_seconds": 5.9,
+    "row_count": 7,
     "error": null,
     "actual_data": [
       {
         "datname": "postgres",
-        "size_bytes": "307732484"
+        "size_bytes": "1739636748"
       },
       {
-        "datname": "sun_db",
-        "size_bytes": "28270596"
-      },
-      {
-        "datname": "sun_test",
-        "size_bytes": "28024836"
-      },
-      {
-        "datname": "atestdb",
-        "size_bytes": "27959300"
+        "datname": "xzl",
+        "size_bytes": "106545164"
       },
       {
         "datname": "templatea",
-        "size_bytes": "27787268"
+        "size_bytes": "91144204"
       },
       {
-        "datname": "template0",
-        "size_bytes": "27451396"
+        "datname": "lz",
+        "size_bytes": "90955788"
       },
       {
         "datname": "template1",
-        "size_bytes": "27451396"
+        "size_bytes": "90578956"
       },
       {
-        "datname": "mtestdb",
-        "size_bytes": "22593540"
+        "datname": "template0",
+        "size_bytes": "89841676"
       },
       {
         "datname": "templatem",
-        "size_bytes": "20578308"
+        "size_bytes": "71958540"
+      }
+    ],
+    "job_id": "e0bbadbb-6815-4317-a7b5-ac7a33cd1cff",
+    "task_id": "28f49d98-3b0d-4fa9-b21f-a9c10f5f4ea4",
+    "call_trace": [
+      {
+        "n": 1,
+        "name": "下发命令",
+        "method": "POST",
+        "uri": "/rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "status_code": 200
+      },
+      {
+        "n": 2,
+        "name": "轮询任务状态",
+        "method": "GET",
+        "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records",
+        "status_code": 200,
+        "polls": 2,
+        "job_status": "running",
+        "statistics": {
+          "total": 1,
+          "succeed": 1,
+          "failed": 0,
+          "running": 0,
+          "other": 0
+        },
+        "node_status": [
+          "succeed"
+        ]
+      },
+      {
+        "n": 3,
+        "name": "取任务结果",
+        "method": "GET",
+        "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/e0bbadbb-6815-4317-a7b5-ac7a33cd1cff/task-record/28f49d98-3b0d-4fa9-b21f-a9c10f5f4ea4/detail",
+        "status_code": 200,
+        "status": "succeed",
+        "out_format": "json",
+        "out_mode": "array",
+        "out_type": "map",
+        "result_is_json_string": true
       }
     ]
   }

@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://172.16.103.193:8002/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/25c9dadf-6771-4541-bb4d-ad0dd986535f/task-record/8d680311-7367-413f-9f8f-747b2ddbe22a/detail"
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "X-TRACE-ID": "1412a748-e96b-4f18-add5-86e0d010600e",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-Content-Type-Options": "nosniff",
+      "X-Download-Options": "noopen",
+      "Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-Content-Security-Policy": "default-src 'self' data: 'unsafe-inline'",
+      "X-WebKit-CSP": "default-src 'self' data: 'unsafe-inline'",
+      "Pragma": "no-cache",
+      "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+      "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+      "X-XSS-Protection": "1; mode=block",
+      "vary": "accept-encoding",
+      "Content-Encoding": "gzip",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Date": "Thu, 12 Nov 2026 03:37:49 GMT",
+      "Keep-Alive": "timeout=20",
+      "Connection": "keep-alive",
+      "Server": "127.0.0.1"
+    },
+    "body": {
+      "node_id": "40abc563810e462a97b065e718189a59no14",
+      "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "[{\"datname\":\"lz\",\"numbackends\":\"1\",\"xact_commit\":\"22491\",\"xact_rollback\":\"3\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"1140\",\"blks_hit\":\"718764\",\"blk_read_time\":\"24.093\",\"blk_write_time\":\"0\",\"tup_inserted\":\"2244\",\"tup_updated\":\"369\",\"tup_deleted\":\"780\",\"tup_returned\":\"2360924\",\"tup_fetched\":\"218147\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.84\"},{\"datname\":\"postgres\",\"numbackends\":\"26\",\"xact_commit\":\"16753654\",\"xact_rollback\":\"31\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"8307\",\"blks_hit\":\"116940521\",\"blk_read_time\":\"35.4200000000000017\",\"blk_write_time\":\"0\",\"tup_inserted\":\"10251638\",\"tup_updated\":\"507288\",\"tup_deleted\":\"4454129\",\"tup_returned\":\"182039827\",\"tup_fetched\":\"45002543\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.99\"},{\"datname\":\"template0\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"template1\",\"numbackends\":\"0\",\"xact_commit\":\"291783\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"520\",\"blks_hit\":\"8188550\",\"blk_read_time\":\"10.7460000000000004\",\"blk_write_time\":\"0\",\"tup_inserted\":\"1086\",\"tup_updated\":\"2025\",\"tup_deleted\":\"54\",\"tup_returned\":\"10150360\",\"tup_fetched\":\"3536905\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.99\"},{\"datname\":\"templatea\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"templatem\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"xzl\",\"numbackends\":\"0\",\"xact_commit\":\"29460\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"1056\",\"blks_hit\":\"991893\",\"blk_read_time\":\"17.4409999999999989\",\"blk_write_time\":\"0\",\"tup_inserted\":\"101244\",\"tup_updated\":\"92\",\"tup_deleted\":\"122\",\"tup_returned\":\"3239900\",\"tup_fetched\":\"289153\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.89\"}]",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "download_file_id": null
+    }
+  }
+}

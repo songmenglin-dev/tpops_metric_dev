@@ -34,10 +34,10 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 19:09:24",
+    "tested_at": "2026-11-12 14:15:37",
     "method": "实例列表接口",
-    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
-    "node_name": "gauss-75a2_root_0",
+    "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+    "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
     "state": "通过",
     "elapsed_seconds": 0.1,
     "row_count": 2,

@@ -44,12 +44,12 @@
     ]
   },
   "verification": {
-    "tested_at": "2026-11-05 19:09:23",
+    "tested_at": "2026-11-12 14:15:37",
     "method": "监控指标接口",
-    "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
-    "node_name": "gauss-75a2_root_0",
+    "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+    "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
     "state": "通过",
-    "elapsed_seconds": 0.2,
+    "elapsed_seconds": 0.1,
     "row_count": 1,
     "error": null,
     "actual_data": [
@@ -59,21 +59,21 @@
         "collection_frequency": 3600,
         "time_interval": 60,
         "timestamps": [
-          1793869464000.0,
-          1793873064000.0
+          1794456637000.0,
+          1794460237000.0
         ],
         "series": {
           "cn_5002": [
-            1793674919.0,
-            1793674595.0
+            1793616334.0,
+            1793616004.0
           ],
           "cn_5001": [
-            1793675206.0,
-            1793674546.0
+            1793616494.0,
+            1793615833.0
           ],
           "cn_5003": [
-            1793674919.0,
-            1793674595.0
+            1793616334.0,
+            1793616003.0
           ]
         }
       }
