@@ -1,0 +1,20 @@
+# Ruff 配置 —— 目标运行时是 Python 3.7.9（见 CLAUDE.md「Python 3.7.9 红线」）
+#
+# target-version = "py37" 的作用：
+#   1. 把 3.8+ 才有的语法（海象 := 等）判为 invalid-syntax；
+#   2. 阻止 UP 规则建议 3.9/3.10 才有的写法（list[str]、X | Y）——
+#      这些规则在 py37 目标下不会触发，无需再 ignore；
+#   3. 配合 FA102 捕捉 PEP 585 内建泛型注解（list[str]）——
+#      这是 py37 运行期会直接 TypeError 的写法。
+#
+# 本仓库运行在 Python 3.7.9，新增代码必须符合 py37 语法。
+
+target-version = "py37"
+line-length = 100
+
+[lint]
+# E/W : pycodestyle 风格与行宽（E501 已含在 E 中，此处显式列出便于阅读）
+# F   : pyflakes —— 未使用导入/变量、未定义名字等真实缺陷
+# UP  : pyupgrade —— 按 target-version 做语法升级建议
+# FA102: PEP 585 内建泛型注解在 py37 不可用
+select = ["E", "F", "W", "E501", "UP", "FA102"]
