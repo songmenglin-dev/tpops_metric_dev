@@ -294,10 +294,13 @@ TPOPS（源） → 采集（Pull） → 归一化（Normalize） → 映射（Ma
 |---|---|
 | 接口 | `POST /rds/v3/monitor/metrics` |
 | 请求 | `start_time`/`end_time`（**13 位毫秒**）、`is_latest_point_only`、`instances[]{instance_id}`、`metric_names[]`（**数组，支持批量**） |
-| 响应 | `metric_infos[]` → 每个含 `metric_name`（**中文名只在这里**）、`collection_frequency`、`time_interval`、`timestamps[]`、`series{}`（按主机 IP 展开） |
+| 响应 | `metric_infos[]`（**一项一个实例**）→ 每个含 `metric_name`（**中文名只在这里**）、`collection_frequency`、`time_interval`、`timestamps[]`、`series{}` |
+| **series 的 key** | 是**节点名**（如 `cn_5001`/`cn_5002`/`cn_5003`、`dn_6001`），**不是主机 IP**；且平台**不提供** series key → node_id 的映射，而 ITSCADA 的 `resourceName` 要 `{instance_name}_{node_id}` → **待客户确认口径** |
+| **取数口径** | **取最新点**：① `is_latest_point_only=true`（只要最新点）② `is_latest_point_only=false` + ≥1h 窗口（补真实时间戳）；两次用同一个 `end_time`，最新点即时序末尾那点 |
+| **实例范围** | 一次**只查一个实例**（与命令中心通道同一个分布式实例）；命令中心无法一次带多实例 → 采集端**按实例循环** |
 | **窗口约束** | **≥ 1 小时**才能覆盖 `collection_frequency=3600` 的指标；5 分钟窗口覆盖 0/21 |
 | **入库滞后** | 约 **5 分钟** → `end_time` 必须回退，否则尾部大量 null（5 分钟窗口实测 null 率 **77.5%**） |
-| **致命坑** | `is_latest_point_only=true` 会让约 **74%** 的指标 `timestamp=0`（值对、时间丢）→ 必须用 **字符串 `"false"`** |
+| **致命坑** | `is_latest_point_only=true` 时约 **74%** 的指标 `timestamp=0` 且 `node_id=null`（值对、时间丢）→ 用 ② 补时间戳，或用采集时刻兜底 |
 | 指标目录 | `GET /rds/v3/monitor/metrics/series?name=<GROUP>`；12 个分组码**必须硬编码**（平台无枚举接口），**写错分组名返回 200 + 空 series 不报错** |
 
 平台采集周期档位（`collection_frequency`）：10s×29、30s×2、60s×152、300s×12、3600s×21。
@@ -896,7 +899,7 @@ GET /rds/gaussdb/v3/instances/c35b8d078cae4a9eb05d616ed5cf032fin14/key-view-exec
 **用途**：命令中心下发前**必须**取 `role == "master"` 的 `node_id`。
 
 **约束（2026-11-06 修正）**：
-- master **不唯一**。集中式实例 `gauss-6374` 的节点清单有 **12 条条目 / 3 个唯一 node_id**，其中 **6 条 `role=master`**（每个 node_id 同时以 CN 与 DN 各出现一次）；HA 实例 `gauss-75a2` 才有恰好 1 个 master DN。
+- master **不唯一**。分布式实例 `gauss-6374`（mode=Combined）的节点清单有 **12 条条目 / 3 个唯一 node_id**，其中 **6 条 `role=master`**（每个 node_id 同时以 CN 与 DN 各出现一次）；集中式实例 `gauss-75a2`（mode=Ha）才有恰好 1 个 master DN。
 - **一次下发多个 master 成功**（原『多节点必失败』是 SHELL 命令的行为，被错误推广）。
 - **各 master 返回的计数值不同**（实测 `postgres.xact_commit` = 7265656 / 7218577 / 6315580），选任一 master 只能得到**该节点视角**，不是整实例汇总。
 → 采集端**一次下发该实例的全部 master**，并按 §4.5.2 的**按节点分基线**规则处理计数类指标。
@@ -1557,8 +1560,8 @@ select d.datname, d.numbackends, d.xact_commit, d.xact_rollback, d.blks_read, d.
 
 ### 4.4.4 多 master：一次下发全部 master
 
-集中式实例 `gauss-6374` 的节点清单有 **12 条条目 / 3 个唯一 node_id**（每个 node_id
-同时以 CN 与 DN 各出现一次），其中 **6 条 `role=master`**。
+分布式实例 `gauss-6374`（mode=Combined，**3 个 CN 全是 master** + 9 个 DN）的节点清单有
+**12 条条目 / 3 个唯一 node_id**（每个 node_id 同时以 CN 与 DN 各出现一次），其中 **6 条 `role=master`**。
 
 实测：**一次下发 3 个 master 成功**（HTTP 200，3 条 `node_tasks` 全部 `succeed`，
 一次轮询拿回 3 组行）。早期方案里"一次下发多节点会失败"是**错的** —— 那条结论来自

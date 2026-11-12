@@ -10,8 +10,8 @@
       },
       "query_params": {},
       "body": {
-        "start_time": 1794367019665,
-        "end_time": 1794453419665,
+        "start_time": 1794368139993,
+        "end_time": 1794454539993,
         "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
         "threshold": 1000,
         "threshold_unit": "ms",

@@ -51,7 +51,7 @@ APIS["GET /rds/gaussdb/v3/instances/{instance_id}/key-view-execute-node"] = {
              "type": "CN/DN", "component_id": "组件 ID", "node_ip": "节点 IP"}
         ]
     },
-    "notes": "命令只允许在 master 节点执行；集中式实例 3 个 CN 均为 master，HA 实例只有 1 个 master DN。"
+    "notes": "命令只允许在 master 节点执行；分布式实例（mode=Combined）3 个 CN 均为 master，集中式实例（mode=Ha）只有 1 个 master DN。"
              "一次下发多节点会失败，须逐节点下发",
     "covers_metrics": 0,
     "is_prerequisite": True,

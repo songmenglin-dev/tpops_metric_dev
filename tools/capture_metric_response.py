@@ -65,11 +65,9 @@ TPOPS_USER = os.environ.get('TPOPS_USER', '')
 TPOPS_PASSWORD = os.environ.get('TPOPS_PASSWORD', '')
 
 CMD_ID = '73722acc-bff6-4d04-adc0-bc1e1fa1eb7d'   # 平台内置命令 general_single_sql_query
+# 实测实例 = 分布式实例 gauss-6374（mode=Combined，3 个 CN master）。
+# 所有通道都只查这一个实例：采集端一条链路覆盖一个实例，换实例整体重跑一轮。
 DEFAULT_INSTANCE = '83cd68f2e4cb40b4b7e69240479ffa26in14'   # gauss-6374，3 个 master
-MONITOR_INSTANCES = [
-    '83cd68f2e4cb40b4b7e69240479ffa26in14',
-    'c35b8d078cae4a9eb05d616ed5cf032fin14',
-]
 MONITOR_WINDOW_MS = 2 * 3600 * 1000
 MONITOR_END_LAG_MS = 5 * 60 * 1000
 SLOW_SQL_WINDOW_MS = 24 * 3600 * 1000
@@ -231,7 +229,7 @@ def capture_command_center(tp, instance_id, node_ids, batch):
     raise RuntimeError('命令中心 SQL 执行失败（重试 %d 次）: %s' % (MAX_ATTEMPTS, last_err))
 
 
-def capture_monitor(tp, metric_name):
+def capture_monitor(tp, metric_name, instance_id):
     """监控指标接口：取最新点 + 取带真实时间戳的时序。
 
     ① `is_latest_point_only=true` —— 平台只返回**最新点**（值对，但多数指标
@@ -241,11 +239,14 @@ def capture_monitor(tp, metric_name):
 
     两次都用同一个 end_time，所以两个响应里"最新点"的值一致；两个响应都是平台原生响应，
     不做任何裁剪。
+
+    **只查一个实例**（与命令中心通道同一个分布式实例）—— 采集端一条链路覆盖一个实例，
+    换实例就整体重跑一轮。
     """
     uri = '/rds/v3/monitor/metrics'
     end = int(time.time() * 1000) - MONITOR_END_LAG_MS
     base = {'start_time': end - MONITOR_WINDOW_MS, 'end_time': end,
-            'instances': [{'instance_id': i} for i in MONITOR_INSTANCES],
+            'instances': [{'instance_id': instance_id}],
             'metric_names': [metric_name]}
     steps = []
     for latest_only in ('true', 'false'):
@@ -325,7 +326,7 @@ def build_captures(tp, instance_id, plan, rules_by_code, batches):
         if method == '命令中心SQL':
             captures[code] = batch_chains[source['sql_key']]
         elif method == '监控指标接口':
-            captures[code] = capture_monitor(tp, source['tpops_source'])
+            captures[code] = capture_monitor(tp, source['tpops_source'], instance_id)
         elif method == '诊断优化接口':
             if metric['query']['api'].endswith('top-sql-list'):
                 captures[code] = capture_top_sql(tp, instance_id, node_ids)

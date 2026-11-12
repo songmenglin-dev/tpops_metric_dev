@@ -106,6 +106,12 @@ def test_monitor_files_capture_latest_point_and_series(manifest):
         latest, series = chain
         assert latest['request']['body']['is_latest_point_only'] == 'true'
         assert series['request']['body']['is_latest_point_only'] == 'false'
+        # 只查一个实例 —— 与命令中心通道同一个分布式实例
+        for step in chain:
+            instances = step['request']['body']['instances']
+            assert len(instances) == 1
+            assert instances[0]['instance_id'] == manifest['instance_id']
+            assert len(step['response_body']['metric_infos']) == 1
         # 最新点只返回一个点
         info = latest['response_body']['metric_infos'][0]
         assert len(info['metrics'][0]['timestamps']) == 1
@@ -113,6 +119,21 @@ def test_monitor_files_capture_latest_point_and_series(manifest):
         info = series['response_body']['metric_infos'][0]
         assert len(info['metrics'][0]['timestamps']) > 1
         assert info['metrics'][0]['timestamps'][0] > 0
+
+
+def test_every_metric_comes_from_the_same_instance(manifest):
+    """所有通道都只查这一个实例 —— 采集端一条链路覆盖一个实例。"""
+    instance_id = manifest['instance_id']
+    for item in manifest['metrics']:
+        chain = _load(os.path.join(RESP_DIR, item['file']))
+        for step in chain:
+            body = step['request'].get('body') or {}
+            for key in ('instance_id',):
+                if key in body:
+                    assert body[key] == instance_id, (item['file'], key)
+            for entry in body.get('instances') or []:
+                assert entry['instance_id'] == instance_id, item['file']
+            assert step['request']['path_params'].get('instance_id', instance_id) == instance_id
 
 
 def test_every_step_records_the_full_request(manifest):

@@ -66,8 +66,8 @@
 
 ## 多 master：一次下发全部 master
 
-集中式实例 `gauss-6374` 的节点清单有 **12 条条目 / 3 个唯一 node_id**（每个 node_id
-同时以 CN 与 DN 各出现一次），其中 **6 条 `role=master`**。
+分布式实例 `gauss-6374`（mode=Combined，**3 个 CN 全是 master** + 9 个 DN）的节点清单有
+**12 条条目 / 3 个唯一 node_id**（每个 node_id 同时以 CN 与 DN 各出现一次），其中 **6 条 `role=master`**。
 
 实测：**一次下发 3 个 master 成功** —— HTTP 200，返回 3 条 `node_tasks`，全部 `succeed`，
 一次轮询就拿回 3 组行。
