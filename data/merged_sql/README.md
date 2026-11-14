@@ -73,9 +73,9 @@
 一次轮询就拿回 3 组行。
 
 > ⚠️ 早期方案里的"一次下发多节点会失败"是**错的** —— 那条结论来自
-> `data/command_center/results/07_task_result_matrix_u_shell_sync.json`，是 **SHELL 命令**
+> 命令中心的 SHELL 命令实测留档，是 **SHELL 命令**
 > 的 `result` 里出现 `Failed to execute command on all nodes.`，被错误推广到了 SQL 命令。
-> 已实测证伪，见 `data/multi_master_probe/`。
+> 已实测证伪（多 master 探针已随一次性产物清理，结论见 `docs/开发方案-GaussDB指标与告警采集.md` §2.2.4）。
 
 **各 master 返回的计数值不同**（实测 `postgres.xact_commit` = 7265656 / 7218577 / 6315580），
 所以：

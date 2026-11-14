@@ -123,9 +123,9 @@
 
 ## 文件命名
 
-`序号_客户指标英文名.json`，序号沿用 `data/metric_verification/` 的编号，
-占位符 `{#NAME}` 之类按同一套规则清洗（`tools/verify_metric_sources.py` 的 `sanitize()`），
-便于与 `data/metric_verification/` 的逐指标实测留档一一对照。
+`序号_客户指标英文名.json`，序号沿用原逐指标实测留档的编号，
+占位符 `{#NAME}` 之类按同一套规则清洗（`tools/capture_metric_response.py` 的 `sanitize()`），
+便于与客户指标库「指标库-指标获取方法」sheet 一一对照。
 
 `000manifest.json` 是索引：每个指标的序号、英文名/中文名、分类、通道、文件名、API 列表，
 以及 **该指标全部的请求对象**（`requests` 数组，与指标文件里的 `request` 逐字一致）。

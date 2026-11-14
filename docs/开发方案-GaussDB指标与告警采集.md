@@ -9,6 +9,19 @@
 | 投递通道 | Kafka，PLAINTEXT，消息体 JSON |
 | 目标读者 | 开发、测试、运维、客户对接人 |
 
+> **2026-11-13 留档清理说明**
+>
+> 本文引用的实测留档（`data/metric_verification/`、`data/command_center/results/`、
+> `data/api_probe/`、`data/multi_master_probe/`）已按"一次性探针产物"口径从仓库删除，
+> 可从 git 历史恢复。**结论与数字仍然有效**，但证据位置变了：
+>
+> - 等价的逐指标原生响应在 **`data/metric_response/`**（一个指标一个文件，含完整请求对象）
+> - 多 master 下发结论（一次下发 3 个 master 全部 succeed）在开发方案 §2.2.4
+> - health-status 响应体为空的证伪在开发方案 §4.3.2
+- 逐指标实测脚本 `tools/verify_metric_sources.py` 与 `tools/fetch_tpops_metrics.py`
+  已删除（前者与 `capture_metric_response.py` 功能重叠，后者产物无人消费）。
+  **重抓逐指标原生响应用 `python tools/capture_metric_response.py`**。
+
 ## 0. 文档说明
 
 ### 0.1 本文档的定位
@@ -351,7 +364,8 @@ select * from ({sql_text}) limit {limit}
 | 实测结果 | 两个接口均 **HTTP 200**，但当前实例**无慢 SQL 数据**（`slow_sql_infos[]` / `top_sql_infos[]` 为空） |
 
 > 说明：早前方案记录过 slow-sql-list 返回 400 的现象；2026-11-05 的实测留档显示
-> 按 `tools/verify_metric_sources.py` 的请求体（窗口 24h、`threshold=1000ms`）调用**返回 200**。
+> 按当时的逐指标实测请求体（窗口 24h、`threshold=1000ms`）调用**返回 200**
+> （该实测脚本已按"一次性产物"口径删除，重抓命令见下方「复核命令」）。
 > 以留档为准。
 
 #### 2.2.6 实例接口（D 类）
@@ -459,11 +473,11 @@ select * from ({sql_text}) limit {limit}
 
 ### 2.4 已完成的可提供性验证
 
-`tools/verify_metric_sources.py` 对 98 个可提供指标**逐个真实调用**并留档：
+逐指标实测对 98 个可提供指标**逐个真实调用**并留档（当时的脚本已删，留档见 `data/metric_response/`）：
 
 | 项 | 结果 |
 |---|---|
-| 总数 / 通过 / 失败 | **98 / 98 / 0**（`data/metric_verification/_summary.json`） |
+| 总数 / 通过 / 失败 | **98 / 98 / 0**（实测留档已按"一次性产物"口径清理，结论有效；等价留档在 `data/metric_response/`） |
 | 实测时间 | 2026-11-05 |
 | 实测实例 | `83cd68f2e4cb40b4b7e69240479ffa26in14`（gauss-6374，分布式版，master 节点 `gauss-6374_gaussdbv5_hcs2-0_0` 等 3 个） |
 | **查询成功但无数据** | **6 个**：慢查询总数/Select慢查询数/DML慢查询数（无慢 SQL）、accessexclusive 锁（无该类锁）、正在运行的 SQL（无活跃会话）、Top10 SQL（无数据） |
@@ -978,8 +992,8 @@ Content-Type: application/json
 >
 > ⚠️ **不要按拍平的写法取值**。早期版本的本文把响应写成
 > `metric_infos[].metric_name_cn / series / timestamps`，那是
-> `tools/verify_metric_sources.py` 的**重塑输出**（脚本自己把平台的 `metric_name` 改名成
-> `metric_name_cn`，见该脚本 `run_monitor()`）—— **平台并不返回 `metric_name_cn` 这个字段名**，
+> 早期逐指标实测脚本的**重塑输出**（该脚本自己把平台的 `metric_name` 改名成
+> `metric_name_cn`）—— **平台并不返回 `metric_name_cn` 这个字段名**，
 > 照拍平写法取值会 KeyError。真实层级是 `metric_infos[] → metrics[]`，
 > `collection_frequency` 在 `metrics[]` 上，`time_interval` 在 `metric_infos[]` 上。
 
@@ -2845,8 +2859,8 @@ W02 → W06 → W12 → W14 → W19 → W21 → W23 → W24
 **复核命令**
 
 ```bash
-# 逐指标回归（需要 TPOPS 环境变量）
-python tools/verify_metric_sources.py
+# 逐指标回归：重建原生响应留档（需要 TPOPS 环境变量）
+python tools/capture_metric_response.py
 
 # 命令中心链路实测
 python data/command_center/test_command_center_api.py
