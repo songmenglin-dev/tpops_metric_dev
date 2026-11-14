@@ -32,6 +32,7 @@ import os
 import re
 
 import openpyxl
+import xlsx_columns
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 XLSX_PATH = os.path.join(BASE_DIR, '高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx')
@@ -283,22 +284,31 @@ def _load_api_by_metric():
 
 
 def load_spec():
-    """客户指标库「指标库」sheet → 按英文名索引的规范。"""
+    """客户指标库「指标库」sheet → 按英文名索引的规范。
+
+    列按**表头名**定位，不按位置 —— 客户表新增/插入列时不会整体读串位。
+    """
     workbook = openpyxl.load_workbook(XLSX_PATH, data_only=True)
     sheet = workbook['指标库']
+    rows = list(sheet.iter_rows(values_only=True))
+    col = xlsx_columns.column_map(rows[0])
     spec = {}
-    for row in list(sheet.iter_rows(values_only=True))[1:]:
-        if not row[3]:
+    for row in rows[1:]:
+        code = xlsx_columns.row_value(row, col, '英文名')
+        if not code:
             continue
-        spec[row[3]] = {
-            'resource_type': row[0],
-            'category': row[1],
-            'metric_name': row[2],
-            'metric_code': row[3],
-            'value_type': row[4],
-            'collect_cycle': {'value': int(row[5]), 'unit': row[6]},
-            'generate_baseline': row[7],
-            'unit': row[8],
+        spec[code] = {
+            'resource_type': xlsx_columns.row_value(row, col, '适用资源类型'),
+            'category': xlsx_columns.row_value(row, col, '指标分类'),
+            'metric_name': xlsx_columns.row_value(row, col, '中文名'),
+            'metric_code': code,
+            'value_type': xlsx_columns.row_value(row, col, '数据类型'),
+            'collect_cycle': {
+                'value': int(xlsx_columns.row_value(row, col, '数据更新周期')),
+                'unit': xlsx_columns.row_value(row, col, '采集更新周期单位'),
+            },
+            'generate_baseline': xlsx_columns.row_value(row, col, '生成性能基线'),
+            'unit': xlsx_columns.row_value(row, col, '指标单位'),
         }
     return spec
 
@@ -307,11 +317,14 @@ def load_method():
     """客户指标库「指标库-指标获取方法」sheet → 英文名 → 获取方法。"""
     workbook = openpyxl.load_workbook(XLSX_PATH, data_only=True)
     sheet = workbook['指标库-指标获取方法']
+    rows = list(sheet.iter_rows(values_only=True))
+    col = xlsx_columns.column_map(rows[0])
     method = {}
-    for row in list(sheet.iter_rows(values_only=True))[1:]:
-        if not row[3]:
+    for row in rows[1:]:
+        code = xlsx_columns.row_value(row, col, '英文名')
+        if not code:
             continue
-        method[row[3]] = row[9]
+        method[code] = xlsx_columns.row_value(row, col, '指标获取方法')
     return method
 
 

@@ -29,6 +29,8 @@ import json
 import os
 import sys
 
+import xlsx_columns
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(ROOT, "data")
 TPOPS_DICT = os.path.join(DATA_DIR, "tpops_all_metric.json")
@@ -385,6 +387,11 @@ def read_client_rows():
     return rows[0], rows[1:]
 
 
+def _col(headers):
+    """按表头名定位列（客户表新增列时不会整体读串位）。"""
+    return xlsx_columns.column_map(headers)
+
+
 def load_tpops_dict():
     """加载平台指标字典。
 
@@ -427,13 +434,14 @@ def _metrics_from_frozen():
     return list(metrics.values())
 
 
-def check_against_excel(rows):
+def check_against_excel(rows, headers):
     """核对 MAPPING 与 Excel 行序一致，且引用的 TPOPS 指标/接口真实存在。"""
+    col = _col(headers)
     if len(MAPPING) != len(rows):
         sys.exit("MAPPING 条数 %d 与客户 Excel 行数 %d 不一致" % (len(MAPPING), len(rows)))
     for idx, (row, entry) in enumerate(zip(rows, MAPPING), start=1):
         expected_cn, tpops_metric = entry[0], entry[1]
-        actual_cn = row[2]
+        actual_cn = row[col['中文名']]
         if actual_cn != expected_cn:
             sys.exit("第 %d 行客户中文名不一致: Excel=%r MAPPING=%r" % (idx, actual_cn, expected_cn))
         if tpops_metric is None:
@@ -451,8 +459,9 @@ def check_against_excel(rows):
                 sys.exit("第 %d 行引用了未知来源: %s" % (idx, one))
 
 
-def build(client_rows):
+def build(client_rows, headers):
     items = []
+    col = _col(headers)
     for row, entry in zip(client_rows, MAPPING):
         expected_cn, tpops_metric, match_level, note, source = entry
         tpops_name = None
@@ -465,9 +474,9 @@ def build(client_rows):
                     names.append(FIELD_CN.get(one, one))
             tpops_name = " + ".join(names)
         items.append({
-            "customer_metric": row[3],
-            "customer_metric_name": row[2],
-            "customer_category": row[1],
+            "customer_metric": row[col['英文名']],
+            "customer_metric_name": row[col['中文名']],
+            "customer_category": row[col['指标分类']],
             "tpops_metric": tpops_metric,
             "tpops_metric_name": tpops_name,
             "source": source,
@@ -542,8 +551,8 @@ def main():
     TP_OPS_BY_ID = dict((m["metric"], m) for m in tpops["metrics"])
     tpops_source = os.path.relpath(tpops.get("source") or TPOPS_DICT, ROOT)
 
-    check_against_excel(client_rows)
-    items = build(client_rows)
+    check_against_excel(client_rows, header)
+    items = build(client_rows, header)
     by_status, by_level, by_source, by_category = summarize(items)
     write_json(items, by_status, by_level, by_source, by_category, tpops_source)
     unsupported_idx = write_unsupported_csv(client_rows)
