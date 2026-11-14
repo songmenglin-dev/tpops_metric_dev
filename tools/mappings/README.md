@@ -22,18 +22,24 @@ data/mapping/                 # 规则数据（表驱动）
 ├── metric_mapping_instance.json            # D 类 实例接口的字段映射
 ├── alarm_mapping.json                      # 告警的字段映射
 ├── itscada_field_map.json    # 客户消息的字段清单（哪些字段、必填与否）
-├── metric_rules.json         # 101 条指标规则（98 可提供 + 3 标记丢弃）
+├── metric_rules.json         # 业务规则：101 条指标规则（98 可提供 + 3 标记丢弃）
+├── response_rules.json       # 取数定位：响应体的哪一段哪一列（98 条 + 18 种形状）
+├── kafka_field_mapping.json  # 字段映射：值 → Kafka 字段（98 条指标 + 4 种告警形态）
 ├── alarm_rules.json          # 告警规则：等级/状态映射 + 257 条告警定义
-└── open_items.json           # 待客户确认的 7 项
+├── open_items.json           # 待客户确认的 7 项
+└── archive/                  # 旧的分类字段映射表（已归档，见该目录 README）
 
 tools/mappings/               # 规则执行代码
 ├── __init__.py               # 对外接口
 ├── table.py                  # 加载与查表（MappingTable / MetricRule / AlarmDefinition）
 ├── rules.py                  # 取值规则引擎（raw / aggregate / counter_delta / …）
+├── decode.py                 # response_body → RuleContext（按 shape + locate 解包）
 └── message.py                # 按 ITSCADA 字段规范组装消息
 
-tools/build_metric_value_rules.py   # 开发方案 §4.3 → data/metric_value_rules.json
+tools/build_metric_value_rules.py   # 开发方案 §4.3 → data/metric_value_rules.json（生成物，不入库）
 tools/build_itscada_mapping.py      # 中间件 + xlsx → data/mapping/*.json
+tools/build_response_rules.py       # 实测响应 + metric_rules → data/mapping/response_rules.json
+tools/build_kafka_mapping.py        # 实测响应 → data/mapping/kafka_field_mapping.json
 tools/build_field_mapping_doc.py     # 分类映射文件 → docs/映射表-ITSCADA字段对照.md
 tests/                               # 映射层单元测试（pytest）
 ```
@@ -41,12 +47,13 @@ tests/                               # 映射层单元测试（pytest）
 `metric_rules.json` 与 `alarm_rules.json` 是**生成物**，不要手改：
 
 ```bash
-python tools/build_metric_value_rules.py   # 开发方案 §4.3 → data/metric_value_rules.json
+python tools/build_metric_value_rules.py   # 开发方案 §4.3 → data/metric_value_rules.json（生成物）（生成物，不入库）
 python tools/build_itscada_mapping.py      # 上述中间件 + xlsx → data/mapping/*.json
 ```
 
 改口径的正确做法：改开发方案 §4.3 的表（人类可读的那份）→ 重新跑两个脚本 →
-提交 `data/metric_value_rules.json` 与 `data/mapping/*.json`。
+提交 `data/mapping/*.json`（`data/metric_value_rules.json` 是生成物，不入库；
+缺失时 `build_itscada_mapping.py` 会自动重建）。
 `tests/test_generated_rules.py` 会检查生成物与生成器一致。
 
 用法：
@@ -60,7 +67,13 @@ table = MappingTable.load()          # 默认读 data/mapping/
 rule = table.metric_rule('GAUSSDB.[{#DATNAME}]_cache_hit_ratio')
 ```
 
-## 分类字段映射文件（开发依据）
+## 分类字段映射文件（已归档）
+
+> **已归档到 `data/mapping/archive/`（2026-11-13）** —— 见
+> [归档说明](data/mapping/archive/README.md)。这套表按类别组织，
+> `value` 字段的来源写的是散文（"result → 行数组 → metric_rules[].value_rule 指定的列"），
+> 查一个指标要跨三个文件跳。现由 **`kafka_field_mapping.json`** 取代：逐指标列出
+> 「响应的某个值 → Kafka 的某个字段」。
 
 每个采集分类一个 JSON，里面只有两段：
 
@@ -92,6 +105,115 @@ rule = table.metric_rule('GAUSSDB.[{#DATNAME}]_cache_hit_ratio')
 `docs/映射表-ITSCADA字段对照.md` 是这 5 个文件的可读版，由
 `tools/build_field_mapping_doc.py` 生成。
 
+## 映射分三层，各管一件事
+
+| 层 | 文件 | 回答什么 |
+|---|---|---|
+| 业务规则 | `metric_rules.json` | 取哪个列、怎么算（值形态、差分、聚合、维度） |
+| 取数定位 | `response_rules.json` | 响应体的哪一段、哪一列（基于实测留档校验） |
+| **字段映射** | **`kafka_field_mapping.json`** | **这个值 → Kafka 消息的哪个字段** |
+
+三份都是生成物，改动都要回到生成器：
+
+```bash
+python tools/build_itscada_mapping.py    # → metric_rules.json / alarm_rules.json
+python tools/build_response_rules.py     # → response_rules.json
+python tools/build_kafka_mapping.py      # → kafka_field_mapping.json
+```
+
+## 字段映射表（`kafka_field_mapping.json`）
+
+**这张表回答一个问题**：某个客户指标的某条消息，ITSCADA 那 7 个字段
+（或告警 13 个字段），每一个的值到底是 TPOPS 响应里的哪个值、怎么转出来的。
+
+每条记录三段：
+
+| 段 | 内容 |
+|---|---|
+| `tpops_response_source` | **实测响应体的原样片段** —— 真实字段名 + 真实数据 |
+| `kafka_target` | Kafka 每个字段的取值表达式（引用 source 里的路径，或是常量） |
+| `remark` | 人话说明，**尤其是维度展开口径** |
+
+```json
+{
+  "metric_code": "GAUSSDB.[{#DATNAME}]_cache_hit_ratio",
+  "tpops_response_source": {
+    "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+    "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+    "status": "succeed",
+    "result": [
+      {"datname": "lz", "numbackends": "0", "xact_commit": "22259",
+       "deadlocks": "0", "cache_hit_ratio": "99.84", "...": "..."},
+      {"datname": "postgres", "numbackends": "26", "...": "..."}
+    ]
+  },
+  "kafka_target": {
+    "metricName": "[{#DATNAME}]缓存命中率",
+    "metricCode": "GAUSSDB.[{#DATNAME}]_cache_hit_ratio",
+    "resourceName": "{instance_name}_{node_id}",
+    "value": "tpops_response_source.result[*].cache_hit_ratio",
+    "unit": "%",
+    "clock": "collect_time",
+    "tags": "instance + node + dimensions"
+  },
+  "placeholder_bindings": {"DATNAME": "tpops_response_source.result[*].datname"},
+  "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）",
+  "message_count": 7,
+  "sample_message": {
+    "metricName": "[lz]缓存命中率",
+    "metricCode": "GAUSSDB.[lz]_cache_hit_ratio",
+    "value": 99.84, "unit": "%", "clock": 1760000000000,
+    "tags": {"instance_id": "83cd68f2…", "dimension_values": {"DATNAME": "lz"}}
+  }
+}
+```
+
+**source 里全是真实响应**：字段名与 TPOPS 返回的一模一样，值也是实测的。
+`tests/test_kafka_mapping.py` 会逐条核对 source 的字段名**必须存在于实测响应体**。
+
+### 取值表达式
+
+| 写法 | 含义 |
+|---|---|
+| `tpops_response_source.result[*].<列>` | 逐行取值（每行一条消息） |
+| `sum(tpops_response_source.result[*].<列>)` | 整批聚合成一条 |
+| `sum(tpops_response_source.result[?<列>=*].<列2>)` | 按该列的每个取值分组，各一条 |
+| `tpops_response_source.metric_infos[].metrics[name=<平台指标id>].series[*][-1]` | A 类时序，每个组件取最后一个非空点 |
+| `count(tpops_response_source.<集合>)` | 集合条数 |
+| `severity_to_priority[tpops_response_source.records[0].severity]` | 经映射表转换 |
+| `collect_time` | 本轮采集完成时刻 |
+| 直接写字面量 | 来自客户指标表的常量（指标名、英文名、单位） |
+
+### 维度展开（占位符指标）
+
+客户指标名里带 `{#DATNAME}` / `{#NAME}` 的指标，**一条结果行对应一条 Kafka 消息**：
+
+```json
+"placeholder_bindings": {"NAME": "tpops_response_source.result[*].relname"}
+```
+
+6000 张表 → 6000 行 → **6000 条消息**，占位符按行里的列替换掉
+（`gaussdb.{#NAME}.garbage.Ratio` → `gaussdb.public.garbage.Ratio`）。
+
+测试会拿"实测行数"对账：`per_row` 的指标有几行就得产出几条消息。
+
+### 展开方式
+
+| 方式 | 指标数 | 含义 |
+|---|---|---|
+| `per_row` | 31 | 一行一条消息（表级/库级指标） |
+| `aggregate` | 44 | 整批聚合成一条（实例级指标） |
+| `per_component` | 11 | 每个组件一条（A 类时序） |
+| `single` | 9 | 一条（诊断/实例接口的集合统计） |
+| `per_group` | 3 | 每个分组一条 |
+
+告警侧按**记录形态**给 4 条（活动/历史 × 收敛/明细），同样三段结构；
+明细形态的 `value` 指向 `convergence_records`（明细行本身没有 `alarm_items_sum`）。
+
+生成时会把整条链路真跑一遍：
+`实测 response_body → 解包 → 取值规则 → 组装消息`，
+所以样例消息能证明映射是对的 —— `tests/test_kafka_mapping.py` 每次都重跑一遍。
+
 ## 指标规则字段
 
 ```json
@@ -118,6 +240,80 @@ rule = table.metric_rule('GAUSSDB.[{#DATNAME}]_cache_hit_ratio')
   "needs_confirmation": false
 }
 ```
+
+## 取数定位表（`response_rules.json`）
+
+`metric_rules.json` 回答"取哪个平台的哪个列"，但采集端拿到的是 HTTP 响应体 ——
+中间隔着三层结构差异：
+
+| 通道 | 响应体 | 要变成规则引擎能吃的形状 |
+|---|---|---|
+| 命令中心 | `detail.result` 是 **JSON 字符串** | 二次 `json.loads` 才是行列表 |
+| 监控指标 | `metric_infos[].metrics[].series` 按组件展开 | 每个组件一条 series + 共享 timestamps |
+| 诊断优化 | `slow_sql_infos` / `top_sql_infos` 列表 | 行列表 |
+| 实例 | `instances` 列表 | 实例对象 |
+
+这一层以前没有落成文件，各采集器只能各写一遍解包，规则里的列名也无从校验。
+`response_rules.json` 把它显式化，每条规则三段：
+
+```json
+{
+  "metric_code": "gaussdb.Deadlocks",
+  "channel": "command_center_sql",
+  "shape": "cmd_rows_stat_database",      // 形状：响应体的哪一段
+  "locate": {                              // 定位：这一段里的哪部分
+    "sql_key": "stat_database",
+    "column": "deadlocks",
+    "value_column": "deadlocks",
+    "match": {},
+    "group_by": []
+  },
+  "business": {                            // 业务规则：取到之后怎么算
+    "value_rule": {"type": "raw", "params": {"column": "deadlocks", "row_policy": "sum"}},
+    "scope": {
+      "row":    {"policy": "sum", "group_by": []},
+      "node":   {"policy": "per_master"},
+      "series": {"policy": "not_applicable"}
+    },
+    "dimensions": {},
+    "value_type": "整数",
+    "missing": "null",
+    "idempotency": ["instance_id", "metric_name", "dimensions", "timestamp"]
+  },
+  "evidence": {                            // 实测证据
+    "sample_file": "data/metric_response/024_gaussdb.Deadlocks.json",
+    "terminal_step": 3,
+    "observed": {"row_count": 7, "columns": ["blk_read_time", "..."], "master_nodes": 3}
+  }
+}
+```
+
+**18 种形状**（= 11 种命令中心行结构 + 4 种监控指标 series 形态 + 2 种诊断列表 + 1 种实例列表）
+定义在文件的 `shapes` 段，`kind` 决定解码方式：
+
+| kind | 含义 |
+|---|---|
+| `rows_from_result` | `payload_path` 指向的字符串二次 `json.loads` 成行列表 |
+| `rows_from_collection` | `payload_path` 指向的列表直接当行列表 |
+| `series_from_metric_infos` | 按 `locate.metric` 匹配平台指标 id，取出 series 与 timestamps |
+| `instance_from_list` | 取列表第一项作为实例对象 |
+
+**这份文件是生成物**，不要手改：
+
+```bash
+python tools/build_response_rules.py          # 重新生成
+python tools/build_response_rules.py --check  # 只校验是否最新
+```
+
+生成时当场校验两件事：
+
+1. `locate` 里要取的列必须真实出现在实测响应的列集合里（开发方案 §5.6.4 的启动期校验前移到生成期）；
+2. 带过滤条件的规则要在样本里统计命中行数，命中 0 行的显式标 `verified_on_sample: false` ——
+   这类规则在生产里会"时有时无"（采集时刻没有那种会话状态或锁模式），
+   根因是客户端过滤了本就不存在的行，应在 SQL 里做条件聚合。
+
+`tests/test_response_rules.py` 会把每条规则在实测留档上跑一遍：
+解得出上下文、跑得出非空值、列名对得上、文件与生成器一致。
 
 ### 占位符怎么处理
 

@@ -38,20 +38,30 @@ def demo_a_class(table):
     print('示例一：A 类　监控指标接口')
     print('=' * 78)
 
-    sample = _read(os.path.join(
-        DATA_DIR, 'metric_verification',
+    # 样本来自 data/metric_response/ 的逐指标原生响应留档
+    calls = _read(os.path.join(
+        DATA_DIR, 'metric_response',
         '001_GAUSSDB.Number_of_ansactions_mmitted_r_cond.json',
     ))
-    actual = sample['verification']['actual_data'][0]
-    tpops_metric_id = sample['tpops_metric']
-    customer_metric = sample['customer_metric']
+    info = calls[0]['response_body']['metric_infos'][0]
+    metric = info['metrics'][0]
+    actual = {
+        'series': metric['series'],
+        'timestamps': metric['timestamps'],
+        'metric_name': metric['metric_name'],
+        'collection_frequency': metric['collection_frequency'],
+        'instance_id': info['instance_id'],
+        'time_interval': info['time_interval'],
+    }
+    tpops_metric_id = metric['name']
+    customer_metric = 'GAUSSDB.Number_of_ansactions_mmitted_r_cond'
 
     print('\n【第 1 步】TPOPS 返回的原始 JSON（实测留档，裁剪过）')
     raw = {
         'metric_infos': [{
             'metrics': [{
                 'name': tpops_metric_id,
-                'metric_name_cn': actual['metric_name_cn'],
+                'metric_name': actual['metric_name'],
                 'series': {key: values[-3:] for key, values in actual['series'].items()},
                 'timestamps': actual['timestamps'][-3:],
                 'collection_frequency': actual['collection_frequency'],

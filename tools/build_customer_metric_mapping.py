@@ -16,11 +16,8 @@
 用法：
     python tools/build_customer_metric_mapping.py
 
-两种模式：
-  * 在线模式（有 data/tpops_all_metric.json）：能做 has_data 校验，结论最完整。
-      python tools/fetch_tpops_metrics.py --hours 2
-      python tools/build_tpops_metric_dict.py
-  * 离线模式（默认）：平台字典缺失时，用已冻结的 data/customer_metric_mapping.json
+只有离线模式：平台字典 data/tpops_all_metric.json 已按"一次性产物"口径删除，
+用已冻结的 data/customer_metric_mapping.json
     （上一轮判定结论）重建「平台指标 → 中文名」对照。脚本可离线跑通，
     但**不再校验平台指标是否真有数据**（has_data 一律按 True 处理）。
     客户改了指标库时，建议先跑一次在线模式再定稿。
@@ -400,14 +397,12 @@ def load_tpops_dict():
             return json.load(fh)
     if not os.path.exists(FROZEN_MAPPING):
         sys.exit("找不到 %s，且没有可回退的 %s\n"
-                 "在线模式请先抓取平台数据再重建平台指标字典：\n"
-                 "    python tools/fetch_tpops_metrics.py --hours 2\n"
-                 "    python tools/build_tpops_metric_dict.py"
+                 "平台指标字典已按一次性产物口径删除，本脚本只能走离线模式。"
                  % (TPOPS_DICT, FROZEN_MAPPING))
     sys.stderr.write(
         "WARNING: 找不到 %s —— 改用离线模式（平台字典取自 %s）。\n"
         "         离线模式不校验平台指标是否真有数据（has_data 一律按 True 处理）。\n"
-        "         需要完整校验请先跑 fetch_tpops_metrics.py + build_tpops_metric_dict.py。\n"
+        "         平台指标字典已删除，无法再校验平台指标是否真有数据。\n"
         % (TPOPS_DICT, os.path.relpath(FROZEN_MAPPING, ROOT)))
     return {"metrics": _metrics_from_frozen(), "source": FROZEN_MAPPING}
 

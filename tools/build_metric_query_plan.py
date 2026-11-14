@@ -30,7 +30,7 @@ OUT_APIS = os.path.join(DATA_DIR, "tpops_api_catalog.json")
 from tpops_api_defs import APIS, CMD_SQL_ID
 
 # 命令中心三跳的 API 描述（含实测真实响应）：tools/cmd_center_flow.py
-from cmd_center_flow import sample_apis
+from cmd_center_api_samples import sample_apis
 
 # --------------------------------------------------------------------------
 # 平台侧只测一次的结论

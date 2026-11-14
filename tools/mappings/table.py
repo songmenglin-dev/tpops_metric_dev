@@ -17,12 +17,16 @@ DATA_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
 FIELD_MAP_FILE = 'itscada_field_map.json'
 METRIC_RULES_FILE = 'metric_rules.json'
 ALARM_RULES_FILE = 'alarm_rules.json'
+# 旧的分类字段映射表已归档（2026-11-13）—— 现在的主映射表是
+# kafka_field_mapping.json，逐指标列出「响应的某个值 → Kafka 的某个字段」。
+# 这几个文件留作历史对照与字段集合校验的基准。
+ARCHIVE_DIR = 'archive'
 CATEGORY_MAPPING_FILES = {
-    'monitor_metrics': 'metric_mapping_monitor_metrics.json',
-    'command_center_sql': 'metric_mapping_command_center_sql.json',
-    'diagnostic': 'metric_mapping_diagnostic.json',
-    'instance': 'metric_mapping_instance.json',
-    'alarm': 'alarm_mapping.json',
+    'monitor_metrics': ARCHIVE_DIR + '/metric_mapping_monitor_metrics.json',
+    'command_center_sql': ARCHIVE_DIR + '/metric_mapping_command_center_sql.json',
+    'diagnostic': ARCHIVE_DIR + '/metric_mapping_diagnostic.json',
+    'instance': ARCHIVE_DIR + '/metric_mapping_instance.json',
+    'alarm': ARCHIVE_DIR + '/alarm_mapping.json',
 }
 
 
@@ -47,6 +51,10 @@ class MetricRule:
     source: Mapping[str, Any]
     value_rule: Mapping[str, Any]
     placeholders: Tuple[str, ...]
+    resource_granularity: str
+    master_view: Optional[str]
+    node_scoped: bool
+    resource_name_template: Optional[str]
     dimension_bindings: Mapping[str, str]
     note: str
     needs_confirmation: bool
@@ -67,6 +75,10 @@ class MetricRule:
             source=payload.get('source', {}),
             value_rule=payload.get('value_rule') or {},
             placeholders=tuple(payload.get('placeholders', ())),
+            resource_granularity=payload.get('resource_granularity', 'instance'),
+            master_view=payload.get('master_view'),
+            node_scoped=bool(payload.get('node_scoped')),
+            resource_name_template=payload.get('resource_name_template'),
             dimension_bindings=payload.get('dimension_bindings', {}),
             note=payload.get('note', ''),
             needs_confirmation=bool(payload.get('needs_confirmation')),

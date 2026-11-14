@@ -24,6 +24,8 @@
 """
 from __future__ import print_function
 
+import distribution
+
 import io
 import json
 import os
@@ -45,6 +47,21 @@ ALARM_RULES_OUT = os.path.join(OUT_DIR, 'alarm_rules.json')
 
 PLACEHOLDER_RE = re.compile(r'\{#(\w+)\}')
 NO_DIM = '—'
+
+
+def _ensure_input(path, builder_func):
+    """输入文件是生成物，缺失时先跑它的生成器。
+
+    `data/customer_metric_query_plan.json` 与 `data/metric_value_rules.json` 都是
+    中间产物，不入库；缺失时自动重建，保证映射表可重复生成。
+    """
+    if os.path.isfile(path):
+        return path
+    print(f'  [重建] {os.path.basename(path)} 缺失，正在生成 ...')
+    builder_func()
+    if not os.path.isfile(path):
+        raise RuntimeError(f'生成失败：{path}')
+    return path
 
 # 占位符 → SQL 结果列。占位符名字取自客户指标名里的 {#XXX}。
 DIMENSION_COLUMN_BY_SQL = {
@@ -214,9 +231,11 @@ C_CLASS_RULES = {
 }
 
 # D 类（实例接口）。
+# 用 instance_field：引擎里 raw 读的是 params.column（行列表语义），
+# 而 D 类的取值在 instances[0] 这个"实例对象"上，必须走 instance_field。
 D_CLASS_RULES = {
     'gaussdb.server_version': {
-        'type': 'raw',
+        'type': 'instance_field',
         'params': {'field': 'engine_version'},
         'note': 'GET /rds/v3.2/instances[].engine_version',
     },
@@ -250,6 +269,8 @@ def _write_json(path, payload):
 
 def _load_api_by_metric():
     """查询方案里逐指标的真实接口路径。"""
+    import build_metric_query_plan
+    _ensure_input(QUERY_PLAN_PATH, build_metric_query_plan.main)
     plan = _read_json(QUERY_PLAN_PATH)
     apis = {}
     for category in plan['categories']:
@@ -322,6 +343,40 @@ def _placeholders(metric_code, metric_name):
             if name not in names:
                 names.append(name)
     return names
+
+
+def _resource_granularity(placeholders):
+    """资源粒度由占位符决定。
+
+    客户指标表里的 resource_type（GAUSSDB实例）说的是"这个指标属于 GaussDB 这个产品"，
+    不是资源粒度。真正的粒度看指标名里的占位符：
+      {#NAME}                       → 表级
+      {#DATNAME}/{#DBNAME}/…        → 库级
+      {#PORT}                       → 端口级
+      没有占位符                     → 实例级
+    """
+    names = set(placeholders or ())
+    if 'NAME' in names:
+        return 'table'
+    if names & {'DATNAME', 'DBNAME', 'DATABASE_NAME'}:
+        return 'database'
+    if 'PORT' in names:
+        return 'port'
+    return 'instance'
+
+
+def _resource_name_template(placeholders, node_scoped):
+    """resourceName 模板：实例名 + [节点（数据按节点分布时）] + 每个占位符各占一段。
+
+    节点这一段只在"数据按节点分布"时才加 —— 表级指标虽然也来自命令中心，
+    但各 master 看到的是同一份数据，加 node_id 只会把同一个资源拆成多份。
+    """
+    template = '{instance_name}'
+    if node_scoped:
+        template += '_{node_id}'
+    for name in placeholders or ():
+        template += '_{%s}' % name
+    return template
 
 
 def _dimension_bindings(placeholders, sql_key):
@@ -499,9 +554,19 @@ def build_metric_rules():
     spec = load_spec()
     method = load_method()
     availability = {item['customer_metric']: item for item in _read_json(MAPPING_PATH)['items']}
+    import build_metric_value_rules
+    _ensure_input(VALUE_RULES_PATH, build_metric_value_rules.main)
     value_rules = _read_json(VALUE_RULES_PATH)['metrics']
     sql_catalog = load_merged_sql()
     apis = _load_api_by_metric()
+
+    # 实测：各 master 返回的结果是否相同 → 哪些指标的数据是按节点分布的
+    samples = distribution.load_samples()
+    sql_key_by_metric = dict(
+        (code, (value_rules.get(code) or {}).get('sql_key'))
+        for code in spec
+    )
+    master_views = distribution.master_view_by_sql_key(samples, sql_key_by_metric)
 
     rules = []
     counts = {'可提供': 0, '无法提供': 0}
@@ -533,10 +598,26 @@ def build_metric_rules():
             'source': source,
             'value_rule': None,
             'placeholders': placeholders,
+            'resource_granularity': _resource_granularity(placeholders),
+            'master_view': None,
+            'node_scoped': False,
+            'resource_name_template': None,
             'dimension_bindings': {},
             'note': avail.get('note') or '',
             'needs_confirmation': False,
         }
+        # 数据分布（实测）：命令中心看各 master 的结果是否相同，
+        # 监控指标看 series 是否按组件展开，诊断与实例接口一次返回整实例数据。
+        channel_key = SOURCE_BY_CHANNEL.get(value_rule['channel']) if value_rule else None
+        sql_key = value_rule['sql_key'] if value_rule else None
+        master_view = master_views.get(sql_key) if sql_key else None
+        series_scoped = distribution.series_is_component_scoped(samples.get(metric_code))
+        node_scoped = distribution.node_scoped_of(channel_key, master_view, series_scoped)
+        entry['master_view'] = master_view
+        entry['node_scoped'] = node_scoped
+        entry['resource_name_template'] = _resource_name_template(
+            placeholders, node_scoped)
+
         if value_rule:
             rule = build_value_rule(
                 metric_code, value_rule, sql_catalog, item['value_type'], placeholders

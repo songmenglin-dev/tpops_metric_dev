@@ -44,6 +44,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台为速率口径；累计值见 pg_stat_database.xact_commit",
       "needs_confirmation": false
@@ -77,6 +81,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "慢SQL集合条数统计",
       "needs_confirmation": false
@@ -115,6 +123,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "按 sql_text 统计 SELECT 类慢查询",
       "needs_confirmation": false
@@ -154,6 +166,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "按 sql_text 统计 DML 类慢查询",
       "needs_confirmation": false
@@ -187,6 +203,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台为速率口径",
       "needs_confirmation": false
@@ -227,6 +247,10 @@
         "needs_confirmation": true
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含实例信息，不能作为本指标的数据源；可用性改用 instances[].instance_status 或 gaussdb_instance_status",
       "needs_confirmation": true
@@ -262,6 +286,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台另有 rds091_gaussv5_deadlocks",
       "needs_confirmation": false
@@ -297,6 +325,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "累计回滚事务数",
       "needs_confirmation": false
@@ -336,6 +368,10 @@
         "note": "state='idle in transaction (aborted)'"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state='idle in transaction (aborted)'",
       "needs_confirmation": false
@@ -369,6 +405,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台为用户总事务数/秒",
       "needs_confirmation": false
@@ -402,6 +442,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台口径为 DDL+DML+DCL 平均SQL执行数/秒",
       "needs_confirmation": false
@@ -442,6 +486,10 @@
       "placeholders": [
         "PORT"
       ],
+      "resource_granularity": "port",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{PORT}",
       "dimension_bindings": {
         "PORT": "setting"
       },
@@ -479,6 +527,10 @@
         "needs_confirmation": true
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "平台为实例状态，非 pg_is_in_recovery 语义",
       "needs_confirmation": true
@@ -511,6 +563,10 @@
         "note": "开发方案描述为 27 字段会话清单，实际合并 SQL 返回的是按库+状态聚合的三列，需另加 SQL 才能取到完整清单"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "会话清单（27 个字段）",
       "needs_confirmation": false
@@ -543,6 +599,10 @@
         "note": ""
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "库级 + 表级统计视图",
       "needs_confirmation": false
@@ -575,6 +635,10 @@
         "note": ""
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "pg_locks 全量锁视图",
       "needs_confirmation": false
@@ -614,6 +678,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -649,6 +717,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台为 CN 进程启动时刻(timestamp)",
       "needs_confirmation": false
@@ -690,6 +762,10 @@
         "note": "state 含 lock 相关会话"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state 含 lock 相关会话",
       "needs_confirmation": false
@@ -725,6 +801,10 @@
         "note": "运行时长 = 当前时刻 - CN 进程启动时刻"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台无 uptime 指标，用启动时刻与当前时间推算",
       "needs_confirmation": false
@@ -752,13 +832,17 @@
         "method": "实例接口"
       },
       "value_rule": {
-        "type": "raw",
+        "type": "instance_field",
         "params": {
           "field": "engine_version"
         },
         "note": "GET /rds/v3.2/instances[].engine_version"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "GET /rds/v3.2/instances；另有 GET /rds/v3/version-info",
       "needs_confirmation": false
@@ -802,6 +886,10 @@
         "note": "正在运行的 SQL 文本，需按 §3.8 脱敏"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "会话当前执行的 SQL 文本",
       "needs_confirmation": false
@@ -841,6 +929,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -882,6 +974,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -923,6 +1019,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -964,6 +1064,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -1005,6 +1109,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -1046,6 +1154,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -1087,6 +1199,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -1128,6 +1244,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -1169,6 +1289,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -1211,6 +1335,10 @@
       "placeholders": [
         "DBNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{DBNAME}",
       "dimension_bindings": {
         "DBNAME": "datname"
       },
@@ -1256,6 +1384,10 @@
       "placeholders": [
         "DBNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{DBNAME}",
       "dimension_bindings": {
         "DBNAME": "datname"
       },
@@ -1298,6 +1430,10 @@
       "placeholders": [
         "DATABASE_NAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{DATABASE_NAME}",
       "dimension_bindings": {
         "DATABASE_NAME": "datname"
       },
@@ -1340,6 +1476,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -1377,6 +1517,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "pg_encoding_to_char()",
       "needs_confirmation": false
@@ -1414,6 +1558,10 @@
         "note": "含 SQL 文本，需按 §3.8 脱敏"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "按 total_elapse_time 排序取 Top N",
       "needs_confirmation": false
@@ -1449,6 +1597,10 @@
         "needs_confirmation": true
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "平台为实例状态",
       "needs_confirmation": true
@@ -1486,6 +1638,10 @@
         "note": "客户表单位标「个」，与时区语义不符，待客户确认"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1524,6 +1680,10 @@
         "note": "实测 8192"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "实测 8192",
       "needs_confirmation": false
@@ -1563,6 +1723,10 @@
         "note": "state='idle in transaction'"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state='idle in transaction'",
       "needs_confirmation": false
@@ -1598,6 +1762,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "累计写块耗时，口径与客户一致",
       "needs_confirmation": false
@@ -1633,6 +1801,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1661,6 +1833,10 @@
       },
       "value_rule": null,
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "PG 侧无 fastpath 计数器；pg_settings 仅有 gsi_fastpath_level 开关",
       "needs_confirmation": false,
@@ -1697,6 +1873,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1732,6 +1912,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1767,6 +1951,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1802,6 +1990,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1837,6 +2029,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1872,6 +2068,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1907,6 +2107,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1942,6 +2146,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -1977,6 +2185,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -2012,6 +2224,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -2047,6 +2263,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -2082,6 +2302,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -2121,6 +2345,10 @@
         "note": "state='active'；平台另有 rds117"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state='active'；平台另有 rds117",
       "needs_confirmation": false
@@ -2149,6 +2377,10 @@
       },
       "value_rule": null,
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "PG 无「禁用连接」概念；pg_settings 仅有 reserved_connections 等预留连接",
       "needs_confirmation": false,
@@ -2189,6 +2421,10 @@
         "note": "state='idle'"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state='idle'",
       "needs_confirmation": false
@@ -2230,6 +2466,10 @@
         "note": "state 含 wait 类会话"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state 含 wait 类会话",
       "needs_confirmation": false
@@ -2265,6 +2505,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "累计读块耗时，口径与客户一致",
       "needs_confirmation": false
@@ -2308,6 +2552,10 @@
         "note": "连接使用率：分子=activity_agg 全部会话数，分母=stat_database 各库 numbackends 之和"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "活跃会话数 / 总连接数",
       "needs_confirmation": false
@@ -2344,6 +2592,10 @@
         "note": "count(*) 统计预备事务"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "count(*) 统计预备事务",
       "needs_confirmation": false
@@ -2372,6 +2624,10 @@
       },
       "value_rule": null,
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "Agent 侧行为，不是数据库可查询的监控指标",
       "needs_confirmation": false,
@@ -2412,6 +2668,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2453,6 +2713,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2495,6 +2759,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2536,6 +2804,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2577,6 +2849,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2618,6 +2894,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2659,6 +2939,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2700,6 +2984,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2741,6 +3029,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2782,6 +3074,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2823,6 +3119,10 @@
       "placeholders": [
         "NAME"
       ],
+      "resource_granularity": "table",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}_{NAME}",
       "dimension_bindings": {
         "NAME": "relname"
       },
@@ -2860,6 +3160,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -2895,6 +3199,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -2930,6 +3238,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -2965,6 +3277,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -3000,6 +3316,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -3035,6 +3355,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "按需触发（requested）的 checkpoint 次数",
       "needs_confirmation": false
@@ -3070,6 +3394,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "按超时触发的 checkpoint 次数",
       "needs_confirmation": false
@@ -3109,6 +3437,10 @@
         "note": "state='idle in transaction'"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state='idle in transaction'",
       "needs_confirmation": false
@@ -3148,6 +3480,10 @@
         "note": "state='idle'"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state='idle'",
       "needs_confirmation": false
@@ -3183,6 +3519,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -3218,6 +3558,10 @@
         "needs_confirmation": true
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台为 DN 主备状态",
       "needs_confirmation": true
@@ -3257,6 +3601,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },
@@ -3302,6 +3650,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },
@@ -3343,6 +3695,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },
@@ -3380,6 +3736,10 @@
         }
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
@@ -3418,6 +3778,10 @@
         "note": ""
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "identical",
+      "node_scoped": false,
+      "resource_name_template": "{instance_name}",
       "dimension_bindings": {},
       "note": "实测 200",
       "needs_confirmation": false
@@ -3457,6 +3821,10 @@
         "note": "state='active'"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "state='active'",
       "needs_confirmation": false
@@ -3497,6 +3865,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },
@@ -3539,6 +3911,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },
@@ -3581,6 +3957,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },
@@ -3623,6 +4003,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },
@@ -3665,6 +4049,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },
@@ -3710,6 +4098,10 @@
         "note": "在线会话数 / 总连接数：分子=activity_agg 全部会话数，分母=stat_database 各库 numbackends 之和"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "在线会话数 / 总连接数",
       "needs_confirmation": false
@@ -3751,6 +4143,10 @@
         "note": "会话时长最长 = 最早开始，SQL 已按 query_start 升序"
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "按 query_start 排序取 Top N",
       "needs_confirmation": false
@@ -3786,6 +4182,10 @@
         "needs_confirmation": true
       },
       "placeholders": [],
+      "resource_granularity": "instance",
+      "master_view": null,
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}",
       "dimension_bindings": {},
       "note": "平台为 DN 主备状态",
       "needs_confirmation": true
@@ -3826,6 +4226,10 @@
       "placeholders": [
         "DATNAME"
       ],
+      "resource_granularity": "database",
+      "master_view": "divergent",
+      "node_scoped": true,
+      "resource_name_template": "{instance_name}_{node_id}_{DATNAME}",
       "dimension_bindings": {
         "DATNAME": "datname"
       },

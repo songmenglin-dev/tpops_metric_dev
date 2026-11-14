@@ -17,8 +17,16 @@ The platform uses a self-signed certificate, so TLS verification is off by defau
 
 ## Usage
 
+逐指标抓原生响应（重建回归样本）：
+
 ```bash
-python tools/fetch_tpops_metrics.py --hours 24
+python tools/capture_metric_response.py     # → data/metric_response/*.json
+```
+
+抓告警侧数据：
+
+```bash
+python tools/fetch_tpops_alarms.py          # → data/alarm/*.json
 ```
 
 ## API endpoints used
@@ -85,18 +93,26 @@ Three scripts produce the customer-facing deliverables in `data/`:
 | Script | Output | Purpose |
 |---|---|---|
 | `build_customer_metric_mapping.py` | `data/customer_metric_mapping.json` | 客户 101 个指标 → TPOPS 可提供性判定与映射关系 |
-| `build_metric_query_plan.py` | `data/customer_metric_query_plan.json`、`data/tpops_api_catalog.json` | 逐指标的查询方案与 API 目录 |
-| `verify_metric_sources.py` | `data/metric_verification/*.json` | **逐指标真实调用**，通过后才落盘 |
-| `build_metric_value_rules.py` | `data/metric_value_rules.json` | 开发方案 §4.3 的逐指标取值规则 → 机器可读 |
+| `build_metric_query_plan.py` | `data/customer_metric_query_plan.json`（生成物）、`data/tpops_api_catalog.json` | 逐指标的查询方案与 API 目录 |
+| `build_metric_value_rules.py` | `data/metric_value_rules.json`（生成物） | 开发方案 §4.3 的逐指标取值规则 → 机器可读 |
 | `build_itscada_mapping.py` | `data/mapping/*.json` | ITSCADA 映射规则（字段映射 / 指标规则 / 告警规则） |
-| `capture_metric_response.py` | `data/metric_response/*.json` | **逐指标抓原生 API 响应体**（一个指标一个文件，命令中心走 11 条合并 SQL） |
-| `build_metric_sql_column.py` | 客户指标明细表 xlsx | 回填「指标库-指标获取方法」sheet 的「使用的SQL」列 |
+| `capture_metric_response.py` | `data/metric_response/*.json` | **逐指标抓原生 API 响应体**（一个指标一个文件，命令中心走 11 条合并 SQL）—— **回归回放用这个** |
+| `cmd_center_api_samples.py` | —（纯数据） | 命令中心三跳的 API 描述样本，供上面两个生成器引用 |
+
+> **中间产物不入库**：`data/customer_metric_query_plan.json` 与 `data/metric_value_rules.json`
+> 已 gitignore。`build_itscada_mapping.py` 在它们缺失时会**自动重建**（见其 `_ensure_input`），
+> 所以"映射表可重复生成"这条保证不受影响。
 
 ```bash
-python tools/build_customer_metric_mapping.py   # 需要先建 tpops_all_metric.json
+python tools/build_customer_metric_mapping.py
 python tools/build_metric_query_plan.py
-python tools/verify_metric_sources.py           # 需 TPOPS_USER / TPOPS_PASSWORD
 python tools/capture_metric_response.py         # 需 TPOPS_USER / TPOPS_PASSWORD
+```
+
+重建映射表（缺中间产物时会自动补齐）：
+
+```bash
+python tools/build_itscada_mapping.py
 ```
 
 ### ITSCADA 映射层
@@ -184,17 +200,9 @@ These exports are all **reproducible from the platform** and are therefore gitig
 
 ### Rebuilding the metric dictionary
 
-`data/tpops_all_metric.json` (234 platform metrics: english id / chinese name / unit /
-group / collection frequency) and `data/metric_names.csv` (the same data as a table) are
-built from the raw exports above:
-
-```bash
-python tools/fetch_tpops_metrics.py --hours 2
-python tools/build_tpops_metric_dict.py
-```
-
-`build_customer_metric_mapping.py` needs `tpops_all_metric.json` to resolve the
-platform-side metric names, so run the dictionary build first if it is missing.
+`data/tpops_all_metric.json` / `data/metric_names.csv` **已按"一次性产物"口径删除**，
+可提供性结论已固化在 `data/customer_metric_mapping.json` 里，不再重建源字典。
+`build_customer_metric_mapping.py` 会走离线模式（不依赖该字典）。
 
 ### Which file to use for "current value"
 

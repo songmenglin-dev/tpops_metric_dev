@@ -21,12 +21,12 @@ MAPPING_DIR = os.path.join(BASE_DIR, 'data', 'mapping')
 OUT_PATH = os.path.join(BASE_DIR, 'docs', '映射表-ITSCADA字段对照.md')
 
 METRIC_FILES = [
-    ('metric_mapping_monitor_metrics.json', 'A 类　监控指标接口'),
-    ('metric_mapping_command_center_sql.json', 'B 类　命令中心 SQL'),
-    ('metric_mapping_diagnostic.json', 'C 类　诊断优化接口'),
-    ('metric_mapping_instance.json', 'D 类　实例接口'),
+    ('archive/metric_mapping_monitor_metrics.json', 'A 类　监控指标接口'),
+    ('archive/metric_mapping_command_center_sql.json', 'B 类　命令中心 SQL'),
+    ('archive/metric_mapping_diagnostic.json', 'C 类　诊断优化接口'),
+    ('archive/metric_mapping_instance.json', 'D 类　实例接口'),
 ]
-ALARM_FILE = 'alarm_mapping.json'
+ALARM_FILE = 'archive/alarm_mapping.json'
 OPEN_ITEMS_FILE = 'open_items.json'
 REQUIRED_LABEL = {True: '必填', False: '选填', 'conditional': '条件必填'}
 SOURCE_TYPE_LABEL = {

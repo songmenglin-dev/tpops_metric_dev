@@ -197,6 +197,91 @@ class TpopsClient:
         self._raise_for_status(resp, "alarm statistic")
         return resp.json()
 
+    # --- alarm rule configuration (the /gaussdb/v3 namespace) --------------
+
+    def console_login(self):
+        """POST /gaussdb/v3/login -- log in to the GaussDB **console** namespace.
+
+        The console namespace (/gaussdb/v3/...) is a *different* auth domain from
+        /rds/v3/...: it needs a CONSOLE-type session, not the OPENAPI mini-token.
+
+        Returns (jwt, csrf). Both come back as response headers:
+          X-Mini-Token -- the console JWT (claims carry login_type=CONSOLE)
+          Csrf         -- the CSRF token to echo back in `x-mini-csrf`
+        """
+        resp = self.session.post(
+            f"{self.base_url}/gaussdb/v3/login",
+            json={"username": self.username, "password": self.password},
+            headers={"Content-Type": "application/json",
+                     "service-tag": "luban", "X-Language": "zh-cn"},
+            timeout=self.timeout,
+        )
+        self._raise_for_status(resp, "console login")
+        jwt = resp.headers.get("X-Mini-Token")
+        csrf = resp.headers.get("Csrf")
+        if not jwt or not csrf:
+            raise TpopsError("console login did not return X-Mini-Token / Csrf")
+        return jwt, csrf
+
+    def alarm_rule_configs(self, limit=100, offset=0, jwt=None, csrf=None):
+        """GET /gaussdb/v3/alarm/configs -- the alarm **rule configuration** catalogue.
+
+        This is the authoritative alarm->metric mapping: every rule carries
+        `metric_code` (the platform metric id) plus the thresholds, observation
+        policy, effective window and the Chinese alarm_name/description.
+
+        NOTE the namespace: this endpoint lives under /gaussdb/v3/, NOT
+        /rds/v3/ or /rds/gaussdb/v3/. It is routed by two headers:
+          service-tag: luban   -- without it the route 404s
+          x-mini-token: gaussdbtpops -- a literal service tag, NOT the JWT
+                                     (putting the JWT here also 404s)
+        Plus the console session: the CONSOLE JWT in the cookie and the Csrf
+        echoed in `x-mini-csrf`. Missing/!matching -> 403.
+
+        `x-language: zh-cn` switches alarm_name/description to Chinese
+        (the default is English).
+        """
+        if jwt is None or csrf is None:
+            jwt, csrf = self.console_login()
+        cookie = (f"session_timeout=30; X-Mini-Token={jwt}; isLogin=logged; "
+                  f"userName={self.username}; ts={int(time.time() * 1000)}")
+        headers = {
+            "service-tag": "luban",
+            "x-mini-token": "gaussdbtpops",
+            "x-mini-csrf": csrf,
+            "cookie": cookie,
+            "X-Language": "zh-cn",
+        }
+        resp = self.session.get(
+            f"{self.base_url}/gaussdb/v3/alarm/configs",
+            params={"limit": limit, "offset": offset},
+            headers=headers,
+            timeout=self.timeout,
+        )
+        self._raise_for_status(resp, "alarm rule configs")
+        return resp.json()
+
+    def alarm_rule_catalog(self, jwt=None, csrf=None):
+        """Every alarm rule config, paging until exhausted.
+
+        Returns (rules, total_count). Each rule is a dict as returned by the
+        platform -- see data/alarm/alarm_configs.json for a full capture.
+        """
+        if jwt is None or csrf is None:
+            jwt, csrf = self.console_login()
+        rules = []
+        offset = 0
+        total = None
+        while True:
+            body = self.alarm_rule_configs(limit=100, offset=offset, jwt=jwt, csrf=csrf)
+            page = body.get("alarm_rule_config") or []
+            total = body.get("total_count", total)
+            rules.extend(page)
+            offset += len(page)
+            if not page or (total is not None and offset >= total):
+                break
+        return rules, total
+
     # --- helpers ----------------------------------------------------------
 
     @staticmethod

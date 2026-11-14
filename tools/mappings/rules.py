@@ -149,11 +149,17 @@ def _eval_raw_filtered(metric_rule, rule, ctx, deltas):
     rows = [row for row in ctx.rows if _match_filter(row, params.get('filter', {}))]
     if not rows:
         return []
-    value = rows[0].get(column)
+    row = rows[0]
+    value = row.get(column)
     cast = params.get('cast')
     if cast == 'int':
         value = _to_int(value)
-    return [({}, value, ctx.now_ms)]
+    # 维度要带上：指标名里的占位符（如 {#PORT}）要靠它替换，
+    # 不填的话组装消息时 substitute_placeholders 会直接抛异常。
+    dims = {}
+    for placeholder, column_name in metric_rule.dimension_bindings.items():
+        dims[placeholder] = row.get(column_name)
+    return [(dims, value, ctx.now_ms)]
 
 
 def _eval_aggregate(metric_rule, rule, ctx, deltas):
@@ -308,14 +314,21 @@ _HANDLERS = {
     'raw_rows': _eval_raw_rows,
     'collection_count': _eval_collection_count,
     'text_prefix_count': _eval_text_prefix_count,
+    'instance_field': _eval_instance_field,
 }
 
 
 # -- 小工具 --------------------------------------------------------------
 def _point_timestamp(ctx, index):
-    """数据时间戳：A 类取与 value 同一下标的 timestamps[i]，其余取采集完成时刻。"""
+    """数据时间戳：A 类取与 value 同一下标的 timestamps[i]，其余取采集完成时刻。
+
+    实测里 timestamps 会出现 0（平台没给采集时刻），此时回退到采集时刻；
+    客户字段 clock 是 Long，这里统一转成整数。
+    """
     if index is not None and 0 <= index < len(ctx.timestamps):
-        return ctx.timestamps[index]
+        stamp = ctx.timestamps[index]
+        if stamp:
+            return int(stamp)
     return ctx.now_ms
 
 

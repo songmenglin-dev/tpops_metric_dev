@@ -23,10 +23,11 @@ def build_metric_message(
     """组装一条 ITSCADA 指标消息。"""
     metric_name = substitute_placeholders(metric_rule.metric_name, dimensions)
     metric_code = substitute_placeholders(metric_rule.metric_code, dimensions)
+    template, fallback = _resource_name_templates(field_map, metric_rule)
     resource_name = build_resource_name(
-        field_map['resource_name']['template'],
-        resource_context,
-        field_map['resource_name'].get('fallback_template'),
+        template,
+        dict(resource_context, **dimensions),
+        fallback,
     )
     return {
         'metricName': metric_name,
@@ -76,6 +77,38 @@ def build_alarm_message(
         'unit': unit,
         'tags': _alarm_tags(record, details),
     }
+
+
+def resource_name_template(field_map, placeholders, node_scoped=False):
+    """resourceName 模板：实例名 + [节点] + 每个占位符各占一段。
+
+    占位符（表名/库名/端口号）取自结果行，拼进资源名，
+    客户才能按 ITSCADA 台账对上。
+    节点这一段只在数据按节点分布时才加（实测结论，见 tools/distribution.py）。
+    """
+    config = field_map['resource_name']
+    template = config.get('metric_template', '{instance_name}')
+    if node_scoped:
+        template += '_{node_id}'
+    for name in placeholders or ():
+        template += '_{%s}' % name
+    return template
+
+
+def _resource_name_templates(field_map, metric_rule):
+    """取 resourceName 模板与回退模板。
+
+    优先用规则里写好的模板（映射表与代码共用同一份，避免各说各话）。
+    """
+    config = field_map['resource_name']
+    template = getattr(metric_rule, 'resource_name_template', None)
+    if not template:
+        template = resource_name_template(
+            field_map,
+            getattr(metric_rule, 'placeholders', ()),
+            bool(getattr(metric_rule, 'node_scoped', False)),
+        )
+    return template, config.get('fallback_template', '{instance_name}')
 
 
 def serialize_value(value: Any, value_type: str) -> Any:

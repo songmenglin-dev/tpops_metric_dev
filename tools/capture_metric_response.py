@@ -76,7 +76,7 @@ MAX_ATTEMPTS = 3
 
 
 def sanitize(name):
-    """客户英文指标名 → 安全文件名（与 tools/verify_metric_sources.py 同一套规则）。"""
+    """客户英文指标名 → 安全文件名（清洗规则与历史留档一致）。"""
     out = name.strip()
     out = re.sub(r'[#{}()\[\]]', '', out)
     out = re.sub(r'[\\/:*?"<>|\r\n\t]', '_', out)

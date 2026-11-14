@@ -8,32 +8,118 @@
   "metric_message": {
     "doc_ref": "指标方案 §6.2",
     "fields": [
-      {"name": "metricName", "type": "String", "required": true},
-      {"name": "metricCode", "type": "String", "required": true},
-      {"name": "resourceName", "type": "String", "required": true},
-      {"name": "value", "type": "String", "required": true},
-      {"name": "unit", "type": "String", "required": false},
-      {"name": "clock", "type": "Long", "required": true},
-      {"name": "tags", "type": "JSON", "required": false}
+      {
+        "name": "metricName",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "metricCode",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "resourceName",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "value",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "unit",
+        "type": "String",
+        "required": false
+      },
+      {
+        "name": "clock",
+        "type": "Long",
+        "required": true
+      },
+      {
+        "name": "tags",
+        "type": "JSON",
+        "required": false
+      }
     ],
-    "required_fields": ["metricName", "metricCode", "resourceName", "value", "clock"]
+    "required_fields": [
+      "metricName",
+      "metricCode",
+      "resourceName",
+      "value",
+      "clock"
+    ]
   },
   "alarm_message": {
     "doc_ref": "告警方案 §3.2",
     "fields": [
-      {"name": "alarmId", "type": "String", "required": true},
-      {"name": "alarmName", "type": "String", "required": false},
-      {"name": "alarmContent", "type": "String", "required": true},
-      {"name": "priority", "type": "Integer", "required": true},
-      {"name": "alarmTime", "type": "Long", "required": true},
-      {"name": "status", "type": "Integer", "required": true},
-      {"name": "recoverTime", "type": "Long", "required": "conditional"},
-      {"name": "resourceName", "type": "String", "required": true},
-      {"name": "metricName", "type": "String", "required": true},
-      {"name": "metricCode", "type": "String", "required": true},
-      {"name": "value", "type": "String", "required": true},
-      {"name": "unit", "type": "String", "required": false},
-      {"name": "tags", "type": "Object", "required": false}
+      {
+        "name": "alarmId",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "alarmName",
+        "type": "String",
+        "required": false
+      },
+      {
+        "name": "alarmContent",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "priority",
+        "type": "Integer",
+        "required": true
+      },
+      {
+        "name": "alarmTime",
+        "type": "Long",
+        "required": true
+      },
+      {
+        "name": "status",
+        "type": "Integer",
+        "required": true
+      },
+      {
+        "name": "recoverTime",
+        "type": "Long",
+        "required": "conditional"
+      },
+      {
+        "name": "resourceName",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "metricName",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "metricCode",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "value",
+        "type": "String",
+        "required": true
+      },
+      {
+        "name": "unit",
+        "type": "String",
+        "required": false
+      },
+      {
+        "name": "tags",
+        "type": "Object",
+        "required": false
+      }
     ],
     "required_fields": [
       "alarmId",
@@ -49,10 +135,20 @@
   },
   "resource_name": {
     "template": "{instance_name}_{node_id}",
-    "fallback_template": "{instance_name}"
+    "fallback_template": "{instance_name}",
+    "metric_template": "{instance_name}",
+    "metric_with_placeholder": "{instance_name}_{PLACEHOLDER}",
+    "note": "指标消息与告警消息的资源名规则不同：指标 = 实例名 + 每个占位符各占一段（表/库/端口，取值来自结果行），粒度由占位符决定，不是客户指标表里的 resource_type（那个说的是指标属于哪个产品）；告警 = 实例名 + node_id（告警要能定位到节点）。具体命名规则要与客户 ITSCADA 台账录入的资源名称完全一致（open_items.json / resource-name，待客户提供台账清单后核对）。"
   },
   "tags": {
-    "metric": ["instance_id", "instance_name", "node_id", "component_id", "host_ip", "dimension_values"],
+    "metric": [
+      "instance_id",
+      "instance_name",
+      "node_id",
+      "component_id",
+      "host_ip",
+      "dimension_values"
+    ],
     "alarm": [
       "instance_id",
       "instance_name",
