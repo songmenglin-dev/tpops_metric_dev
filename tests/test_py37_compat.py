@@ -103,8 +103,17 @@ def _check_file(path):
     source = _read(path)
 
     # 1. 语法级：3.7 能否解析
+    # feature_version 是 3.8+ 的参数；在 3.7 解释器上跑这道门禁时没有它，
+    # 但 3.7 自带的解析器本身就拒绝 3.8+ 语法，语法级检查天然成立。
     try:
         tree = ast.parse(source, filename=path, feature_version=(3, 7))
+    except TypeError:
+        # 当前解释器就是 3.7（或更早）：用它自己的解析器
+        try:
+            tree = ast.parse(source, filename=path)
+        except SyntaxError as exc:
+            problems.append((exc.lineno or 0, f'3.7 无法解析：{exc.msg}'))
+            return problems
     except SyntaxError as exc:
         problems.append((exc.lineno or 0, f'3.7 无法解析：{exc.msg}'))
         # 语法已经不过 3.7，但用当前版本再解析一遍，把 API 层的问题也一并报出来

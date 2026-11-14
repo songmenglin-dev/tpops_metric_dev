@@ -13,13 +13,17 @@ import build_itscada_mapping as builder  # noqa: E402
 import build_metric_value_rules as value_builder  # noqa: E402
 
 
-def test_metric_value_rules_file_is_up_to_date(tmpdir):
-    regenerated = value_builder._build_metrics(value_builder._read_plan())
-    stored = json.load(
-        io.open(os.path.join(DATA_DIR, 'metric_value_rules.json'), encoding='utf-8')
-    )
-    assert stored['metrics'] == regenerated
-    assert stored['counts']['total'] == 98
+def test_metric_value_rules_are_stable():
+    """取值规则生成器可重复：两次生成结果一致，且覆盖 98 条可提供指标。
+
+    `data/metric_value_rules.json` 是不入库的中间产物，由
+    `tools/build_metric_value_rules.py` 从开发方案 §4.3 机械生成；
+    这里直接校验生成器本身，产物落盘与否不影响这个保证。
+    """
+    first = value_builder._build_metrics(value_builder._read_plan())
+    second = value_builder._build_metrics(value_builder._read_plan())
+    assert first == second
+    assert len(first) == 98
 
 
 def test_metric_rules_file_is_up_to_date():
@@ -47,7 +51,5 @@ def test_value_rules_cover_all_provided_metrics():
         item['customer_metric'] for item in availability['items']
         if item['status'] == '可提供'
     )
-    value_rules = json.load(
-        io.open(os.path.join(DATA_DIR, 'metric_value_rules.json'), encoding='utf-8')
-    )
-    assert set(value_rules['metrics']) == provided
+    value_rules = value_builder._build_metrics(value_builder._read_plan())
+    assert set(value_rules) == provided

@@ -278,6 +278,7 @@ def test_metric_message_has_exactly_the_documented_fields(table):
     }
     assert message['metricName'] == '每秒提交事务数'
     assert message['metricCode'] == 'GAUSSDB.Number_of_ansactions_mmitted_r_cond'
+    # A 类监控指标的数据按组件（节点）展开 → 资源名带 node_id
     assert message['resourceName'] == 'gauss-75a2_node-1'
     assert message['value'] == 12
     assert message['unit'] == 'tps'
@@ -296,6 +297,8 @@ def test_metric_message_substitutes_placeholders(table):
     )
     assert message['metricName'] == '[postgres]缓存命中率'
     assert message['metricCode'] == 'GAUSSDB.[postgres]_cache_hit_ratio'
+    # 库级 + 节点级：资源名带 node_id 和库名，客户才能按台账对上
+    assert message['resourceName'] == 'gauss-75a2_node-1_postgres'
 
 
 def test_metric_message_keeps_missing_value_as_null(table):
@@ -401,19 +404,25 @@ def test_alarm_message_uses_linked_customer_metric(table):
 
 
 # -- 与实测样本对拍 ------------------------------------------------------
-def test_series_point_matches_real_verification_sample(table):
-    """用 data/metric_verification 的实测留档回放 A 类取值。"""
+def test_series_point_matches_real_response_sample(table):
+    """用 data/metric_response 的原生响应回放 A 类取值。"""
     path = os.path.join(
-        DATA_DIR, 'metric_verification', '001_GAUSSDB.Number_of_ansactions_mmitted_r_cond.json'
+        DATA_DIR, 'metric_response', '001_GAUSSDB.Number_of_ansactions_mmitted_r_cond.json'
     )
     sample = json.load(open(path, encoding='utf-8'))
     rule = _rule(table, 'GAUSSDB.Number_of_ansactions_mmitted_r_cond')
-    for actual in sample['verification']['actual_data']:
-        ctx = RuleContext(series=actual['series'])
-        values = evaluate(rule, ctx)
-        assert values, actual['instance_id']
-        for _dims, value, _clock in values:
-            assert isinstance(value, float)
+    checked = 0
+    for call in sample:
+        body = call.get('response_body') or {}
+        for info in body.get('metric_infos') or []:
+            for metric in info.get('metrics') or []:
+                ctx = RuleContext(series=metric['series'])
+                values = evaluate(rule, ctx)
+                assert values, metric.get('name')
+                for _dims, value, _clock in values:
+                    assert isinstance(value, float)
+                checked += 1
+    assert checked, '样本里没有可回放的指标点'
 
 
 def test_dimension_metrics_are_always_per_row(table):

@@ -34,12 +34,13 @@ def table():
     return MappingTable.load()
 
 
+# 分类映射表已归档（2026-11-13），这里仍校验它们与客户方案字段表一致
 MAPPING_FILES = {
-    'monitor_metrics': 'metric_mapping_monitor_metrics.json',
-    'command_center_sql': 'metric_mapping_command_center_sql.json',
-    'diagnostic': 'metric_mapping_diagnostic.json',
-    'instance': 'metric_mapping_instance.json',
-    'alarm': 'alarm_mapping.json',
+    'monitor_metrics': 'archive/metric_mapping_monitor_metrics.json',
+    'command_center_sql': 'archive/metric_mapping_command_center_sql.json',
+    'diagnostic': 'archive/metric_mapping_diagnostic.json',
+    'instance': 'archive/metric_mapping_instance.json',
+    'alarm': 'archive/alarm_mapping.json',
 }
 
 
@@ -172,15 +173,19 @@ def test_table_exposes_category_mappings(table):
 
 def test_command_center_rows_are_strings_in_real_data():
     """命令中心返回的行值是字符串 —— 映射表里写明了，转换规则要能处理。"""
-    payload = json.load(
-        io.open(
-            os.path.join(DATA_DIR, 'command_center', 'results', '07_task_result_sql.json'),
-            encoding='utf-8',
-        )
+    path = os.path.join(
+        DATA_DIR, 'metric_response', '006_GAUSSDB.NAME.Number.t.date.ples.json'
     )
-    result = payload['response']['body']['result']
-    assert isinstance(result, str)
-    assert isinstance(json.loads(result), list)
+    calls = json.load(io.open(path, encoding='utf-8'))
+    results = [
+        (call.get('response_body') or {}).get('result')
+        for call in calls
+        if 'result' in (call.get('response_body') or {})
+    ]
+    assert results, '样本里没有命令中心的结果行'
+    for result in results:
+        assert isinstance(result, str)
+        assert isinstance(json.loads(result), list)
 
 
 def test_generated_doc_is_up_to_date():
