@@ -77,13 +77,11 @@ tools/mappings/           # 映射层执行代码
 tests/     # 映射层单元测试（pytest）；TPOPS 与 Kafka 一律 mock
 tools/     # 现有离线取数脚本 + 参考实现，保留
 data/      # 离线样本与调研产物
-│  ├── alarm/               # 告警侧数据（抓取产物 + 告警定义目录），详见该目录 README
-│  ├── command_center/      # 统一命令中心 API 实测（5 个接口全量真实调用 + 速查表）
-│  ├── metric_verification/ # 逐指标真实调用留档（98/98 通过），可直接当回归样本
-│  ├── metric_response/     # 逐指标**原生 API 响应体**（98 个文件，命令中心走 11 条合并 SQL）
+│  ├── alarm/               # 告警侧数据（抓取产物 + 告警定义目录 + 181 条规则配置），详见该目录 README
+│  ├── command_center/      # 统一命令中心 API 速查表（实测产物已清理，见该目录 README）
+│  ├── metric_response/     # 逐指标**原生 API 响应体**（100 个文件，命令中心走 11 条合并 SQL）—— 回归样本
+│  ├── merged_sql/          # 11 条合并 SQL 及其探针结果
 │  ├── customer_metric_mapping.json    # 101 客户指标 → TPOPS 可提供性判定
-│  ├── customer_metric_query_plan.json # 逐指标查询方案与真实响应
-│  ├── metric_value_rules.json         # 开发方案 §4.3 的逐指标取值规则（生成物）
 │  ├── tpops_api_catalog.json          # TPOPS API 目录
 │  └── customer_metric_unsupported.csv # 无法提供清单
 docs/      # 文档
@@ -92,10 +90,33 @@ docs/      # 文档
 │  └── *.docx          # 客户监控平台接入指引（走 Agent，非本项目路径）
 ```
 
-`data/tpops_all_metric.json`（TPOPS 原始指标字典）**已删除且不再需要**：可提供性结论已固化在
-`customer_metric_mapping.json` 里，不重建源字典。
+**已清理的产物**（2026-11-13，按"一次性探针产物"口径删除，均可从 git 历史恢复）：
+
+- `data/metric_verification/`、`data/command_center/results/`、`data/api_probe/`、
+  `data/multi_master_probe/` —— 逐指标实测留档、命令中心全量留档、探针结果。
+  **等价内容在 `data/metric_response/`**（逐指标原生响应，一个指标一文件），
+  回归回放改用它。
+- `data/customer_metric_query_plan.json`、`data/metric_value_rules.json` —— 映射表的中间产物，
+  **不入库**，缺失时由 `tools/build_itscada_mapping.py` 自动重建（见该文件的 `_ensure_input`）。
+- `data/tpops_all_metric.json`（TPOPS 原始指标字典）—— 可提供性结论已固化在
+  `customer_metric_mapping.json` 里，不重建源字典。
 
 ## 运行
+
+**开发环境**（conda，Python 3.7.9 —— 不用 venv）：
+
+```bash
+conda create -n tpops python=3.7.9 -c conda-forge --override-channels -y
+conda install -n tpops -c conda-forge --override-channels -y pip
+conda run -n tpops python -m pip install -r requirements.txt
+conda activate tpops          # 或每次用 conda run -n tpops <命令>
+conda run -n tpops python -m pytest -q
+```
+
+> Anaconda 默认源（repo.anaconda.com）需要接受商业 TOS，**不要用它**；一律加
+> `-c conda-forge --override-channels`。
+
+启动采集端：
 
 ```bash
 cp .env.example .env        # 填 TPOPS_PASSWORD、KAFKA_* 等
@@ -200,7 +221,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 - 采集端代码单文件 < 400 行、函数 < 50 行；按功能分模块，不堆大文件。
   （`tools/` 下有几个离线脚本超 400 行，是历史产物；采集端按上面的新结构写，不沿用。）
 - 测试用 pytest：映射、窗口计算、序列化写单元测试；TPOPS 与 Kafka 一律 mock。目标覆盖率 80%。
-  `data/metric_verification/` 里的 98 份实测留档可直接当回归样本回放。
+  `data/metric_response/` 里的逐指标原生响应可直接当回归样本回放。
 - 提交信息用 conventional commits（`feat:` / `fix:` / `docs:` / `refactor:` / `test:` / `chore:`），正文中文。
 
 ## 待定事项（客户未最终确认，先按可配置实现）
@@ -216,7 +237,8 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
    需与客户核对正确拼写。可提供性**已判定：98 可提供 / 3 无法提供**，逐指标真实调用 **98/98 通过**。
    落地：`data/mapping/itscada_field_map.json`（字段级映射）+ `data/mapping/metric_rules.json`（逐指标规则）。
 2. **客户指标 → 取数方法的映射表已建好** —— `data/customer_metric_query_plan.json`
-   （101 条逐指标查询方案与真实响应），另加 sheet「指标库-指标获取方法」标注每个指标走哪条通道
+   （101 条逐指标查询方案，**生成物不入库**，由 `tools/build_metric_query_plan.py` 从
+   `data/customer_metric_mapping.json` 重建），另加 sheet「指标库-指标获取方法」标注每个指标走哪条通道
    （命令中心SQL 82 / 监控指标接口 11 / 诊断优化接口 4 / 实例接口 1 / 无法提供 3）。
    采集端落地为 `data/mapping/` 下的**表驱动数据文件，不要写死在代码中**；
    3 个无法提供的指标丢弃并计数上报。
@@ -250,12 +272,11 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 | `docs/api/API参考-监控大盘.md` | 指标查询接口定义 |
 | `docs/api/API参考-告警管理.md` | 告警接口定义 |
 | `docs/api/API参考-登录.md` | mini-token 认证流程 |
-| `data/customer_metric_query_plan.json` | 逐指标查询方案与真实响应（采集端的实现依据） |
+| `data/customer_metric_query_plan.json` | 逐指标查询方案（生成物，采集端的实现依据） |
 | `docs/ITSCADA第三方指标数据接入对接方案V2.docx` | **客户侧指标接入规范**：字段表、占位符规则、指标表模板 |
 | `docs/ITSCADA第三方告警数据接入对接方案V2.docx` | **客户侧告警接入规范**：字段表、告警压缩规则 |
 | `tools/mappings/README.md` | 映射规则文件说明：字段含义、取值规则类型、怎么改 |
 | `docs/映射表-ITSCADA字段对照.md` | **开发依据**：两张字段级映射表（指标 / 告警），原始字段 → ITSCADA 客户字段 |
-| `data/metric_verification/` | 逐指标真实调用留档（98/98 通过），回归样本 |
 | `data/metric_response/README.md` | 逐指标**原生 API 响应体**留档（98 个文件）：格式、通道构成、重抓命令 |
 | `data/alarm/README.md` | 告警侧数据结构与抓取产物说明 |
 | `tools/README.md` | 离线取数脚本用法（`tools/tpops_client.py` 是可用参考实现） |
