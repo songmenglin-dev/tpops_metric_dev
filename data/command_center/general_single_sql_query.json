@@ -1,0 +1,114 @@
+{
+  "api": "GET /rds/gaussdb/v3/command-center/commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+  "response_body": {
+    "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+    "cmd_name": "general_single_sql_query",
+    "cmd_type": "SQL",
+    "description": "执行通用查询语句",
+    "call_type": "sync",
+    "category": "general_sql",
+    "source": "default",
+    "action": "query",
+    "status": "enabled",
+    "limit_usage": [
+      "api"
+    ],
+    "creator": "admin",
+    "operator": "admin",
+    "create_time": 1793689832180,
+    "operate_time": 1793689832180,
+    "constraint_config": {
+      "cluster_mode": "All",
+      "limit_node_types": [
+        "master"
+      ],
+      "limit_component_types": [
+        "cn",
+        "dn"
+      ],
+      "db_version": {
+        "min_value": "3.100.0",
+        "max_value": null
+      },
+      "kernel_version": {
+        "min_value": "503",
+        "max_value": null
+      }
+    },
+    "param_config": {
+      "params": [
+        {
+          "param_id": "e3ea1e63-6119-4885-bae9-19d4e5a49da2",
+          "param_name": "sql_text",
+          "param_type": "single",
+          "data_type": "sql",
+          "sensitive": true,
+          "required": true,
+          "default_value": null,
+          "min_value": null,
+          "max_value": null,
+          "max_size": null,
+          "enum_values": null,
+          "pattern": "^(select|SELECT|show|SHOW)(.){1, 10000}$",
+          "placeholder_wrapper": "origin",
+          "description": "具体SQL文本"
+        },
+        {
+          "param_id": "a601a68e-c1a4-4382-b5ef-25435e9c9ecb",
+          "param_name": "limit",
+          "param_type": "single",
+          "data_type": "integer",
+          "sensitive": false,
+          "required": true,
+          "default_value": null,
+          "min_value": "1",
+          "max_value": "1000",
+          "max_size": null,
+          "enum_values": null,
+          "pattern": "^(1000|[1-9]\\d{0,2})$",
+          "placeholder_wrapper": "origin",
+          "description": "返回的最大行数）"
+        }
+      ]
+    },
+    "exec_config": {
+      "params": [
+        {
+          "param_name": "switch_database",
+          "param_value": false,
+          "sensitive": null
+        },
+        {
+          "param_name": "database_field",
+          "param_value": null,
+          "sensitive": null
+        },
+        {
+          "param_name": "result_masks",
+          "param_value": [],
+          "sensitive": null
+        },
+        {
+          "param_name": "time_out",
+          "param_value": 30000,
+          "sensitive": null
+        }
+      ]
+    },
+    "output_config": {
+      "format": "json",
+      "mode": "array",
+      "type": "map",
+      "is_redirect": false,
+      "storage_mode": null,
+      "save_dir": null
+    },
+    "compare_config": {
+      "fields": [],
+      "is_support": false
+    },
+    "remark": "1.只支持简单的单条SQL查询语句，类型仅支持select。\n2.SQL语句长度不能超过10000字符。不建议传入超大SQL文本（避免存在慢SQL），严禁输入破坏性的高危SQL。\n3.返回条目数limit最大不超过1000。不建议设置很大，避免返回数据量超过API接口上限。4.自定义SQL命令执行导致的修改将会无法恢复，请做好相关库表数据备份。",
+    "cmd_content": "select * from ({sql_text}) limit {limit};"
+  },
+  "generated_at": "2026-11-18 16:50:37 +0800"
+}

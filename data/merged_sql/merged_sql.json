@@ -911,5 +911,29 @@
       "master_count": 1
     }
   },
-  "concurrency_finding": "实测 2026-11-07：同一实例并发下发 >=4 条 SQL 会随机失败，错误信息为 'invalid SQL statement with syntax error'（SQL 本身无问题，同条串行重跑即过；金丝雀测试 8/8 无参数串味）→ 平台侧参数竞争。且并发不省时间：并发 1 = 4.5s，并发 11 = 8.0s。→ CMD_CONCURRENCY 应设 2（+ 逐条重试），不是 9。"
+  "concurrency_finding": "实测 2026-11-07：同一实例并发下发 >=4 条 SQL 会随机失败，错误信息为 'invalid SQL statement with syntax error'（SQL 本身无问题，同条串行重跑即过；金丝雀测试 8/8 无参数串味）→ 平台侧参数竞争。且并发不省时间：并发 1 = 4.5s，并发 11 = 8.0s。→ CMD_CONCURRENCY 应设 2（+ 逐条重试），不是 9。",
+  "paging": {
+    "default_page_size": 100,
+    "note": "合并 SQL 的每个内层子查询都必须带 limit/offset。平台 Agent 对命令输出有 102400 B 硬上限，超了整条任务失败（不是截断）：output size(...) exceeds the threshold(102400 B)。1 万张表时表级视图单条就 2.6 MB，不分页则一条都回不来。分页窗口只作用于可增长视图（paged=true）；固定视图每页全量重复取（合计仅 5.3 KB）。",
+    "views": {
+      "stat_user_tables": {
+        "paged": true,
+        "strip_inner_limit": true,
+        "why": "行数随实例表数量线性增长（实测 68~79 行 → 1 万张表即 2.6 MB）"
+      },
+      "dbstat_sum": {
+        "paged": true,
+        "strip_inner_limit": true,
+        "why": "left join 的结果随表数量线性增长；原 SQL 的 limit 100 只是护栏，分页时要让位给外层窗口"
+      },
+      "activity_running": {
+        "paged": false,
+        "why": "语义上限 20 条（取最新），不是数据量限制，不参与分页"
+      },
+      "activity_top10": {
+        "paged": false,
+        "why": "语义上限 10 条（取最早），不是数据量限制，不参与分页"
+      }
+    }
+  }
 }
