@@ -69,21 +69,34 @@
 - **后果**：多一层搬运工作（把 `tools/mappings/*.py` 搬进 `tpops_kafka/mapping/`），
   但生产包自洽，不依赖 `tools/`。
 
-### 决策 2：映射层逻辑「搬」而不「重写」
+### 决策 2：生产代码全部在 `tpops_kafka/`，`tools/` 与 `data/` 只作参考
 
-- **选择**：`tools/mappings/{table,rules,decode,message,nodes}.py` 搬进
-  `tpops_kafka/mapping/`，逻辑基本不动，只做两件事：补 `decode_merged`/`merge_pages`，
-  以及把告警幂等键从 `(alarm_id, instance_id, node_id, first_alarm_time)` 改成
-  `(alarm_id, instance_id, first_alarm_time, status)`。
-  `tools/` 下的副本保留，继续服务离线回放与文档生成。
-- **理由**：那 5 个模块已有 164 个通过的测试覆盖，逻辑正确且已被回归样本验证；
-  重写等于把已验证的代码再赌一次。
-- **替代方案**：(a) 生产代码 `import tools.mappings` —— 生产包依赖仓库根的离线工具目录，
-  部署时要带 `tools/`，且 `tools/` 里有会连真实平台的脚本，边界不清；
-  (b) 重写 —— 无收益。
-- **后果**：同一份逻辑存在两份副本，需要用「以 `tpops_kafka/mapping/` 为准」的约定管理；
-  离线脚本改为从 `tpops_kafka` 导入可消除副本，但会改动 10+ 个既有脚本，
-  超出本变更范围，留作后续。
+- **选择**：`tpops_kafka/` 是**唯一的生产代码**。`tools/` 与 `data/` 是参考与离线工具，
+  生产代码**不得**依赖它们：
+  - `tools/mappings/{table,rules,decode,message,nodes}.py` **复制**进 `tpops_kafka/mapping/`，
+    全部改造（`decode_merged` / `merge_pages`、告警幂等键、跨视图比率）**只在包内做**。
+  - 复制完成后，把 `tools/` 下 10+ 个脚本与 `tests/` 下 8 个测试文件的
+    `import tools.mappings` 全部改为 `import tpops_kafka.mapping`，然后**删除 `tools/mappings/`**
+    （git 历史保留）。
+  - 映射数据在包内 `tpops_kafka/mapping/data/` 持有一份生产副本；
+    仓库根 `data/mapping/`、`data/merged_sql/` 保留为参考与发布源，
+    由一致性测试保证两侧不漂移。
+- **理由**：
+  1. **生产包必须自洽**。部署产物是 `tpops_kafka/`，运行时不能去读仓库根的 `tools/` 与
+     `data/`（`tools/` 里有会连真实平台的脚本，边界不清）。
+  2. **双副本会静默分叉**。若 `tools/mappings/` 与 `tpops_kafka/mapping/` 并存，
+     而 164 个现有测试测的是前者，那么**测试全绿并不代表生产代码正确** ——
+     这与本次要修的「静默出 0」是同一类风险。切依赖 + 删副本是唯一能消除它的做法。
+  3. 那 5 个模块已有 164 个通过的测试覆盖，逻辑正确且已被回归样本验证；
+     **复制**（而非重写）把这批验证一并带进生产包。
+- **替代方案**：(a) 生产代码 `import tools.mappings` —— 生产包依赖离线工具目录，部署不完整；
+  (b) 重写 —— 把已验证的代码再赌一次；(c) 保留 `tools/mappings/` 双副本 ——
+  测试指向哪一份就绿哪一份，另一份无人验证。
+- **后果**：
+  - 改造顺序必须调整：**先复制、再在包内改**，不能「先改 tools 再复制」（否则改两遍）。
+  - 切依赖是一次跨 18+ 个文件的机械改动（import 重定向），由全量测试把关。
+  - `tools/` 下脚本运行时需要把项目根加入 `sys.path`（它们目前只加了 `tools/` 目录）。
+  - 仓库里从此不再有「映射层的第二份实现」，开发方案 §5.1 的目录结构与实际一致。
 
 ### 决策 3：合并 SQL 的解码用新增 shape 段，不动既有 shape
 

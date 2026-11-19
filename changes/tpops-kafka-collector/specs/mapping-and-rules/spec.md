@@ -63,6 +63,21 @@ SHALL NOT 在代码中硬编码任何客户指标名、列名、单位或维度�
 每个视图的列 SHALL 由该列声明的 `json_column` 指定；
 SHALL NOT 把整个单行对象当作行列表返回。
 
+**为什么必须显式处理（实现者必读）**——把合并形态当行列表用会**静默产出 0**：
+
+```
+result = '[{"stat_database":"[{\"datname\":\"lz\",\"xact_commit\":153291,...}]",
+            "locks":"[...]", ...}]'
+  ↓ 旧的 _rows_from_result：json.loads 之后直接当行列表
+ctx.rows = [ {"stat_database": "[{...}]", "locks": "[{...}]", ...} ]
+           ↑ 1 行、11 个「整段 JSON 字符串」列 —— 不是视图的行
+  ↓ 规则引擎 row.get("deadlocks") → None
+sum / raw 规则 → _to_number(None) → 0
+```
+
+「列不存在」与「列的值是 0」在数值转换眼里是一回事 —— 82 个 B 类指标会**全部为 0 且不报错**，
+这正是本需求要消除的失败模式。
+
 #### Scenario: 解出视图行
 
 - **WHEN** `result` 为 `[{"stat_database":"[{...}]","locks":"[{...}]"}]`

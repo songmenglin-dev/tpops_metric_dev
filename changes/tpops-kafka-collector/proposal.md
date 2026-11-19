@@ -84,13 +84,14 @@ Topic 名与分区策略（§3.2）、采集周期 7 档（§3.3）、取值口�
 
 | 区域 | 影响 |
 |---|---|
-| **新增** `tpops_kafka/` | 顶层 8 个（`config` / `models` / `errors` / `retry` / `watermark` / `scheduler` / `health` / `main`）+ `tpops/` 6 个 + `collectors/` 5 个 + `mapping/` 7 个（5 个照搬 + `loader` + `masking`）+ `kafka/` 2 个 = **28 个新模块** |
-| **改** `tools/mappings/decode.py` | 新增 `decode_merged` / `merge_pages`；既有 `_rows_from_result` 不动 |
+| **新增** `tpops_kafka/` | 顶层 8 个（`config` / `models` / `errors` / `retry` / `watermark` / `scheduler` / `health` / `main`）+ `tpops/` 6 个 + `collectors/` 5 个 + `mapping/` 7 个（5 个复制自 `tools/mappings/` + `loader` + `sqlgen` + `masking`）+ `kafka/` 2 个 = **28 个新模块**。**这是唯一的生产代码** |
+| **删** `tools/mappings/` | 复制进包并把 `tools/` 与 `tests/` 的 import 切到包内后删除（git 历史保留）。理由：双副本会静默分叉，而分叉就是「测试全绿但生产代码错」 |
+| **改** `tools/` 下 10+ 个脚本、`tests/` 下 8 个测试文件 | import 由 `tools.mappings` 改为 `tpops_kafka.mapping`；脚本的 `sys.path` 加项目根 |
 | **改** `tools/build_response_rules.py` | 生成 `merged_views` 段、改写 `api_chain`、删除死代码 `IDEMPOTENCY['alarm']`、增加合并形态的列校验 |
 | **改** `tools/build_itscada_mapping.py` | `alarm_rules.json` 增加 `idempotency` 段 |
-| **改** `tools/build_sql_merge.py` 的渲染逻辑 | 搬进包（`tpops_kafka/mapping/sqlgen.py`），供运行时按 offset 生成 SQL |
+| **改** `tools/build_sql_merge.py` 的渲染逻辑 | 复制进包（`tpops_kafka/mapping/sqlgen.py`），供运行时按 offset 生成 SQL |
 | **改** `data/mapping/response_rules.json`、`alarm_rules.json` | 生成物，随生成器更新 |
-| **改** `docs/开发方案-GaussDB指标与告警采集.md` | §3.1 / §3.7 / §4.5.4 等本次直接改动的契约章节 |
+| **改** `docs/开发方案-GaussDB指标与告警采集.md` | §3.1 / §3.7 / §4.5.4 / §5.1 等本次直接改动的契约章节 |
 | **新增** `tests/` 下的 unit / integration / fixtures / regression 四层 | 回归层回放 98 份留档 + 合并 SQL 留档 |
 | **外部依赖** | `kafka-python==2.0.2`（PLAINTEXT 生产者）、`requests`；均为既有锁版本，无新增依赖 |
 

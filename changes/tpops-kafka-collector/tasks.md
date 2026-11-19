@@ -21,39 +21,56 @@
 
 ## 任务
 
-### 波次 0 —— 映射层基准改造与契约同步（前置，W00）
+### 波次 0 —— 生产代码落位、映射层基准改造与契约同步（前置，W00）
 
-- [ ] **0.1 加 `merged_views` 段与合并形态解码**：改 `tools/mappings/decode.py` 新增
-  `decode_merged` / `merge_pages`；改 `tools/build_response_rules.py` 生成 `merged_views` 段
-  （11 个视图，各带 `json_column` / `paged` / `sql_ref`；未声明 `paged` 的按 `false`），
-  并校验它与 `data/merged_sql/merged_sql.json` 的视图名一一对应。
+> **顺序约束**：先复制进包，再在包内改造。生产代码全部在 `tpops_kafka/`；
+> `tools/` 与 `data/` 只作参考。
+
+- [ ] **0.1 建包并复制映射层**：新建 `tpops_kafka/` 包骨架（`__init__.py`、
+  `mapping/__init__.py`、`errors.py`、`models.py`），
+  把 `tools/mappings/{table,rules,decode,message,nodes}.py` **复制**进 `tpops_kafka/mapping/`
+  （本步不改逻辑，只搬家）。
+  完成后包内有一份与 `tools/mappings/` 等价的实现。
+  证明：`pytest tests/ -q` 全绿（此时两边都还在，测试指向不变）
+- [ ] **0.2 在包内加 `merged_views` 段与合并形态解码**：在 `tpops_kafka/mapping/decode.py`
+  新增 `decode_merged` / `merge_pages`；改 `tools/build_response_rules.py` 生成
+  `merged_views` 段（11 个视图，各带 `json_column` / `paged` / `sql_ref`；
+  未声明 `paged` 的按 `false`），并校验它与 `data/merged_sql/merged_sql.json`
+  的视图名一一对应。
   完成后「一行 11 个 json_agg 列」的返回体能解出每个视图的行列表，空页得到 `[]`，
   坏 JSON 抛 `DecodeError`（归入 `MappingError`，不可重试）。
   证明：`pytest tests/test_merged_sql_mapping.py -q`
-- [ ] **0.2 修告警幂等键**：改 `tools/build_itscada_mapping.py` 的 `build_alarm_rules()`，
-  在 `alarm_rules.json` 增加 `idempotency` 段，键为
-  `(alarm_id, instance_id, first_alarm_time, status)`；删掉 `tools/build_response_rules.py`
-  里从未被写出的死代码 `IDEMPOTENCY['alarm']`。完成后同一告警的触发与恢复是两个不同的键。
+- [ ] **0.3 在包内修告警幂等键**：在包内定义 `AlarmRecord.idempotency_key`（键为
+  `(alarm_id, instance_id, first_alarm_time, status)`）；
+  改 `tools/build_itscada_mapping.py` 的 `build_alarm_rules()`，在 `alarm_rules.json`
+  增加 `idempotency` 段；删掉 `tools/build_response_rules.py` 里从未被写出的死代码
+  `IDEMPOTENCY['alarm']`。完成后同一告警的触发与恢复是两个不同的键。
   证明：`pytest tests/test_rules.py -q -k idempotency`
-- [ ] **0.3 修跨视图比率**：让 `decode_merged` 同时填 `ctx.rows_by_key`。
+- [ ] **0.4 在包内修跨视图比率**：让包内的 `decode_merged` 同时填 `ctx.rows_by_key`。
   完成后 `gaussdb.Total_pct` 与 `GAUSSDB.session_usage` 拿到真实比率而非 0。
   证明：`pytest tests/test_merged_sql_mapping.py -q -k cross_view`
-- [ ] **0.4 合并形态的列校验与证据重推导**：在 `tools/build_response_rules.py` 增加一条针对
+- [ ] **0.5 合并形态的列校验与证据重推导**：在 `tools/build_response_rules.py` 增加一条针对
   合并形态的列名校验，数据源为 `data/merged_sql/sql_merge_probe_result.json` 与
   `data/merged_sql/merged_sql.json`（实测留档为准，映射表为声明）。
   完成后映射表与真实返回的列名不一致时生成器直接报错；且重跑生成器后
   `git diff` 为空（映射表可重复生成）。
   证明：`pytest tests/test_response_rules.py tests/test_generated_rules.py -q`
   与 `python tools/build_response_rules.py && git diff --exit-code data/mapping/response_rules.json`
-- [ ] **0.5 同步开发方案的契约章节**：改
+- [ ] **0.6 同步开发方案的契约章节**：改
   `docs/开发方案-GaussDB指标与告警采集.md` 的 §3.1（消息信封改为客户字段表的 7/13 字段）、
   §3.7 与 §4.5.4（告警幂等键加 `status`、去 `node_id`）、§4.4 与 §4.4.2
   （1 条合并 SQL + 102400 B 上限 + 分页）、§5.5（新增 `CMD_PAGE_SIZE`、
   `CMD_CONCURRENCY` 默认值改 2）、§5.6.4（校验来源改为实测留档，删掉已删目录的引用）、
-  §6.2（回归样本补合并形态）。
+  §6.2（回归样本补合并形态）、§5.1（目录结构注明 `tools/`、`data/` 只作参考）。
   完成后文档与实现、映射表三处口径一致。
   证明：`grep -n "11 条合并 SQL" docs/开发方案-GaussDB指标与告警采集.md` 的结果中，
   与本次改动相关的章节不再出现；`pytest tests/test_generated_rules.py -q`
+- [ ] **0.7 把依赖切到包内并删除参考副本**：把 `tools/` 下 10+ 个脚本与 `tests/` 下 8 个
+  测试文件的 `import tools.mappings` 全部改为 `import tpops_kafka.mapping`；
+  `tools/` 脚本的 `sys.path` 需同时加入项目根；**删除 `tools/mappings/`**（git 历史保留）；
+  加一条测试断言 `tpops_kafka/` 下无任何指向 `tools` / `data` 的 import。
+  完成后仓库里只剩一份映射层实现，且生产包自洽。
+  证明：`pytest tests/ -q` 全绿 + `pytest tests/unit/test_package_boundary.py -q`
 
 ### 波次 1 —— 骨架与平台层（W01~W09）
 
@@ -86,10 +103,10 @@
   （token 从响应头取）、401 强制刷新重试一次、`verify_tls=False` 默认、错误四分类。
   完成后认证失败不发起第二次认证。
   证明：`pytest tests/unit/test_client.py -q`
-- [ ] **1.7 映射层复制进包与表加载**（W07）：把 `tools/mappings/{table,rules,decode,message,nodes}.py`
-  **复制**进 `tpops_kafka/mapping/`（`tools/` 侧副本保留）；新建 `tpops_kafka/mapping/loader.py`
-  加载 `tpops_kafka/mapping/data/*.json` 并做启动期四类校验（来源列存在于实测留档的实际返回列、
-  可提供指标齐全、条目对应真实指标、占位符与维度绑定一一对应）。
+- [ ] **1.7 映射表加载与启动校验**（W07）：新建 `tpops_kafka/mapping/loader.py`
+  加载**包内** `tpops_kafka/mapping/data/*.json` 并做启动期四类校验（来源列存在于实测留档的
+  实际返回列、可提供指标齐全、条目对应真实指标、占位符与维度绑定一一对应）。
+  完成后校验全部在包内完成，运行时不需要仓库根目录。
   证明：`pytest tests/unit/test_mapping_loader.py -q`
 - [ ] **1.8 规则引擎**（W08）：在 `tpops_kafka/mapping/rules.py` 实现映射表在用的全部
   13 种 `value_rule.type`（`raw` / `raw_filtered` / `aggregate` / `counter_delta` /
@@ -190,11 +207,13 @@
   1.8 依赖 1.7；2.2 依赖 2.1；2.6 依赖 2.2、2.5；2.9 依赖 0.2；
   3.1 依赖 1.5、1.9、2.4、2.6、2.7、2.8、2.9；3.3 依赖 3.1、3.2。
   2.6 依赖 1.8（规则引擎）；3.4 依赖 2.1、2.2（夹具）。
-- **映射层双副本**：决策 2 决定 `tools/mappings/` 与 `tpops_kafka/mapping/` 存在同源副本，
-  以 `tpops_kafka/mapping/` 为准；`tools/` 侧继续服务离线回放与文档生成。
-  后续可让离线脚本改为从 `tpops_kafka` 导入以消除副本 —— 超出本变更范围。
-- **映射数据双副本**：决策 9 要求 `tpops_kafka/mapping/data/` 与仓库根 `data/` 保持一致，
-  由 2.1 的测试守住，防漂移。
+- **生产代码只有一份**：决策 2 定下 `tpops_kafka/` 是唯一生产代码。
+  波次 0 的 0.7 会把 `tools/` 与 `tests/` 的 import 全部切到包内并删除 `tools/mappings/`，
+  从此仓库里不再有「映射层的第二份实现」—— 双副本分叉是静默走样的主要来源，
+  与本次要修的「静默出 0」同属一类风险。
+- **映射数据仍是两份**：`data/mapping/`、`data/merged_sql/` 是参考与发布源，
+  `tpops_kafka/mapping/data/` 是生产用的副本（决策 9），由 2.1 的一致性测试守住防漂移。
+  数据文件本身是**声明**（不像代码那样会分叉），保留两份可接受。
 - **既有 164 个测试不搬迁**：留在 `tests/` 根，本次新增测试按四层分目录。
 - **裁剪预案**（若工期吃紧，按开发方案 §7.1.1 顺序让出范围，且必须同步下调验收口径）：
   先砍 2.9（告警采集器）→ 再砍 2.7/2.8（C/D 类）→ 再砍 24 小时连续运行观察。

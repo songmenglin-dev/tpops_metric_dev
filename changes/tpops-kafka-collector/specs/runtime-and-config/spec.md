@@ -5,6 +5,29 @@
 
 ## ADDED Requirements
 
+### Requirement: 生产代码边界
+
+`tpops_kafka/` SHALL 是**唯一的生产代码**。
+生产代码 SHALL NOT 导入仓库根的 `tools.*` 或 `data.*`；
+运行时 SHALL NOT 读取仓库根目录下的任何文件。
+仓库根的 `tools/` 与 `data/` 仅作参考与离线工具，SHALL NOT 作为生产依赖。
+
+#### Scenario: 依赖方向检查
+
+- **WHEN** 扫描 `tpops_kafka/` 下全部模块的 import
+- **THEN** 不存在任何指向 `tools` 或 `data` 的 import 语句
+
+#### Scenario: 运行时读取路径
+
+- **WHEN** 采集端在任意工作目录下启动并完成一轮采集
+- **THEN** 它读取的映射表与 SQL 全部来自包内 `tpops_kafka/mapping/data/`，
+  不依赖仓库根目录的存在或位置
+
+#### Scenario: 参考与生产不漂移
+
+- **WHEN** 仓库根 `data/mapping/`、`data/merged_sql/` 与包内副本内容不一致
+- **THEN** 一致性测试失败，指出不一致的文件
+
 ### Requirement: 启动期配置加载与快速失败
 
 采集端 SHALL 在启动时一次性从环境变量加载全部配置，并对必填项做校验；
