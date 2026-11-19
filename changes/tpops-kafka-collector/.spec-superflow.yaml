@@ -2,13 +2,13 @@
 # Derived data. Always rebuildable from artifacts. Lost/corrupt → fall back to content-level detection.
 
 # === Core state ===
-state: specifying
+state: bridging
 workflow: full
 revision: null
 
 # === Hashes (fast staleness detection) ===
-artifacts_hash: sha256:0a0f1d6bbc659f87da48aa2373e6ac31984420eeabd6874279a719dd7505eaa8
-contract_hash: null
+artifacts_hash: sha256:2f8150b066498280612499381288113cb16d48a45efded8ccd05718ac64bf6ab
+contract_hash: sha256:cca6a213064cd0e2858803ee2d10cf82873438b1be30d4815eb40595e7db20d8
 
 # === Execution progress ===
 execution_mode: null
@@ -21,9 +21,9 @@ spec_publication_receipt: null
 
 # === Metadata ===
 change_name: tpops-kafka-collector
-last_transition: 2026-11-19T03:46:00.260Z
-last_transition_from: exploring
-last_transition_to: specifying
+last_transition: 2026-11-19T05:42:38.555Z
+last_transition_from: specifying
+last_transition_to: bridging
 
 # === Decision points ===
 dp_0_decisions: 变更名=tpops-kafka-collector；意图=实现 tpops_kafka/ 采集端，把 TPOPS(GaussDB 监控平台) 的指标与告警按客户 ITSCADA 字段规范转成 JSON 投递到 Kafka(PLAINTEXT)，常驻进程持续循环。范围=W01~W24 全量，四波次：波次0 合并 SQL 映射基准改造(设计文档 docs/设计-合并SQL映射基准改造.md：merged_views 段 + decode_merged/merge_pages + 告警幂等键加 status + 跨视图 ratio_across 修复)；波次1 骨架与平台层 W01~W09；波次2 四条采集链 W10~W18；波次3 调度与测试 W19~W23；波次4 交付文档 W24；联调验收 P5(需客户 Kafka 地址/Topic) 在本变更外。不含=archive 改名 classification、24 条评审现状核对表、开发方案 6 处「11 条合并 SQL」漂移同步，三项另开变更。约束=Python 3.7.9 语法红线(禁海象/内建泛型/zoneinfo/cached_property 等)；依赖锁 kafka-python==2.0.2 requests>=2.25,<3.2 openpyxl>=3.0,<3.12 pytest>=7,<8；单文件<400 行、函数<50 行；凭据只走环境变量、禁硬编码/写日志/入库；DTO 用 frozen dataclass 不可变；错误显式包装带上下文、logging 不用 print、不静默吞异常；TPOPS 接口红线(两套命名空间、mini-token 在响应头、认证失败不重试防锁号、verify_tls=False、指标窗口≥1h、end_time 回退 5 分钟、is_latest_point_only=false、12 分组码硬编码且空分组靠告警、告警 limit≤100 需分页且历史仅存 30 天需显式告警、命令中心用 statistics.running==0 判结束、result 二次 json.loads、只在 master 执行、GaussDB 方言无 FILTER 且 state is not null、sql_text 被掩码)；映射层表驱动不写死列名；命令中心输出上限 102400 B(超了整条失败非截断)、每页 limit/offset、1 条合并 SQL 全量形态；目标交付 2026-12-15(今天 11-19 剩 18 个工作日)；客户死线两项(告警字段规范、慢 SQL 外发口径)待客户结论，按最严口径实现。artifact_language=zh。workflow_path=full(推荐 full，与用户选择一致)。沟通=我起草用户审，口径变更/对外契约/删减范围集中提问不逐条打断。
@@ -32,8 +32,8 @@ dp_0_confirmed: true
 dp_0_timestamp: 2026-11-19T03:41:10Z
 dp_1_result: null
 dp_1_timestamp: null
-dp_2_result: null
-dp_2_timestamp: null
+dp_2_result: approved: proposal+5 specs(58 需求/126 场景)+design(13 决策)+tasks(32 任务/5 波次) 全部通过 ssf validate；盲读 8 个阻塞项已修（消息契约以客户字段表 7/13 字段为准、维度落 tags.dimension_values、规则类型 13 种、多 master 按 node_scoped 归集、node_id 去重、DecodeError 归 MappingError、幂等键真相源同步、映射数据集合补 sqlgen）；用户补充约束已落：生产代码全部在 tpops_kafka/，tools/ 与 data/ 只作参考，0.7 切依赖并删 tools/mappings/；用户确认拉回开发方案契约章节同步
+dp_2_timestamp: 2026-11-19T05:42:34Z
 dp_3_result: null
 dp_3_timestamp: null
 dp_4_result: null
