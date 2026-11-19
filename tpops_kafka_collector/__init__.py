@@ -10,6 +10,7 @@
                         ↘ mapping → models
 
 - ``tpops_kafka_collector.mapping``：映射层 —— 客户口径的规则执行与响应解码；
+- ``tpops_kafka_collector.ids``：幂等键的计算（告警 / 指标）；
 - ``tpops_kafka_collector.errors``：异常体系与「可重试 / 不可重试」判定。
 """
 from __future__ import print_function

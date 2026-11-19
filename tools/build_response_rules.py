@@ -31,9 +31,21 @@ import re
 import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+# 来源列校验的实现只有一份：生产包 ``tpops_kafka_collector/mapping/columns.py``。
+# 生成器与采集端用同一套逻辑，声明与事实不会各写各的。
+from tpops_kafka_collector.ids import METRIC_IDEMPOTENCY_FIELDS
+from tpops_kafka_collector.mapping.columns import (
+    merged_archive_view_columns,
+    source_column_problems,
+)
+
 MAPPING_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
 RESPONSE_DIR = os.path.join(REPO_ROOT, 'data', 'metric_response')
 MERGED_SQL_PATH = os.path.join(REPO_ROOT, 'data', 'merged_sql', 'merged_sql.json')
+MERGED_PROBE_PATH = os.path.join(REPO_ROOT, 'data', 'merged_sql', 'sql_merge_probe_result.json')
 METRIC_RULES_PATH = os.path.join(MAPPING_DIR, 'metric_rules.json')
 OUTPUT_PATH = os.path.join(MAPPING_DIR, 'response_rules.json')
 
@@ -110,9 +122,11 @@ CHANNELS = {
     },
 }
 
+# 指标幂等键的字段（开发方案 §4.5.4）—— 实现在生产包 ``tpops_kafka_collector/ids.py``，
+# 本文件只把它**声明**进映射表（同一份契约的两个副本）。
+# 告警幂等键在 alarm_rules.json 里声明（键含 status，见设计决策 5），本文件不重复声明。
 IDEMPOTENCY = {
-    'metric': ['instance_id', 'metric_name', 'dimensions', 'timestamp'],
-    'alarm': ['alarm_id', 'instance_id', 'node_id', 'first_alarm_time', 'last_alarm_time'],
+    'metric': list(METRIC_IDEMPOTENCY_FIELDS),
 }
 
 
@@ -496,6 +510,55 @@ def _merged_view_names(sql_text):
     return names
 
 
+def _assert_archive_matches_views(merged_views, metric_rules):
+    """用**实测留档**校验合并形态的视图名与来源列。
+
+    留档（``data/merged_sql/sql_merge_probe_result.json``）是**事实**，
+    映射表是**声明** —— 两者对不上就报错退出，绝不静默产出一份
+    与真实返回不匹配的映射表（那会让采集端取到不存在的列、静默出 0）。
+
+    两条校验：
+    1. **视图名**：留档里每个节点的 ``result`` 解析后是**一行**，该行的键
+       就是实际返回的视图名，必须与 ``merged_views`` 段一致；
+    2. **来源列**：每条命令中心规则要取的列，必须真实出现在留档该视图的
+       实际返回列里（开发方案 §5.6.4）。
+    """
+    payload = _read_json(MERGED_PROBE_PATH)
+    archive_views = _archive_view_names(payload)
+    declared = sorted(merged_views)
+    if sorted(archive_views) != declared:
+        raise BuildError(
+            '实测留档的视图名与映射表对不上：留档里是 %s，映射表里是 %s'
+            % (sorted(archive_views), declared)
+        )
+    columns = merged_archive_view_columns(payload)
+    problems = source_column_problems(metric_rules, columns)
+    if problems:
+        raise BuildError('来源列与实测留档对不上：\n  ' + '\n  '.join(problems))
+
+
+def _archive_view_names(payload):
+    """留档里实际返回的视图名（每个节点的 result 解析后那一行的键）。"""
+    names = set()
+    for node_name in sorted(payload.get('nodes') or {}):
+        node = payload['nodes'][node_name] or {}
+        raw = node.get('result')
+        if not raw:
+            continue
+        text = raw.decode('utf-8') if isinstance(raw, bytes) else raw
+        try:
+            rows = json.loads(text)
+        except ValueError as exc:
+            raise BuildError('留档节点 %s 的 result 不是合法 JSON：%s' % (node_name, exc))
+        if not isinstance(rows, list) or len(rows) != 1:
+            raise BuildError(
+                '留档节点 %s 的 result 期望 1 行，实际 %s 行'
+                % (node_name, len(rows) if isinstance(rows, list) else '?')
+            )
+        names.update(rows[0].keys())
+    return names
+
+
 def _build_merged_views(merged):
     """生成 ``merged_views`` 段：合并 SQL 的 11 个视图。
 
@@ -552,6 +615,7 @@ def build():
 
     shapes, rules = _build_shapes_and_rules(metric_rules, samples, merged_sql)
     merged_views = _build_merged_views(merged)
+    _assert_archive_matches_views(merged_views, metric_rules)
     return {
         'version': '1.0',
         'generated_by': 'tools/build_response_rules.py',

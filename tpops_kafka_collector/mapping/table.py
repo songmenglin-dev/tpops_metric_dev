@@ -13,12 +13,16 @@ from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Tuple
 
 from ..errors import MappingError
+from .columns import merged_archive_view_columns, validate_source_columns
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
 FIELD_MAP_FILE = 'itscada_field_map.json'
 METRIC_RULES_FILE = 'metric_rules.json'
 ALARM_RULES_FILE = 'alarm_rules.json'
+# 合并形态的实测留档 —— **来源列的权威来源**（开发方案 §5.6.4）。
+# 旧的 ``data/command_center/results/`` 已于 2026-11-13 删除，不得再引用。
+PROBE_FILE = 'sql_merge_probe_result.json'
 # 旧的分类字段映射表已归档（2026-11-13）—— 现在的主映射表是
 # kafka_field_mapping.json，逐指标列出「响应的某个值 → Kafka 的某个字段」。
 # 这几个文件留作历史对照与字段集合校验的基准。
@@ -114,7 +118,20 @@ class MappingTable:
         self._by_code = {rule.metric_code: rule for rule in metric_rules}
 
     @classmethod
-    def load(cls, data_dir: str = DATA_DIR) -> 'MappingTable':
+    def load(
+        cls,
+        data_dir: str = DATA_DIR,
+        validate_columns: bool = True,
+        probe_path: Optional[str] = None,
+    ) -> 'MappingTable':
+        """加载映射表。
+
+        :param validate_columns: 启动期校验来源列（开发方案 §5.6.4）——
+            每条规则要取的列必须真实存在于**实测留档**的实际返回列里。
+            对不上就抛 ``MappingError``（不可重试）→ 启动失败并打印差异。
+        :param probe_path: 合并形态的实测留档路径；缺省按 ``data_dir`` 的
+            同级 ``merged_sql/`` 推导（映射数据搬进包内时路径跟着搬）。
+        """
         field_map = _read_json(os.path.join(data_dir, FIELD_MAP_FILE))
         metric_payload = _read_json(os.path.join(data_dir, METRIC_RULES_FILE))
         alarm_payload = _read_json(os.path.join(data_dir, ALARM_RULES_FILE))
@@ -122,7 +139,22 @@ class MappingTable:
         for key, filename in CATEGORY_MAPPING_FILES.items():
             category_mappings[key] = _read_json(os.path.join(data_dir, filename))
         rules = tuple(MetricRule.from_dict(item) for item in metric_payload['rules'])
-        return cls(field_map, rules, alarm_payload, category_mappings)
+        table = cls(field_map, rules, alarm_payload, category_mappings)
+        if validate_columns:
+            if probe_path is None:
+                probe_path = _default_probe_path(data_dir)
+            table.validate_source_columns(probe_path)
+        return table
+
+    def validate_source_columns(self, probe_path: str) -> None:
+        """校验每条规则的来源列都存在于实测留档的实际返回列中。
+
+        留档是**事实**，映射表是**声明** —— 两者对不上就启动失败
+        （``MappingError`` 不可重试），否则采集端会取到不存在的列、静默出 0。
+        """
+        payload = _read_json(probe_path)
+        columns = merged_archive_view_columns(payload)
+        validate_source_columns(self._metric_rules, columns)
 
     # -- 字段映射 ---------------------------------------------------------
     @property
@@ -211,6 +243,12 @@ class MappingTable:
     @property
     def category_mappings(self) -> Mapping[str, Mapping[str, Any]]:
         return self._category_mappings
+
+
+def _default_probe_path(data_dir: str) -> str:
+    """合并形态实测留档的路径（映射数据同级目录下的 ``merged_sql/``）。"""
+    parent = os.path.dirname(os.path.abspath(data_dir))
+    return os.path.join(parent, 'merged_sql', PROBE_FILE)
 
 
 def _read_json(path: str) -> Dict[str, Any]:

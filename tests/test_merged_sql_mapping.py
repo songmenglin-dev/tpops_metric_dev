@@ -23,6 +23,7 @@ import pytest
 from conftest import DATA_DIR, REPO_ROOT
 
 from tpops_kafka_collector.errors import MappingError, is_retryable
+from tpops_kafka_collector.mapping import evaluate
 from tpops_kafka_collector.mapping.decode import (
     DecodeError,
     decode,
@@ -361,3 +362,101 @@ def test_read_timeout_would_have_been_misclassified_by_exact_name_match():
     assert 'ReadTimeout' != 'Timeout'
     assert issubclass(requests.exceptions.ReadTimeout, requests.exceptions.Timeout)
     assert is_retryable(requests.exceptions.ReadTimeout()) is True
+
+
+# -- 跨视图比率（ratio_across）--------------------------------------------
+#
+# **这个文件守的是「静默出 0」**：跨视图比率的分子分母来自**两个不同的视图**，
+# 只解一个视图的话分母取不到 → 比率恒为 0，且**不报错**。
+# 回归样本是真实留档 ``data/merged_sql/sql_merge_probe_result.json``。
+
+RATIO_RULES = ('gaussdb.Total_pct', 'GAUSSDB.session_usage')
+
+# 留档里的标准比值（分子/分母）—— 开发方案 §4.2.4 与执行合同里的验收数字。
+CANONICAL_NUMERATOR = 23
+CANONICAL_DENOMINATOR = 29
+
+
+class _RatioRule(object):
+    """规则引擎只认 ``value_rule``（跨视图比率不涉及维度绑定）。"""
+
+    def __init__(self, metric_code, params):
+        self.metric_code = metric_code
+        self.value_rule = {'type': 'ratio_across', 'params': params}
+        self.dimension_bindings = {}
+
+
+def _ratio_params(metric_code):
+    """从映射表里取这条指标的比值参数（分子/分母各来自哪个视图的哪一列）。"""
+    for rule in _load(RULES_PATH)['rules']:
+        if rule['metric_code'] == metric_code:
+            return rule['business']['value_rule']['params']
+    raise AssertionError('映射表里没有 %s' % metric_code)
+
+
+def _archive_sides(node):
+    """从留档的原始行里算出分子与分母（不借用实现里的算术）。"""
+    row = json.loads(node['result'])[0]
+    numerator = sum(item['cnt'] for item in json.loads(row['activity_agg']))
+    denominator = sum(item['numbackends'] for item in json.loads(row['stat_database']))
+    return numerator, denominator
+
+
+@pytest.fixture(scope='module')
+def probe_nodes():
+    """留档里的每个 master 节点（一个节点 = 一次合并 SQL 的返回）。"""
+    return _load(PROBE_PATH)['nodes']
+
+
+@pytest.mark.parametrize('metric_code', RATIO_RULES)
+def test_cross_view_ratio_equals_the_ratio_derived_from_the_archive(
+    probe_nodes, merged_views, metric_code
+):
+    """跨视图比率必须等于留档原始行算出的比值，而不是 0。
+
+    期望值从**留档自己的行**推出（分子=activity_agg 的 cnt 之和，
+    分母=stat_database 的 numbackends 之和）—— 不复制实现的算术，
+    这样实现的算错了这里也会跟着错。
+    """
+    params = _ratio_params(metric_code)
+    numerator_spec = params['numerator']
+    denominator_spec = params['denominator']
+    # 分子分母确实来自两个不同的视图 —— 少解一个就恒为 0
+    assert numerator_spec['sql_key'] != denominator_spec['sql_key']
+
+    for node_name in sorted(probe_nodes):
+        node = probe_nodes[node_name]
+        merged = decode_merged({'result': node['result']}, merged_views)
+        ctx = merged.by_sql_key[numerator_spec['sql_key']]
+
+        results = evaluate(_RatioRule(metric_code, params), ctx)
+        assert results, (metric_code, node_name)
+
+        # 期望值：直接从留档原始行算
+        numerator, denominator = _archive_sides(node)
+        assert numerator > 0 and denominator > 0
+
+        value = results[0][1]
+        assert value == round(numerator / denominator, 2), (metric_code, node_name, value)
+        assert value != 0, (metric_code, node_name)
+
+
+def test_cross_view_ratio_on_the_measured_node_is_23_over_29(probe_nodes, merged_views):
+    """留档里的标准比值 23/29 —— 两条比值指标都拿到 0.79，不是 0。"""
+    params = _ratio_params('gaussdb.Total_pct')
+    canonical_nodes = [
+        name for name in sorted(probe_nodes)
+        if _archive_sides(probe_nodes[name]) == (CANONICAL_NUMERATOR, CANONICAL_DENOMINATOR)
+    ]
+    assert canonical_nodes, '留档里没有 23/29 的节点了'
+
+    for node_name in canonical_nodes:
+        node = probe_nodes[node_name]
+        merged = decode_merged({'result': node['result']}, merged_views)
+        ctx = merged.by_sql_key[params['numerator']['sql_key']]
+        for metric_code in RATIO_RULES:
+            rule_params = _ratio_params(metric_code)
+            value = evaluate(_RatioRule(metric_code, rule_params), ctx)[0][1]
+            assert value == round(CANONICAL_NUMERATOR / CANONICAL_DENOMINATOR, 2)
+            assert value == 0.79
+            assert value != 0

@@ -30,11 +30,20 @@ import io
 import json
 import os
 import re
+import sys
 
 import openpyxl
 import xlsx_columns
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+# 幂等键的字段清单只有一份：生产包 ``tpops_kafka_collector/ids.py`` 是实现，
+# 本生成器把它写进 ``alarm_rules.json`` 的 ``idempotency`` 段做**声明** ——
+# 声明与实现同源，改一处不会漏另一处（键的**格式**不在这里写死）。
+from tpops_kafka_collector.ids import ALARM_IDEMPOTENCY_FIELDS
+
 XLSX_PATH = os.path.join(BASE_DIR, '高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx')
 MAPPING_PATH = os.path.join(BASE_DIR, 'data', 'customer_metric_mapping.json')
 QUERY_PLAN_PATH = os.path.join(BASE_DIR, 'data', 'customer_metric_query_plan.json')
@@ -721,6 +730,19 @@ def build_alarm_rules():
         'value_sources': {
             'latest_metric_value': '取告警时刻该客户指标的最近一次采样值',
             'alarm_items_sum': '取收敛条目的 alarm_items_sum（命中节点数）',
+        },
+        'idempotency': {
+            'alarm': {
+                'fields': list(ALARM_IDEMPOTENCY_FIELDS),
+                'status_domain': 'platform_raw',
+                'note': (
+                    '键含 status（平台原值 activated/recovered/cleared/cleared_by_user）——'
+                    'ITSCADA 整数枚举会把 recovered 与 cleared 压成同一个键。'
+                    '不含 node_id（收敛条目的节点靠明细行回填，逐轮可能不同）与 '
+                    'last_alarm_time（恢复后它不变）。'
+                    '计算见 tpops_kafka_collector/ids.py。'
+                ),
+            },
         },
         'counts': {
             'total_definitions': len(definitions),

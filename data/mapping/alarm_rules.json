@@ -29,6 +29,18 @@
     "latest_metric_value": "取告警时刻该客户指标的最近一次采样值",
     "alarm_items_sum": "取收敛条目的 alarm_items_sum（命中节点数）"
   },
+  "idempotency": {
+    "alarm": {
+      "fields": [
+        "alarm_id",
+        "instance_id",
+        "first_alarm_time",
+        "status"
+      ],
+      "status_domain": "platform_raw",
+      "note": "键含 status（平台原值 activated/recovered/cleared/cleared_by_user）——ITSCADA 整数枚举会把 recovered 与 cleared 压成同一个键。不含 node_id（收敛条目的节点靠明细行回填，逐轮可能不同）与 last_alarm_time（恢复后它不变）。计算见 tpops_kafka_collector/ids.py。"
+    }
+  },
   "counts": {
     "total_definitions": 257,
     "linked_to_customer_metric": 3,

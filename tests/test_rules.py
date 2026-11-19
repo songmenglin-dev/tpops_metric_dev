@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 """取值规则引擎与 ITSCADA 消息组装。"""
+import io
 import json
 import os
 
 import pytest
 
 from conftest import DATA_DIR
+from tpops_kafka_collector.ids import (
+    ALARM_IDEMPOTENCY_FIELDS,
+    METRIC_IDEMPOTENCY_FIELDS,
+    alarm_idempotency_key,
+    metric_idempotency_key,
+)
 from tpops_kafka_collector.mapping import (
     CounterDeltaStore,
     MappingTable,
@@ -544,3 +551,116 @@ def test_command_center_rows_match_real_probe_result(table):
             continue
         column = rule.value_rule['params'].get('column')
         assert column in columns[sql_key], (rule.metric_code, column, sql_key)
+
+
+# -- 幂等键（开发方案 §3.7 / §4.5.4，设计决策 5）------------------------
+#
+# **这个文件守的是「恢复事件被去重丢弃」**：同一条告警的触发（activated）
+# 与恢复（recovered）必须得到**两个不同的幂等键** —— 客户字段表里
+# ``recoverTime`` 在 status=0 时必填，恢复消息发不出去就等于丢了恢复事件。
+#
+# 键里**不含** ``node_id``（收敛条目的节点靠明细行回填，可能逐轮不同）
+# 与 ``last_alarm_time``（恢复后它不变，实测 last ≠ clear）。
+
+ALARM_RULES_PATH = os.path.join(DATA_DIR, 'mapping', 'alarm_rules.json')
+
+
+@pytest.fixture(scope='module')
+def alarm_rules():
+    with io.open(ALARM_RULES_PATH, encoding='utf-8') as fp:
+        return json.load(fp)
+
+
+def test_alarm_idempotency_key_differs_between_activated_and_recovered():
+    """同一告警的触发与恢复 → 两个不同的键（恢复事件不会被去重丢弃）。"""
+    activated = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'activated')
+    recovered = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'recovered')
+    assert activated != recovered
+
+
+def test_alarm_idempotency_key_is_stable_when_status_unchanged():
+    """同一告警重复采集、状态不变 → 同一个键（只产出一条消息）。"""
+    first = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'activated')
+    second = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'activated')
+    assert first == second
+
+
+def test_alarm_idempotency_key_uses_platform_raw_status():
+    """``status`` 用平台原值 —— ITSCADA 枚举把 recovered 与 cleared 都映射成 0，
+    用枚举会让这两种状态共用一个键。"""
+    recovered = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'recovered')
+    cleared = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'cleared')
+    assert recovered != cleared
+
+
+def test_alarm_idempotency_key_excludes_node_id_and_last_alarm_time():
+    """键里不含 node_id / last_alarm_time —— 两者都会在恢复后变化或漂移。"""
+    assert ALARM_IDEMPOTENCY_FIELDS == (
+        'alarm_id', 'instance_id', 'first_alarm_time', 'status',
+    )
+    key = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'activated')
+    assert 'node_id' not in key
+    assert 'last_alarm_time' not in key
+
+
+def test_metric_idempotency_key_differs_across_dimensions():
+    """维度参与拼接 —— 同一指标在不同维度上各产出一个值 → 两个键。"""
+    one = metric_idempotency_key('inst-1', 'GAUSSDB.connections', {'DBNAME': 'a'}, 100)
+    two = metric_idempotency_key('inst-1', 'GAUSSDB.connections', {'DBNAME': 'b'}, 100)
+    assert one != two
+
+
+def test_metric_idempotency_key_is_order_independent_over_dimensions():
+    """维度按键排序 —— 插入顺序不同也得到同一个键。"""
+    one = metric_idempotency_key('inst-1', 'm', {'A': '1', 'B': '2'}, 100)
+    two = metric_idempotency_key('inst-1', 'm', {'B': '2', 'A': '1'}, 100)
+    assert one == two
+
+
+def test_metric_idempotency_key_fields():
+    assert METRIC_IDEMPOTENCY_FIELDS == (
+        'instance_id', 'metric_name', 'dimensions', 'timestamp',
+    )
+
+
+def test_alarm_idempotency_declaration_matches_the_implementation(alarm_rules):
+    """``alarm_rules.json`` 的 ``idempotency`` 段与实现列出的字段必须相同。
+
+    声明（数据）与实现（代码）是同一份契约的两个副本 —— 改一处必须改另一处。
+    """
+    declared = alarm_rules['idempotency']['alarm']['fields']
+    assert list(declared) == list(ALARM_IDEMPOTENCY_FIELDS)
+
+
+def test_alarm_idempotency_declaration_uses_platform_raw_status(alarm_rules):
+    assert alarm_rules['idempotency']['alarm']['status_domain'] == 'platform_raw'
+
+
+def test_alarm_idempotency_every_declared_field_changes_the_key(alarm_rules):
+    """声明里的每个字段都必须真的参与键的计算（不是写进 JSON 的摆设）。"""
+    values = {
+        'alarm_id': 'a-1',
+        'instance_id': 'inst-1',
+        'first_alarm_time': 1793767902000,
+        'status': 'activated',
+    }
+    base = alarm_idempotency_key(**values)
+    for field in alarm_rules['idempotency']['alarm']['fields']:
+        changed = dict(values)
+        changed[field] = 'other'
+        assert alarm_idempotency_key(**changed) != base, field
+
+
+def test_response_rules_declares_the_metric_idempotency_fields():
+    """``response_rules.json`` 每条规则的 ``idempotency`` 与实现列出的字段相同。
+
+    指标幂等键的声明在映射表里（``business.idempotency``），实现在
+    ``tpops_kafka_collector/ids.py`` —— 同一份契约的两个副本。
+    """
+    path = os.path.join(DATA_DIR, 'mapping', 'response_rules.json')
+    with io.open(path, encoding='utf-8') as fp:
+        payload = json.load(fp)
+    assert payload['rules']
+    for rule in payload['rules']:
+        assert rule['business']['idempotency'] == list(METRIC_IDEMPOTENCY_FIELDS), \
+            rule['metric_code']
