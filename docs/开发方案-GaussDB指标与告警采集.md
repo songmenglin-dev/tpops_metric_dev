@@ -11,7 +11,7 @@
 
 > **2026-11-13 留档清理说明**
 >
-> 本文引用的实测留档（`data/metric_verification/`、`data/command_center/results/`、
+> 本文引用的实测留档（`data/metric_response/`、`data/merged_sql/`、
 > `data/api_probe/`、`data/multi_master_probe/`）已按"一次性探针产物"口径从仓库删除，
 > 可从 git 历史恢复。**结论与数字仍然有效**，但证据位置变了：
 >
@@ -47,8 +47,8 @@
 
 | 依据 | 位置 | 规模 |
 |---|---|---|
-| 逐指标真实调用结果 | `data/metric_verification/*.json` | 98 个指标，98/98 通过 |
-| 统一命令中心实测响应 | `data/command_center/results/` | 197 份请求/响应留档 |
+| 逐指标真实调用结果 | `data/metric_response/*.json` | 98 个指标，98/98 通过 |
+| 统一命令中心实测响应 | `data/metric_response/` + `data/merged_sql/` | 三跳请求/响应与合并 SQL 实跑留档 |
 | 客户指标库原始表 | `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` | 101 指标 / 13 类别 |
 | 指标→取数方法判定 | `data/customer_metric_mapping.json`、`data/customer_metric_query_plan.json` | 101 条 |
 | 告警侧原始数据 | `data/alarm/` | 5 组抓取 + 288 条告警定义 |
@@ -210,10 +210,10 @@ TPOPS（源） → 采集（Pull） → 归一化（Normalize） → 映射（Ma
 | D1 | 98 个可提供指标全部产出数据，字段与客户指标库 9 列规范逐条对齐 | 逐指标核对表签字 |
 | D2 | 3 个不可提供指标不出数据、有书面理由、计数可查 | 清单核对 |
 | D3 | 消息 JSON 符合 §3.2 冻结的格式 | schema 校验通过 |
-| D4 | 连续运行 ≥ 24 小时，60 秒档达成率 ≥ 99%，无进程崩溃 | 运行日志 |
+| D4 | ~~连续运行 ≥ 24 小时~~ → **本变更不覆盖**：降级为「连续 2 小时 + 杀进程重启演练」 | 运行日志（**注**：连续 24 小时观察属 P5 联调，需客户 Kafka 地址；按 §7.1.1「每砍一项都必须同步下调 §1.7 的验收口径」显式下调） |
 | D5 | 杀进程→重启，数据无缺口（从水位续传），无重复投递 | 中断演练 |
 | D6 | 单元/集成覆盖率 ≥ 80% | CI 报告 |
-| D7 | 认证失败场景验证：连续 3 次错误密码后账号**未**被锁定 | 演练记录 |
+| D7 | 认证失败场景验证：连续 3 次错误密码后账号**未**被锁定 | 演练记录（**本变更只交付其单元形态**：注入 401 断言不发起第二次认证；真实平台演练属 P5 联调） |
 | D8 | 慢 SQL 文本默认脱敏 | 配置断言 |
 
 ---
@@ -277,7 +277,7 @@ TPOPS（源） → 采集（Pull） → 归一化（Normalize） → 映射（Ma
 
 ### 2.2 TPOPS 平台调研
 
-**来源**：`docs/api/`（CHM 原文转换）、`data/tpops_api_catalog.json`、`data/command_center/results/`（197 份实测留档）、`data/metric_verification/`（98 份实测留档）。
+**来源**：`docs/api/`（CHM 原文转换）、`data/tpops_api_catalog.json`、`data/metric_response/`（98 份逐指标实测留档）、`data/merged_sql/`（合并 SQL 与实跑留档）。
 
 #### 2.2.1 平台结构
 
@@ -507,84 +507,91 @@ select * from ({sql_text}) limit {limit}
 
 ### 3.1 消息模型（JSON 信封）
 
-#### 3.1.1 指标消息
+> **以客户两份对接方案的字段表为准**：字段集来自
+> `docs/ITSCADA第三方指标数据接入对接方案V2.docx` §6.2 与
+> `docs/ITSCADA第三方告警数据接入对接方案V2.docx` §3.2，
+> 逐字段落在 `data/mapping/itscada_field_map.json` 的
+> `metric_message` / `alarm_message` 段。
+>
+> 本节此前的另一套信封（`msg_type` / `schema_version` / `instance_id` /
+> `metric_name` … 指标 14 字段、告警 25 字段）是映射层重构**之前**的内部设计，
+> 已被客户字段表取代，不再产出。
+
+#### 3.1.1 指标消息（7 个字段）
 
 ```json
 {
-  "msg_type": "metric",
-  "schema_version": "1.0",
-  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-  "instance_name": "gauss-6374",
-  "metric_name": "GAUSSDB.[{#DATNAME}]_committed_transactions",
-  "metric_name_cn": "[{#DATNAME}] Commited transactions",
-  "metric_category": "数据库信息",
-  "dimensions": { "DATNAME": "postgres" },
+  "metricName": "GAUSSDB.[{#DATNAME}]_committed_transactions",
+  "metricCode": "GAUSSDB.DATNAME_committed_transactions",
+  "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
   "value": 12345,
-  "value_type": "整数",
   "unit": "tps",
-  "timestamp": 1793871051000,
-  "collect_time": 1793871082000,
-  "source": "command_center_sql"
+  "clock": 1793871051000,
+  "tags": {
+    "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+    "instance_name": "gauss-6374",
+    "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+    "component_id": null,
+    "host_ip": "172.16.103.126",
+    "dimension_values": { "DATNAME": "postgres" }
+  }
 }
 ```
 
 | 字段 | 类型 | 必填 | 来源与语义 |
 |---|---|---|---|
-| `msg_type` | string | ✓ | 固定 `"metric"` |
-| `schema_version` | string | ✓ | 固定 `"1.0"`，格式演进时递增 |
-| `instance_id` | string | ✓ | TPOPS 实例 ID |
-| `instance_name` | string | ✓ | TPOPS 实例名（如 `gauss-6374`） |
-| `metric_name` | string | ✓ | **客户指标英文名，原样保留（含 OCR 错字）** |
-| `metric_name_cn` | string | ✓ | 客户指标中文名 |
-| `metric_category` | string | ✓ | 客户指标分类（13 类之一） |
-| `dimensions` | object | ✓ | 维度键值；无维度时为 `{}` |
-| `value` | number/string | ✓ | 按 `value_type` 序列化；**缺失时为 `null`，不填 0** |
-| `value_type` | string | ✓ | 整数 / 浮点 / 字符 / 文本（**与客户表一致**） |
+| `metricName` | string | ✓ | 客户指标英文名，**原样保留（含 OCR 错字）**；占位符原样保留 |
+| `metricCode` | string | ✓ | 客户指标编码，占位符原样保留 |
+| `resourceName` | string | ✓ | **`{host_ip}_{node_id}`**（节点 IP + TPOPS 节点 ID），只能表示一个节点 |
+| `value` | number/string | ✓ | 按客户指标表【数据类型】序列化；**取不到时该条不产出**，不用 0 代替 |
 | `unit` | string/null | ✓ | 客户表「指标单位」；**缺省填 `null`，不填空串** |
-| `timestamp` | number | ✓ | **数据时间**：A 类取平台时间戳；B/C/D 类取采集时刻 |
-| `collect_time` | number | ✓ | 本条数据的采集完成时刻（毫秒） |
-| `source` | string | ✓ | `monitor_metrics` / `command_center_sql` / `diagnostic` / `instance` |
+| `clock` | number | ✓ | 13 位毫秒时间戳。A 类取平台时间戳；B/C/D 类取采集时刻 |
+| `tags` | JSON | ✓ | 见下 |
 
-#### 3.1.2 告警消息
+`tags` 的键：`instance_id`、`instance_name`、`node_id`、`component_id`（小写下划线）、
+`host_ip`、`dimension_values`。**业务维度（表名/库名/端口）只进 `tags.dimension_values`**，
+不进 `resourceName` —— 客户按台账查的是节点，粒度在指标名里。
+
+#### 3.1.2 告警消息（13 个字段）
 
 ```json
 {
-  "msg_type": "alarm",
-  "schema_version": "1.0",
-  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-  "instance_name": "gauss-6374",
-  "alarm_id": "2007010001",
-  "alarm_name": "节点NTP状态异常",
-  "alarm_type": "event",
-  "alarm_category": "节点状态",
-  "severity": "major",
-  "status": "activated",
-  "first_alarm_time": 1793758083000,
-  "last_alarm_time": 1793771156000,
-  "clear_alarm_time": null,
-  "alarm_duration": "4小时5分钟",
-  "alarm_items_sum": 1,
-  "host_ip": "172.16.103.128",
-  "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
-  "description": "172.16.103.128节点NTP服务状态异常。",
-  "impaction": "节点NTP状态异常会导致实例无法正确进行时间同步。",
-  "possible_causes": "1、NTP客户端和服务端的网络连接有问题。…",
-  "processing_steps": "1、登录告警对象节点；…",
-  "alarm_detail_raise_count": 5,
-  "notify_status": "disabled",
-  "automatic_clear": true,
-  "details": [
-    { "node_id": "…", "host_ip": "…", "description": "…", "cause": "…" }
-  ]
+  "alarmId": "2007010001",
+  "alarmName": "节点NTP状态异常",
+  "alarmContent": "172.16.103.128节点NTP服务状态异常。",
+  "priority": 2,
+  "alarmTime": 1793758083000,
+  "status": 0,
+  "recoverTime": 1793771169000,
+  "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+  "metricName": "节点NTP状态异常",
+  "metricCode": "gaussdb.alarm.2007010001",
+  "value": "95.5",
+  "unit": null,
+  "tags": { "instance_id": "…", "details": [ { "node_id": "…", "host_ip": "…", "description": "…" } ] }
 }
 ```
 
+| 字段 | 类型 | 必填 | 来源与语义 |
+|---|---|---|---|
+| `alarmId` | string | ✓ | 平台 `alarm_id` |
+| `alarmName` | string | ✓ | 平台 `alarm_name`；查不到时用告警定义目录里的规则名 |
+| `alarmContent` | string | ✓ | 平台 `description` / `cause` / `impaction` 合成 |
+| `priority` | Integer | ✓ | `severity_to_priority` 映射（`severity_to_itscada` 的整数形态） |
+| `alarmTime` | Long | ✓ | 平台 `first_alarm_time` |
+| `status` | Integer | ✓ | `status_to_itscada`：`activated`→1，`recovered`/`cleared`/`cleared_by_user`→0 |
+| `recoverTime` | Long | 条件必填 | 平台 `clear_alarm_time`；**status=0（恢复）时必填**，否则 `null` |
+| `resourceName` | string | ✓ | 同指标消息；收敛条目不带节点，按 `alarm_id` 关联明细行回填，回填不到落到第一个 master CN |
+| `metricName` / `metricCode` | string | ✓ | 能对应到客户指标的用客户指标名；其余用 `gaussdb.alarm.<alarm_id>` |
+| `value` | string | ✓ | 事件类取 `alarm_items_sum`；指标类取该客户指标最近一次采样值（取不到 `null`，不填 0） |
+| `unit` | string/null | ✓ | 缺省 `null` |
+| `tags` | Object | ✓ | 含 `details` 数组（收敛条目命中的各节点明细行） |
+
 **告警消息的关键设计**：
 
-- **收敛条目作主条目，明细行挂 `details` 数组**——一条消息对应"实例 + alarm_id"，
+- **收敛条目作主条目，明细行挂 `details` 数组** —— 一条消息对应「实例 + alarm_id」，
   `details` 覆盖该告警命中的各个节点。
 - `details` 缺失时为空数组 `[]`，**不省略字段**（便于客户侧统一解析）。
-- `alarm_duration` 保留平台原文（中文描述串），同时时间字段用毫秒时间戳供客户计算。
 
 #### 3.1.3 统一约束
 
@@ -592,11 +599,11 @@ select * from ({sql_text}) limit {limit}
 |---|---|
 | 编码 | UTF-8，不转义非 ASCII（`ensure_ascii=False`） |
 | 时间 | 一律 **13 位毫秒时间戳**（与 TPOPS 平台一致） |
-| 缺失值 | 一律 `null`，**不填 0、不填空串**（0 与"取不到"是两件事） |
+| 缺失值 | 一律 `null`，**不填 0、不填空串**（0 与「取不到」是两件事）；**取不到值的数据点整条不产出** |
 | 字段顺序 | 由序列化器固定（`sort_keys=False`，按定义顺序），保证可 diff |
-| 数值 | 整数指标序列化为 `int`；浮点保留 2 位小数；比率类保留 2 位小数 |
-| 空维度 | `dimensions` 传 `{}`，不传 `null` |
-| 幂等键 | 指标消息：`instance_id + metric_name + dimensions + timestamp`；告警消息：§4.5.4 |
+| 数值 | 整数指标序列化为 `int`；浮点与比率类保留 2 位小数 |
+| 空维度 | `tags.dimension_values` 传 `{}`，不传 `null` |
+| 幂等键 | 指标：`instance_id + metric_name + 排序后的 dimensions + timestamp`；告警：§4.5.4 |
 
 ### 3.2 Topic 与分区策略（定稿）
 
@@ -708,11 +715,11 @@ select * from ({sql_text}) limit {limit}
 | 采集范围 | 活动告警（收敛 + 明细）+ 历史告警（收敛 + 明细）+ 数量统计 |
 | 主条目 | 收敛列表（实例 + alarm_id 为一条） |
 | 明细挂载 | 明细行按 `alarm_id + instance_id` 归并进主条目的 `details` 数组 |
-| 幂等键 | `(alarm_id, instance_id, node_id, first_alarm_time)` |
+| 幂等键 | `(alarm_id, instance_id, first_alarm_time, status)` —— 见 §4.5.4 |
 | 历史增量 | 按 `first_alarm_time` 水位只取新增/变化的记录，避免每轮全量 |
 | 30 天窗口 | 每轮检查"最新历史告警时间距今 > 30 天"→ **显式告警日志**（FR-18） |
 | 告警定义补全 | 用 `alarm_id` 关联 `data/alarm/catalog_*.json`，补全规则名、默认阈值、默认等级 |
-| 状态变化 | 同一告警从 `activated` → `cleared`/`recovered` 时**作为新条目投递**（`last_alarm_time` 变化 → 幂等键变化） |
+| 状态变化 | 同一告警从 `activated` → `cleared`/`recovered` 时**作为新条目投递**（`status` 变化 → 幂等键变化）。**注意**：恢复时 `first_alarm_time` 与 `last_alarm_time` 都不变（实测 last=1793767902000 ≠ clear=1793771169000），所以键里必须有 `status`，否则恢复事件会被去重永久丢弃 |
 
 ### 3.8 安全与脱敏（定稿）
 
@@ -1537,15 +1544,24 @@ notify_status, automatic_clear
 告警不走"指标"体系，走独立的 §3.1.2 消息模型。客户指标库中**没有告警指标条目**，
 告警字段规范由 §3.7 定稿。
 
-### 4.4 合并 SQL 目录（11 条 —— 已全部实测通过）
+### 4.4 合并 SQL 目录（11 个视图 → **1 条合并 SQL**）
 **合并规则**：① 同视图 + 同粒度 → 一条宽 SQL；② 派生列在 SQL 里用 `CASE WHEN` 算完；
 ③ 列全部显式写出（平台的列名取自 `as` 别名）；④ ORDER BY 只在必要时加，且**方向必须与指标语义一致**；
 ⑤ 一条 SQL 的刷新周期 = 它覆盖指标中最高需求档；⑥ 能由已有行推导的派生指标不单开 SQL。
 
-> **这 11 条已于 2026-11-07 在两个实例上逐条真实执行通过**
-> （留档 `data/merged_sql/probe_result.json`，脚本 `tools/probe_merged_sql.py`）：
+> **这 11 个视图已于 2026-11-07 在两个实例上逐条真实执行通过**
+> （留档 `data/merged_sql/probe_result.json`）：
 > Combined 实例 11/11 成功（70.7 s，含 1 次重试）、HA 实例 11/11 成功（55.0 s）。
 > 正式定义（含每条的**实测列集合**）见 `data/merged_sql/merged_sql.json`。
+>
+> **2026-11-18 起，这 11 个视图被再合并成 1 条 SQL**（`data/merged_sql/sql_merge.sql`）：
+> 平台下发的每条 SQL 都要独立走一遍「建任务 → 分发到节点 → 收集 → 置完成」，
+> 这段**固定开销约 5 秒**（实测 `select 1 as x` 也要 5.06~5.61 秒，与 SQL 复杂度无关）。
+> 11 条串行 = 11 × 5 秒 ≈ 60 秒；11 个结果集塞进 1 条 = 1 × 5 秒 + 执行 =
+> **实测 8.39 秒**（留档 `data/merged_sql/sql_merge_probe_result.json`）。
+>
+> 合并后的返回形态是「**一行 11 个 `json_agg` 列**，列值是该视图的 JSON 字符串」——
+> 映射层据此解码，见 `tpops_kafka_collector/mapping/decode.py` 的 `decode_merged`。
 
 | # | sql_key | 来源视图 | 覆盖指标 | 刷新档 | 实测行数/节点 | 实测列数 |
 |---|---|---|---|---|---|---|
@@ -1644,8 +1660,19 @@ select d.datname, d.numbackends, d.xact_commit, d.xact_rollback, d.blks_read, d.
 | 5 | `limit` 必填，1~1000 | 宽表用 1000 |
 | 6 | `sql_text` ≤ 10000 字符 | pattern 限制 |
 | 7 | 分母为 0 的比率用 `case when` 兜底为 0 | 防除零错误导致整条 SQL 失败 |
+| 8 | **每个内层子查询都要带 `limit`/`offset`** | 平台 Agent 对命令输出有 **102400 B 硬上限**，超了**整条任务失败**（不是截断）：`agent run uni-op error, Error: output size(200022 B) exceeds the threshold(102400 B)` |
+| 9 | **可增长视图要分页** | `stat_user_tables` / `dbstat_sum` 的行数随实例表数量线性增长（实测 68~79 行 → 1 万张表即 2.6 MB），不分页则一条都回不来。分页窗口只作用于可增长视图；固定视图每页全量重复取（合计仅 5.3 KB） |
+| 10 | **`json_agg` 对零行返回 NULL** | 平台渲染成**空字符串 `''`**（不是 `[]`）—— 客户端必须把 `''`/`null` 当空数组处理，否则 `json.loads` 直接抛异常 |
 
-### 4.4.3 并发实测结论（2026-11-07，取代此前"8~15 秒"的估算）
+> **平台侧的三层限制（2026-11-18 实测）**：
+> ① `limit` 参数 ≤ 1000；② 结果集 ≤ 1000 行（**静默截断**）；③ 结果总体积 ≤ 102400 B（**整条失败**）。
+> ③ 是真正的硬墙，且**每个 master 各自算各的**（3 个 master 各出一份、各自 100 KB）。
+>
+> **分页吞吐**：1 万张表 = 100 页，并发 3 需约 6 分钟一轮（每页 ≈ 7 s 固定开销）。
+> → **表级指标在 1 万张表的实例上不可能进 60 秒档**，必须降频（≥ 300 秒档）。
+> 这是规模上限，不是实现缺陷。
+
+### 4.4.3 并发实测结论（2026-11-07；2026-11-18 合并为 1 条后更新）
 
 | 并发作业数 | 失败数 | 墙钟(s) |
 |---|---|---|
@@ -1731,7 +1758,20 @@ for row in sql_rows:
 | 消息类型 | 幂等键 |
 |---|---|
 | 指标 | `instance_id + metric_name + 排序后的 dimensions + timestamp` |
-| 告警 | `alarm_id + instance_id + node_id + first_alarm_time` |
+| 告警 | `alarm_id + instance_id + first_alarm_time + status` |
+
+**告警键为什么是这四项**：
+
+- `status` 用**平台原值**（`activated` / `recovered` / `cleared` / `cleared_by_user`），
+  不用 ITSCADA 整数 —— 整数形态会把 `recovered` 与 `cleared` 压成同一个键。
+- **不含 `node_id`**：收敛条目本身没有节点，它的 `resourceName` 是「按 `alarm_id` 关联明细行
+  回填」的，回填到的节点可能逐轮不同；节点进键会导致同一告警因回填漂移而重复投递。
+- **不含 `last_alarm_time`**：恢复后它不变（实测 last=1793767902000 ≠ clear=1793771169000），
+  加了也区分不出恢复事件。
+
+键由采集端运行时计算（`tpops_kafka_collector/ids.py`），
+声明写在 `data/mapping/alarm_rules.json` 的 `idempotency` 段 —— 两者是同一契约的两份副本，
+由测试守住不漂移。
 
 采集端在内存里维护一个 **LRU 幂等键集合**（容量可配，默认 10000 条），
 防止同一轮内的重复投递与相邻轮的重投。
@@ -1939,7 +1979,7 @@ tpops_kafka_collector/
 │   └── data/
 │       ├── metric_map.json      # 101 指标 → 取值规则（含占位符、维度绑定、口径 note）
 │       ├── field_map.json       # 内部 DTO 字段 → 客户 JSON 字段名
-│       ├── sql_batches.json     # 11 条合并 SQL + 覆盖指标 + 刷新周期
+│       ├── merged_sql.json      # 11 个视图的定义 + 覆盖指标 + 刷新档位 + 分页段（合并 SQL 的源）
 │       ├── alarm_catalog.json   # 告警定义目录（catalog_metric + catalog_event 合并）
 │       └── unsupported.json     # 3 个不可提供指标及理由
 ├── kafka/               # ── 投递层
@@ -1953,6 +1993,14 @@ tests/
 ├── fixtures/            # 由 data/ 留档转成的固定样本
 └── regression/          # 留档回放：98 指标逐条比对
 ```
+
+> **生产代码边界**：`tpops_kafka_collector/` 是**唯一的生产代码**。
+> `tools/` 与 `data/` 只作参考与离线工具 —— 生产代码**不得** import `tools.*` / `data.*`，
+> 运行时不读仓库根目录。映射层已复制进包（`tpops_kafka_collector/mapping/`），
+> `tools/mappings/` 在依赖切换完成后删除（git 历史保留）。
+>
+> 映射数据在包内 `tpops_kafka_collector/mapping/data/` 持生产副本；
+> 仓库根 `data/mapping/`、`data/merged_sql/` 为参考与发布源，由一致性测试守住不漂移。
 
 **文件规模约束**（NFR-08）：单文件 < 400 行、函数 < 50 行。
 `tools/` 下有几个历史离线脚本超过 400 行，属历史产物，采集端不沿用。
@@ -2210,8 +2258,9 @@ class Scheduler:
 | `POLL_INTERVAL_SECONDS` | `30` | 调度 tick 周期（秒） |
 | `METRIC_WINDOW_HOURS` | `2` | 监控指标窗口（小时），**下限强制 1** |
 | `METRIC_END_LAG_MINUTES` | `5` | `end_time` 回退量（分钟） |
-| `CMD_CONCURRENCY` | `9` | 命令中心并发下发数（1~10） |
+| `CMD_CONCURRENCY` | `2` | 命令中心并发下发数（1~10）。**默认 2 而非 9**：实测并发 ≥4 会触发平台侧参数竞争，产生假的「invalid SQL statement with syntax error」，且高并发总墙钟反而更长 |
 | `CMD_LIMIT` | `1000` | SQL `limit` 参数（1~1000） |
+| `CMD_PAGE_SIZE` | `100` | 合并 SQL 的**分页容量**（每页每个视图取多少行）。平台单次输出上限 102400 B，超了整条任务失败；表级视图行数随实例表数量增长，需要按 offset 逐页取 |
 | `CMD_POLL_TIMEOUT` | `60` | 单个任务轮询超时（秒） |
 | `CMD_RETRY_ATTEMPTS` | `3` | 单条 SQL 重试次数 |
 | `ALARM_LIMIT` | `100` | 告警分页大小（平台上限 100） |
@@ -2304,7 +2353,7 @@ class Scheduler:
 
 | 校验 | 失败处理 |
 |---|---|
-| 每条规则的 `source_column` 存在于对应 SQL 的**实际返回列**中 | 启动失败并打印差异（`sql_batches` 的列由 `data/command_center/results/` 留档推导） |
+| 每条规则的 `source_column` 存在于对应 SQL 的**实际返回列**中 | 启动失败并打印差异。**列的权威来源是实测留档**：`data/metric_response/`（98 份逐指标留档，旧的 per-view 形态）与 `data/merged_sql/sql_merge_probe_result.json`（合并形态）。~~`data/command_center/results/`~~ 已于 2026-11-13 删除，不得再引用 |
 | 每个可提供指标都在 `metric_map` 中 | 启动失败 |
 | 每个 `metric_map` 条目都对应一个真实可提供指标 | 启动失败（防拼写错误） |
 | 占位符与 `dimension_bindings` 一一对应 | 启动失败 |
@@ -2406,8 +2455,9 @@ pytest-cov<5
 
 | 留档 | 数量 | 用途 |
 |---|---|---|
-| `data/metric_verification/*.json` | 98 | 每个指标的真实响应 → 断言规则引擎产出的值 |
-| `data/command_center/results/*.json` | 197 | 三跳解析（`result` 二次 `json.loads`、`statistics.running` 判据、掩码 SQL） |
+| `data/metric_response/*.json` | 98 | 每个指标的真实响应 → 断言规则引擎产出的值（旧的 per-view 形态，**仍必须能解**） |
+| `data/merged_sql/sql_merge_probe_result.json` | 1 | **合并形态**的生产路径留档 → 断言 11 个视图各自解出真实行、82 个 B 类指标的值等于期望值表 |
+| `data/merged_sql/probe_result.json` | 1 | 11 条视图各自的实测留档（列名、行数） |
 | `data/alarm/*.json` | 5 | 告警收敛/明细/统计解析 |
 | `data/instances.json` | 1 | 实例元数据 |
 
@@ -2477,7 +2527,7 @@ pytest-cov<5
 | **M1** | 骨架 + 配置 + 异常体系 + DTO + Kafka 生产者 + 序列化 + 健康端点 | 可启动、能收信号、空跑不报错 | `python -m tpops_kafka_collector.main` 起停正常；序列化快照测试通过 |
 | **M2** | `tpops/client.py` + 认证 + 错误分类 + 重试框架 | 平台层可用 | 认证失败不重试（T16）；错误分类单测通过 |
 | **M3** | **A 类采集器**（11 指标） | 11 个指标上 Kafka | 与 `data/metric_response/` 的 A 类留档**逐条比对一致** |
-| **M4** | **命令中心客户端**（三跳 + 并发 + 重试）+ 11 条合并 SQL | B 类基础设施 | 三跳解析回归 R2~R5 通过；单条 SQL 3~8 秒内返回 |
+| **M4** | **命令中心客户端**（三跳 + 并发 + 重试）+ **1 条合并 SQL**（11 个视图） | B 类基础设施 | 三跳解析回归 R2~R5 通过；合并 SQL 实测 8.39 秒返回 |
 | **M5** | **规则引擎 + B 类采集器**（82 指标） | 82 个指标上 Kafka | 回归 R1 全通过；一轮墙钟 ≤ 25 秒 |
 | **M6** | C/D 类采集器 + 告警采集器 + 幂等去重 | 4+1 指标 + 告警上 Kafka | T18/T20/T21 通过；告警明细正确挂载 |
 | **M7** | 调度器 + 水位 + 差分基线 + 优雅退出 + 健康端点 | 持续运行 | T13~T15/T19 通过；杀进程重启无重复无丢失 |
@@ -2563,6 +2613,12 @@ TPOPS 可提供性（结论 **98 可提供 / 3 无法提供**）；11-05~11-07 �
 
 - **第一周（11-23~11-27）**：**M3**（A 类 11 指标，走监控指标接口）与
   **M4**（命令中心三跳客户端 + 并发 + 重试 + 合并 SQL）并行。
+
+  > **表级指标的档位上限（2026-11-18 实测）**：合并 SQL 的可增长视图
+  > （`stat_user_tables` / `dbstat_sum`）要按 offset 逐页取，
+  > 1 万张表 = 100 页，并发 3 需约 6 分钟一轮 →
+  > **表级指标在表量大的实例上必须降频到 ≥ 300 秒档**，不能进 60 秒档。
+  > 这是平台输出上限（102400 B）决定的规模上限，不是实现缺陷。
   M4 是关键路径的起点——B 类 82 指标全部压在它上面，且合并 SQL 的正确性
   决定 81% 指标的成败。
 - **第二周（11-30~12-04）**：**M5**（规则引擎 + B 类采集器 82 指标）与
@@ -2630,7 +2686,7 @@ TPOPS 可提供性（结论 **98 可提供 / 3 无法提供**）；11-05~11-07 �
 | W10 | A 类：窗口计算 + 时间戳切片 | W06 W08 | `tpops/metrics.py` |
 | W11 | A 类采集器 | W10 W08 | `collectors/monitor.py` |
 | W12 | 命令中心三跳客户端 | W06 W03 | `tpops/command_center.py` |
-| W13 | 11 条合并 SQL 数据文件 | W07 | `mapping/data/sql_batches.json` |
+| W13 | **1 条合并 SQL 数据文件**（11 个视图 + 分页段） | W07 | `mapping/data/merged_sql.json`（运行时按 offset 渲染 SQL） |
 | W14 | B 类采集器（含缓存与派生） | W12 W13 W08 | `collectors/command_center.py` |
 | W15 | C 类（slow-sql / top-sql） | W06 W08 | `tpops/diagnostic.py` `collectors/diagnostic.py` |
 | W16 | D 类（实例元数据） | W06 W08 | `tpops/instances.py` `collectors/instance.py` |
