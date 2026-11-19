@@ -55,7 +55,10 @@
 - **验收检查**（全部为命令，逐条见 `tasks.md` 的证明列）：
   - `pytest tests/ -q` 全绿（含既有 164 个用例与本次新增）
   - `pytest --cov=tpops_kafka_collector --cov-fail-under=80 -q`；映射层与规则引擎 ≥95%
-  - `pytest tests/test_py37_compat.py -q`；`ruff check` 通过（`target-version = "py37"`）
+  - `pytest tests/test_py37_compat.py -q`（3.7 语法门禁，须已把 `tpops_kafka_collector` 纳入扫描目录）
+  - `ruff check tpops_kafka_collector/` 干净。**注意**：仓库现状 `ruff check .` 有 357 条历史 lint 错误
+    （`tools/mappings/` 基线自身就有 31 条，UP009/UP010/UP031 为主）—— 那是既有技术债，
+    不在本变更范围；本变更只要求**新生产包自身干净**
   - 回归层 98/98 通过
   - 手工：起进程 → 发 SIGTERM → 退出码 0 且水位文件完整
   - 手工：杀进程 → 重启 → 不重复、不丢失
@@ -195,7 +198,7 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
 - **完成标准**：
   - `pytest --cov=tpops_kafka_collector --cov-report=term-missing --cov-fail-under=80 -q` 通过；
     映射层与规则引擎 ≥95%
-  - `pytest tests/test_py37_compat.py -q` 与 `ruff check` 通过
+  - `pytest tests/test_py37_compat.py -q` 与 `ruff check tpops_kafka_collector/` 通过
   - 杀进程 → 重启演练：不重复、不丢失（水位只在投递成功后推进）
   - 60 秒档单轮墙钟 P95 ≤ 25 秒（实测规模）
 - **Review gate**：review report 路径 `.superpowers/reviews/wave-3.md`；
@@ -301,6 +304,7 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
   - 任何 wave 的 review receipt 为 `fail` 或缺失
   - `ssf execution plan` 不存在或与当前 wave 不匹配
   - 覆盖率门禁未过（整体 <80% 或映射层与规则引擎 <95%）
-  - 3.7 语法门禁未过
+  - 3.7 语法门禁未过（`pytest tests/test_py37_compat.py`）
+  - 新生产包的 `ruff check tpops_kafka_collector/` 不干净（仓库其余部分的历史 lint 债务不在此门禁内）
   - 发现「不报错但数据错」的路径（静默出 0、跨 master 3 倍累加、分页按页求值）而未被测试拦住
   - 客户两项死线未回时，**慢 SQL 不得以明文外发**（只能按最严口径脱敏）

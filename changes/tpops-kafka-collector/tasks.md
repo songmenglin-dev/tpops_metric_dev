@@ -194,9 +194,10 @@
   完成后「值等于期望值」成为回归判据（不是「非零」判据）。
   证明：`pytest tests/regression -q`
 - [ ] **3.5 全量测试与门禁**（W23）：补齐单元/集成/回归三层，跑通覆盖率门禁
-  （整体 ≥80%、映射层与规则引擎 ≥95%）与 3.7 语法门禁。
+  （整体 ≥80%、映射层与规则引擎 ≥95%）、3.7 语法门禁，并把**新生产包**的 lint 清干净
+  （`ruff check tpops_kafka_collector/` → 0；仓库其余部分 357 条历史 lint 债务不在本变更范围）。
   证明：`pytest --cov=tpops_kafka_collector --cov-report=term-missing --cov-fail-under=80 -q`
-  与 `pytest tests/test_py37_compat.py -q`
+  与 `pytest tests/test_py37_compat.py -q` 与 `ruff check tpops_kafka_collector/`
 
 ### 波次 4 —— 交付文档（W24）
 
