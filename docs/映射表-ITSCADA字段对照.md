@@ -34,7 +34,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `metricName` | String | 必填 | 映射表 | `data/mapping/metric_rules.json → metric_name` | 用 TPOPS 返回的 metrics[].name 去匹配该条目的 source.tpops_metric | 把 {#XXX} 换成维度实际值 |
 | `metricCode` | String | 必填 | 映射表 | `data/mapping/metric_rules.json → metric_code` | 用 TPOPS 返回的 metrics[].name 去匹配该条目的 source.tpops_metric | 把 {#XXX} 换成维度实际值 |
-| `resourceName` | String | 必填 | 组装 | `instances[].name + nodes[].node_id` | 由上面几个字段组装 | series 的键取 component_id（去掉 ip 前缀）→ 节点清单换算 node_id → 拼 {instance_name}_{node_id}；键是 value 时为实例级，只用实例名 |
+| `resourceName` | String | 必填 | 组装 | `nodes[].node_ip + nodes[].node_id` | 由上面几个字段组装 | resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；series 的键取 component_id（去掉 ip 前缀）→ 节点清单换算 node_id/node_ip；与节点无关时落到节点清单里的第一个 master CN |
 | `value` | String | 必填 | TPOPS 字段 | `metric_infos[].metrics[].series[<维度键>][i]` | TPOPS 响应里直接取 | 取最后一个非空点；该点是 null 就不产出这条消息（不填 0） |
 | `unit` | String | 选填 | 映射表 | `data/mapping/metric_rules.json → unit` | 用 TPOPS 返回的 metrics[].name 去匹配该条目的 source.tpops_metric | 客户指标表【指标单位】，为空则 null |
 | `clock` | Long | 必填 | TPOPS 字段 | `metric_infos[].metrics[].timestamps[i]` | TPOPS 响应里直接取 | i 与 value 取到的点是同一下标 |
@@ -60,7 +60,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `metricName` | String | 必填 | 映射表 | `data/mapping/metric_rules.json → metric_name` | 用合并 SQL 的 sql_key + 结果列名，匹配该条目的 source.sql_key 与 value_rule.params.column | 把 {#XXX} 换成维度实际值 |
 | `metricCode` | String | 必填 | 映射表 | `data/mapping/metric_rules.json → metric_code` | 用合并 SQL 的 sql_key + 结果列名，匹配该条目的 source.sql_key 与 value_rule.params.column | 把 {#XXX} 换成维度实际值 |
-| `resourceName` | String | 必填 | 组装 | `instances[].name + node_id` | 由上面几个字段组装 | 拼 {instance_name}_{node_id}；取不到 node_id 时只用实例名 |
+| `resourceName` | String | 必填 | 组装 | `nodes[].node_ip + nodes[].node_id` | 由上面几个字段组装 | resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；数据按节点分布时取执行该 SQL 的节点，与节点无关时落到节点清单里的第一个 master CN |
 | `value` | String | 必填 | TPOPS 字段 | `result → 行数组 → metric_rules[].value_rule 指定的列` | TPOPS 响应里直接取 | 按 value_rule 执行（raw / aggregate / counter_delta / ratio_across …）；原始值是字符串，按客户表【数据类型】转型；row_policy 决定逐行出还是跨行求和 |
 | `unit` | String | 选填 | 映射表 | `data/mapping/metric_rules.json → unit` | 用合并 SQL 的 sql_key + 结果列名，匹配该条目的 source.sql_key 与 value_rule.params.column | 客户指标表【指标单位】，为空则 null |
 | `clock` | Long | 必填 | 组装 | `本轮采集完成时刻` | 由上面几个字段组装 | 命令中心返回的是当前快照，没有自己的时间戳 |
@@ -89,7 +89,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `metricName` | String | 必填 | 映射表 | `data/mapping/metric_rules.json → metric_name` | 用接口与集合名（slow_sql_infos / top_sql_infos）匹配 | 把 {#XXX} 换成维度实际值 |
 | `metricCode` | String | 必填 | 映射表 | `data/mapping/metric_rules.json → metric_code` | 用接口与集合名（slow_sql_infos / top_sql_infos）匹配 | 把 {#XXX} 换成维度实际值 |
-| `resourceName` | String | 必填 | 组装 | `instances[].name` | 由上面几个字段组装 | 实例级接口，没有节点维度，只用实例名 |
+| `resourceName` | String | 必填 | 组装 | `nodes[].node_ip + nodes[].node_id` | 由上面几个字段组装 | resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；接口是实例级的，落到节点清单里的第一个 master CN |
 | `value` | String | 必填 | TPOPS 字段 | `slow_sql_infos[] / top_sql_infos[]` | TPOPS 响应里直接取 | 按 value_rule 执行：集合条数 / 按 sql_text 前缀计数（Select、DML）/ 按 total_elapse_time 取前 10 条 |
 | `unit` | String | 选填 | 映射表 | `data/mapping/metric_rules.json → unit` | 用接口与集合名（slow_sql_infos / top_sql_infos）匹配 | 客户指标表【指标单位】，为空则 null |
 | `clock` | Long | 必填 | 组装 | `本轮采集完成时刻` | 由上面几个字段组装 | 接口返回的是当前快照，没有自己的时间戳 |
@@ -115,7 +115,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `metricName` | String | 必填 | 映射表 | `data/mapping/metric_rules.json → metric_name` | 实例接口只有 1 个指标：gaussdb.server_version | 把 {#XXX} 换成维度实际值 |
 | `metricCode` | String | 必填 | 映射表 | `data/mapping/metric_rules.json → metric_code` | 实例接口只有 1 个指标：gaussdb.server_version | 把 {#XXX} 换成维度实际值 |
-| `resourceName` | String | 必填 | TPOPS 字段 | `instances[].name` | TPOPS 响应里直接取 | 实例级接口，没有节点维度，直接用实例名 |
+| `resourceName` | String | 必填 | 组装 | `nodes[].node_ip + nodes[].node_id` | 由上面几个字段组装 | resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；接口是实例级的，落到节点清单里的第一个 master CN |
 | `value` | String | 必填 | TPOPS 字段 | `instances[].engine_version` | TPOPS 响应里直接取 | 原样（字符型指标） |
 | `unit` | String | 选填 | 映射表 | `data/mapping/metric_rules.json → unit` | 实例接口只有 1 个指标：gaussdb.server_version | 客户指标表【指标单位】，为空则 null |
 | `clock` | Long | 必填 | 组装 | `本轮采集完成时刻` | 由上面几个字段组装 | 接口返回的是当前快照，没有自己的时间戳 |
@@ -177,7 +177,7 @@
 | `alarmTime` | Long | 必填 | TPOPS 字段 | convergence | `records[].first_alarm_time` | TPOPS 响应里直接取 | 原样 |
 | `status` | Integer | 必填 | TPOPS 字段 | convergence | `records[].status` | TPOPS 响应里直接取 | activated→1（告警）/ recovered、cleared→0（恢复） |
 | `recoverTime` | Long | 条件必填 | TPOPS 字段 | convergence | `records[].clear_alarm_time` | TPOPS 响应里直接取 | status=0（恢复）时必填；status=1（告警）时输出 null |
-| `resourceName` | String | 必填 | 组装 | instance_name 取 convergence，node_id 取 detail | `records[].instance_name / records[].node_id` | 由上面几个字段组装 | 拼 {instance_name}_{node_id}；拿不到 node_id 时只用实例名 |
+| `resourceName` | String | 必填 | 组装 | 明细行自带 node_id 与 host_ip；收敛条目不带，按 alarm_id 关联明细行回填 | `records[].node_id / records[].host_ip` | 由上面几个字段组装 | resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；仍拿不到节点时落到节点清单里的第一个 master CN |
 | `metricName` | String | 必填 | 映射表 | 按 alarm_id 查表 | `data/mapping/alarm_rules.json → metric_name` | 用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id] | 能对应到客户指标的告警用客户指标中文名；其余用告警名 |
 | `metricCode` | String | 必填 | 映射表 | 按 alarm_id 查表 | `data/mapping/alarm_rules.json → metric_code` | 用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id] | 能对应到客户指标的告警用客户指标英文名；其余用 gaussdb.alarm.<alarm_id> |
 | `value` | String | 必填 | TPOPS 字段 | convergence | `records[].alarm_items_sum` | TPOPS 响应里直接取 | 事件类告警取命中节点数；指标类告警取该客户指标最近一次采样值（取不到则 null，不填 0） |
@@ -208,7 +208,7 @@
 |---|---|---|---|
 | 1 | value 的线格式 | 按客户指标表【数据类型】序列化（整数/浮点→数字，字符/文本→字符串） | 两份方案的字段表都写 value 为 String，但指标样例里是数字 75.3、告警样例里是字符串 "95.5"。 |
 | 2 | 指标名字段的叫法 | 用字段表的 metricName / metricCode | 指标方案的字段表用 metricName/metricCode，告警方案的样例 JSON 里写的是 metric_name。 |
-| 3 | resourceName 与客户台账的对齐 | {instance_name}_{node_id}，取不到节点时用 {instance_name} | 方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。 |
+| 3 | resourceName 与客户台账的对齐 | {host_ip}_{node_id}（节点 IP + TPOPS 节点 ID）；与节点无关的指标落到节点清单里的第一个 master CN | resourceName 只能表示一个节点 → 固定「节点 IP + 节点 ID」；表名/库名/端口这类业务维度改走 metricName/metricCode 的占位符与 tags.dimension_values。方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。 |
 | 4 | 采集频率 | 以客户指标表【数据更新周期】为准（30 秒~24 小时共 7 档） | 方案建议「需告警的指标 1 分钟一次、无需告警的 5 分钟一次」，与客户表的分档不一致。 |
 | 5 | 状态类指标的展示值转义 | 平台枚举值原样透传（实测 1=正常、0=异常） | 5 条状态类指标（实例状态、主备状态）的客户展示值转义未定义。 |
 | 6 | 告警挂到哪个客户指标 | 257 条告警里只有 3 条能对应上客户指标（都指向 gaussdb.Tps），其余用 gaussdb.alarm.<alarm_id> 自造指标名 | 事件类告警没有对应的客户指标，需要客户确认这种挂法是否可接受。 |

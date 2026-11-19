@@ -70,6 +70,7 @@ data/mapping/             # 映射规则数据（**表驱动，不写死在代�
 tools/mappings/           # 映射层执行代码
 ├── table.py     # 映射表加载与查表
 ├── rules.py     # 字段级转换规则（类型、单位、缺省值）
+├── nodes.py     # 节点身份解析（resourceName：节点 IP + 节点 ID；选 master CN）
 └── message.py   # 按 ITSCADA 字段规范组装消息
 ```
 
@@ -78,7 +79,7 @@ tests/     # 映射层单元测试（pytest）；TPOPS 与 Kafka 一律 mock
 tools/     # 现有离线取数脚本 + 参考实现，保留
 data/      # 离线样本与调研产物
 │  ├── alarm/               # 告警侧数据（抓取产物 + 告警定义目录 + 181 条规则配置），详见该目录 README
-│  ├── command_center/      # 统一命令中心 API 速查表（实测产物已清理，见该目录 README）
+│  ├── command_center/      # 内置命令清单（142 条）+ 通用 SQL 命令详情
 │  ├── metric_response/     # 逐指标**原生 API 响应体**（100 个文件，命令中心走 11 条合并 SQL）—— 回归样本
 │  ├── merged_sql/          # 11 条合并 SQL 及其探针结果
 │  ├── customer_metric_mapping.json    # 101 客户指标 → TPOPS 可提供性判定
@@ -95,7 +96,7 @@ docs/      # 文档
 - `data/metric_verification/`、`data/command_center/results/`、`data/api_probe/`、
   `data/multi_master_probe/` —— 逐指标实测留档、命令中心全量留档、探针结果。
   **等价内容在 `data/metric_response/`**（逐指标原生响应，一个指标一文件），
-  回归回放改用它。
+  回归回放改用它；**命令清单已重新拉取并保留在 `data/command_center/`**。
 - `data/customer_metric_query_plan.json`、`data/metric_value_rules.json` —— 映射表的中间产物，
   **不入库**，缺失时由 `tools/build_itscada_mapping.py` 自动重建（见该文件的 `_ensure_input`）。
 - `data/tpops_all_metric.json`（TPOPS 原始指标字典）—— 可提供性结论已固化在
@@ -135,8 +136,9 @@ python -m tpops_kafka.main
 | `METRIC_WINDOW_HOURS` | 指标查询窗口，**不得小于 1** |
 | `METRIC_END_LAG_MINUTES` | end_time 回退量，默认 5 |
 
-`.env.example` 目前只有 `TPOPS_USER` / `TPOPS_PASSWORD` / `TPOPS_BASE_URL` 三项，
-`KAFKA_*` 与调度参数在采集端落地时补齐。
+`.env.example` 已包含 `TPOPS_*`、`KAFKA_*`（地址与两个 Topic 名）与调度参数
+（`POLL_INTERVAL_SECONDS` / `METRIC_WINDOW_HOURS` / `METRIC_END_LAG_MINUTES`）；
+`KAFKA_BOOTSTRAP_SERVERS` 仍待客户提供，Topic 名用的是默认值。
 
 ## Python 3.7.9 红线
 
@@ -249,9 +251,13 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
    仍待客户确认的是**告警→指标的挂载口径**：257 条平台告警里只有 3 条能对应到客户指标
    （都指向 `gaussdb.Tps`），其余 254 条事件类告警用 `gaussdb.alarm.<alarm_id>` 自造指标名。
 7. **慢 SQL 的 `sql_text` 是否可外发** —— 含业务 SQL 文本，默认脱敏或截断，需客户书面确认。
-8. **`resourceName` 与客户台账的对齐** —— 文档要求与 ITSCADA 台账录入的资源名称完全一致；
-   当前按 `{instance_name}_{node_id}` 生成（`itscada_field_map.json` 的 `resource_name` 段），
-   台账命名规则待客户提供后核对。
+8. **`resourceName` 与客户台账的对齐** —— **口径已定**：resourceName 只能表示一个节点 →
+   固定 `{host_ip}_{node_id}`（节点 IP + TPOPS 节点 ID），指标与告警同规则；
+   与节点无关的指标（命令中心实例级/表级/库级、诊断优化、实例接口）落到节点清单里的
+   **第一个 master CN**（`tools/mappings/nodes.py`）；表名/库名/端口等业务维度改走
+   `metricName`/`metricCode` 的占位符与 `tags.dimension_values`。
+   剩下的只是与 ITSCADA 台账录入的资源名称核对，模板在 `itscada_field_map.json` 的
+   `resource_name` 段，改表即可、不改代码。
 9. **`value` 的线格式** —— 两份方案的字段表写 String，指标样例是数字、告警样例是字符串；
    当前按客户指标表【数据类型】序列化，需客户确认。
 10. **A 类多 series 的归集口径** —— A 类 11 个客户指标都是**实例级一条消息**，

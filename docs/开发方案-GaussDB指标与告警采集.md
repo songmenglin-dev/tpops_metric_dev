@@ -308,7 +308,7 @@ TPOPS（源） → 采集（Pull） → 归一化（Normalize） → 映射（Ma
 | 接口 | `POST /rds/v3/monitor/metrics` |
 | 请求 | `start_time`/`end_time`（**13 位毫秒**）、`is_latest_point_only`、`instances[]{instance_id}`、`metric_names[]`（**数组，支持批量**） |
 | 响应 | `metric_infos[]`（**一项一个实例**）→ 含 `instance_id`、`time_interval`、`metrics[]`；每个 `metrics[]` 含 `name`、`metric_name`（**中文名只在这里**）、`collection_frequency`、`node_id`、`timestamps[]`、`series{}` |
-| **series 的 key** | 是**组件 ID**（如 `cn_5001`/`cn_5002`/`cn_5003`、`dn_6001`），DN 侧是 `<主机IP>-<组件ID>`（如 `172.16.103.126-dn_6005`），**不是主机 IP**；key 里**不含 node_id**，需经节点清单接口的 `component_id` 反查，而 ITSCADA 的 `resourceName` 要 `{instance_name}_{node_id}` → **待客户确认口径**（见 §4.2.4） |
+| **series 的 key** | 是**组件 ID**（如 `cn_5001`/`cn_5002`/`cn_5003`、`dn_6001`），DN 侧是 `<主机IP>-<组件ID>`（如 `172.16.103.126-dn_6005`），**不是主机 IP**；key 里**不含 node_id**，需经节点清单接口的 `component_id` 反查，而 ITSCADA 的 `resourceName` 要 `{host_ip}_{node_id}`（节点 IP + 节点 ID）→ **待客户确认台账命名**（见 §3.9 第 10 项） |
 | **取数口径** | **取最新点**：① `is_latest_point_only=true`（只要最新点）② `is_latest_point_only=false` + ≥1h 窗口（补真实时间戳）；两次用同一个 `end_time`，最新点即时序末尾那点 |
 | **实例范围** | 一次**只查一个实例**（与命令中心通道同一个分布式实例）；命令中心无法一次带多实例 → 采集端**按实例循环** |
 | **窗口约束** | **≥ 1 小时**才能覆盖 `collection_frequency=3600` 的指标；5 分钟窗口覆盖 0/21 |
@@ -740,6 +740,7 @@ select * from ({sql_text}) limit {limit}
 | 7 | 慢 SQL 文本能否外发 | **默认脱敏** | 环境变量 `SQL_MASKING_ENABLED` |
 | 8 | 告警明细字段的最终取舍 | §3.1.2 全字段 | 映射表裁剪 |
 | 9 | **A 类多 series 的归集口径**（一个客户指标对应多个组件 series，见 §4.2.4） | **暂按逐组件各出一条消息**（现状行为），维度键 `COMPONENT_ID` 归入 `tags` | 映射表 `value_rule` 增加聚合参数 + 改 `rules.py` 的 `series_point` 实现 |
+| 10 | **`resourceName` 的取值口径** | **`{host_ip}_{node_id}`**（节点 IP + TPOPS 节点 ID）：resourceName 只能表示一个节点；与节点无关的指标（命令中心实例级/表级/库级、诊断优化、实例接口）落到节点清单里的**第一个 master CN**；表名/库名/端口等业务维度改走 `metricName`/`metricCode` 的占位符与 `tags.dimension_values` | 映射表 `itscada_field_map.json → resource_name`（**不改代码**）；待客户提供 ITSCADA 台账后核对命名 |
 
 > **结论：前 8 项均不阻塞编码。** 开发按默认值实现，映射表与配置留出调整位。
 >
@@ -747,6 +748,9 @@ select * from ({sql_text}) limit {limit}
 > ——客户指标是实例级一条，平台是每组件一条 series，合成方式（求和 / 取最早 / 按组件展开）
 > 属业务口径，须客户确认。A 类通道的采集代码按「先按 series 产出、再按映射表聚合」的两段式写，
 > 聚合环节默认关闭，确认后只改映射表即可启用。
+>
+> **第 10 项的口径已定**（resourceName = 节点 IP + 节点 ID），不阻塞开发；
+> 剩下的只是与客户 ITSCADA 台账里的资源名称核对，模板集中在映射表里，改表即可。
 
 ---
 
@@ -1054,7 +1058,9 @@ for 每个 metric_info:
 
 现状：`tools/mappings/rules.py` 的 `series_point` 规则**逐 series 产出一条消息**，
 维度键 `COMPONENT_ID`；而 `tools/mappings/message.py` 又把 `COMPONENT_ID` 归进 `tags`
-（不作为客户维度）—— 于是客户侧会收到**多条同名、同 resourceName、值不同的指标消息**。
+（不作为客户维度）—— 于是客户侧会收到**多条同名、同指标、值不同的指标消息**。
+（`resourceName` 本身不重复：`resourceName` 只表示节点，逐 series 的消息分别指向
+各组件所在节点，见 §3.9 第 10 项。）
 
 候选口径（**待客户确认**，已登记为 `data/mapping/open_items.json` 的 `a-class-multi-series`）：
 
@@ -1063,7 +1069,7 @@ for 每个 metric_info:
 | rds092 / rds093 / rds400 / rds402 | 实例级速率 | **求和**（各 CN / DN 分担流量） |
 | rds133_cn_startup_time | 实例启动时刻 / 运行时长 | **取最早（min）** 的启动时刻 |
 | gaussdb_instance_status | 实例状态 | 直接取（单 series） |
-| datanode_switch_status | 实例主备状态 | **按 DN 展开**（资源名带组件）或归集为布尔 |
+| datanode_switch_status | 实例主备状态 | **按 DN 展开**（每个 DN 一条消息，`resourceName` 指向该 DN 所在节点；同一主机上的多个 DN 资源名相同）或归集为布尔 |
 
 **确认前不要写死在代码里** —— 归集口径由 `data/mapping/metric_rules.json` 的 `value_rule`
 承载，客户确认后改表 + 改规则实现即可。
@@ -2470,7 +2476,7 @@ pytest-cov<5
 |---|---|---|---|
 | **M1** | 骨架 + 配置 + 异常体系 + DTO + Kafka 生产者 + 序列化 + 健康端点 | 可启动、能收信号、空跑不报错 | `python -m tpops_kafka.main` 起停正常；序列化快照测试通过 |
 | **M2** | `tpops/client.py` + 认证 + 错误分类 + 重试框架 | 平台层可用 | 认证失败不重试（T16）；错误分类单测通过 |
-| **M3** | **A 类采集器**（11 指标） | 11 个指标上 Kafka | 与 `data/metric_verification` 的 A 类留档**逐条比对一致** |
+| **M3** | **A 类采集器**（11 指标） | 11 个指标上 Kafka | 与 `data/metric_response/` 的 A 类留档**逐条比对一致** |
 | **M4** | **命令中心客户端**（三跳 + 并发 + 重试）+ 11 条合并 SQL | B 类基础设施 | 三跳解析回归 R2~R5 通过；单条 SQL 3~8 秒内返回 |
 | **M5** | **规则引擎 + B 类采集器**（82 指标） | 82 个指标上 Kafka | 回归 R1 全通过；一轮墙钟 ≤ 25 秒 |
 | **M6** | C/D 类采集器 + 告警采集器 + 幂等去重 | 4+1 指标 + 告警上 Kafka | T18/T20/T21 通过；告警明细正确挂载 |
