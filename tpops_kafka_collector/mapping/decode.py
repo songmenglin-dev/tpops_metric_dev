@@ -29,7 +29,7 @@ from __future__ import print_function
 
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple  # noqa: F401  （Dict/Tuple 仅用于 # type: 注释）
 
 from .rules import RuleContext
 from ..errors import MappingError

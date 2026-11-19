@@ -16,6 +16,7 @@ from .message import build_alarm_message, build_metric_message
 from .decode import (
     DecodeError,
     MergedContexts,
+    decode,
     decode_merged,
     merge_pages,
 )
@@ -33,6 +34,7 @@ __all__ = [
     'RuleError',
     'build_alarm_message',
     'build_metric_message',
+    'decode',
     'decode_merged',
     'evaluate',
     'merge_pages',

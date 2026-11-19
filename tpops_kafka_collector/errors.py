@@ -13,7 +13,7 @@
 """
 from __future__ import print_function
 
-from typing import Tuple
+from typing import Tuple  # noqa: F401  （仅用于 # type: 注释）
 
 __all__ = [
     'AuthError',
@@ -67,11 +67,17 @@ def is_retryable(exc: BaseException) -> bool:
         ProduceError                     ✓  指数退避 + 抖动
         requests.Timeout / ConnectionError ✓  指数退避 + 抖动
 
-    ``requests`` 的异常用类名判定，避免为了判一个异常类型就把
+    ``requests`` 的异常用**基类链**判定，避免为了判一个异常类型就把
     ``requests`` 硬绑到这层（采集端其它模块也不一定需要它）。
+
+    必须走 MRO 而不是类名精确相等 —— requests 实际抛出的是
+    ``ReadTimeout`` / ``ConnectTimeout``，它们是 ``Timeout`` /
+    ``ConnectionError`` 的**子类**，精确相等会把这两个最常见的瞬时故障
+    判成不可重试（直接中止本轮，而不是退避重试），与 §5.7 的表正好相反。
     """
     if isinstance(exc, NON_RETRYABLE):
         return False
     if isinstance(exc, RETRYABLE):
         return True
-    return type(exc).__name__ in ('Timeout', 'ConnectionError')
+    return any(base.__name__ in ('Timeout', 'ConnectionError')
+               for base in type(exc).__mro__)

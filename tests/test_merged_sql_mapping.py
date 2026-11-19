@@ -305,3 +305,59 @@ def test_package_per_view_path_replays_every_command_center_sample():
         assert len(ctx.rows) == expected, rule['metric_code']
         checked += 1
     assert checked >= 80, checked
+
+
+# --- 重试判定（§5.7 重试表）------------------------------------------
+#
+# requests 的 Timeout / ConnectionError 在 requests 里是一组**子类**：
+# ReadTimeout / ConnectTimeout 是 Timeout 的子类，ProxyError / SSLError 等
+# 是 ConnectionError 的子类。requests 实际抛出的是这些子类，所以判定必须
+# 走基类链，不能用类名精确相等 —— 否则最常见的瞬时故障会被判成不可重试，
+# 直接中止本轮而不是退避重试。
+
+import requests
+
+from tpops_kafka_collector.errors import (
+    AuthError,
+    ProduceError,
+    ProtocolError,
+    TransientError,
+)
+
+
+@pytest.mark.parametrize('exc', [
+    requests.exceptions.Timeout(),
+    requests.exceptions.ReadTimeout(),
+    requests.exceptions.ConnectTimeout(),
+    requests.exceptions.ConnectionError(),
+    requests.exceptions.ProxyError(),
+])
+def test_requests_timeout_and_connection_errors_are_retryable(exc):
+    """requests 的超时/连接异常（含子类）都应判为可重试。"""
+    assert is_retryable(exc) is True
+
+
+@pytest.mark.parametrize('exc', [
+    AuthError(),
+    ProtocolError(),
+    MappingError(),
+])
+def test_platform_errors_defined_as_non_retryable_stay_non_retryable(exc):
+    """§5.7 里标为不可重试的异常不得被基类链判定改成可重试。"""
+    assert is_retryable(exc) is False
+
+
+def test_transient_and_produce_errors_are_retryable():
+    assert is_retryable(TransientError()) is True
+    assert is_retryable(ProduceError()) is True
+
+
+def test_read_timeout_would_have_been_misclassified_by_exact_name_match():
+    """回归锚点：类名精确相等会把 ReadTimeout 判成不可重试。
+
+    这个断言固定住「必须走基类链」这个实现约束 —— 若有人把判定改回
+    `type(exc).__name__ in (...)`，本用例立刻失败。
+    """
+    assert 'ReadTimeout' != 'Timeout'
+    assert issubclass(requests.exceptions.ReadTimeout, requests.exceptions.Timeout)
+    assert is_retryable(requests.exceptions.ReadTimeout()) is True
