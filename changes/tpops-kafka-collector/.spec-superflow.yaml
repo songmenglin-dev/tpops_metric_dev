@@ -2,7 +2,7 @@
 # Derived data. Always rebuildable from artifacts. Lost/corrupt → fall back to content-level detection.
 
 # === Core state ===
-state: approved-for-build
+state: executing
 workflow: full
 revision: 2
 
@@ -21,9 +21,9 @@ spec_publication_receipt: null
 
 # === Metadata ===
 change_name: tpops-kafka-collector
-last_transition: 2026-11-19T05:49:42.276Z
-last_transition_from: bridging
-last_transition_to: approved-for-build
+last_transition: 2026-11-19T05:51:37.506Z
+last_transition_from: approved-for-build
+last_transition_to: executing
 
 # === Decision points ===
 dp_0_decisions: 变更名=tpops-kafka-collector；意图=实现 tpops_kafka/ 采集端，把 TPOPS(GaussDB 监控平台) 的指标与告警按客户 ITSCADA 字段规范转成 JSON 投递到 Kafka(PLAINTEXT)，常驻进程持续循环。范围=W01~W24 全量，四波次：波次0 合并 SQL 映射基准改造(设计文档 docs/设计-合并SQL映射基准改造.md：merged_views 段 + decode_merged/merge_pages + 告警幂等键加 status + 跨视图 ratio_across 修复)；波次1 骨架与平台层 W01~W09；波次2 四条采集链 W10~W18；波次3 调度与测试 W19~W23；波次4 交付文档 W24；联调验收 P5(需客户 Kafka 地址/Topic) 在本变更外。不含=archive 改名 classification、24 条评审现状核对表、开发方案 6 处「11 条合并 SQL」漂移同步，三项另开变更。约束=Python 3.7.9 语法红线(禁海象/内建泛型/zoneinfo/cached_property 等)；依赖锁 kafka-python==2.0.2 requests>=2.25,<3.2 openpyxl>=3.0,<3.12 pytest>=7,<8；单文件<400 行、函数<50 行；凭据只走环境变量、禁硬编码/写日志/入库；DTO 用 frozen dataclass 不可变；错误显式包装带上下文、logging 不用 print、不静默吞异常；TPOPS 接口红线(两套命名空间、mini-token 在响应头、认证失败不重试防锁号、verify_tls=False、指标窗口≥1h、end_time 回退 5 分钟、is_latest_point_only=false、12 分组码硬编码且空分组靠告警、告警 limit≤100 需分页且历史仅存 30 天需显式告警、命令中心用 statistics.running==0 判结束、result 二次 json.loads、只在 master 执行、GaussDB 方言无 FILTER 且 state is not null、sql_text 被掩码)；映射层表驱动不写死列名；命令中心输出上限 102400 B(超了整条失败非截断)、每页 limit/offset、1 条合并 SQL 全量形态；目标交付 2026-12-15(今天 11-19 剩 18 个工作日)；客户死线两项(告警字段规范、慢 SQL 外发口径)待客户结论，按最严口径实现。artifact_language=zh。workflow_path=full(推荐 full，与用户选择一致)。沟通=我起草用户审，口径变更/对外契约/删减范围集中提问不逐条打断。
