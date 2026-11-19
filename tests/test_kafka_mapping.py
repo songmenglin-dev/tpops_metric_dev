@@ -23,7 +23,6 @@ import pytest
 from conftest import DATA_DIR, REPO_ROOT
 
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
-from mappings.message import resource_name_template  # noqa: E402
 
 MAPPING_DIR = os.path.join(DATA_DIR, 'mapping')
 RESPONSE_DIR = os.path.join(DATA_DIR, 'metric_response')
@@ -458,44 +457,44 @@ def test_node_scoped_is_recorded(payload):
         assert isinstance(mapping.get('node_scoped'), bool), mapping['metric_code']
 
 
-def test_resource_name_follows_the_granularity_and_distribution(payload):
-    """resourceName = 实例名 + [节点（按节点分布时）] + 每个占位符各占一段。"""
-    metric_rules = dict(
-        (r['metric_code'], r) for r in _load(METRIC_RULES_PATH)['rules']
-    )
+def test_resource_name_is_node_ip_and_node_id(payload):
+    """resourceName 只表示节点 → 固定「节点 IP + 节点 ID」。"""
     for mapping in payload['metric_mappings']:
         message = mapping.get('sample_message')
         if message is None:
             continue
-        rule = metric_rules[mapping['metric_code']]
-        placeholders = rule.get('placeholders') or []
-        expected = '{instance_name}'
-        if mapping['node_scoped']:
-            expected += '_{node_id}'
-        for name in placeholders:
-            expected += '_{%s}' % name
-        assert mapping['kafka_target']['resourceName'] == expected, \
+        assert mapping['kafka_target']['resourceName'] == '{host_ip}_{node_id}', \
             mapping['metric_code']
 
         resource = message['resourceName']
-        instance = message['tags']['instance_name']
-        # 纯实例级就是实例名本身；带节点或维度的在后面追加
-        assert resource == instance or resource.startswith(instance + '_'), \
+        host_ip = message['tags'].get('host_ip')
+        node_id = message['tags'].get('node_id')
+        assert host_ip, mapping['metric_code']
+        assert resource.startswith(host_ip + '_'), mapping['metric_code']
+        assert node_id and resource == '%s_%s' % (host_ip, node_id), \
             mapping['metric_code']
-        if mapping['node_scoped']:
-            node_id = message['tags'].get('node_id')
-            assert node_id and node_id in resource.split('_'), mapping['metric_code']
-        else:
-            assert message['tags'].get('node_id') is None or \
-                node_id_not_in(resource, message['tags']), mapping['metric_code']
+
+
+def test_resource_name_does_not_carry_business_dimensions(payload):
+    """表名/库名/端口这类业务维度不进资源名（只放 tags.dimension_values）。"""
+    for mapping in payload['metric_mappings']:
+        message = mapping.get('sample_message')
+        if message is None:
+            continue
+        resource = message['resourceName']
         dimension = message['tags'].get('dimension_values') or {}
-        for value in dimension.values():
-            assert str(value) in resource, mapping['metric_code']
+        for name, value in dimension.items():
+            assert str(value) not in resource, mapping['metric_code']
 
 
-def node_id_not_in(resource, tags):
-    node_id = tags.get('node_id')
-    return not node_id or node_id not in resource
+def test_instance_scoped_metrics_use_the_first_master_node(payload):
+    """与节点无关的指标 → 落到节点清单里的第一个 master CN（跨轮稳定）。"""
+    master = '172.16.103.126_3881c04403394ee1b36a2bf873e69007no14'
+    for mapping in payload['metric_mappings']:
+        message = mapping.get('sample_message')
+        if message is None or mapping['node_scoped']:
+            continue
+        assert message['resourceName'] == master, mapping['metric_code']
 
 
 def test_table_level_metrics_are_not_node_scoped(payload):

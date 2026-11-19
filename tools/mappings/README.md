@@ -150,7 +150,7 @@ python tools/build_kafka_mapping.py      # → kafka_field_mapping.json
   "kafka_target": {
     "metricName": "[{#DATNAME}]缓存命中率",
     "metricCode": "GAUSSDB.[{#DATNAME}]_cache_hit_ratio",
-    "resourceName": "{instance_name}_{node_id}",
+    "resourceName": "{host_ip}_{node_id}",
     "value": "tpops_response_source.result[*].cache_hit_ratio",
     "unit": "%",
     "clock": "collect_time",
@@ -365,16 +365,34 @@ python tools/build_response_rules.py --check  # 只校验是否最新
 
 ## resourceName
 
-模板在 `data/mapping/itscada_field_map.json` 的 `resource_name` 段：默认
-`{instance_name}_{node_id}`，取不到节点时回退 `{instance_name}`。各通道的节点解析方式：
+**resourceName 只能表示一个节点**（客户口径），所以模板固定为
+`{host_ip}_{node_id}`（如 `172.16.103.126_3881c04403394ee1b36a2bf873e69007no14`），
+指标与告警同规则。模板在 `data/mapping/itscada_field_map.json` 的 `resource_name` 段。
 
-| 通道 | node_id 来源 |
+表名/库名/端口这类业务维度**不进资源名**，改由 `metricName`/`metricCode` 的占位符
+与 `tags.dimension_values` 承载 —— 客户按台账查的是节点，粒度在指标名里。
+
+节点身份来自 `GET /rds/gaussdb/v3/instances/{id}/key-view-execute-node` 的节点清单。
+各通道的节点解析方式：
+
+| 通道 | 节点来源 |
 |---|---|
 | 监控指标接口 | series 的键是 `component_id`（如 `cn_5002`）或 `ip-component_id`，经节点清单换算 |
-| 命令中心 SQL | 命令中心任务记录直接带 `node_id` |
-| 诊断优化接口 | 实例级，回退 `{instance_name}` |
-| 实例接口 | 实例级，回退 `{instance_name}` |
-| 告警 | 告警明细行自带 `node_id`；收敛条目无节点时回退 |
+| 命令中心 SQL | 数据按节点分布时取执行该 SQL 的节点；否则视为与节点无关 |
+| 诊断优化接口 | 与节点无关 |
+| 实例接口 | 与节点无关 |
+| 告警 | 明细行自带 `node_id`/`host_ip`；收敛条目无节点，按 `alarm_id` 关联明细行回填 |
+
+**与节点无关的指标**（命令中心的实例级/表级/库级、诊断优化、实例接口）统一挂到
+节点清单里的**第一个 master CN**（`role=master` 且 `type=CN`）—— 固定一个节点，
+避免「这轮 SQL 在哪个 master 上跑」导致资源名漂移。选主逻辑在
+`tools/mappings/nodes.py`（`select_master_node` / `resolve_node_context`）。
+
+> **告警的两点说明**：
+> ① 收敛条目（`is_convergence=true`）平台**不带节点身份**，按 `alarm_id` 关联明细行回填；
+>    一条告警命中多个节点时回填不了 → 落到第一个 master CN（此时该节点**不代表**真实告警节点，
+>    真实节点在明细行形态的消息里）。
+> ② 明细行形态（`is_convergence=false`）每行一个节点，`resourceName` 直接指向该节点。
 
 > **未决**：最终值必须与客户 ITSCADA 台账录入的资源名称完全一致。
 > 台账命名规则要客户给，拿到后改这里的模板即可。

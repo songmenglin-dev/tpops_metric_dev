@@ -54,7 +54,6 @@ class MetricRule:
     resource_granularity: str
     master_view: Optional[str]
     node_scoped: bool
-    resource_name_template: Optional[str]
     dimension_bindings: Mapping[str, str]
     note: str
     needs_confirmation: bool
@@ -78,7 +77,6 @@ class MetricRule:
             resource_granularity=payload.get('resource_granularity', 'instance'),
             master_view=payload.get('master_view'),
             node_scoped=bool(payload.get('node_scoped')),
-            resource_name_template=payload.get('resource_name_template'),
             dimension_bindings=payload.get('dimension_bindings', {}),
             note=payload.get('note', ''),
             needs_confirmation=bool(payload.get('needs_confirmation')),

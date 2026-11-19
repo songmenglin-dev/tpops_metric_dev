@@ -187,7 +187,7 @@
       "kafka_target": {
         "metricName": "每秒提交事务数",
         "metricCode": "GAUSSDB.Number_of_ansactions_mmitted_r_cond",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=rds092_gaussv5_commit_counter].series[*][-1]",
         "unit": "tps",
         "clock": "tpops_response_source.metric_infos[].metrics[name=rds092_gaussv5_commit_counter].timestamps[-1]",
@@ -196,12 +196,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": true,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「用户提交事务数/秒」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台为速率口径；累计值见 pg_stat_database.xact_commit",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「用户提交事务数/秒」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；平台为速率口径；累计值见 pg_stat_database.xact_commit",
       "message_count": 3,
       "sample_message": {
         "metricName": "每秒提交事务数",
         "metricCode": "GAUSSDB.Number_of_ansactions_mmitted_r_cond",
-        "resourceName": "gauss-6374_40abc563810e462a97b065e718189a59no14",
+        "resourceName": "172.16.103.127_40abc563810e462a97b065e718189a59no14",
         "value": 11,
         "unit": "tps",
         "clock": 1794454179000,
@@ -271,7 +271,7 @@
       "kafka_target": {
         "metricName": "慢查询总数",
         "metricCode": "GAUSSDB.Total_slow_queries",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "count(tpops_response_source.slow_sql_infos)",
         "unit": null,
         "clock": "collect_time",
@@ -280,21 +280,21 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；慢SQL集合条数统计",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；慢SQL集合条数统计",
       "message_count": 1,
       "sample_message": {
         "metricName": "慢查询总数",
         "metricCode": "GAUSSDB.Total_slow_queries",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 1,
         "unit": null,
         "clock": 1760000000000,
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "component_id": null,
-          "host_ip": null
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -367,7 +367,7 @@
       "kafka_target": {
         "metricName": "Select慢查询数",
         "metricCode": "GAUSSDB.Select_slow_queries",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "count(tpops_response_source.slow_sql_infos[?sql_text starts with select|with])",
         "unit": null,
         "clock": "collect_time",
@@ -376,21 +376,21 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；按 sql_text 统计 SELECT 类慢查询",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；按 sql_text 统计 SELECT 类慢查询",
       "message_count": 1,
       "sample_message": {
         "metricName": "Select慢查询数",
         "metricCode": "GAUSSDB.Select_slow_queries",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": null,
         "clock": 1760000000000,
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "component_id": null,
-          "host_ip": null
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -463,7 +463,7 @@
       "kafka_target": {
         "metricName": "DML慢查询数",
         "metricCode": "GAUSSDB.DML_slow_queries",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "count(tpops_response_source.slow_sql_infos[?sql_text starts with insert|update|delete])",
         "unit": null,
         "clock": "collect_time",
@@ -472,21 +472,21 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；按 sql_text 统计 DML 类慢查询",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；按 sql_text 统计 DML 类慢查询",
       "message_count": 1,
       "sample_message": {
         "metricName": "DML慢查询数",
         "metricCode": "GAUSSDB.DML_slow_queries",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": null,
         "clock": 1760000000000,
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "component_id": null,
-          "host_ip": null
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -564,7 +564,7 @@
       "kafka_target": {
         "metricName": "每秒回滚事务数",
         "metricCode": "GAUSSDB.Number_of_llback_ansactions_r_cond",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=rds093_gaussv5_rollback_counter].series[*][-1]",
         "unit": "tps",
         "clock": "tpops_response_source.metric_infos[].metrics[name=rds093_gaussv5_rollback_counter].timestamps[-1]",
@@ -573,12 +573,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": true,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「用户回滚事务数/秒」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台为速率口径",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「用户回滚事务数/秒」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；平台为速率口径",
       "message_count": 3,
       "sample_message": {
         "metricName": "每秒回滚事务数",
         "metricCode": "GAUSSDB.Number_of_llback_ansactions_r_cond",
-        "resourceName": "gauss-6374_40abc563810e462a97b065e718189a59no14",
+        "resourceName": "172.16.103.127_40abc563810e462a97b065e718189a59no14",
         "value": 0,
         "unit": "tps",
         "clock": 1794454179000,
@@ -645,7 +645,7 @@
       "kafka_target": {
         "metricName": "服务可用性检测",
         "metricCode": "GAUSSDB.Service_availability_testing",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=gaussdb_instance_status].series[*][-1]",
         "unit": null,
         "clock": "tpops_response_source.metric_infos[].metrics[name=gaussdb_instance_status].timestamps[-1]",
@@ -654,21 +654,21 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": false,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「实例状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含实例信息，不能作为本指标的数据源；可用性改用 instances[].instance_status 或 gaussdb_instance_status",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「实例状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含实例信息，不能作为本指标的数据源；可用性改用 instances[].instance_status 或 gaussdb_instance_status",
       "message_count": 1,
       "sample_message": {
         "metricName": "服务可用性检测",
         "metricCode": "GAUSSDB.Service_availability_testing",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": "正常",
         "unit": null,
         "clock": 1794454187000,
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "component_id": null,
-          "host_ip": null
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -770,7 +770,7 @@
       "kafka_target": {
         "metricName": "检测到的死锁次数",
         "metricCode": "gaussdb.Deadlocks",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].deadlocks)",
         "unit": "个",
         "clock": "collect_time",
@@ -779,12 +779,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；平台另有 rds091_gaussv5_deadlocks",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；平台另有 rds091_gaussv5_deadlocks",
       "message_count": 1,
       "sample_message": {
         "metricName": "检测到的死锁次数",
         "metricCode": "gaussdb.Deadlocks",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "个",
         "clock": 1760000000000,
@@ -907,7 +907,7 @@
       "kafka_target": {
         "metricName": "回滚的事务总数",
         "metricCode": "gaussdb.Xact_rollback",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].xact_rollback)",
         "unit": "个",
         "clock": "collect_time",
@@ -916,12 +916,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计回滚事务数",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计回滚事务数",
       "message_count": 1,
       "sample_message": {
         "metricName": "回滚的事务总数",
         "metricCode": "gaussdb.Xact_rollback",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 36,
         "unit": "个",
         "clock": 1760000000000,
@@ -994,7 +994,7 @@
       "kafka_target": {
         "metricName": "事务中已中止的空闲连接数",
         "metricCode": "gaussdb.Idle_in_transaction_aborted",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": "个",
         "clock": "collect_time",
@@ -1003,12 +1003,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle in transaction (aborted)'",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle in transaction (aborted)'",
       "message_count": 1,
       "sample_message": {
         "metricName": "事务中已中止的空闲连接数",
         "metricCode": "gaussdb.Idle_in_transaction_aborted",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "个",
         "clock": 1760000000000,
@@ -1080,7 +1080,7 @@
       "kafka_target": {
         "metricName": "TPS（每秒事务数）",
         "metricCode": "gaussdb.Tps",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=rds400_gaussv5_total_counter].series[*][-1]",
         "unit": "个",
         "clock": "tpops_response_source.metric_infos[].metrics[name=rds400_gaussv5_total_counter].timestamps[-1]",
@@ -1089,12 +1089,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": true,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「用户总事务数/秒（TPS）」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台为用户总事务数/秒",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「用户总事务数/秒（TPS）」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；平台为用户总事务数/秒",
       "message_count": 3,
       "sample_message": {
         "metricName": "TPS（每秒事务数）",
         "metricCode": "gaussdb.Tps",
-        "resourceName": "gauss-6374_40abc563810e462a97b065e718189a59no14",
+        "resourceName": "172.16.103.127_40abc563810e462a97b065e718189a59no14",
         "value": 11.0,
         "unit": "个",
         "clock": 1794454187000,
@@ -1181,7 +1181,7 @@
       "kafka_target": {
         "metricName": "QPS（每秒查询数）",
         "metricCode": "gaussdb.QPS",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=rds402_gaussv5_ddl_dml_dcl_count].series[*][-1]",
         "unit": "个",
         "clock": "tpops_response_source.metric_infos[].metrics[name=rds402_gaussv5_ddl_dml_dcl_count].timestamps[-1]",
@@ -1190,12 +1190,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": true,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「平均SQL执行数（QPS）」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台口径为 DDL+DML+DCL 平均SQL执行数/秒",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「平均SQL执行数（QPS）」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；平台口径为 DDL+DML+DCL 平均SQL执行数/秒",
       "message_count": 6,
       "sample_message": {
         "metricName": "QPS（每秒查询数）",
         "metricCode": "gaussdb.QPS",
-        "resourceName": "gauss-6374_40abc563810e462a97b065e718189a59no14",
+        "resourceName": "172.16.103.127_40abc563810e462a97b065e718189a59no14",
         "value": 28.13,
         "unit": "个",
         "clock": 1794454187000,
@@ -1266,7 +1266,7 @@
       "kafka_target": {
         "metricName": "服务端口{#PORT}检测",
         "metricCode": "gaussdb_{#PORT}port.status",
-        "resourceName": "{instance_name}_{PORT}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[0].setting",
         "unit": null,
         "clock": "collect_time",
@@ -1275,12 +1275,12 @@
       "resource_granularity": "port",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：端口级（指标名带端口占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含端口/实例信息，不能用于可用性探测；本指标仅能取到端口号，可用性需另找来源",
+      "remark": "一条消息；资源粒度：端口级（指标名带端口占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；实测 2026-11-06：GET /rds/health-status 返回 200 但响应体为空（Content-Length: 0），只反映 open-api 服务存活，不含端口/实例信息，不能用于可用性探测；本指标仅能取到端口号，可用性需另找来源",
       "message_count": 1,
       "sample_message": {
         "metricName": "服务端口8000检测",
         "metricCode": "gaussdb_8000port.status",
-        "resourceName": "gauss-6374_8000",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 8000,
         "unit": null,
         "clock": 1760000000000,
@@ -1288,7 +1288,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "PORT": "8000"
@@ -1348,7 +1348,7 @@
       "kafka_target": {
         "metricName": "GAUSSDB服务状态",
         "metricCode": "GAUSSDB.PG_Service_Status",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=gaussdb_instance_status].series[*][-1]",
         "unit": null,
         "clock": "tpops_response_source.metric_infos[].metrics[name=gaussdb_instance_status].timestamps[-1]",
@@ -1357,21 +1357,21 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": false,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「实例状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台为实例状态，非 pg_is_in_recovery 语义",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「实例状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；平台为实例状态，非 pg_is_in_recovery 语义",
       "message_count": 1,
       "sample_message": {
         "metricName": "GAUSSDB服务状态",
         "metricCode": "GAUSSDB.PG_Service_Status",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 1,
         "unit": null,
         "clock": 1794454190000,
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "component_id": null,
-          "host_ip": null
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -1423,7 +1423,7 @@
       "kafka_target": {
         "metricName": "获取连接信息",
         "metricCode": "gaussdb.get.connections.sum",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*]",
         "unit": null,
         "clock": "collect_time",
@@ -1432,12 +1432,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；会话清单（27 个字段）",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；会话清单（27 个字段）",
       "message_count": 1,
       "sample_message": {
         "metricName": "获取连接信息",
         "metricCode": "gaussdb.get.connections.sum",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": [
           {
             "datname": "postgres",
@@ -1547,7 +1547,7 @@
       "kafka_target": {
         "metricName": "获取db性能数据",
         "metricCode": "gaussdb.get.dbstat.sum",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*]",
         "unit": null,
         "clock": "collect_time",
@@ -1556,12 +1556,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；库级 + 表级统计视图",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；库级 + 表级统计视图",
       "message_count": 1,
       "sample_message": {
         "metricName": "获取db性能数据",
         "metricCode": "gaussdb.get.dbstat.sum",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": [
           {
             "datname": "templatea",
@@ -2886,7 +2886,7 @@
       "kafka_target": {
         "metricName": "获取数据库锁数据",
         "metricCode": "gaussdb.get.lock.info",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*]",
         "unit": null,
         "clock": "collect_time",
@@ -2895,12 +2895,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；pg_locks 全量锁视图",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；pg_locks 全量锁视图",
       "message_count": 1,
       "sample_message": {
         "metricName": "获取数据库锁数据",
         "metricCode": "gaussdb.get.lock.info",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": [
           {
             "datname": "postgres",
@@ -2914,9 +2914,9 @@
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": "40abc563810e462a97b065e718189a59no14",
-          "component_id": "cn_5002",
-          "host_ip": "172.16.103.127"
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "component_id": null,
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -3001,7 +3001,7 @@
       "kafka_target": {
         "metricName": "({#NAME})被删除的行总数（包括已回收行）",
         "metricCode": "gaussdb.{#NAME}.Number.lete.ples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_tup_del",
         "unit": null,
         "clock": "collect_time",
@@ -3010,12 +3010,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；累计删除行数",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；累计删除行数",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)被删除的行总数（包括已回收行）",
         "metricCode": "gaussdb.snapshot.Number.lete.ples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 24,
         "unit": null,
         "clock": 1760000000000,
@@ -3023,7 +3023,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -3101,7 +3101,7 @@
       "kafka_target": {
         "metricName": "启动时间",
         "metricCode": "gaussdb.Starttime",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=rds133_cn_startup_time].series[*][-1]",
         "unit": null,
         "clock": "tpops_response_source.metric_infos[].metrics[name=rds133_cn_startup_time].timestamps[-1]",
@@ -3110,12 +3110,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": true,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「CN进程启动时刻」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台为 CN 进程启动时刻(timestamp)",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「CN进程启动时刻」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；平台为 CN 进程启动时刻(timestamp)",
       "message_count": 3,
       "sample_message": {
         "metricName": "启动时间",
         "metricCode": "gaussdb.Starttime",
-        "resourceName": "gauss-6374_40abc563810e462a97b065e718189a59no14",
+        "resourceName": "172.16.103.127_40abc563810e462a97b065e718189a59no14",
         "value": "1793616989.0",
         "unit": null,
         "clock": 1794450651000,
@@ -3178,7 +3178,7 @@
       "kafka_target": {
         "metricName": "查看当前锁等待数量",
         "metricCode": "gaussdb.Lockwaiting",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": null,
         "clock": "collect_time",
@@ -3187,12 +3187,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state 含 lock 相关会话",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state 含 lock 相关会话",
       "message_count": 1,
       "sample_message": {
         "metricName": "查看当前锁等待数量",
         "metricCode": "gaussdb.Lockwaiting",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": null,
         "clock": 1760000000000,
@@ -3264,7 +3264,7 @@
       "kafka_target": {
         "metricName": "运行时长",
         "metricCode": "gaussdb.Uptimestr",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=rds133_cn_startup_time].series[*][-1]",
         "unit": null,
         "clock": "tpops_response_source.metric_infos[].metrics[name=rds133_cn_startup_time].timestamps[-1]",
@@ -3273,12 +3273,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": true,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「CN进程启动时刻」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台无 uptime 指标，用启动时刻与当前时间推算",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「CN进程启动时刻」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；平台无 uptime 指标，用启动时刻与当前时间推算",
       "message_count": 3,
       "sample_message": {
         "metricName": "运行时长",
         "metricCode": "gaussdb.Uptimestr",
-        "resourceName": "gauss-6374_40abc563810e462a97b065e718189a59no14",
+        "resourceName": "172.16.103.127_40abc563810e462a97b065e718189a59no14",
         "value": "-33616989.0",
         "unit": null,
         "clock": 1794450651000,
@@ -3339,7 +3339,7 @@
       "kafka_target": {
         "metricName": "版本",
         "metricCode": "gaussdb.server_version",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.instances[0].engine_version",
         "unit": null,
         "clock": "collect_time",
@@ -3348,21 +3348,21 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；GET /rds/v3.2/instances；另有 GET /rds/v3/version-info",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；GET /rds/v3.2/instances；另有 GET /rds/v3/version-info",
       "message_count": 1,
       "sample_message": {
         "metricName": "版本",
         "metricCode": "gaussdb.server_version",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": "V2.0-10.0.0",
         "unit": null,
         "clock": 1760000000000,
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "component_id": null,
-          "host_ip": null
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -3425,7 +3425,7 @@
       "kafka_target": {
         "metricName": "正在运行的SQL",
         "metricCode": "gaussdb.running.sql.limit.20",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "top(tpops_response_source.result[*], query_start, 20)",
         "unit": null,
         "clock": "collect_time",
@@ -3434,12 +3434,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；会话当前执行的 SQL 文本",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；会话当前执行的 SQL 文本",
       "message_count": 1,
       "sample_message": {
         "metricName": "正在运行的SQL",
         "metricCode": "gaussdb.running.sql.limit.20",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": [
           {
             "datname": "postgres",
@@ -3563,7 +3563,7 @@
       "kafka_target": {
         "metricName": "({#NAME})已删除但未回收的行数（死亡行）",
         "metricCode": "gaussdb.{#NAME}.Number.ad.ples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_dead_tup",
         "unit": null,
         "clock": "collect_time",
@@ -3572,12 +3572,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)已删除但未回收的行数（死亡行）",
         "metricCode": "gaussdb.snapshot.Number.ad.ples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 24,
         "unit": null,
         "clock": 1760000000000,
@@ -3585,7 +3585,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -3686,7 +3686,7 @@
       "kafka_target": {
         "metricName": "({#NAME})通过 HOT更新的行数",
         "metricCode": "gaussdb.{#NAME}.Number.t.date.ples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_tup_hot_upd",
         "unit": "%",
         "clock": "collect_time",
@@ -3695,12 +3695,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)通过 HOT更新的行数",
         "metricCode": "gaussdb.snapshot.Number.t.date.ples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": "%",
         "clock": 1760000000000,
@@ -3708,7 +3708,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -3809,7 +3809,7 @@
       "kafka_target": {
         "metricName": "({#NAME})索引扫描次数",
         "metricCode": "gaussdb.{#NAME}.number.Of.index.scan",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].idx_scan",
         "unit": null,
         "clock": "collect_time",
@@ -3818,12 +3818,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)索引扫描次数",
         "metricCode": "gaussdb.snapshot.number.Of.index.scan",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 954,
         "unit": null,
         "clock": 1760000000000,
@@ -3831,7 +3831,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -3932,7 +3932,7 @@
       "kafka_target": {
         "metricName": "({#NAME})顺序扫描读取的行数",
         "metricCode": "gaussdb.{#NAME}.number.Of.quential.ples.ad",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].seq_tup_read",
         "unit": null,
         "clock": "collect_time",
@@ -3941,12 +3941,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)顺序扫描读取的行数",
         "metricCode": "gaussdb.snapshot.number.Of.quential.ples.ad",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 28825,
         "unit": null,
         "clock": 1760000000000,
@@ -3954,7 +3954,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -4055,7 +4055,7 @@
       "kafka_target": {
         "metricName": "({#NAME})通过索引扫描获取的行数",
         "metricCode": "gaussdb.{#NAME}.number.Of.dex.ples.ad",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].idx_tup_fetch",
         "unit": null,
         "clock": "collect_time",
@@ -4064,12 +4064,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)通过索引扫描获取的行数",
         "metricCode": "gaussdb.snapshot.number.Of.dex.ples.ad",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 470,
         "unit": null,
         "clock": 1760000000000,
@@ -4077,7 +4077,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -4178,7 +4178,7 @@
       "kafka_target": {
         "metricName": "({#NAME})插入的行数",
         "metricCode": "gaussdb.{#NAME}.number.Of.insert.tuples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_tup_ins",
         "unit": null,
         "clock": "collect_time",
@@ -4187,12 +4187,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)插入的行数",
         "metricCode": "gaussdb.snapshot.number.Of.insert.tuples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": null,
         "clock": 1760000000000,
@@ -4200,7 +4200,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -4301,7 +4301,7 @@
       "kafka_target": {
         "metricName": "({#NAME})当前活跃的行数",
         "metricCode": "gaussdb.{#NAME}.number.Of.live.tuples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_live_tup",
         "unit": null,
         "clock": "collect_time",
@@ -4310,12 +4310,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)当前活跃的行数",
         "metricCode": "gaussdb.snapshot.number.Of.live.tuples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 189,
         "unit": null,
         "clock": 1760000000000,
@@ -4323,7 +4323,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -4424,7 +4424,7 @@
       "kafka_target": {
         "metricName": "({#NAME})更新的行总数",
         "metricCode": "gaussdb.{#NAME}.number.Of.update.tuples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_tup_upd",
         "unit": null,
         "clock": "collect_time",
@@ -4433,12 +4433,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)更新的行总数",
         "metricCode": "gaussdb.snapshot.number.Of.update.tuples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": null,
         "clock": 1760000000000,
@@ -4446,7 +4446,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -4547,7 +4547,7 @@
       "kafka_target": {
         "metricName": "({#NAME})顺序扫描次数",
         "metricCode": "gaussdb.{#NAME}.number.Of.sequential.scan",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].seq_scan",
         "unit": null,
         "clock": "collect_time",
@@ -4556,12 +4556,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)顺序扫描次数",
         "metricCode": "gaussdb.snapshot.number.Of.sequential.scan",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 696,
         "unit": null,
         "clock": 1760000000000,
@@ -4569,7 +4569,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -4631,7 +4631,7 @@
       "kafka_target": {
         "metricName": "DB [{#DBNAME}]: 获取锁信息",
         "metricCode": "gaussdb.locks.get_metrics[{#DBNAME}]",
-        "resourceName": "{instance_name}_{DBNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[?datname=*].cnt)",
         "unit": "MB",
         "clock": "collect_time",
@@ -4640,21 +4640,21 @@
       "resource_granularity": "database",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 datname 分组，每组一条消息；资源粒度：库级（指标名带库占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；按 datname 聚合，平台无按 DBNAME 的锁指标",
+      "remark": "按 datname 分组，每组一条消息；资源粒度：库级（指标名带库占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；按 datname 聚合，平台无按 DBNAME 的锁指标",
       "message_count": 1,
       "sample_message": {
         "metricName": "DB [postgres]: 获取锁信息",
         "metricCode": "gaussdb.locks.get_metrics[postgres]",
-        "resourceName": "gauss-6374_postgres",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": "4",
         "unit": "MB",
         "clock": 1760000000000,
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": "40abc563810e462a97b065e718189a59no14",
-          "component_id": "cn_5002",
-          "host_ip": "172.16.103.127",
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "component_id": null,
+          "host_ip": "172.16.103.126",
           "dimension_values": {
             "DBNAME": "postgres"
           }
@@ -4706,7 +4706,7 @@
       "kafka_target": {
         "metricName": "DB [{#DBNAME}]: Num of accessexclusive locks",
         "metricCode": "gaussdb.locks.accessexclusive[{#DBNAME}]",
-        "resourceName": "{instance_name}_{DBNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[?datname=*].cnt)",
         "unit": null,
         "clock": "collect_time",
@@ -4715,7 +4715,7 @@
       "resource_granularity": "database",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 datname 分组，每组一条消息；资源粒度：库级（指标名带库占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；mode='AccessExclusiveLock' 按库聚合",
+      "remark": "按 datname 分组，每组一条消息；资源粒度：库级（指标名带库占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；mode='AccessExclusiveLock' 按库聚合",
       "message_count": 0,
       "sample_message": null,
       "evidence": {
@@ -4775,7 +4775,7 @@
       "kafka_target": {
         "metricName": "[{#DATABASE_NAME}]库大小",
         "metricCode": "gaussdb.DBtsize[{#DATABASE_NAME}]",
-        "resourceName": "{instance_name}_{DATABASE_NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].size_bytes",
         "unit": null,
         "clock": "collect_time",
@@ -4784,12 +4784,12 @@
       "resource_granularity": "database",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {DATABASE_NAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；资源粒度：库级（指标名带库占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；平台另有 rds128 聚合值",
+      "remark": "按 {DATABASE_NAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；资源粒度：库级（指标名带库占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；平台另有 rds128 聚合值",
       "message_count": 7,
       "sample_message": {
         "metricName": "[postgres]库大小",
         "metricCode": "gaussdb.DBtsize[postgres]",
-        "resourceName": "gauss-6374_postgres",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": "1727283212",
         "unit": null,
         "clock": 1760000000000,
@@ -4797,7 +4797,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "DATABASE_NAME": "postgres"
@@ -4888,7 +4888,7 @@
       "kafka_target": {
         "metricName": "({#NAME})死亡行占比",
         "metricCode": "gaussdb.{#NAME}.garbage.Ratio",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].dead_tup_ratio",
         "unit": null,
         "clock": "collect_time",
@@ -4897,12 +4897,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)死亡行占比",
         "metricCode": "gaussdb.snapshot.garbage.Ratio",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 11.27,
         "unit": null,
         "clock": 1760000000000,
@@ -4910,7 +4910,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -4981,7 +4981,7 @@
       "kafka_target": {
         "metricName": "字符集",
         "metricCode": "gaussdb.Serverencoding",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[0].encoding",
         "unit": null,
         "clock": "collect_time",
@@ -4990,12 +4990,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；pg_encoding_to_char()",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；pg_encoding_to_char()",
       "message_count": 1,
       "sample_message": {
         "metricName": "字符集",
         "metricCode": "gaussdb.Serverencoding",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": "UTF8",
         "unit": null,
         "clock": 1760000000000,
@@ -5003,7 +5003,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -5078,7 +5078,7 @@
       "kafka_target": {
         "metricName": "当前运行时间最长的Top10 SQL",
         "metricCode": "gaussdb.Top10sql",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "top(tpops_response_source.top_sql_infos, total_elapse_time, 10)",
         "unit": null,
         "clock": "collect_time",
@@ -5087,12 +5087,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；按 total_elapse_time 排序取 Top N",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；按 total_elapse_time 排序取 Top N",
       "message_count": 1,
       "sample_message": {
         "metricName": "当前运行时间最长的Top10 SQL",
         "metricCode": "gaussdb.Top10sql",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": [
           {
             "sql_id": "1011577308",
@@ -5310,9 +5310,9 @@
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "component_id": null,
-          "host_ip": null
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -5379,7 +5379,7 @@
       "kafka_target": {
         "metricName": "数据库状态",
         "metricCode": "gaussdb.Status",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=gaussdb_instance_status].series[*][-1]",
         "unit": null,
         "clock": "tpops_response_source.metric_infos[].metrics[name=gaussdb_instance_status].timestamps[-1]",
@@ -5388,21 +5388,21 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": false,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「实例状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台为实例状态",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「实例状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；平台为实例状态",
       "message_count": 1,
       "sample_message": {
         "metricName": "数据库状态",
         "metricCode": "gaussdb.Status",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 1,
         "unit": null,
         "clock": 1794454191000,
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
           "component_id": null,
-          "host_ip": null
+          "host_ip": "172.16.103.126"
         }
       },
       "evidence": {
@@ -5459,7 +5459,7 @@
       "kafka_target": {
         "metricName": "时区",
         "metricCode": "gaussdb.Timezone",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[0].setting",
         "unit": "个",
         "clock": "collect_time",
@@ -5468,12 +5468,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 1,
       "sample_message": {
         "metricName": "时区",
         "metricCode": "gaussdb.Timezone",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": "Etc/GMT-8",
         "unit": "个",
         "clock": 1760000000000,
@@ -5481,7 +5481,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -5536,7 +5536,7 @@
       "kafka_target": {
         "metricName": "页大小",
         "metricCode": "gaussdb.Pagesize",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[0].setting",
         "unit": null,
         "clock": "collect_time",
@@ -5545,12 +5545,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；实测 8192",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；实测 8192",
       "message_count": 1,
       "sample_message": {
         "metricName": "页大小",
         "metricCode": "gaussdb.Pagesize",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 8192,
         "unit": null,
         "clock": 1760000000000,
@@ -5558,7 +5558,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -5608,7 +5608,7 @@
       "kafka_target": {
         "metricName": "事务中空闲的连接数",
         "metricCode": "gaussdb.Idle_in_transaction",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": "个",
         "clock": "collect_time",
@@ -5617,12 +5617,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle in transaction'",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle in transaction'",
       "message_count": 1,
       "sample_message": {
         "metricName": "事务中空闲的连接数",
         "metricCode": "gaussdb.Idle_in_transaction",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "个",
         "clock": 1760000000000,
@@ -5732,7 +5732,7 @@
       "kafka_target": {
         "metricName": "写块的时间（毫秒）",
         "metricCode": "gaussdb.Blk_write_time",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].blk_write_time)",
         "unit": "ms",
         "clock": "collect_time",
@@ -5741,12 +5741,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计写块耗时，口径与客户一致",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计写块耗时，口径与客户一致",
       "message_count": 1,
       "sample_message": {
         "metricName": "写块的时间（毫秒）",
         "metricCode": "gaussdb.Blk_write_time",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "ms",
         "clock": 1760000000000,
@@ -5869,7 +5869,7 @@
       "kafka_target": {
         "metricName": "当前连接到数据库的后端进程数",
         "metricCode": "gaussdb.Numbackends",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].numbackends)",
         "unit": "个",
         "clock": "collect_time",
@@ -5878,12 +5878,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "当前连接到数据库的后端进程数",
         "metricCode": "gaussdb.Numbackends",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 26,
         "unit": "个",
         "clock": 1760000000000,
@@ -6006,7 +6006,7 @@
       "kafka_target": {
         "metricName": "总连接数",
         "metricCode": "gaussdb.Total_conn",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].numbackends)",
         "unit": "个",
         "clock": "collect_time",
@@ -6015,12 +6015,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "总连接数",
         "metricCode": "gaussdb.Total_conn",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 26,
         "unit": "个",
         "clock": 1760000000000,
@@ -6143,7 +6143,7 @@
       "kafka_target": {
         "metricName": "临时文件大小",
         "metricCode": "gaussdb.Temp_bytes",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].temp_bytes)",
         "unit": null,
         "clock": "collect_time",
@@ -6152,12 +6152,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "临时文件大小",
         "metricCode": "gaussdb.Temp_bytes",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": null,
         "clock": 1760000000000,
@@ -6280,7 +6280,7 @@
       "kafka_target": {
         "metricName": "从磁盘读取的块数",
         "metricCode": "gaussdb.Blks_read",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].blks_read)",
         "unit": "个",
         "clock": "collect_time",
@@ -6289,12 +6289,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "从磁盘读取的块数",
         "metricCode": "gaussdb.Blks_read",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 10601,
         "unit": "个",
         "clock": 1760000000000,
@@ -6417,7 +6417,7 @@
       "kafka_target": {
         "metricName": "从缓存命中读取的块数",
         "metricCode": "gaussdb.Blks_hit",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].blks_hit)",
         "unit": null,
         "clock": "collect_time",
@@ -6426,12 +6426,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "从缓存命中读取的块数",
         "metricCode": "gaussdb.Blks_hit",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 126717499,
         "unit": null,
         "clock": 1760000000000,
@@ -6554,7 +6554,7 @@
       "kafka_target": {
         "metricName": "删除的行数",
         "metricCode": "gaussdb.Tup_deleted",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].tup_deleted)",
         "unit": null,
         "clock": "collect_time",
@@ -6563,12 +6563,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "删除的行数",
         "metricCode": "gaussdb.Tup_deleted",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 4452245,
         "unit": null,
         "clock": 1760000000000,
@@ -6691,7 +6691,7 @@
       "kafka_target": {
         "metricName": "提交的事务总数",
         "metricCode": "gaussdb.Xact_commit",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].xact_commit)",
         "unit": null,
         "clock": "collect_time",
@@ -6700,12 +6700,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "提交的事务总数",
         "metricCode": "gaussdb.Xact_commit",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 14993143,
         "unit": null,
         "clock": 1760000000000,
@@ -6828,7 +6828,7 @@
       "kafka_target": {
         "metricName": "插入的行数",
         "metricCode": "gaussdb.Tup_inserted",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].tup_inserted)",
         "unit": null,
         "clock": "collect_time",
@@ -6837,12 +6837,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "插入的行数",
         "metricCode": "gaussdb.Tup_inserted",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 10353442,
         "unit": null,
         "clock": 1760000000000,
@@ -6965,7 +6965,7 @@
       "kafka_target": {
         "metricName": "数据库操作冲突次数",
         "metricCode": "gaussdb.Conflicts",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].conflicts)",
         "unit": "ms",
         "clock": "collect_time",
@@ -6974,12 +6974,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "数据库操作冲突次数",
         "metricCode": "gaussdb.Conflicts",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "ms",
         "clock": 1760000000000,
@@ -7102,7 +7102,7 @@
       "kafka_target": {
         "metricName": "更新的行数",
         "metricCode": "gaussdb.Tup_updated",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].tup_updated)",
         "unit": "个",
         "clock": "collect_time",
@@ -7111,12 +7111,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "更新的行数",
         "metricCode": "gaussdb.Tup_updated",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 509774,
         "unit": "个",
         "clock": 1760000000000,
@@ -7239,7 +7239,7 @@
       "kafka_target": {
         "metricName": "查询返回的行数",
         "metricCode": "gaussdb.Tup_returned",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].tup_returned)",
         "unit": null,
         "clock": "collect_time",
@@ -7248,12 +7248,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "查询返回的行数",
         "metricCode": "gaussdb.Tup_returned",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 197426331,
         "unit": null,
         "clock": 1760000000000,
@@ -7376,7 +7376,7 @@
       "kafka_target": {
         "metricName": "生成的临时文件数",
         "metricCode": "gaussdb.Temp_files",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].temp_files)",
         "unit": "b",
         "clock": "collect_time",
@@ -7385,12 +7385,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "生成的临时文件数",
         "metricCode": "gaussdb.Temp_files",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "b",
         "clock": 1760000000000,
@@ -7513,7 +7513,7 @@
       "kafka_target": {
         "metricName": "通过索引获取的行数",
         "metricCode": "gaussdb.tup_fetched",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].tup_fetched)",
         "unit": null,
         "clock": "collect_time",
@@ -7522,12 +7522,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "通过索引获取的行数",
         "metricCode": "gaussdb.tup_fetched",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 49001861,
         "unit": null,
         "clock": 1760000000000,
@@ -7600,7 +7600,7 @@
       "kafka_target": {
         "metricName": "活动连接数",
         "metricCode": "gaussdb.Active_conn",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": "个",
         "clock": "collect_time",
@@ -7609,12 +7609,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='active'；平台另有 rds117",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='active'；平台另有 rds117",
       "message_count": 1,
       "sample_message": {
         "metricName": "活动连接数",
         "metricCode": "gaussdb.Active_conn",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 7,
         "unit": "个",
         "clock": 1760000000000,
@@ -7672,7 +7672,7 @@
       "kafka_target": {
         "metricName": "空闲连接数",
         "metricCode": "gaussdb.Idle_conn",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": "个",
         "clock": "collect_time",
@@ -7681,12 +7681,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle'",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle'",
       "message_count": 1,
       "sample_message": {
         "metricName": "空闲连接数",
         "metricCode": "gaussdb.Idle_conn",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 12,
         "unit": "个",
         "clock": 1760000000000,
@@ -7744,7 +7744,7 @@
       "kafka_target": {
         "metricName": "等待资源的连接数",
         "metricCode": "gaussdb.Waiting_conn",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": "%",
         "clock": "collect_time",
@@ -7753,12 +7753,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state 含 wait 类会话",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state 含 wait 类会话",
       "message_count": 1,
       "sample_message": {
         "metricName": "等待资源的连接数",
         "metricCode": "gaussdb.Waiting_conn",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "%",
         "clock": 1760000000000,
@@ -7868,7 +7868,7 @@
       "kafka_target": {
         "metricName": "读块的时间（毫秒）",
         "metricCode": "gaussdb.Blk_read_time",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].blk_read_time)",
         "unit": "个",
         "clock": "collect_time",
@@ -7877,12 +7877,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计读块耗时，口径与客户一致",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计读块耗时，口径与客户一致",
       "message_count": 1,
       "sample_message": {
         "metricName": "读块的时间（毫秒）",
         "metricCode": "gaussdb.Blk_read_time",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 83,
         "unit": "个",
         "clock": 1760000000000,
@@ -8029,7 +8029,7 @@
       "kafka_target": {
         "metricName": "连接使用率",
         "metricCode": "gaussdb.Total_pct",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.activity_agg.result[*].cnt) ÷ sum(tpops_response_source.stat_database.result[*].numbackends)",
         "unit": "个",
         "clock": "collect_time",
@@ -8038,12 +8038,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；活跃会话数 / 总连接数",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；活跃会话数 / 总连接数",
       "message_count": 1,
       "sample_message": {
         "metricName": "连接使用率",
         "metricCode": "gaussdb.Total_pct",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0.0,
         "unit": "个",
         "clock": 1760000000000,
@@ -8094,7 +8094,7 @@
       "kafka_target": {
         "metricName": "预提交事务数",
         "metricCode": "gaussdb.Prepared",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[0].prepared_xacts",
         "unit": "个",
         "clock": "collect_time",
@@ -8103,12 +8103,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；count(*) 统计预备事务",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；count(*) 统计预备事务",
       "message_count": 1,
       "sample_message": {
         "metricName": "预提交事务数",
         "metricCode": "gaussdb.Prepared",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "个",
         "clock": 1760000000000,
@@ -8116,7 +8116,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -8199,7 +8199,7 @@
       "kafka_target": {
         "metricName": "({#NAME}) number of dead tuples",
         "metricCode": "GAUSSDB.{#NAME}.Number.ad.ples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_dead_tup",
         "unit": null,
         "clock": "collect_time",
@@ -8208,12 +8208,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot) number of dead tuples",
         "metricCode": "GAUSSDB.snapshot.Number.ad.ples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 24,
         "unit": null,
         "clock": 1760000000000,
@@ -8221,7 +8221,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -8322,7 +8322,7 @@
       "kafka_target": {
         "metricName": "({#NAME}) number of delete tuples",
         "metricCode": "GAUSSDB.{#NAME}.Number.lete.ples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_tup_del",
         "unit": "tuples/s",
         "clock": "collect_time",
@@ -8331,12 +8331,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot) number of delete tuples",
         "metricCode": "GAUSSDB.snapshot.Number.lete.ples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 24,
         "unit": "tuples/s",
         "clock": 1760000000000,
@@ -8344,7 +8344,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -8445,7 +8445,7 @@
       "kafka_target": {
         "metricName": "({#NAME})Garbage ratio",
         "metricCode": "GAUSSDB.{#NAME}.garbage.Ratio",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].dead_tup_ratio",
         "unit": "%",
         "clock": "collect_time",
@@ -8454,12 +8454,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)Garbage ratio",
         "metricCode": "GAUSSDB.snapshot.garbage.Ratio",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 11.27,
         "unit": "%",
         "clock": 1760000000000,
@@ -8467,7 +8467,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -8568,7 +8568,7 @@
       "kafka_target": {
         "metricName": "({#NAME}) number of hot update tuples",
         "metricCode": "GAUSSDB.{#NAME}.Number.t.date.ples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_tup_hot_upd",
         "unit": "tuples/s",
         "clock": "collect_time",
@@ -8577,12 +8577,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot) number of hot update tuples",
         "metricCode": "GAUSSDB.snapshot.Number.t.date.ples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": "tuples/s",
         "clock": 1760000000000,
@@ -8590,7 +8590,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -8691,7 +8691,7 @@
       "kafka_target": {
         "metricName": "({#NAME})number of index scan",
         "metricCode": "GAUSSDB.{#NAME}.number.Of.index.scan",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].idx_scan",
         "unit": "scans/s",
         "clock": "collect_time",
@@ -8700,12 +8700,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)number of index scan",
         "metricCode": "GAUSSDB.snapshot.number.Of.index.scan",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 954,
         "unit": "scans/s",
         "clock": 1760000000000,
@@ -8713,7 +8713,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -8814,7 +8814,7 @@
       "kafka_target": {
         "metricName": "({#NAME})number of index tuples read",
         "metricCode": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].idx_tup_fetch",
         "unit": "tuples/s",
         "clock": "collect_time",
@@ -8823,12 +8823,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)number of index tuples read",
         "metricCode": "GAUSSDB.snapshot.number.Of.dex.ples.ad",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 470,
         "unit": "tuples/s",
         "clock": 1760000000000,
@@ -8836,7 +8836,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -8937,7 +8937,7 @@
       "kafka_target": {
         "metricName": "({#NAME})number of live tuples",
         "metricCode": "GAUSSDB.{#NAME}.number.Of.live.tuples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_live_tup",
         "unit": null,
         "clock": "collect_time",
@@ -8946,12 +8946,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)number of live tuples",
         "metricCode": "GAUSSDB.snapshot.number.Of.live.tuples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 189,
         "unit": null,
         "clock": 1760000000000,
@@ -8959,7 +8959,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -9060,7 +9060,7 @@
       "kafka_target": {
         "metricName": "({#NAME})number of insert tuples",
         "metricCode": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_tup_ins",
         "unit": "tuples/s",
         "clock": "collect_time",
@@ -9069,12 +9069,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)number of insert tuples",
         "metricCode": "GAUSSDB.snapshot.number.Of.insert.tuples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": "tuples/s",
         "clock": 1760000000000,
@@ -9082,7 +9082,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -9183,7 +9183,7 @@
       "kafka_target": {
         "metricName": "({#NAME})number of sequencial scan",
         "metricCode": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].seq_scan",
         "unit": "scans/s",
         "clock": "collect_time",
@@ -9192,12 +9192,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)number of sequencial scan",
         "metricCode": "GAUSSDB.snapshot.number.Of.sequential.scan",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 696,
         "unit": "scans/s",
         "clock": 1760000000000,
@@ -9205,7 +9205,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -9306,7 +9306,7 @@
       "kafka_target": {
         "metricName": "({#NAME})number of sequencial tuples read",
         "metricCode": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].seq_tup_read",
         "unit": "tuples/s",
         "clock": "collect_time",
@@ -9315,12 +9315,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)number of sequencial tuples read",
         "metricCode": "GAUSSDB.snapshot.number.Of.quential.ples.ad",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 28825,
         "unit": "tuples/s",
         "clock": 1760000000000,
@@ -9328,7 +9328,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -9429,7 +9429,7 @@
       "kafka_target": {
         "metricName": "({#NAME})number of update tuples",
         "metricCode": "GAUSSDB.{#NAME}.number.Of.update.tuples",
-        "resourceName": "{instance_name}_{NAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].n_tup_upd",
         "unit": "tuples/s",
         "clock": "collect_time",
@@ -9438,12 +9438,12 @@
       "resource_granularity": "table",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
         "metricName": "(snapshot)number of update tuples",
         "metricCode": "GAUSSDB.snapshot.number.Of.update.tuples",
-        "resourceName": "gauss-6374_snapshot",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": "tuples/s",
         "clock": 1760000000000,
@@ -9451,7 +9451,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
             "NAME": "snapshot"
@@ -9517,7 +9517,7 @@
       "kafka_target": {
         "metricName": "Buffers Alloc",
         "metricCode": "GAUSSDB.Buffers_Alloc",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].buffers_alloc)",
         "unit": "buffers/s",
         "clock": "collect_time",
@@ -9526,12 +9526,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 1,
       "sample_message": {
         "metricName": "Buffers Alloc",
         "metricCode": "GAUSSDB.Buffers_Alloc",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "buffers/s",
         "clock": 1760000000000,
@@ -9539,7 +9539,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -9594,7 +9594,7 @@
       "kafka_target": {
         "metricName": "Buffers Backend",
         "metricCode": "GAUSSDB.Buffers_Backend",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].buffers_backend)",
         "unit": "buffers/s",
         "clock": "collect_time",
@@ -9603,12 +9603,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 1,
       "sample_message": {
         "metricName": "Buffers Backend",
         "metricCode": "GAUSSDB.Buffers_Backend",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 43,
         "unit": "buffers/s",
         "clock": 1760000000000,
@@ -9616,7 +9616,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -9671,7 +9671,7 @@
       "kafka_target": {
         "metricName": "Buffers Backend Fsync",
         "metricCode": "GAUSSDB.Buffers_Backend_Fsync",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].buffers_backend_fsync)",
         "unit": "buffers/s",
         "clock": "collect_time",
@@ -9680,12 +9680,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 1,
       "sample_message": {
         "metricName": "Buffers Backend Fsync",
         "metricCode": "GAUSSDB.Buffers_Backend_Fsync",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "buffers/s",
         "clock": 1760000000000,
@@ -9693,7 +9693,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -9748,7 +9748,7 @@
       "kafka_target": {
         "metricName": "Buffers Checkpoint",
         "metricCode": "GAUSSDB.Buffers_Checkpoint",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].buffers_checkpoint)",
         "unit": "buffers/s",
         "clock": "collect_time",
@@ -9757,12 +9757,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 1,
       "sample_message": {
         "metricName": "Buffers Checkpoint",
         "metricCode": "GAUSSDB.Buffers_Checkpoint",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "buffers/s",
         "clock": 1760000000000,
@@ -9770,7 +9770,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -9825,7 +9825,7 @@
       "kafka_target": {
         "metricName": "Buffers Clean",
         "metricCode": "GAUSSDB.Buffers_Clean",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].buffers_clean)",
         "unit": "buffers/s",
         "clock": "collect_time",
@@ -9834,12 +9834,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 1,
       "sample_message": {
         "metricName": "Buffers Clean",
         "metricCode": "GAUSSDB.Buffers_Clean",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "buffers/s",
         "clock": 1760000000000,
@@ -9847,7 +9847,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -9902,7 +9902,7 @@
       "kafka_target": {
         "metricName": "Checkpoint count (by checkpoint segments)",
         "metricCode": "GAUSSDB.Checkpoint_count_eckpoint_gments",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].checkpoints_req)",
         "unit": "cps",
         "clock": "collect_time",
@@ -9911,12 +9911,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；按需触发（requested）的 checkpoint 次数",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；按需触发（requested）的 checkpoint 次数",
       "message_count": 1,
       "sample_message": {
         "metricName": "Checkpoint count (by checkpoint segments)",
         "metricCode": "GAUSSDB.Checkpoint_count_eckpoint_gments",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 5,
         "unit": "cps",
         "clock": 1760000000000,
@@ -9924,7 +9924,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -9979,7 +9979,7 @@
       "kafka_target": {
         "metricName": "Checkpoint count (by checkpoint timeout)",
         "metricCode": "GAUSSDB.Checkpoint_count_eckpoint_meout",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].checkpoints_timed)",
         "unit": "cps",
         "clock": "collect_time",
@@ -9988,12 +9988,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；按超时触发的 checkpoint 次数",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；按超时触发的 checkpoint 次数",
       "message_count": 1,
       "sample_message": {
         "metricName": "Checkpoint count (by checkpoint timeout)",
         "metricCode": "GAUSSDB.Checkpoint_count_eckpoint_meout",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 12687,
         "unit": "cps",
         "clock": 1760000000000,
@@ -10001,7 +10001,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -10056,7 +10056,7 @@
       "kafka_target": {
         "metricName": "Idle in transaction connections",
         "metricCode": "GAUSSDB.Idle_in_transaction_connections",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": null,
         "clock": "collect_time",
@@ -10065,12 +10065,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle in transaction'",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle in transaction'",
       "message_count": 1,
       "sample_message": {
         "metricName": "Idle in transaction connections",
         "metricCode": "GAUSSDB.Idle_in_transaction_connections",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": null,
         "clock": 1760000000000,
@@ -10130,7 +10130,7 @@
       "kafka_target": {
         "metricName": "Idle connections",
         "metricCode": "GAUSSDB.Idle_connections",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": null,
         "clock": "collect_time",
@@ -10139,12 +10139,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle'",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='idle'",
       "message_count": 1,
       "sample_message": {
         "metricName": "Idle connections",
         "metricCode": "GAUSSDB.Idle_connections",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 12,
         "unit": null,
         "clock": 1760000000000,
@@ -10202,7 +10202,7 @@
       "kafka_target": {
         "metricName": "Max Written Clean",
         "metricCode": "GAUSSDB.Max_Written_Clean",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].maxwritten_clean)",
         "unit": "buffers/s",
         "clock": "collect_time",
@@ -10211,12 +10211,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 1,
       "sample_message": {
         "metricName": "Max Written Clean",
         "metricCode": "GAUSSDB.Max_Written_Clean",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": "buffers/s",
         "clock": 1760000000000,
@@ -10224,7 +10224,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -10315,7 +10315,7 @@
       "kafka_target": {
         "metricName": "Standby状态",
         "metricCode": "GAUSSDB.Standby_status",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=datanode_switch_status].series[*][-1]",
         "unit": null,
         "clock": "tpops_response_source.metric_infos[].metrics[name=datanode_switch_status].timestamps[-1]",
@@ -10324,12 +10324,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": true,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「DN主备状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台为 DN 主备状态",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「DN主备状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；平台为 DN 主备状态",
       "message_count": 9,
       "sample_message": {
         "metricName": "Standby状态",
         "metricCode": "GAUSSDB.Standby_status",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": null,
         "clock": 1794454192000,
@@ -10448,7 +10448,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}] Commited transactions",
         "metricCode": "GAUSSDB.[{#DATNAME}]_committed_transactions",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].xact_commit",
         "unit": "tps",
         "clock": "collect_time",
@@ -10457,12 +10457,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；按 datname 取累计值",
+      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；按 datname 取累计值",
       "message_count": 7,
       "sample_message": {
         "metricName": "[lz] Commited transactions",
         "metricCode": "GAUSSDB.[lz]_committed_transactions",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14_lz",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 22259,
         "unit": "tps",
         "clock": 1760000000000,
@@ -10541,7 +10541,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}] Active connections",
         "metricCode": "GAUSSDB.[{#DATNAME}]_Active_connections",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[?datname=*].cnt)",
         "unit": null,
         "clock": "collect_time",
@@ -10550,12 +10550,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 datname 分组，每组一条消息；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；按 datname 统计活跃会话",
+      "remark": "按 datname 分组，每组一条消息；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；按 datname 统计活跃会话",
       "message_count": 1,
       "sample_message": {
         "metricName": "[postgres] Active connections",
         "metricCode": "GAUSSDB.[postgres]_Active_connections",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14_postgres",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 7,
         "unit": null,
         "clock": 1760000000000,
@@ -10669,7 +10669,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}] Rolled back transactions",
         "metricCode": "GAUSSDB.[{#DATNAME}]_rolled_back_transactions",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].xact_rollback",
         "unit": "tps",
         "clock": "collect_time",
@@ -10678,12 +10678,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；按 datname 取累计值",
+      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；按 datname 取累计值",
       "message_count": 7,
       "sample_message": {
         "metricName": "[lz] Rolled back transactions",
         "metricCode": "GAUSSDB.[lz]_rolled_back_transactions",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14_lz",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "tps",
         "clock": 1760000000000,
@@ -10812,7 +10812,7 @@
       "kafka_target": {
         "metricName": "当前连接数",
         "metricCode": "GAUSSDB.Current_number_of_connections",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].numbackends)",
         "unit": null,
         "clock": "collect_time",
@@ -10821,12 +10821,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 1,
       "sample_message": {
         "metricName": "当前连接数",
         "metricCode": "GAUSSDB.Current_number_of_connections",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 26,
         "unit": null,
         "clock": 1760000000000,
@@ -10904,7 +10904,7 @@
       "kafka_target": {
         "metricName": "最大连接数",
         "metricCode": "GAUSSDB.maximum_connection",
-        "resourceName": "{instance_name}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[0].setting",
         "unit": null,
         "clock": "collect_time",
@@ -10913,12 +10913,12 @@
       "resource_granularity": "instance",
       "master_view": "identical",
       "node_scoped": false,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；实测 200",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；实测 200",
       "message_count": 1,
       "sample_message": {
         "metricName": "最大连接数",
         "metricCode": "GAUSSDB.maximum_connection",
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 200,
         "unit": null,
         "clock": 1760000000000,
@@ -10926,7 +10926,7 @@
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
+          "component_id": null,
           "host_ip": "172.16.103.126"
         }
       },
@@ -10976,7 +10976,7 @@
       "kafka_target": {
         "metricName": "活跃连接数",
         "metricCode": "GAUSSDB.Number_of_active_connections",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.result[*].cnt)",
         "unit": null,
         "clock": "collect_time",
@@ -10985,12 +10985,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='active'",
+      "remark": "整批聚合成一条消息（row_policy=sum）；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；state='active'",
       "message_count": 1,
       "sample_message": {
         "metricName": "活跃连接数",
         "metricCode": "GAUSSDB.Number_of_active_connections",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 7,
         "unit": null,
         "clock": 1760000000000,
@@ -11098,7 +11098,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}]每秒Fetch记录数",
         "metricCode": "GAUSSDB.[{#DATNAME}]_fetch_records_per_second",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].tup_fetched",
         "unit": "tup/s",
         "clock": "collect_time",
@@ -11107,12 +11107,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
+      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
       "message_count": 7,
       "sample_message": {
         "metricName": "[lz]每秒Fetch记录数",
         "metricCode": "GAUSSDB.[lz]_fetch_records_per_second",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14_lz",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "tup/s",
         "clock": 1760000300000,
@@ -11241,7 +11241,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}]每秒Insert记录数",
         "metricCode": "GAUSSDB.[{#DATNAME}]_insert_records_per_second",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].tup_inserted",
         "unit": "tup/s",
         "clock": "collect_time",
@@ -11250,12 +11250,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
+      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
       "message_count": 7,
       "sample_message": {
         "metricName": "[lz]每秒Insert记录数",
         "metricCode": "GAUSSDB.[lz]_insert_records_per_second",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14_lz",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "tup/s",
         "clock": 1760000300000,
@@ -11384,7 +11384,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}]每秒Return记录数",
         "metricCode": "GAUSSDB.[{#DATNAME}]_return_records_per_second",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].tup_returned",
         "unit": "tup/s",
         "clock": "collect_time",
@@ -11393,12 +11393,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
+      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
       "message_count": 7,
       "sample_message": {
         "metricName": "[lz]每秒Return记录数",
         "metricCode": "GAUSSDB.[lz]_return_records_per_second",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14_lz",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "tup/s",
         "clock": 1760000300000,
@@ -11527,7 +11527,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}]每秒Update记录数",
         "metricCode": "GAUSSDB.[{#DATNAME}]_update_records_per_second",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].tup_updated",
         "unit": "tup/s",
         "clock": "collect_time",
@@ -11536,12 +11536,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
+      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
       "message_count": 7,
       "sample_message": {
         "metricName": "[lz]每秒Update记录数",
         "metricCode": "GAUSSDB.[lz]_update_records_per_second",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14_lz",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "tup/s",
         "clock": 1760000300000,
@@ -11670,7 +11670,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}]缓存命中率",
         "metricCode": "GAUSSDB.[{#DATNAME}]_cache_hit_ratio",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].cache_hit_ratio",
         "unit": "%",
         "clock": "collect_time",
@@ -11679,12 +11679,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
+      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）",
       "message_count": 7,
       "sample_message": {
         "metricName": "[lz]缓存命中率",
         "metricCode": "GAUSSDB.[lz]_cache_hit_ratio",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14_lz",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 99.84,
         "unit": "%",
         "clock": 1760000000000,
@@ -11837,7 +11837,7 @@
       "kafka_target": {
         "metricName": "连接数使用率",
         "metricCode": "GAUSSDB.session_usage",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "sum(tpops_response_source.activity_agg.result[*].cnt) ÷ sum(tpops_response_source.stat_database.result[*].numbackends)",
         "unit": "%",
         "clock": "collect_time",
@@ -11846,12 +11846,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；在线会话数 / 总连接数",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；在线会话数 / 总连接数",
       "message_count": 1,
       "sample_message": {
         "metricName": "连接数使用率",
         "metricCode": "GAUSSDB.session_usage",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0.0,
         "unit": "%",
         "clock": 1760000000000,
@@ -11917,7 +11917,7 @@
       "kafka_target": {
         "metricName": "会话时间TOP10",
         "metricCode": "GAUSSDB.sessions_active_top10",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "top(tpops_response_source.result[*], query_start, 10)",
         "unit": null,
         "clock": "collect_time",
@@ -11926,12 +11926,12 @@
       "resource_granularity": "instance",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "一条消息；资源粒度：实例级（无占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；按 query_start 排序取 Top N",
+      "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；按 query_start 排序取 Top N",
       "message_count": 1,
       "sample_message": {
         "metricName": "会话时间TOP10",
         "metricCode": "GAUSSDB.sessions_active_top10",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": [
           {
             "datname": "postgres",
@@ -12062,7 +12062,7 @@
       "kafka_target": {
         "metricName": "Primary状态",
         "metricCode": "GAUSSDB.Primary_status",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.metric_infos[].metrics[name=datanode_switch_status].series[*][-1]",
         "unit": null,
         "clock": "tpops_response_source.metric_infos[].metrics[name=datanode_switch_status].timestamps[-1]",
@@ -12071,12 +12071,12 @@
       "resource_granularity": "instance",
       "master_view": null,
       "node_scoped": true,
-      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「DN主备状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；平台为 DN 主备状态",
+      "remark": "每个组件一条消息；归集口径待客户确认（open_items.json / a-class-multi-series）；平台中文名「DN主备状态」与客户指标表中文名不同，按客户指标表发；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；平台为 DN 主备状态",
       "message_count": 9,
       "sample_message": {
         "metricName": "Primary状态",
         "metricCode": "GAUSSDB.Primary_status",
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 0,
         "unit": null,
         "clock": 1794454192000,
@@ -12195,7 +12195,7 @@
       "kafka_target": {
         "metricName": "[{#DATNAME}]每秒Delete记录数",
         "metricCode": "GAUSSDB.[{#DATNAME}]_delete_records_per_second",
-        "resourceName": "{instance_name}_{node_id}_{DATNAME}",
+        "resourceName": "{host_ip}_{node_id}",
         "value": "tpops_response_source.result[*].tup_deleted",
         "unit": "tup/s",
         "clock": "collect_time",
@@ -12204,12 +12204,12 @@
       "resource_granularity": "database",
       "master_view": "divergent",
       "node_scoped": true,
-      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
+      "remark": "按 {DATNAME} 展开：一行一条消息，result 的每一行产出一条（实测 7 行 → 7 条；6000 个库就是 6000 条）；累计值跨轮差分为速率；首轮无基线返回 null，累计值回退判定重启并丢弃；资源粒度：库级（指标名带库占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；累计值，每秒速率需按周期差分",
       "message_count": 7,
       "sample_message": {
         "metricName": "[lz]每秒Delete记录数",
         "metricCode": "GAUSSDB.[lz]_delete_records_per_second",
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14_lz",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "value": 0,
         "unit": "tup/s",
         "clock": 1760000300000,
@@ -12311,7 +12311,7 @@
         "alarmTime": "tpops_response_source.records[0].first_alarm_time",
         "status": "status_to_itscada[tpops_response_source.records[0].status]",
         "recoverTime": null,
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "metricName": "节点NTP状态异常",
         "metricCode": "gaussdb.alarm.2007010001",
         "value": "tpops_response_source.records[0].alarm_items_sum",
@@ -12327,7 +12327,7 @@
         "alarmTime": 1793758083000,
         "status": 1,
         "recoverTime": null,
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "metricName": "节点NTP状态异常",
         "metricCode": "gaussdb.alarm.2007010001",
         "value": "1",
@@ -12335,8 +12335,8 @@
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
-          "host_ip": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "host_ip": "172.16.103.126",
           "alarm_category": "节点状态",
           "alarm_type": "event",
           "engine": "gaussdb",
@@ -12454,7 +12454,7 @@
         "alarmTime": "tpops_response_source.records[0].first_alarm_time",
         "status": "status_to_itscada[tpops_response_source.records[0].status]",
         "recoverTime": null,
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "metricName": "节点NTP状态异常",
         "metricCode": "gaussdb.alarm.2007010001",
         "value": "tpops_response_source.convergence_records[0].alarm_items_sum",
@@ -12470,7 +12470,7 @@
         "alarmTime": 1793758083000,
         "status": 1,
         "recoverTime": null,
-        "resourceName": "gauss-6374_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+        "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
         "metricName": "节点NTP状态异常",
         "metricCode": "gaussdb.alarm.2007010001",
         "value": "1",
@@ -12571,7 +12571,7 @@
         "alarmTime": "tpops_response_source.records[0].first_alarm_time",
         "status": "status_to_itscada[tpops_response_source.records[0].status]",
         "recoverTime": "tpops_response_source.records[0].clear_alarm_time",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "metricName": "节点NTP状态异常",
         "metricCode": "gaussdb.alarm.2007010001",
         "value": "tpops_response_source.records[0].alarm_items_sum",
@@ -12587,7 +12587,7 @@
         "alarmTime": 1793692618000,
         "status": 0,
         "recoverTime": 1793771169000,
-        "resourceName": "gauss-6374",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "metricName": "节点NTP状态异常",
         "metricCode": "gaussdb.alarm.2007010001",
         "value": "14",
@@ -12595,8 +12595,8 @@
         "tags": {
           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
           "instance_name": "gauss-6374",
-          "node_id": null,
-          "host_ip": null,
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "host_ip": "172.16.103.126",
           "alarm_category": "节点状态",
           "alarm_type": "event",
           "engine": "gaussdb",
@@ -12718,7 +12718,7 @@
         "alarmTime": "tpops_response_source.records[0].first_alarm_time",
         "status": "status_to_itscada[tpops_response_source.records[0].status]",
         "recoverTime": "tpops_response_source.records[0].clear_alarm_time",
-        "resourceName": "{instance_name}_{node_id}",
+        "resourceName": "{host_ip}_{node_id}",
         "metricName": "节点NTP状态异常",
         "metricCode": "gaussdb.alarm.2007010001",
         "value": "tpops_response_source.convergence_records[0].alarm_items_sum",
@@ -12734,7 +12734,7 @@
         "alarmTime": 1793761377000,
         "status": 0,
         "recoverTime": 1793771169000,
-        "resourceName": "gauss-6374_3881c04403394ee1b36a2bf873e69007no14",
+        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "metricName": "节点NTP状态异常",
         "metricCode": "gaussdb.alarm.2007010001",
         "value": "14",

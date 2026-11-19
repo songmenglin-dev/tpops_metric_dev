@@ -33,7 +33,26 @@ def _dump(obj, limit=700):
     return text if len(text) <= limit else text[:limit] + '\n  ...（已截断）'
 
 
-def demo_a_class(table):
+def _instance_nodes():
+    """节点清单（key-view-execute-node 的实测留档）—— resourceName 的节点来源。"""
+    directory = os.path.join(DATA_DIR, 'metric_response')
+    for name in sorted(os.listdir(directory)):
+        if not name.endswith('.json') or name.startswith('000'):
+            continue
+        for step in _read(os.path.join(directory, name)):
+            if 'key-view' in step.get('api', ''):
+                return step['response_body'].get('nodes', [])
+    return []
+
+
+def _node_of_component(nodes, component_id):
+    for node in nodes:
+        if node.get('component_id') == component_id:
+            return node
+    return {}
+
+
+def demo_a_class(table, nodes):
     print('=' * 78)
     print('示例一：A 类　监控指标接口')
     print('=' * 78)
@@ -93,13 +112,21 @@ def demo_a_class(table):
     print('  第 1 条：维度=%s 值=%s 时间戳=%s' % (json.dumps(dims, ensure_ascii=False), value, clock))
 
     print('\n【第 4 步】组装成客户 Kafka 消息')
+    # series 的键是组件 ID → 经节点清单换算成节点（resourceName 只表示节点）
+    node = _node_of_component(nodes, sorted(actual['series'])[0])
     message = build_metric_message(
         table.field_map,
         rule,
         dims,
         value,
-        {'instance_name': 'gauss-6374', 'node_id': 'node-1'},
+        {
+            'instance_name': 'gauss-6374',
+            'node_id': node.get('node_id'),
+            'component_id': node.get('component_id'),
+            'host_ip': node.get('node_ip'),
+        },
         clock,
+        nodes=nodes,
     )
     print(_dump(message))
 
@@ -108,7 +135,8 @@ def demo_a_class(table):
         ('metricName', '映射表 metric_name（按 TPOPS 指标 id 查到的客户中文名）',
          rule.metric_name),
         ('metricCode', '映射表 metric_code（客户英文名）', rule.metric_code),
-        ('resourceName', 'instances[].name + 节点清单 node_id', 'gauss-6374_node-1'),
+        ('resourceName', '节点清单的 node_ip + node_id（只表示节点）',
+         message['resourceName']),
         ('value', 'metrics[].series[<series 键>][最后一个非空点]', value),
         ('unit', '映射表 unit（客户指标表【指标单位】）', rule.unit),
         ('clock', 'metrics[].timestamps[同一下标]', clock),
@@ -119,7 +147,7 @@ def demo_a_class(table):
             customer_field, origin, json.dumps(value_text, ensure_ascii=False)))
 
 
-def demo_b_class(table):
+def demo_b_class(table, nodes):
     print()
     print('=' * 78)
     print('示例二：B 类　命令中心 SQL')
@@ -129,9 +157,10 @@ def demo_b_class(table):
         {'datname': 'postgres', 'xact_commit': '7265656', 'numbackends': '3'},
         {'datname': 'template1', 'xact_commit': '12', 'numbackends': '0'},
     ]
+    node = nodes[0] if nodes else {}
     print('\n【第 1 步】命令中心返回的原始 JSON（result 是 JSON 字符串，要二次解析）')
     raw = {
-        'node_id': 'd5284a09d06c4b2798c8c713259fe705no14',
+        'node_id': node.get('node_id'),
         'status': 'succeed',
         'result': json.dumps(rows, ensure_ascii=False),
     }
@@ -155,17 +184,24 @@ def demo_b_class(table):
     dims, value, clock = results[0]
     message = build_metric_message(
         table.field_map, rule, dims, value,
-        {'instance_name': 'gauss-75a2', 'node_id': 'd5284a09d06c4b2798c8c713259fe705no14'},
+        {
+            'instance_name': 'gauss-6374',
+            'node_id': node.get('node_id'),
+            'host_ip': node.get('node_ip'),
+        },
         clock,
+        nodes=nodes,
     )
     print(_dump(message))
-    print('\n  ↑ 注意 metricName / metricCode 里的 {#DATNAME} 已被换成实际值 postgres')
+    print('\n  ↑ 注意 metricName / metricCode 里的 {#DATNAME} 已被换成实际值 postgres；'
+          '库名不进 resourceName（它只表示节点），在 tags.dimension_values 里')
 
 
 def main():
     table = MappingTable.load()
-    demo_a_class(table)
-    demo_b_class(table)
+    nodes = _instance_nodes()
+    demo_a_class(table, nodes)
+    demo_b_class(table, nodes)
     print()
     print('=' * 78)
     print('查看全部映射：docs/映射表-ITSCADA字段对照.md')

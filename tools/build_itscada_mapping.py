@@ -378,20 +378,6 @@ def _resource_granularity(placeholders):
     return 'instance'
 
 
-def _resource_name_template(placeholders, node_scoped):
-    """resourceName 模板：实例名 + [节点（数据按节点分布时）] + 每个占位符各占一段。
-
-    节点这一段只在"数据按节点分布"时才加 —— 表级指标虽然也来自命令中心，
-    但各 master 看到的是同一份数据，加 node_id 只会把同一个资源拆成多份。
-    """
-    template = '{instance_name}'
-    if node_scoped:
-        template += '_{node_id}'
-    for name in placeholders or ():
-        template += '_{%s}' % name
-    return template
-
-
 def _dimension_bindings(placeholders, sql_key):
     """占位符 → SQL 结果列的绑定。"""
     table = DIMENSION_COLUMN_BY_SQL.get(sql_key, {})
@@ -614,7 +600,6 @@ def build_metric_rules():
             'resource_granularity': _resource_granularity(placeholders),
             'master_view': None,
             'node_scoped': False,
-            'resource_name_template': None,
             'dimension_bindings': {},
             'note': avail.get('note') or '',
             'needs_confirmation': False,
@@ -628,8 +613,8 @@ def build_metric_rules():
         node_scoped = distribution.node_scoped_of(channel_key, master_view, series_scoped)
         entry['master_view'] = master_view
         entry['node_scoped'] = node_scoped
-        entry['resource_name_template'] = _resource_name_template(
-            placeholders, node_scoped)
+        # resourceName 的模板是全局的（只表示节点：节点 IP + 节点 ID），
+        # 唯一出处是 itscada_field_map.json 的 resource_name 段，不逐指标存。
 
         if value_rule:
             rule = build_value_rule(

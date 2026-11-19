@@ -74,8 +74,8 @@
       "customer_type": "String",
       "required": true,
       "source_type": "assembled",
-      "source": "instances[].name + nodes[].node_id",
-      "transform": "series 的键取 component_id（去掉 ip 前缀）→ 节点清单换算 node_id → 拼 {instance_name}_{node_id}；键是 value 时为实例级，只用实例名",
+      "source": "nodes[].node_ip + nodes[].node_id",
+      "transform": "resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；series 的键取 component_id（去掉 ip 前缀）→ 节点清单换算 node_id/node_ip；与节点无关时落到节点清单里的第一个 master CN",
       "source_field": null,
       "source_lookup": "由上面几个字段组装"
     },

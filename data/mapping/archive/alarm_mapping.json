@@ -242,11 +242,11 @@
       "required": true,
       "source_type": "assembled",
       "source": [
-        "records[].instance_name",
-        "records[].node_id"
+        "records[].node_id",
+        "records[].host_ip"
       ],
-      "source_in": "instance_name 取 convergence，node_id 取 detail",
-      "transform": "拼 {instance_name}_{node_id}；拿不到 node_id 时只用实例名",
+      "source_in": "明细行自带 node_id 与 host_ip；收敛条目不带，按 alarm_id 关联明细行回填",
+      "transform": "resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；仍拿不到节点时落到节点清单里的第一个 master CN",
       "source_field": null,
       "source_lookup": "由上面几个字段组装"
     },

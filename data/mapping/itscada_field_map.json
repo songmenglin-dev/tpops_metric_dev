@@ -1,5 +1,5 @@
 {
-  "version": "1.2",
+  "version": "1.3",
   "note": "客户 Kafka 消息的字段清单。各字段的来源与转换规则按分类拆在同目录：metric_mapping_*.json（指标四类）、alarm_mapping.json（告警）",
   "source_documents": {
     "metric": "docs/ITSCADA第三方指标数据接入对接方案V2.docx",
@@ -134,11 +134,9 @@
     ]
   },
   "resource_name": {
-    "template": "{instance_name}_{node_id}",
-    "fallback_template": "{instance_name}",
-    "metric_template": "{instance_name}",
-    "metric_with_placeholder": "{instance_name}_{PLACEHOLDER}",
-    "note": "指标消息与告警消息的资源名规则不同：指标 = 实例名 + 每个占位符各占一段（表/库/端口，取值来自结果行），粒度由占位符决定，不是客户指标表里的 resource_type（那个说的是指标属于哪个产品）；告警 = 实例名 + node_id（告警要能定位到节点）。具体命名规则要与客户 ITSCADA 台账录入的资源名称完全一致（open_items.json / resource-name，待客户提供台账清单后核对）。"
+    "template": "{host_ip}_{node_id}",
+    "fallback_template": ["{host_ip}", "{node_id}"],
+    "note": "resourceName 只能表示一个节点 → 固定「节点 IP + 节点 ID」（如 172.16.103.126_3881c04403394ee1b36a2bf873e69007no14），指标与告警同规则。节点身份来自 key-view-execute-node 的节点清单；与节点无关的指标（命令中心的实例级/表级/库级、诊断优化、实例接口）统一挂到节点清单里的第一个 master CN 上（role=master 且 type=CN），保证跨轮稳定。表名/库名/端口这类业务维度不再进资源名，改由 metricName/metricCode 的占位符与 tags.dimension_values 承载。具体命名规则要与客户 ITSCADA 台账录入的资源名称完全一致（open_items.json / resource-name，待客户提供台账清单后核对）。"
   },
   "tags": {
     "metric": [

@@ -16,8 +16,8 @@
     {
       "id": "resource-name",
       "topic": "resourceName 与客户台账的对齐",
-      "default": "{instance_name}_{node_id}，取不到节点时用 {instance_name}",
-      "detail": "方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。"
+      "default": "{host_ip}_{node_id}（节点 IP + TPOPS 节点 ID）；与节点无关的指标落到节点清单里的第一个 master CN",
+      "detail": "resourceName 只能表示一个节点 → 固定「节点 IP + 节点 ID」；表名/库名/端口这类业务维度改走 metricName/metricCode 的占位符与 tags.dimension_values。方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。"
     },
     {
       "id": "collect-cycle",

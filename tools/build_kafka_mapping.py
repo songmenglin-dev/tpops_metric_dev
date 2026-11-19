@@ -47,8 +47,8 @@ ALARM_DIR = os.path.join(REPO_ROOT, 'data', 'alarm')
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
 
 from mappings.decode import decode  # noqa: E402
-from mappings.message import (build_alarm_message, build_metric_message,  # noqa: E402
-                              resource_name_template)
+from mappings.message import build_alarm_message, build_metric_message  # noqa: E402
+from mappings.nodes import resolve_node_context  # noqa: E402
 from mappings.rules import CounterDeltaStore, evaluate  # noqa: E402
 from mappings.table import AlarmDefinition, MetricRule  # noqa: E402
 
@@ -81,9 +81,9 @@ DIMENSION_NOUN = {
     'PORT': '个端口',
 }
 
-# 资源作用域：决定 resourceName 是实例级还是节点级
-SCOPE_INSTANCE = 'instance'   # 资源 = 实例（客户指标库里 101 个指标全是这一类）
-SCOPE_NODE = 'node'           # 资源 = 实例+节点（命令中心在每个 master 上各跑一份）
+# 资源作用域：决定 resourceName 指向哪个节点
+SCOPE_INSTANCE = 'instance'   # 数据与节点无关 → 资源 = 第一个 master CN
+SCOPE_NODE = 'node'           # 数据按节点分布 → 资源 = 数据来源的那个节点
 
 GRANULARITY_NOTE = {
     'instance': '实例级（无占位符）',
@@ -152,8 +152,11 @@ def _resource_context(steps, body, instances, channel, dims, fallback_nodes=(),
                       scope=SCOPE_NODE):
     """拼出 resourceName 与 tags 需要的资源属性。
 
-    实例级指标：资源就是实例，不带 node_id —— 否则同一个指标会因为
-    「这一轮数据来自哪个节点」而挂到不同资源上，resourceName 会漂移。
+    resourceName 只能表示一个节点 → 一律「节点 IP + 节点 ID」：
+
+    - 数据按节点分布（SCOPE_NODE）→ 资源 = 数据来源的那个节点；
+    - 数据与节点无关（SCOPE_INSTANCE）→ 资源 = 节点清单里的第一个 master CN，
+      固定一个节点，避免「这轮 SQL 在哪个 master 上跑」导致资源名漂移。
     """
     nodes = _nodes_of(steps) or list(fallback_nodes)
     # 同一个 node_id 在节点清单里会出现多次（CN 一条 + 各 distributed_id 的 DN 一条），
@@ -194,17 +197,18 @@ def _resource_context(steps, body, instances, channel, dims, fallback_nodes=(),
     instance_id = instance_id or DEFAULT_INSTANCE_ID
     instance = _instance_of(instances, instance_id) or {}
     if scope == SCOPE_INSTANCE:
-        # 实例级：节点不是资源身份，只是条目属性
-        node_id = None
+        # 与节点无关：节点不是数据来源，统一落到第一个 master CN
         component_id = None
+        node_id = None
         host_ip = None
-    return {
+    context = {
         'instance_id': instance_id,
         'instance_name': instance.get('name'),
         'node_id': node_id,
         'component_id': component_id,
         'host_ip': host_ip,
     }
+    return resolve_node_context(context, nodes)
 
 
 # -- 源：真实响应片段 --------------------------------------------------------
@@ -482,8 +486,7 @@ def _source_and_target(field_map, channel, rule, locate, value_rule, params, sou
     target = {
         'metricName': rule.metric_name,
         'metricCode': rule.metric_code,
-        'resourceName': rule.resource_name_template or resource_name_template(
-            field_map, rule.placeholders, rule.node_scoped),
+        'resourceName': field_map['resource_name']['template'],
         'value': _value_expression(channel, locate, params, value_rule, expansion),
         'unit': rule.unit,
         'clock': 'collect_time',
@@ -530,6 +533,10 @@ def _remark(rule, expansion, message_count, observed, channel, params, source_da
                         .get('metrics', [{}])[0].get('metric_name') or ''))
     granularity = getattr(rule, 'resource_granularity', 'instance')
     parts.append('资源粒度：%s' % GRANULARITY_NOTE.get(granularity, granularity))
+    if scope == SCOPE_INSTANCE:
+        parts.append('resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）')
+    else:
+        parts.append('resourceName 指向数据来源的那个节点（数据按节点分布）')
     if master_view == 'identical':
         parts.append('各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可')
     elif master_view == 'divergent':
@@ -574,16 +581,10 @@ def _build_metric_mappings(field_map, metric_rules, response_rules, instances, n
         source_data = _real_source(entry['channel'], body, entry['locate'])
         master_view = rule.master_view
 
-        # 资源作用域：诊断与实例接口的数据本身就是实例级的；
-        # 命令中心同一条 SQL 在每个 master 上各跑一份，是节点视角数据。
-        scope = (SCOPE_INSTANCE if entry['channel'] in ('diagnostic', 'instance')
-                 else SCOPE_NODE)
-        if entry['channel'] == 'monitor_metrics':
-            # 单值形态（series 只有一个 'value' 键）是实例级状态，没有节点身份
-            series_keys = source_data.get('metric_infos', [{}])[0] \
-                .get('metrics', [{}])[0].get('series', {}) or {}
-            if series_keys and all(key == 'value' for key in series_keys):
-                scope = SCOPE_INSTANCE
+        # 资源作用域看「数据是否按节点分布」——实测结论落在 rule.node_scoped 上：
+        # 命令中心比各 master 的返回是否相同，监控指标看 series 是否按组件展开，
+        # 诊断与实例接口一次返回整实例数据。
+        scope = SCOPE_NODE if rule.node_scoped else SCOPE_INSTANCE
         resource = _resource_context(steps, body, instances, entry['channel'], {}, nodes,
                                      scope=scope)
         messages = []
@@ -593,6 +594,7 @@ def _build_metric_mappings(field_map, metric_rules, response_rules, instances, n
                     steps, body, instances, entry['channel'], dims, nodes, scope=scope)
             messages.append(build_metric_message(
                 field_map, rule, dims, value, resource, timestamp or NOW_MS,
+                nodes=nodes,
             ))
 
         if (rule.value_rule or {}).get('type') == 'ratio_across':
@@ -687,10 +689,31 @@ def _alarm_source_and_target(field_map, records, has_details, is_history,
     return source, target
 
 
-def _build_alarm_mappings(field_map, alarm_rules):
+def _node_by_alarm_id():
+    """alarm_id → 节点（node_id, host_ip）。
+
+    收敛条目不带节点身份，明细行带。只在明细行指向**同一个**节点时才回填，
+    涉及多个节点（一条告警落在多个节点上）就不指定 —— 由 resourceName
+    回落到第一个 master CN。
+    """
+    mapping = {}
+    for filename in ('active_detail.json', 'history_detail.json'):
+        payload = _read_json(os.path.join(ALARM_DIR, filename))
+        for item in payload.get('records', []):
+            key = item.get('alarm_id')
+            node = (item.get('node_id'), item.get('host_ip'))
+            if key not in mapping:
+                mapping[key] = node
+            elif mapping[key] != node:
+                mapping[key] = None
+    return mapping
+
+
+def _build_alarm_mappings(field_map, alarm_rules, nodes=()):
     definitions = alarm_rules.get('definitions', {})
     severity_to_priority = alarm_rules.get('severity_to_priority', {})
     status_to_itscada = alarm_rules.get('status_to_itscada', {})
+    nodes_by_alarm = _node_by_alarm_id()
     mappings = []
     for shape_id, filename, label, request, has_details in ALARM_SHAPES:
         payload = _read_json(os.path.join(ALARM_DIR, filename))
@@ -707,6 +730,11 @@ def _build_alarm_mappings(field_map, alarm_rules):
                     record = dict(item, **record)
                     break
         raw_definition = definitions.get(str(record.get('alarm_id')))
+        if not record.get('node_id'):
+            # 收敛条目没有节点身份 → 用明细行的节点（同一节点时才回填）
+            node = nodes_by_alarm.get(record.get('alarm_id'))
+            if node:
+                record = dict(record, node_id=node[0], host_ip=node[1])
         definition = None
         if raw_definition:
             definition = AlarmDefinition(
@@ -730,12 +758,14 @@ def _build_alarm_mappings(field_map, alarm_rules):
                 'instance_id': record.get('instance_id'),
                 'instance_name': record.get('instance_name'),
                 'node_id': record.get('node_id'),
+                'host_ip': record.get('host_ip'),
             },
             severity_to_priority,
             status_to_itscada,
             metric_value=None,
             unit=None,
             details=details,
+            nodes=nodes,
         )
         convergence_records = []
         if has_details:
@@ -780,10 +810,11 @@ def build():
             'file': item['file'],
             'steps': _read_json(os.path.join(RESPONSE_DIR, item['file'])),
         }
+    instance_nodes = _instance_nodes()
     metric_mappings = _build_metric_mappings(
-        field_map, metric_rules, response_rules, instances, _instance_nodes(),
+        field_map, metric_rules, response_rules, instances, instance_nodes,
         samples_by_metric)
-    alarm_mappings = _build_alarm_mappings(field_map, alarm_rules)
+    alarm_mappings = _build_alarm_mappings(field_map, alarm_rules, instance_nodes)
 
     return {
         'version': '2.0',

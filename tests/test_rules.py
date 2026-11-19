@@ -23,6 +23,19 @@ def table():
     return MappingTable.load()
 
 
+# 节点清单样本（key-view-execute-node 的形状）：3 个 CN master + 各 DN
+NODES = [
+    {'node_id': '3881c04403394ee1b36a2bf873e69007no14', 'role': 'master',
+     'type': 'CN', 'component_id': 'cn_5001', 'node_ip': '172.16.103.126'},
+    {'node_id': '40abc563810e462a97b065e718189a59no14', 'role': 'master',
+     'type': 'CN', 'component_id': 'cn_5002', 'node_ip': '172.16.103.127'},
+    {'node_id': '5a3cd027ad5c4f9bbb67d728c6d279c0no14', 'role': 'master',
+     'type': 'CN', 'component_id': 'cn_5003', 'node_ip': '172.16.103.128'},
+    {'node_id': '3881c04403394ee1b36a2bf873e69007no14', 'role': 'master',
+     'type': 'DN', 'component_id': 'dn_6001', 'node_ip': '172.16.103.126'},
+]
+
+
 def _rule(table, code):
     rule = table.metric_rule(code)
     assert rule is not None, code
@@ -48,30 +61,46 @@ def test_substitute_placeholders_missing_dimension_raises():
 
 
 def test_build_resource_name_uses_template():
-    context = {'instance_name': 'gauss-75a2', 'node_id': 'd5284a09no14'}
-    assert build_resource_name('{instance_name}_{node_id}', context) == 'gauss-75a2_d5284a09no14'
+    context = {'host_ip': '172.16.103.151', 'node_id': 'd5284a09no14'}
+    assert build_resource_name('{host_ip}_{node_id}', context) == '172.16.103.151_d5284a09no14'
 
 
 def test_build_resource_name_missing_node_falls_back():
-    context = {'instance_name': 'gauss-75a2', 'node_id': None}
-    assert build_resource_name('{instance_name}_{node_id}', context) == 'gauss-75a2_'
+    context = {'host_ip': '172.16.103.151', 'node_id': None}
+    assert build_resource_name('{host_ip}_{node_id}', context) == '172.16.103.151_'
 
 
 def test_build_resource_name_uses_fallback_template_when_node_missing():
-    context = {'instance_name': 'gauss-75a2', 'node_id': None}
+    context = {'host_ip': '172.16.103.151', 'node_id': None}
     rendered = build_resource_name(
-        '{instance_name}_{node_id}', context, fallback_template='{instance_name}'
+        '{host_ip}_{node_id}', context, fallback_template='{host_ip}'
     )
-    assert rendered == 'gauss-75a2'
+    assert rendered == '172.16.103.151'
 
 
-def test_metric_message_falls_back_to_instance_name(table):
-    """实例级指标取不到节点时，resourceName 退到实例名，不留半截下划线。"""
+def test_build_resource_name_tries_fallback_templates_in_order():
+    """回退模板给一串时，取第一个渲染出非空结果的。"""
+    context = {'host_ip': None, 'node_id': 'node-1'}
+    rendered = build_resource_name(
+        '{host_ip}_{node_id}', context, fallback_template=['{host_ip}', '{node_id}']
+    )
+    assert rendered == 'node-1'
+
+
+def test_metric_message_falls_back_to_master_node(table):
+    """与节点无关的指标：resourceName 落到节点清单里的第一个 master CN。"""
     rule = _rule(table, 'gaussdb.server_version')
     message = build_metric_message(
-        table.field_map, rule, {}, 'V2.0-10.0.0', {'instance_name': 'gauss-75a2'}, 1
+        table.field_map,
+        rule,
+        {},
+        'V2.0-10.0.0',
+        {'instance_name': 'gauss-75a2'},
+        1,
+        nodes=NODES,
     )
-    assert message['resourceName'] == 'gauss-75a2'
+    assert message['resourceName'] == '172.16.103.126_3881c04403394ee1b36a2bf873e69007no14'
+    assert message['tags']['node_id'] == '3881c04403394ee1b36a2bf873e69007no14'
 
 
 def test_metric_message_carries_resource_tags(table):
@@ -93,6 +122,10 @@ def test_metric_message_carries_resource_tags(table):
     assert message['tags']['instance_id'] == 'iid'
     assert message['tags']['node_id'] == 'node-1'
     assert message['tags']['dimension_values'] == {'DATNAME': 'postgres'}
+    # resourceName 只表示节点 → 节点 IP + 节点 ID
+    assert message['resourceName'] == '172.16.103.151_node-1'
+    # 库名这类业务维度不再进资源名
+    assert 'postgres' not in message['resourceName']
 
 
 # -- 取值规则 ------------------------------------------------------------
@@ -270,7 +303,8 @@ def test_metric_message_has_exactly_the_documented_fields(table):
         rule,
         {},
         12,
-        {'instance_name': 'gauss-75a2', 'node_id': 'node-1'},
+        {'instance_name': 'gauss-75a2', 'node_id': 'node-1',
+         'host_ip': '172.16.103.151'},
         1793871051000,
     )
     assert set(message) == {
@@ -278,8 +312,8 @@ def test_metric_message_has_exactly_the_documented_fields(table):
     }
     assert message['metricName'] == '每秒提交事务数'
     assert message['metricCode'] == 'GAUSSDB.Number_of_ansactions_mmitted_r_cond'
-    # A 类监控指标的数据按组件（节点）展开 → 资源名带 node_id
-    assert message['resourceName'] == 'gauss-75a2_node-1'
+    # A 类监控指标的数据按组件（节点）展开 → 资源名指向那个节点
+    assert message['resourceName'] == '172.16.103.151_node-1'
     assert message['value'] == 12
     assert message['unit'] == 'tps'
     assert message['clock'] == 1793871051000
@@ -292,13 +326,15 @@ def test_metric_message_substitutes_placeholders(table):
         rule,
         {'DATNAME': 'postgres'},
         99.5,
-        {'instance_name': 'gauss-75a2', 'node_id': 'node-1'},
+        {'instance_name': 'gauss-75a2', 'node_id': 'node-1',
+         'host_ip': '172.16.103.151'},
         1793871051000,
     )
     assert message['metricName'] == '[postgres]缓存命中率'
     assert message['metricCode'] == 'GAUSSDB.[postgres]_cache_hit_ratio'
-    # 库级 + 节点级：资源名带 node_id 和库名，客户才能按台账对上
-    assert message['resourceName'] == 'gauss-75a2_node-1_postgres'
+    # 库级维度不进资源名（resourceName 只能表示节点），走 metricName/tags
+    assert message['resourceName'] == '172.16.103.151_node-1'
+    assert message['tags']['dimension_values'] == {'DATNAME': 'postgres'}
 
 
 def test_metric_message_keeps_missing_value_as_null(table):
@@ -329,13 +365,15 @@ def test_alarm_message_has_exactly_the_documented_fields(table):
         'instance_id': 'iid',
         'instance_name': 'gauss-6374',
         'node_id': 'node-1',
+        'host_ip': '172.16.103.151',
         'description': '172.16.103.128节点NTP服务状态异常。',
     }
     message = build_alarm_message(
         table.field_map,
         record,
         definition,
-        {'instance_name': 'gauss-6374', 'node_id': 'node-1'},
+        {'instance_name': 'gauss-6374', 'node_id': 'node-1',
+         'host_ip': '172.16.103.151'},
         table.alarm_rules['severity_to_priority'],
         table.alarm_rules['status_to_itscada'],
     )
@@ -350,7 +388,32 @@ def test_alarm_message_has_exactly_the_documented_fields(table):
     assert message['metricCode'] == 'gaussdb.alarm.2007010001'
     assert message['metricName'] == '节点NTP状态异常'
     assert message['value'] == '2'
-    assert message['resourceName'] == 'gauss-6374_node-1'
+    assert message['resourceName'] == '172.16.103.151_node-1'
+
+
+def test_alarm_message_without_node_falls_back_to_master_node(table):
+    """收敛条目不带节点 → 落到节点清单里的第一个 master CN。"""
+    definition = table.alarm_definition('2007010001')
+    record = {
+        'alarm_id': '2007010001',
+        'alarm_name': '节点NTP状态异常',
+        'severity': 'major',
+        'status': 'activated',
+        'first_alarm_time': 1793758083000,
+        'alarm_items_sum': 2,
+        'instance_id': 'iid',
+        'instance_name': 'gauss-6374',
+    }
+    message = build_alarm_message(
+        table.field_map,
+        record,
+        definition,
+        {'instance_name': 'gauss-6374'},
+        table.alarm_rules['severity_to_priority'],
+        table.alarm_rules['status_to_itscada'],
+        nodes=NODES,
+    )
+    assert message['resourceName'] == '172.16.103.126_3881c04403394ee1b36a2bf873e69007no14'
 
 
 def test_alarm_message_recovered_carries_recover_time(table):

@@ -88,11 +88,12 @@ def substitute_placeholders(template: str, dimensions: Mapping[str, Any]) -> str
 def build_resource_name(
     template: str,
     context: Mapping[str, Any],
-    fallback_template: Optional[str] = None,
+    fallback_template: Any = None,
 ) -> str:
     """按模板拼资源名。
 
     模板里的占位符取不到值时（None 或空串），改用回退模板；
+    回退模板可以给一串，按顺序取第一个渲染出非空结果的；
     没有回退模板时留空串占位。
     """
     missing = [False]
@@ -106,7 +107,13 @@ def build_resource_name(
 
     rendered = RESOURCE_FIELD_RE.sub(_replace, template or '')
     if missing[0] and fallback_template:
-        return build_resource_name(fallback_template, context)
+        fallbacks = (fallback_template,) if isinstance(fallback_template, str) \
+            else tuple(fallback_template)
+        for candidate in fallbacks:
+            attempt = build_resource_name(candidate, context)
+            if attempt:
+                return attempt
+        return ''
     return rendered
 
 

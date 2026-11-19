@@ -3,6 +3,7 @@
 
 from .table import AlarmDefinition, MappingError, MappingTable, MetricRule
 from .rules import CounterDeltaStore, RuleContext, RuleError, evaluate
+from .nodes import resolve_node_context, select_master_node
 from .message import build_alarm_message, build_metric_message
 
 __all__ = [
@@ -16,4 +17,6 @@ __all__ = [
     'build_alarm_message',
     'build_metric_message',
     'evaluate',
+    'resolve_node_context',
+    'select_master_node',
 ]

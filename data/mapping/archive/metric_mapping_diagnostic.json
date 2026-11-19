@@ -62,8 +62,8 @@
       "customer_type": "String",
       "required": true,
       "source_type": "assembled",
-      "source": "instances[].name",
-      "transform": "实例级接口，没有节点维度，只用实例名",
+      "source": "nodes[].node_ip + nodes[].node_id",
+      "transform": "resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；接口是实例级的，落到节点清单里的第一个 master CN",
       "source_field": null,
       "source_lookup": "由上面几个字段组装"
     },
