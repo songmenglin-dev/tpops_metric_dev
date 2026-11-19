@@ -21,8 +21,8 @@ import pytest
 
 from conftest import REPO_ROOT
 
-# 要检查的目录（相对仓库根）。tpops_kafka_collector/ 尚未建立，出现了就一起检查。
-SCAN_DIRS = ('tools', 'tests', 'data')
+# 要检查的目录（相对仓库根）。tpops_kafka_collector/ 是生产代码，必须一起检查。
+SCAN_DIRS = ('tools', 'tests', 'data', 'tpops_kafka_collector')
 SCAN_ROOT_FILES = True
 
 # CLAUDE.md「Python 3.7.9 红线」点名的禁用 API → 原因
