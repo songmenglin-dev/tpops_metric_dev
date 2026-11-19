@@ -1,0 +1,10 @@
+{
+  "status": "fail",
+  "base": "357ece4eeebff1aea7eb20423744a65de8febdf2",
+  "head": "f054d087129efa7a26077092930a9271867e568a",
+  "report": ".superpowers/sdd/reviews/wave-0-mapping-baseline.md",
+  "report_sha256": "sha256:e83ff9d8393bb009aa8f5cd127ca6052282793bd984bf85661a37bdb4225cbd2",
+  "plan_hash": "sha256:009778c0004b26f99db59f221e72779bba08828f003d6f4adf37688fcfa06424",
+  "plan_revision": 2,
+  "recorded_at": "2026-11-19T06:35:06.730Z"
+}

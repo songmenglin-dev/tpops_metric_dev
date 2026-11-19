@@ -1,0 +1,2062 @@
+# Review package: 357ece4..HEAD
+
+## Commits
+f054d08 test: 3.7 语法门禁把生产包 tpops_kafka_collector 纳入扫描范围
+f13f137 feat(mapping): 加 merged_views 段与合并形态解码
+edd7666 feat(mapping): 建 tpops_kafka_collector 生产包并复制映射层
+
+## Files changed
+ data/mapping/response_rules.json          |  92 ++++++-
+ tests/test_merged_sql_mapping.py          | 307 +++++++++++++++++++++
+ tests/test_py37_compat.py                 |   4 +-
+ tools/build_response_rules.py             |  74 ++++++
+ tpops_kafka_collector/__init__.py         |  19 ++
+ tpops_kafka_collector/errors.py           |  77 ++++++
+ tpops_kafka_collector/mapping/__init__.py |  41 +++
+ tpops_kafka_collector/mapping/decode.py   | 346 ++++++++++++++++++++++++
+ tpops_kafka_collector/mapping/message.py  | 179 +++++++++++++
+ tpops_kafka_collector/mapping/nodes.py    | 100 +++++++
+ tpops_kafka_collector/mapping/rules.py    | 425 ++++++++++++++++++++++++++++++
+ tpops_kafka_collector/mapping/table.py    | 223 ++++++++++++++++
+ 12 files changed, 1884 insertions(+), 3 deletions(-)
+
+## Diff
+diff --git a/data/mapping/response_rules.json b/data/mapping/response_rules.json
+index a9c17a6..f131111 100644
+--- a/data/mapping/response_rules.json
++++ b/data/mapping/response_rules.json
+@@ -8922,12 +8922,102 @@
+             "xact_commit",
+             "xact_rollback"
+           ],
+           "master_nodes": 3,
+           "matched_rows": 7
+         }
+       },
+       "needs_confirmation": false,
+       "note": "累计值，每秒速率需按周期差分"
+     }
+-  ]
++  ],
++  "merged_views": {
++    "stat_database": {
++      "json_column": "stat_database",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "stat_database"
++      }
++    },
++    "stat_user_tables": {
++      "json_column": "stat_user_tables",
++      "paged": true,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "stat_user_tables"
++      }
++    },
++    "activity_agg": {
++      "json_column": "activity_agg",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "activity_agg"
++      }
++    },
++    "activity_running": {
++      "json_column": "activity_running",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "activity_running"
++      }
++    },
++    "activity_top10": {
++      "json_column": "activity_top10",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "activity_top10"
++      }
++    },
++    "locks": {
++      "json_column": "locks",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "locks"
++      }
++    },
++    "bgwriter": {
++      "json_column": "bgwriter",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "bgwriter"
++      }
++    },
++    "settings": {
++      "json_column": "settings",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "settings"
++      }
++    },
++    "database": {
++      "json_column": "database",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "database"
++      }
++    },
++    "prepared_xacts": {
++      "json_column": "prepared_xacts",
++      "paged": false,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "prepared_xacts"
++      }
++    },
++    "dbstat_sum": {
++      "json_column": "dbstat_sum",
++      "paged": true,
++      "sql_ref": {
++        "catalog": "data/merged_sql/sql_merge.sql",
++        "sql_key": "dbstat_sum"
++      }
++    }
++  }
+ }
+diff --git a/tests/test_merged_sql_mapping.py b/tests/test_merged_sql_mapping.py
+new file mode 100644
+index 0000000..4917774
+--- /dev/null
++++ b/tests/test_merged_sql_mapping.py
+@@ -0,0 +1,307 @@
++# -*- coding: utf-8 -*-
++"""合并 SQL（「一行 N 个 json_agg 列」）的解码与分页拼接。
++
++**这个文件守的是本项目最危险的一种失败**：把合并形态的返回体当成行列表，
++82 个 B 类指标会**静默产出 0 / None / 空列表**且不报错
++（详见 ``changes/tpops-kafka-collector/specs/mapping-and-rules/spec.md``
++的「合并 SQL 返回形态的解码」）。
++
++覆盖：
++- 真实留档 ``data/merged_sql/sql_merge_probe_result.json`` 能解出 11 个视图的行列表；
++- 空视图（``''`` / ``null``）→ ``[]``，不抛异常；
++- 坏 JSON 列值 → ``DecodeError``（不静默返回 ``[]`` 或 0）；
++- ``result`` 不是恰好 1 行 → ``DecodeError``，并说明期望行数与实际行数；
++- ``DecodeError`` 归属 ``MappingError`` → 不可重试；
++- 既有 per-view 形态（``result`` 直接是行列表）仍按原样解。
++"""
++import io
++import json
++import os
++
++import pytest
++
++from conftest import DATA_DIR, REPO_ROOT
++
++from tpops_kafka_collector.errors import MappingError, is_retryable
++from tpops_kafka_collector.mapping.decode import (
++    DecodeError,
++    decode,
++    decode_merged,
++    merge_pages,
++)
++
++MERGED_DIR = os.path.join(DATA_DIR, 'merged_sql')
++PROBE_PATH = os.path.join(MERGED_DIR, 'sql_merge_probe_result.json')
++MERGED_SQL_PATH = os.path.join(MERGED_DIR, 'merged_sql.json')
++RULES_PATH = os.path.join(DATA_DIR, 'mapping', 'response_rules.json')
++RESPONSE_DIR = os.path.join(DATA_DIR, 'metric_response')
++
++
++def _load(path):
++    with io.open(path, encoding='utf-8') as fp:
++        return json.load(fp)
++
++
++@pytest.fixture(scope='module')
++def merged_views():
++    """映射表里的 merged_views 段（由生成器产出）。"""
++    payload = _load(RULES_PATH)
++    views = payload.get('merged_views')
++    assert views, 'response_rules.json 里没有 merged_views 段'
++    return views
++
++
++@pytest.fixture(scope='module')
++def probe_body():
++    """真实留档的合并形态返回体：``{"result": <平台返回的 JSON 字符串>}``。"""
++    probe = _load(PROBE_PATH)
++    node = probe['nodes'][sorted(probe['nodes'])[0]]
++    return {'result': node['result']}
++
++
++# -- 真实留档：解出每个视图的行列表 ---------------------------------------
++
++def test_probe_result_decodes_into_one_row_list_per_view(probe_body, merged_views):
++    merged = decode_merged(probe_body, merged_views)
++    assert set(merged.rows_by_key) == set(merged_views)
++    assert set(merged.by_sql_key) == set(merged_views)
++    assert merged.rows_by_key['stat_database']
++    assert merged.rows_by_key['stat_user_tables']
++
++
++def test_decoded_rows_are_dicts_not_json_strings(probe_body, merged_views):
++    """回归的核心：列值必须被解成行，不是「整段 JSON 字符串」。"""
++    merged = decode_merged(probe_body, merged_views)
++    for view, rows in merged.rows_by_key.items():
++        for row in rows:
++            assert isinstance(row, dict), view
++            assert not isinstance(row, dict) or not all(
++                isinstance(value, str) and value.startswith('[') for value in row.values()
++            ), view
++    row = merged.rows_by_key['stat_database'][0]
++    assert 'datname' in row
++    assert 'xact_commit' in row
++
++
++def test_view_context_rows_match_rows_by_key(probe_body, merged_views):
++    merged = decode_merged(probe_body, merged_views)
++    for view, ctx in merged.by_sql_key.items():
++        assert tuple(ctx.rows) == merged.rows_by_key[view], view
++
++
++def test_context_carries_all_views_for_cross_view_rules(probe_body, merged_views):
++    """跨视图比率（ratio_across）要能从上下文里取到别的视图的行。"""
++    merged = decode_merged(probe_body, merged_views)
++    ctx = merged.by_sql_key['activity_agg']
++    assert ctx.rows_by_key.get('stat_database')
++    assert ctx.rows_by_key.get('activity_agg')
++
++
++# -- 空视图 ---------------------------------------------------------------
++
++@pytest.mark.parametrize('empty_value', ['', None])
++def test_empty_view_decodes_to_empty_list(empty_value):
++    views = {'stat_database': {'json_column': 'stat_database', 'paged': False}}
++    body = {'result': json.dumps([{'stat_database': empty_value}])}
++    merged = decode_merged(body, views)
++    assert merged.rows_by_key['stat_database'] == ()
++    assert merged.by_sql_key['stat_database'].rows == ()
++
++
++def test_empty_view_among_other_views_does_not_break_others():
++    views = {
++        'stat_database': {'json_column': 'stat_database', 'paged': False},
++        'locks': {'json_column': 'locks', 'paged': False},
++    }
++    body = {'result': json.dumps([
++        {'stat_database': '', 'locks': '[{"mode":"ExclusiveLock"}]'},
++    ])}
++    merged = decode_merged(body, views)
++    assert merged.rows_by_key['stat_database'] == ()
++    assert merged.rows_by_key['locks'][0]['mode'] == 'ExclusiveLock'
++
++
++# -- 坏数据 ---------------------------------------------------------------
++
++MALFORMED_VIEW_JSON = '[{"datname": '
++
++
++def test_malformed_column_value_raises_decode_error():
++    views = {'stat_database': {'json_column': 'stat_database', 'paged': False}}
++    body = {'result': json.dumps([{'stat_database': MALFORMED_VIEW_JSON}])}
++    with pytest.raises(DecodeError):
++        decode_merged(body, views)
++
++
++def test_malformed_column_value_does_not_silently_return_empty():
++    views = {'stat_database': {'json_column': 'stat_database', 'paged': False}}
++    body = {'result': json.dumps([{'stat_database': MALFORMED_VIEW_JSON}])}
++    try:
++        merged = decode_merged(body, views)
++    except DecodeError:
++        return
++    pytest.fail('坏 JSON 静默返回了 %r' % (merged.rows_by_key.get('stat_database'),))
++
++
++@pytest.mark.parametrize('result_payload,actual_rows', [
++    ('[]', 0),
++    ('[{}, {}]', 2),
++])
++def test_result_not_exactly_one_row_raises_decode_error(result_payload, actual_rows):
++    views = {'stat_database': {'json_column': 'stat_database', 'paged': False}}
++    body = {'result': result_payload}
++    with pytest.raises(DecodeError) as excinfo:
++        decode_merged(body, views)
++    message = str(excinfo.value)
++    assert '1' in message
++    assert str(actual_rows) in message
++
++
++def test_missing_view_column_raises_decode_error():
++    views = {'stat_database': {'json_column': 'stat_database', 'paged': False}}
++    body = {'result': json.dumps([{'locks': '[]'}])}
++    with pytest.raises(DecodeError):
++        decode_merged(body, views)
++
++
++def test_decode_error_is_mapping_error_and_not_retryable():
++    assert issubclass(DecodeError, MappingError)
++    assert not is_retryable(DecodeError('坏了'))
++
++
++# -- 分页拼接 -------------------------------------------------------------
++
++def _page(view_rows):
++    return {'result': json.dumps([view_rows])}
++
++
++def test_merge_pages_concatenates_only_paged_views():
++    views = {
++        'stat_user_tables': {'json_column': 'stat_user_tables', 'paged': True},
++        'stat_database': {'json_column': 'stat_database', 'paged': False},
++    }
++    page1 = _page({
++        'stat_user_tables': '[{"relname":"t1"}]',
++        'stat_database': '[{"datname":"lz"}]',
++    })
++    page2 = _page({
++        'stat_user_tables': '[{"relname":"t2"}]',
++        'stat_database': '[{"datname":"lz"}]',
++    })
++    merged = merge_pages([page1, page2], views)
++    assert len(merged.rows_by_key['stat_user_tables']) == 2
++    assert merged.rows_by_key['stat_user_tables'][1]['relname'] == 't2'
++    # 固定视图只取第一页，不累加
++    assert len(merged.rows_by_key['stat_database']) == 1
++
++
++def test_merge_pages_single_page_equals_page():
++    views = {
++        'stat_user_tables': {'json_column': 'stat_user_tables', 'paged': True},
++        'stat_database': {'json_column': 'stat_database', 'paged': False},
++    }
++    page1 = _page({
++        'stat_user_tables': '[{"relname":"t1"}]',
++        'stat_database': '[{"datname":"lz"}]',
++    })
++    merged = merge_pages([page1], views)
++    assert len(merged.rows_by_key['stat_user_tables']) == 1
++    assert len(merged.rows_by_key['stat_database']) == 1
++
++
++def test_merge_pages_with_no_page_raises_decode_error():
++    views = {'stat_database': {'json_column': 'stat_database', 'paged': False}}
++    with pytest.raises(DecodeError):
++        merge_pages([], views)
++
++
++# -- 映射表里的 merged_views 段 -------------------------------------------
++
++def test_merged_views_covers_every_view_of_merged_sql(merged_views):
++    merged_sql = _load(MERGED_SQL_PATH)
++    sql_keys = [batch['sql_key'] for batch in merged_sql['batches']]
++    assert sorted(merged_views) == sorted(sql_keys)
++    assert len(merged_views) == 11
++
++
++def test_merged_views_entries_have_the_three_fields(merged_views):
++    for name, spec in merged_views.items():
++        assert spec['json_column'] == name
++        assert isinstance(spec['paged'], bool)
++        assert 'sql_merge.sql' in spec['sql_ref']['catalog']
++
++
++def test_merged_views_paged_flags_come_from_merged_sql_paging(merged_views):
++    merged_sql = _load(MERGED_SQL_PATH)
++    paging_views = merged_sql.get('paging', {}).get('views', {})
++    for name, spec in merged_views.items():
++        expected = bool(paging_views.get(name, {}).get('paged', False))
++        assert spec['paged'] == expected, name
++    assert sorted(n for n, s in merged_views.items() if s['paged']) == [
++        'dbstat_sum', 'stat_user_tables',
++    ]
++
++
++def test_existing_shapes_and_rules_are_untouched():
++    """既有 11 个 cmd_rows_* 形状与 98 条规则一个字都不能变。"""
++    payload = _load(RULES_PATH)
++    cmd_shapes = [
++        (name, shape) for name, shape in payload['shapes'].items()
++        if name.startswith('cmd_rows_')
++    ]
++    assert len(cmd_shapes) == 11
++    for name, shape in cmd_shapes:
++        assert shape['kind'] == 'rows_from_result', name
++        assert shape['payload_path'] == ['result'], name
++    assert len(payload['rules']) == 98
++
++
++# -- 既有 per-view 形态保持可解 -------------------------------------------
++
++def test_old_per_view_form_still_decodes():
++    """旧形态（``result`` 直接是行列表）必须原样解，不能被合并形态的改动带坏。"""
++    payload = _load(RULES_PATH)
++    rule = None
++    for item in payload['rules']:
++        if item['metric_code'] == 'gaussdb.Deadlocks':
++            rule = item
++            break
++    assert rule is not None
++    steps = _load(os.path.join(RESPONSE_DIR, rule['evidence']['sample_file']))
++    body = steps[rule['evidence']['terminal_step']]['response_body']
++    shape = payload['shapes'][rule['shape']]
++    ctx = decode(body, shape, rule['locate'], now_ms=1760000000000)
++    assert ctx.rows
++    assert 'deadlocks' in ctx.rows[0]
++
++
++def test_old_per_view_form_is_not_accepted_as_merged_form():
++    """旧形态的 ``result`` 有多行 → 走合并路径必须报错，不能「猜」。"""
++    views = {'stat_database': {'json_column': 'stat_database', 'paged': False}}
++    body = {'result': '[{"a":1},{"a":2}]'}
++    with pytest.raises(DecodeError):
++        decode_merged(body, views)
++
++
++def test_package_per_view_path_replays_every_command_center_sample():
++    """包内的 per-view 解码路径逐条回放旧留档，行数必须与留档一致。
++
++    这是「复制映射层没改坏」的守卫：合并形态的改造只应新增一条路径，
++    既有路径的行为一个字都不能变。
++    """
++    payload = _load(RULES_PATH)
++    checked = 0
++    for rule in payload['rules']:
++        if rule['channel'] != 'command_center_sql':
++            continue
++        evidence = rule['evidence']
++        steps = _load(os.path.join(RESPONSE_DIR, evidence['sample_file']))
++        body = steps[evidence['terminal_step']]['response_body']
++        shape = payload['shapes'][rule['shape']]
++        ctx = decode(body, shape, rule['locate'], now_ms=1760000000000)
++        expected = evidence.get('observed', {}).get('row_count')
++        if expected is None:
++            continue
++        assert len(ctx.rows) == expected, rule['metric_code']
++        checked += 1
++    assert checked >= 80, checked
+diff --git a/tests/test_py37_compat.py b/tests/test_py37_compat.py
+index 3296eae..7b75d54 100644
+--- a/tests/test_py37_compat.py
++++ b/tests/test_py37_compat.py
+@@ -14,22 +14,22 @@
+ 
+ 只用标准库 ast，**在 3.13 上也能查出 3.7 的问题**，所以这条门禁在任何机器上都有意义。
+ """
+ import ast
+ import os
+ 
+ import pytest
+ 
+ from conftest import REPO_ROOT
+ 
+-# 要检查的目录（相对仓库根）。tpops_kafka_collector/ 尚未建立，出现了就一起检查。
+-SCAN_DIRS = ('tools', 'tests', 'data')
++# 要检查的目录（相对仓库根）。tpops_kafka_collector/ 是生产代码，必须一起检查。
++SCAN_DIRS = ('tools', 'tests', 'data', 'tpops_kafka_collector')
+ SCAN_ROOT_FILES = True
+ 
+ # CLAUDE.md「Python 3.7.9 红线」点名的禁用 API → 原因
+ BANNED_ATTRIBUTES = {
+     'cached_property': 'functools.cached_property 是 3.8+',
+     'removeprefix': 'str.removeprefix 是 3.9+',
+     'removesuffix': 'str.removesuffix 是 3.9+',
+     'to_thread': 'asyncio.to_thread 是 3.9+',
+ }
+ 
+diff --git a/tools/build_response_rules.py b/tools/build_response_rules.py
+index e30f233..816f4d9 100644
+--- a/tools/build_response_rules.py
++++ b/tools/build_response_rules.py
+@@ -457,52 +457,126 @@ def _business_of(rule):
+         'placeholders': rule.get('placeholders', []) or [],
+         'value_type': rule.get('value_type'),
+         'unit': rule.get('unit'),
+         'collect_cycle': rule.get('collect_cycle', {}) or {},
+         'time_policy': time_policy,
+         'missing': 'null',
+         'idempotency': IDEMPOTENCY['metric'],
+     }
+ 
+ 
++def _merged_view_names(sql_text):
++    """从合并 SQL 里解析出视图名（``json_agg(t) ... as <视图名>`` 的别名）。
++
++    视图列的写法是 ``(select json_agg(t) from ( <内层 SQL> ) t) as <视图名>``，
++    内层 SQL 里也有括号，正则按括号配平扫一遍才准。
++    """
++    names = []
++    marker = 'json_agg(t)'
++    position = 0
++    while True:
++        start = sql_text.find(marker, position)
++        if start < 0:
++            break
++        position = start + len(marker)
++        depth = 0
++        index = position
++        while index < len(sql_text):
++            char = sql_text[index]
++            if char == '(':
++                depth += 1
++            elif char == ')':
++                depth -= 1
++                if depth < 0:
++                    break
++            index += 1
++        match = re.match(r'\s+as\s+([a-z_][a-z0-9_]*)', sql_text[index + 1:])
++        if not match:
++            raise BuildError('合并 SQL 里有一处 json_agg 没有 as 别名')
++        names.append(match.group(1))
++    return names
++
++
++def _build_merged_views(merged):
++    """生成 ``merged_views`` 段：合并 SQL 的 11 个视图。
++
++    视图名以 ``merged_sql.json`` 的 ``batches[].sql_key`` 为准，
++    并与 ``sql_merge.sql`` 里实际的列别名**交叉校验** —— 对不上就报错退出，
++    绝不静默产出一份与 SQL 不匹配的映射表。
++
++    ``paged`` 取自 ``merged_sql.json`` 的 ``paging.views[].paged``，**不重新发明**；
++    没在该段里出现的视图按 ``paged = false`` 处理（固定视图每页全量重复取，
++    累加会翻倍）。
++    """
++    batches = merged.get('batches', [])
++    sql_keys = [batch['sql_key'] for batch in batches]
++    if len(set(sql_keys)) != len(sql_keys):
++        raise BuildError('merged_sql.json 的 sql_key 有重复：%s' % sql_keys)
++
++    merge_sql_path = os.path.join(REPO_ROOT, 'data', 'merged_sql', 'sql_merge.sql')
++    with io.open(merge_sql_path, encoding='utf-8') as fp:
++        sql_text = fp.read()
++    sql_view_names = _merged_view_names(sql_text)
++    if sorted(sql_view_names) != sorted(sql_keys):
++        raise BuildError(
++            'sql_merge.sql 的视图名与 merged_sql.json 的 sql_key 对不上：'
++            'SQL 里是 %s，JSON 里是 %s' % (sorted(sql_view_names), sorted(sql_keys))
++        )
++
++    paging_views = (merged.get('paging') or {}).get('views') or {}
++    views = {}
++    for sql_key in sql_keys:
++        views[sql_key] = {
++            'json_column': sql_key,
++            'paged': bool((paging_views.get(sql_key) or {}).get('paged', False)),
++            'sql_ref': {
++                'catalog': 'data/merged_sql/sql_merge.sql',
++                'sql_key': sql_key,
++            },
++        }
++    return views
++
++
+ def build():
+     metric_rules = _read_json(METRIC_RULES_PATH)['rules']
+     manifest = _read_json(os.path.join(RESPONSE_DIR, '000manifest.json'))
+     merged = _read_json(MERGED_SQL_PATH)
+     merged_sql = dict((b['sql_key'], b.get('sql')) for b in merged.get('batches', []))
+ 
+     samples = {}
+     for item in manifest['metrics']:
+         path = os.path.join(RESPONSE_DIR, item['file'])
+         samples[item['customer_metric']] = {
+             'file': item['file'],
+             'steps': _read_json(path),
+         }
+ 
+     shapes, rules = _build_shapes_and_rules(metric_rules, samples, merged_sql)
++    merged_views = _build_merged_views(merged)
+     return {
+         'version': '1.0',
+         'generated_by': 'tools/build_response_rules.py',
+         'generated_from': {
+             'metric_rules': 'data/mapping/metric_rules.json',
+             'response_samples': 'data/metric_response/',
+             'merged_sql': 'data/merged_sql/merged_sql.json',
+         },
+         'note': (
+             '以实测 response_body 为基准的映射条件。extract 段（shape + locate）'
+             '回答"从响应体的哪一段取哪一列"，business 段回答"取到之后怎么算"；'
+             'evidence 段记录这份条件是在哪个样本、哪些列上验证的。'
+             '列名与响应体的匹配在生成期已校验（开发方案 §5.6.4）。'
+         ),
+         'channels': CHANNELS,
+         'shapes': shapes,
+         'rules': rules,
++        'merged_views': merged_views,
+     }
+ 
+ 
+ def main(argv):
+     check_only = '--check' in argv
+     payload = build()
+     text = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=False) + '\n'
+     if check_only:
+         if not os.path.exists(OUTPUT_PATH):
+             print('response_rules.json 不存在')
+diff --git a/tpops_kafka_collector/__init__.py b/tpops_kafka_collector/__init__.py
+new file mode 100644
+index 0000000..c17de92
+--- /dev/null
++++ b/tpops_kafka_collector/__init__.py
+@@ -0,0 +1,19 @@
++# -*- coding: utf-8 -*-
++"""GaussDB 监控/告警数据采集端（生产包）。
++
++**这是本项目唯一的生产代码包** —— ``tools/`` 与 ``data/`` 只作参考与回归样本，
++运行时不从那里 import（见 ``changes/tpops-kafka-collector/design.md`` 决策 2）。
++
++分层（依赖单向）::
++
++    main → scheduler → collectors → tpops → client
++                        ↘ mapping → models
++
++- ``tpops_kafka_collector.mapping``：映射层 —— 客户口径的规则执行与响应解码；
++- ``tpops_kafka_collector.errors``：异常体系与「可重试 / 不可重试」判定。
++"""
++from __future__ import print_function
++
++__all__ = ['__version__']
++
++__version__ = '0.1.0'
+diff --git a/tpops_kafka_collector/errors.py b/tpops_kafka_collector/errors.py
+new file mode 100644
+index 0000000..c2d6c5b
+--- /dev/null
++++ b/tpops_kafka_collector/errors.py
+@@ -0,0 +1,77 @@
++# -*- coding: utf-8 -*-
++"""采集端的异常体系（含「可重试 / 不可重试」语义）。
++
++对应开发方案 §5.7。**重试判定集中在这里**，不散落到各模块：
++``is_retryable(exc)`` 是唯一的判定入口，重试框架（``retry.py``）只认它。
++
++铁律两条：
++
++- **认证失败绝不重试** —— 平台登录失败会累计 ``login_failed_attempts`` 并锁号，
++  盲目重试等于自己把账号锁死（开发方案 §2.2.9 坑 17）。
++- **映射 / 协议类错误不重试** —— 响应结构与预期不符要人工介入改代码，
++  重试只会把同一个坏数据重复拉一遍。
++"""
++from __future__ import print_function
++
++from typing import Tuple
++
++__all__ = [
++    'AuthError',
++    'MappingError',
++    'ProduceError',
++    'ProtocolError',
++    'TransientError',
++    'TpopsError',
++    'is_retryable',
++]
++
++
++class TpopsError(RuntimeError):
++    """所有平台层错误的基类。"""
++
++
++class AuthError(TpopsError):
++    """认证失败 —— 不可重试（重试会累计 login_failed_attempts 并锁号）。"""
++
++
++class TransientError(TpopsError):
++    """网络/5xx/超时 —— 可重试。"""
++
++
++class ProtocolError(TpopsError):
++    """平台返回结构与预期不符 —— 不可重试（需要人工介入改代码）。"""
++
++
++class MappingError(TpopsError):
++    """映射表与实际数据不匹配 —— 不可重试。"""
++
++
++class ProduceError(TpopsError):
++    """Kafka 投递失败 —— 可重试，且不推进水位。"""
++
++
++# 不可重试的类型：先判它们（明确排除），再判可重试的。
++NON_RETRYABLE = (AuthError, ProtocolError, MappingError)  # type: Tuple[type, ...]
++RETRYABLE = (TransientError, ProduceError)  # type: Tuple[type, ...]
++
++
++def is_retryable(exc: BaseException) -> bool:
++    """这个异常该不该重试。
++
++    判定表（开发方案 §5.7）::
++
++        AuthError                        ✗
++        ProtocolError                    ✗
++        MappingError                     ✗
++        TransientError                   ✓  指数退避 + 抖动
++        ProduceError                     ✓  指数退避 + 抖动
++        requests.Timeout / ConnectionError ✓  指数退避 + 抖动
++
++    ``requests`` 的异常用类名判定，避免为了判一个异常类型就把
++    ``requests`` 硬绑到这层（采集端其它模块也不一定需要它）。
++    """
++    if isinstance(exc, NON_RETRYABLE):
++        return False
++    if isinstance(exc, RETRYABLE):
++        return True
++    return type(exc).__name__ in ('Timeout', 'ConnectionError')
+diff --git a/tpops_kafka_collector/mapping/__init__.py b/tpops_kafka_collector/mapping/__init__.py
+new file mode 100644
+index 0000000..eff9a24
+--- /dev/null
++++ b/tpops_kafka_collector/mapping/__init__.py
+@@ -0,0 +1,41 @@
++# -*- coding: utf-8 -*-
++"""映射层：客户指标规则 → ITSCADA 字段。
++
++与 ``tools/mappings/`` 同源。**生产包里的这一份才是运行时用的**；
++``tools/mappings/`` 在切依赖后删除（``changes/tpops-kafka-collector/design.md`` 决策 2）。
++
++两条解码路径（设计决策 3）：
++- ``decode``：既有 per-view 形态（``result`` 直接是行列表）；
++- ``decode_merged`` / ``merge_pages``：合并 SQL 形态（一行 N 个 ``json_agg`` 列）。
++"""
++
++from .table import AlarmDefinition, MappingTable, MetricRule
++from .rules import CounterDeltaStore, RuleContext, RuleError, evaluate
++from .nodes import resolve_node_context, select_master_node
++from .message import build_alarm_message, build_metric_message
++from .decode import (
++    DecodeError,
++    MergedContexts,
++    decode_merged,
++    merge_pages,
++)
++from ..errors import MappingError
++
++__all__ = [
++    'AlarmDefinition',
++    'CounterDeltaStore',
++    'DecodeError',
++    'MappingError',
++    'MappingTable',
++    'MergedContexts',
++    'MetricRule',
++    'RuleContext',
++    'RuleError',
++    'build_alarm_message',
++    'build_metric_message',
++    'decode_merged',
++    'evaluate',
++    'merge_pages',
++    'resolve_node_context',
++    'select_master_node',
++]
+diff --git a/tpops_kafka_collector/mapping/decode.py b/tpops_kafka_collector/mapping/decode.py
+new file mode 100644
+index 0000000..ab1d249
+--- /dev/null
++++ b/tpops_kafka_collector/mapping/decode.py
+@@ -0,0 +1,346 @@
++# -*- coding: utf-8 -*-
++"""把实测 response_body 解成规则引擎要的 RuleContext。
++
++**为什么需要这一层**：映射规则里写的是"取哪个平台的哪个列"，
++但采集端拿到的第一手数据是 HTTP 响应体 —— 中间隔着
++「命令中心 result 是 JSON 字符串」「监控指标是按组件展开的 series」
++「诊断接口返回的是列表」这些结构差异。缺了这一层，
++每个采集器都要各写一遍解包，规则里的列名也就无从校验。
++
++映射条件写在 ``data/mapping/response_rules.json``：
++- **shape**（形状）决定"从响应体的哪一段取"；
++- **locate**（定位）决定"取这一段里的哪部分"，是逐指标的条件。
++
++本模块只认这两样，不含任何业务计算 —— 业务计算在 ``rules.py``。
++
++**两条解码路径**（对应设计决策 3）：
++
++- 路径 P（既有）：``decode(body, shape, locate)`` —— ``result`` 直接是行列表
++  （旧的 11 条命令中心 SQL 形态、监控指标、诊断、实例接口）。
++- 路径 M（新增，生产路径）：``decode_merged(body, views)`` / ``merge_pages(...)``
++  —— ``result`` 是**一行**，该行的每个键是一个视图名，值是该视图的 JSON 字符串
++  （「一条合并 SQL」的形态）。
++
++两条路径**不共用形状**：一个 shape 只对应一种 body，不靠自动探测区分。
++把合并形态当行列表用会**静默产出 0**（82 个 B 类指标全错且不报错），
++详见 ``changes/tpops-kafka-collector/specs/mapping-and-rules/spec.md``。
++"""
++from __future__ import print_function
++
++import json
++from dataclasses import dataclass
++from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
++
++from .rules import RuleContext
++from ..errors import MappingError
++
++__all__ = ['DecodeError', 'MergedContexts', 'decode', 'decode_merged', 'merge_pages']
++
++
++class DecodeError(MappingError):
++    """响应体不符合规则声明的形状。
++
++    继承 ``MappingError``（平台层异常体系）→ **不可重试**：
++    响应结构与预期不符要人工介入，重试只会重复拉同一个坏数据。
++    """
++
++
++def decode(
++    body: Any,
++    shape: Mapping[str, Any],
++    locate: Optional[Mapping[str, Any]] = None,
++    now_ms: int = 0,
++) -> RuleContext:
++    """按 shape 声明把响应体解成 RuleContext。
++
++    :param body: HTTP 响应体（已 json.loads 的 dict）
++    :param shape: 形状声明，含 ``kind``
++    :param locate: 逐指标定位条件
++    :param now_ms: 采集完成时刻（毫秒），缺值回退时用它
++    """
++    locate = locate or {}
++    kind = shape.get('kind')
++    if kind == 'rows_from_result':
++        rows = _rows_from_result(body, shape)
++        return RuleContext(rows=tuple(rows), now_ms=now_ms)
++    if kind == 'rows_from_collection':
++        collection = shape.get('collection') or locate.get('collection')
++        if not collection:
++            raise DecodeError('rows_from_collection 形状缺 collection')
++        rows = _as_rows(_dig(body, [collection], shape))
++        return RuleContext(
++            rows=tuple(rows),
++            collections={collection: tuple(rows)},
++            now_ms=now_ms,
++        )
++    if kind == 'series_from_metric_infos':
++        series, timestamps = _series_from_metric_infos(body, locate)
++        return RuleContext(
++            series=series,
++            timestamps=timestamps,
++            now_ms=now_ms,
++        )
++    if kind == 'instance_from_list':
++        collection = shape.get('collection') or locate.get('collection')
++        rows = _as_rows(_dig(body, [collection], shape))
++        instance = dict(rows[0]) if rows else {}
++        return RuleContext(
++            instance=instance,
++            rows=tuple(rows),
++            collections={collection: tuple(rows)},
++            now_ms=now_ms,
++        )
++    raise DecodeError('未知的解码形状：%s' % kind)
++
++
++# -- 合并形态（路径 M）--------------------------------------------------
++
++@dataclass(frozen=True)
++class MergedContexts:
++    """「一条合并 SQL」的解码结果。
++
++    - ``by_sql_key``：视图名 → 该视图的 ``RuleContext``（``rows`` 是该视图的行）；
++    - ``rows_by_key``：视图名 → 该视图的行元组（跨视图规则直接用这个）。
++
++    ``by_sql_key`` 里每个上下文的 ``rows_by_key`` **也填好了全部视图**，
++    这样 ``ratio_across`` 这类跨视图规则不必再单独拿一份数据。
++    """
++
++    by_sql_key: Mapping[str, RuleContext]
++    rows_by_key: Mapping[str, Tuple[Mapping[str, Any], ...]]
++
++
++def decode_merged(
++    body: Any,
++    views: Mapping[str, Any],
++    now_ms: int = 0,
++) -> MergedContexts:
++    """把「一行 N 个 json_agg 列」的合并返回体解成每个视图的行列表。
++
++    :param body: HTTP 响应体（``{"result": "<平台的 JSON 字符串>"}``）
++    :param views: ``merged_views`` 段：视图名 → ``{json_column, paged, sql_ref}``
++    :param now_ms: 采集完成时刻（毫秒）
++
++    形态（实测）::
++
++        result = '[{"stat_database":"[{\\"datname\\":\\"lz\\",...}]", ...}]'
++
++    ``result`` 解析后是**恰好一行**，该行的每个键是一个视图名，值是该视图的
++    JSON 字符串。**不能把这一行当行列表返回** —— 那样每个视图的列拿到的是
++    一整段 JSON 字符串，取值时全部变成 0/None/空列表且不报错。
++
++    - 视图的列值为 ``''`` 或 ``null``（``json_agg`` 零行 → NULL → 平台渲染成空串）
++      → 该视图解成空列表 ``[]``，不抛异常；
++    - 列值不是合法 JSON → 抛 ``DecodeError``（不静默返回空列表）；
++    - ``result`` 不是恰好 1 行 → 抛 ``DecodeError``，并说明期望与实际行数。
++    """
++    row = _merged_row(body)
++    rows_by_key = {}  # type: Dict[str, Tuple[Mapping[str, Any], ...]]
++    for name in views:
++        column = _json_column_of(views[name], name)
++        rows_by_key[name] = _rows_of_view(row, name, column)
++    return _build_merged_contexts(rows_by_key, now_ms)
++
++
++def merge_pages(
++    bodies: Sequence[Any],
++    views: Mapping[str, Any],
++    now_ms: int = 0,
++) -> MergedContexts:
++    """把多页返回体按视图拼成完整视图行列表。
++
++    **只有声明 ``paged = true`` 的视图做跨页拼接**；固定视图只取第一页
++    （每页都会重复返回同样的全量数据，累加会翻倍）。
++
++    拼接放在映射层而不是采集端，是因为 ``row_policy: sum`` 的语义是
++    「整视图求和」—— 逐页解码逐页求值会**按页出值**，表一多就静默出错。
++    """
++    if not bodies:
++        raise DecodeError('没有可拼接的返回体')
++    per_page = [decode_merged(body, views, now_ms) for body in bodies]
++    rows_by_key = {}  # type: Dict[str, Tuple[Mapping[str, Any], ...]]
++    for name in views:
++        if _is_paged(views[name]):
++            merged = []  # type: List[Mapping[str, Any]]
++            for page in per_page:
++                merged.extend(page.rows_by_key.get(name, ()))
++            rows_by_key[name] = tuple(merged)
++        else:
++            rows_by_key[name] = per_page[0].rows_by_key.get(name, ())
++    return _build_merged_contexts(rows_by_key, now_ms)
++
++
++def _build_merged_contexts(
++    rows_by_key: Mapping[str, Tuple[Mapping[str, Any], ...]],
++    now_ms: int,
++) -> MergedContexts:
++    """给每个视图造一个上下文，并把**全部视图**的行填进 ``rows_by_key``。"""
++    by_sql_key = {}  # type: Dict[str, RuleContext]
++    for name, rows in rows_by_key.items():
++        by_sql_key[name] = RuleContext(
++            rows=rows,
++            rows_by_key=rows_by_key,
++            now_ms=now_ms,
++        )
++    return MergedContexts(by_sql_key=by_sql_key, rows_by_key=rows_by_key)
++
++
++def _merged_row(body: Any) -> Mapping[str, Any]:
++    """取出合并形态里的那一行（``result`` 解析后必须恰好一行）。"""
++    if not isinstance(body, Mapping):
++        raise DecodeError('合并形态的响应体必须是对象，实际是 %s' % type(body).__name__)
++    if 'result' not in body:
++        raise DecodeError('合并形态的响应体里没有 result')
++    payload = body['result']
++    if isinstance(payload, (bytes, str)):
++        text = payload.decode('utf-8') if isinstance(payload, bytes) else payload
++        if not text.strip():
++            raise DecodeError('合并形态的 result 是空字符串，期望 1 行，实际 0 行')
++        try:
++            payload = json.loads(text)
++        except ValueError as exc:
++            raise DecodeError('result 不是合法 JSON：%s' % exc)
++    if not isinstance(payload, list):
++        raise DecodeError('合并形态的 result 期望行列表，实际是 %s' % type(payload).__name__)
++    if len(payload) != 1:
++        raise DecodeError(
++            '合并形态的 result 期望 1 行，实际 %d 行' % len(payload)
++        )
++    row = payload[0]
++    if not isinstance(row, Mapping):
++        raise DecodeError('合并形态的那一行必须是对象，实际是 %s' % type(row).__name__)
++    return row
++
++
++def _rows_of_view(
++    row: Mapping[str, Any],
++    name: str,
++    column: str,
++) -> Tuple[Mapping[str, Any], ...]:
++    """取一个视图的行列表。空视图 → 空列表；坏 JSON → 抛异常。"""
++    if column not in row:
++        raise DecodeError('合并形态的那一行里没有视图 %s 的列 %s' % (name, column))
++    value = row[column]
++    if value is None:
++        return ()
++    if isinstance(value, (bytes, str)):
++        text = value.decode('utf-8') if isinstance(value, bytes) else value
++        if not text.strip():
++            # json_agg 对零行返回 NULL，平台渲染成空字符串
++            return ()
++        try:
++            value = json.loads(text)
++        except ValueError as exc:
++            raise DecodeError('视图 %s 的列 %s 不是合法 JSON：%s' % (name, column, exc))
++    if value is None:
++        return ()
++    if not isinstance(value, list):
++        raise DecodeError(
++            '视图 %s 的列 %s 期望行列表，实际是 %s' % (name, column, type(value).__name__)
++        )
++    rows = []  # type: List[Mapping[str, Any]]
++    for item in value:
++        if not isinstance(item, Mapping):
++            raise DecodeError(
++                '视图 %s 的列 %s 里有非对象的行：%s' % (name, column, type(item).__name__)
++            )
++        rows.append(item)
++    return tuple(rows)
++
++
++def _json_column_of(spec: Any, name: str) -> str:
++    """视图在合并那一行里对应的列名（默认与视图同名）。"""
++    if isinstance(spec, Mapping):
++        column = spec.get('json_column')
++        if column:
++            return str(column)
++    return name
++
++
++def _is_paged(spec: Any) -> bool:
++    """视图是否可增长（声明 ``paged = true``）。缺省为 false。"""
++    if isinstance(spec, Mapping):
++        return bool(spec.get('paged', False))
++    return False
++
++
++# -- 各形状的实现 -------------------------------------------------------
++
++def _rows_from_result(body: Mapping[str, Any], shape: Mapping[str, Any]) -> List[Mapping[str, Any]]:
++    """命令中心的任务明细：``result`` 是 JSON 字符串，二次解析才是行列表。"""
++    payload = _dig(body, list(shape.get('payload_path') or ['result']), shape)
++    if payload is None:
++        return []
++    if isinstance(payload, (bytes, str)):
++        text = payload.decode('utf-8') if isinstance(payload, bytes) else payload
++        if not text.strip():
++            return []
++        try:
++            payload = json.loads(text)
++        except ValueError as exc:
++            raise DecodeError('result 不是合法 JSON：%s' % exc)
++    return _as_rows(payload)
++
++
++def _series_from_metric_infos(
++    body: Mapping[str, Any],
++    locate: Mapping[str, Any],
++) -> Any:
++    """监控指标接口：按平台指标 id 取出该指标的 series 与 timestamps。"""
++    metric_id = locate.get('metric')
++    if not metric_id:
++        raise DecodeError('series_from_metric_infos 定位缺 metric')
++    series = {}  # type: Dict[str, List[Optional[float]]]
++    timestamps = ()  # type: Any
++    for info in body.get('metric_infos') or ():
++        for metric in info.get('metrics') or ():
++            if metric.get('name') != metric_id:
++                continue
++            for key, values in (metric.get('series') or {}).items():
++                series[key] = list(values)
++            points = metric.get('timestamps') or ()
++            if points:
++                timestamps = tuple(points)
++    if not series:
++        raise DecodeError('响应体里没有指标 %s 的 series' % metric_id)
++    return series, timestamps
++
++
++# -- 小工具 ---------------------------------------------------------------
++
++def _dig(payload: Any, path: Sequence[str], shape: Mapping[str, Any]) -> Any:
++    """按路径取值，缺失时报错（带 shape 名，便于定位是哪条形状不匹配）。"""
++    current = payload
++    walked = []  # type: List[str]
++    for segment in path:
++        walked.append(str(segment))
++        if isinstance(current, Mapping):
++            if segment not in current:
++                raise DecodeError(
++                    '响应体里没有路径 %s（形状 %s）' % ('/'.join(walked), shape.get('kind'))
++                )
++            current = current[segment]
++        elif isinstance(current, list):
++            try:
++                current = current[int(segment)]
++            except (IndexError, ValueError):
++                raise DecodeError(
++                    '响应体路径 %s 下标越界（形状 %s）' % ('/'.join(walked), shape.get('kind'))
++                )
++        else:
++            raise DecodeError(
++                '响应体路径 %s 不是可下钻的容器（形状 %s）' % ('/'.join(walked), shape.get('kind'))
++            )
++    return current
++
++
++def _as_rows(payload: Any) -> List[Mapping[str, Any]]:
++    if payload is None:
++        return []
++    if not isinstance(payload, list):
++        raise DecodeError('期望行列表，实际是 %s' % type(payload).__name__)
++    rows = []  # type: List[Mapping[str, Any]]
++    for item in payload:
++        if isinstance(item, Mapping):
++            rows.append(item)
++    return rows
+diff --git a/tpops_kafka_collector/mapping/message.py b/tpops_kafka_collector/mapping/message.py
+new file mode 100644
+index 0000000..85a32b7
+--- /dev/null
++++ b/tpops_kafka_collector/mapping/message.py
+@@ -0,0 +1,179 @@
++# -*- coding: utf-8 -*-
++"""按 ITSCADA 字段规范组装消息。
++
++两份对接方案（指标 / 告警）规定的字段集合就是这里输出的字段集合，
++不多不少；字段含义见 ``data/itscada_field_map.json``。
++"""
++from __future__ import print_function
++
++from typing import Any, Dict, Mapping, Optional, Sequence
++
++from .nodes import resolve_node_context
++from .rules import build_resource_name, substitute_placeholders
++
++
++def build_metric_message(
++    field_map: Mapping[str, Any],
++    metric_rule,
++    dimensions: Mapping[str, Any],
++    value: Any,
++    resource_context: Mapping[str, Any],
++    timestamp: int,
++    tags: Optional[Mapping[str, Any]] = None,
++    nodes: Optional[Sequence[Mapping[str, Any]]] = None,
++) -> Dict[str, Any]:
++    """组装一条 ITSCADA 指标消息。
++
++    resourceName 只表示节点 → 「节点 IP + 节点 ID」；与节点无关的指标
++    （``nodes`` 里的第一个 master CN）由 ``resolve_node_context`` 兜底。
++    """
++    metric_name = substitute_placeholders(metric_rule.metric_name, dimensions)
++    metric_code = substitute_placeholders(metric_rule.metric_code, dimensions)
++    context = resolve_node_context(resource_context, nodes)
++    resource_name = build_resource_name(
++        field_map['resource_name']['template'],
++        context,
++        field_map['resource_name'].get('fallback_template'),
++    )
++    return {
++        'metricName': metric_name,
++        'metricCode': metric_code,
++        'resourceName': resource_name,
++        'value': serialize_value(value, metric_rule.value_type),
++        'unit': metric_rule.unit,
++        'clock': timestamp,
++        'tags': _metric_tags(context, dimensions, tags),
++    }
++
++
++def build_alarm_message(
++    field_map: Mapping[str, Any],
++    record: Mapping[str, Any],
++    definition,
++    resource_context: Mapping[str, Any],
++    severity_to_priority: Mapping[str, int],
++    status_to_itscada: Mapping[str, int],
++    metric_value: Any = None,
++    unit: Optional[str] = None,
++    details: Optional[Sequence[Mapping[str, Any]]] = None,
++    nodes: Optional[Sequence[Mapping[str, Any]]] = None,
++) -> Dict[str, Any]:
++    """组装一条 ITSCADA 告警消息。
++
++    告警记录自带 node_id 与 host_ip；没有节点的告警回落到第一个 master CN。
++    """
++    status = status_to_itscada.get(record.get('status'))
++    priority = severity_to_priority.get(record.get('severity'))
++    if priority is None:
++        priority = definition.default_priority
++    content = _alarm_content(record, details)
++    value = metric_value if definition.value_source == 'latest_metric_value' else record.get('alarm_items_sum')
++    context = resolve_node_context(
++        dict(resource_context or {},
++             node_id=(record.get('node_id') or (resource_context or {}).get('node_id')),
++             host_ip=(record.get('host_ip') or (resource_context or {}).get('host_ip'))),
++        nodes,
++    )
++    return {
++        'alarmId': str(record.get('alarm_id')),
++        'alarmName': record.get('alarm_name') or definition.alarm_name,
++        'alarmContent': content,
++        'priority': priority,
++        'alarmTime': record.get('first_alarm_time'),
++        'status': status,
++        'recoverTime': record.get('clear_alarm_time') if status == 0 else None,
++        'resourceName': build_resource_name(
++            field_map['resource_name']['template'],
++            context,
++            field_map['resource_name'].get('fallback_template'),
++        ),
++        'metricName': definition.metric_name,
++        'metricCode': definition.metric_code,
++        'value': serialize_value(value, '字符'),
++        'unit': unit,
++        'tags': _alarm_tags(record, details, context),
++    }
++
++
++def serialize_value(value: Any, value_type: str) -> Any:
++    """按客户指标表的数据类型序列化取值。
++
++    文档字段表写 value 是 String，样例里指标是数字、告警是字符串；
++    这里统一按客户表【数据类型】来，缺失值一律 null（不填 0）。
++    """
++    if value is None:
++        return None
++    if value_type == '整数':
++        return _as_int(value)
++    if value_type == '浮点':
++        return _as_float(value)
++    if isinstance(value, (list, tuple)):
++        return list(value)
++    return str(value) if not isinstance(value, str) else value
++
++
++def _as_int(value):
++    try:
++        return int(float(value))
++    except (TypeError, ValueError):
++        return None
++
++
++def _as_float(value):
++    try:
++        return round(float(value), 2)
++    except (TypeError, ValueError):
++        return None
++
++
++def _metric_tags(resource_context, dimensions, extra):
++    """指标消息的标签：资源属性 + 维度值。"""
++    tags = {
++        'instance_id': resource_context.get('instance_id'),
++        'instance_name': resource_context.get('instance_name'),
++        'node_id': resource_context.get('node_id'),
++        'component_id': resource_context.get('component_id'),
++        'host_ip': resource_context.get('host_ip'),
++    }
++    if dimensions:
++        # COMPONENT_ID 是平台序列键，属于资源属性而不是客户维度
++        customer_dims = {
++            key: value for key, value in dimensions.items() if key != 'COMPONENT_ID'
++        }
++        if customer_dims:
++            tags['dimension_values'] = customer_dims
++    tags.update(extra or {})
++    return tags
++
++
++def _alarm_content(record, details):
++    for detail in details or ():
++        if detail.get('description'):
++            return detail['description']
++    if record.get('description'):
++        return record['description']
++    if record.get('cause'):
++        return record['cause']
++    return record.get('alarm_name') or ''
++
++
++def _alarm_tags(record, details, context=None):
++    """告警标签：资源属性 + 告警属性。
++
++    节点身份取**解析后**的上下文 —— 没有节点的告警回落到 master CN，
++    tags 要与 resourceName 指向同一个节点。
++    """
++    context = context or {}
++    tags = {
++        'instance_id': record.get('instance_id'),
++        'instance_name': record.get('instance_name'),
++        'node_id': context.get('node_id') or record.get('node_id'),
++        'host_ip': context.get('host_ip') or record.get('host_ip'),
++        'alarm_category': record.get('alarm_category'),
++        'alarm_type': record.get('alarm_type'),
++        'engine': record.get('engine'),
++        'alarm_duration': record.get('alarm_duration'),
++    }
++    if details:
++        tags['details'] = [dict(detail) for detail in details]
++    return tags
+diff --git a/tpops_kafka_collector/mapping/nodes.py b/tpops_kafka_collector/mapping/nodes.py
+new file mode 100644
+index 0000000..ff3a4de
+--- /dev/null
++++ b/tpops_kafka_collector/mapping/nodes.py
+@@ -0,0 +1,100 @@
++# -*- coding: utf-8 -*-
++"""节点身份：resourceName 的取值口径。
++
++**resourceName 只能表示一个节点**（客户口径），所以统一用「节点 IP + 节点 ID」：
++``172.16.103.126_3881c04403394ee1b36a2bf873e69007no14``。
++
++与节点无关的指标（命令中心的实例级/表级/库级、诊断优化、实例接口）
++挂到节点清单里的**第一个 master CN** 上 —— 固定一个节点，跨轮稳定，
++不会因为「这轮 SQL 在哪个 master 上跑」而让资源名漂移。
++
++节点清单来自 ``GET /rds/gaussdb/v3/instances/{id}/key-view-execute-node``，
++每条形如::
++
++    {"node_id": "...no14", "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
++     "role": "master", "type": "CN", "component_id": "cn_5001",
++     "node_ip": "172.16.103.126"}
++"""
++from __future__ import print_function
++
++from typing import Any, Dict, Mapping, Optional, Sequence
++
++MASTER_ROLE = 'master'
++MASTER_TYPE = 'CN'
++
++
++def select_master_node(nodes: Optional[Sequence[Mapping[str, Any]]]) -> Optional[Mapping[str, Any]]:
++    """节点清单里的第一个 master CN。
++
++    退化顺序：master CN → 任意 master → 清单里第一个节点 → None。
++    清单是平台按固定顺序返回的，取第一条即可保证跨轮一致。
++    """
++    items = list(nodes or ())
++    for predicate in (
++        lambda node: node.get('role') == MASTER_ROLE and node.get('type') == MASTER_TYPE,
++        lambda node: node.get('role') == MASTER_ROLE,
++    ):
++        for node in items:
++            if predicate(node):
++                return node
++    return items[0] if items else None
++
++
++def find_node_by_id(
++    nodes: Optional[Sequence[Mapping[str, Any]]],
++    node_id: Optional[str],
++) -> Optional[Mapping[str, Any]]:
++    """按 node_id 找节点（同一个 node_id 在清单里会出现多次：CN 一条 + 各 DN 一条）。"""
++    if not node_id:
++        return None
++    for node in nodes or ():
++        if node.get('node_id') == node_id:
++            return node
++    return None
++
++
++def find_node_by_ip(
++    nodes: Optional[Sequence[Mapping[str, Any]]],
++    host_ip: Optional[str],
++) -> Optional[Mapping[str, Any]]:
++    """按节点 IP 找节点。"""
++    if not host_ip:
++        return None
++    for node in nodes or ():
++        if node.get('node_ip') == host_ip:
++            return node
++    return None
++
++
++def resolve_node_context(
++    context: Optional[Mapping[str, Any]],
++    nodes: Optional[Sequence[Mapping[str, Any]]] = None,
++) -> Dict[str, Any]:
++    """补齐资源上下文里的节点身份。
++
++    - 有 node_id → 用它，缺 IP 就从节点清单反查；
++    - 只有 IP → 按 IP 反查 node_id，查不到就只用 IP（resourceName 退到 IP，
++      不硬套别的节点 —— 宁可资源名对不上台账，也不能指错节点）；
++    - 什么都没有（与节点无关的指标）→ 用第一个 master CN 兜底。
++
++    返回新字典，不改传入的 context。
++    """
++    resolved = dict(context or {})
++    node_id = resolved.get('node_id')
++    if node_id:
++        matched = find_node_by_id(nodes, node_id)
++        if matched and not resolved.get('host_ip'):
++            resolved['host_ip'] = matched.get('node_ip')
++        return resolved
++    host_ip = resolved.get('host_ip')
++    if host_ip:
++        matched = find_node_by_ip(nodes, host_ip)
++        if matched:
++            resolved['node_id'] = matched.get('node_id')
++        return resolved
++    master = select_master_node(nodes)
++    if master is None:
++        return resolved
++    resolved['node_id'] = master.get('node_id')
++    resolved['host_ip'] = master.get('node_ip')
++    return resolved
+diff --git a/tpops_kafka_collector/mapping/rules.py b/tpops_kafka_collector/mapping/rules.py
+new file mode 100644
+index 0000000..82c361a
+--- /dev/null
++++ b/tpops_kafka_collector/mapping/rules.py
+@@ -0,0 +1,425 @@
++# -*- coding: utf-8 -*-
++"""字段级转换规则：取值、占位符替换、资源名拼装。
++
++规则本身在 ``data/mapping/`` 的 JSON 里，这里只负责**执行**规则。
++字段级映射（原始字段 → ITSCADA 字段）见 ``data/mapping/itscada_field_map.json``。
++"""
++from __future__ import print_function
++
++import re
++from dataclasses import dataclass, field
++from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
++
++PLACEHOLDER_RE = re.compile(r'\{#(\w+)\}')
++RESOURCE_FIELD_RE = re.compile(r'\{(\w+)\}')
++
++# 取值结果：(维度键值, 值, 数据时间戳)。
++# 维度为空表示该指标没有维度；时间戳是客户字段 clock 的来源
++# （A 类取与 value 同一下标的 timestamps[i]，其余取采集完成时刻）。
++MetricValue = Tuple[Dict[str, Any], Any, Optional[int]]
++
++
++class RuleError(Exception):
++    """规则无法执行。"""
++
++
++@dataclass(frozen=True)
++class RuleContext:
++    """一次取数的输入。"""
++
++    rows: Tuple[Mapping[str, Any], ...] = ()
++    rows_by_key: Mapping[str, Sequence[Mapping[str, Any]]] = field(default_factory=dict)
++    series: Mapping[str, Sequence[Optional[float]]] = field(default_factory=dict)
++    timestamps: Tuple[int, ...] = ()
++    collections: Mapping[str, Sequence[Mapping[str, Any]]] = field(default_factory=dict)
++    instance: Mapping[str, Any] = field(default_factory=dict)
++    now_ms: int = 0
++
++
++class CounterDeltaStore:
++    """累计计数器的差分基线。
++
++    铁律（开发方案 §3.4）：首轮无基线不产出值；累计值回退判定为实例重启，
++    丢弃本轮差分并重建基线；时间差用采集时刻差而不是标称周期。
++    """
++
++    def __init__(self) -> None:
++        self._baselines = {}  # type: Dict[Tuple[str, str], Tuple[float, int]]
++
++    def rate(
++        self,
++        metric_code: str,
++        dimensions: Mapping[str, Any],
++        counter_value: float,
++        now_ms: int,
++    ) -> Tuple[Optional[float], str]:
++        """返回 (速率, 说明)。速率为 None 时说明原因。"""
++        key = (metric_code, _dimension_key(dimensions))
++        previous = self._baselines.get(key)
++        if previous is None:
++            self._baselines[key] = (counter_value, now_ms)
++            return None, '首轮无基线，仅建立基线'
++        last_value, last_ms = previous
++        if counter_value < last_value:
++            self._baselines[key] = (counter_value, now_ms)
++            return None, '累计值回退，判定实例重启，丢弃本轮差分并重建基线'
++        elapsed = (now_ms - last_ms) / 1000.0
++        if elapsed <= 0:
++            return None, '采集时刻未推进，丢弃本轮差分'
++        self._baselines[key] = (counter_value, now_ms)
++        return (counter_value - last_value) / elapsed, '按采集时刻差分'
++
++    def forget(self, metric_code: str, dimensions: Mapping[str, Any]) -> None:
++        self._baselines.pop((metric_code, _dimension_key(dimensions)), None)
++
++
++def substitute_placeholders(template: str, dimensions: Mapping[str, Any]) -> str:
++    """把 ``{#DATNAME}`` 替换成维度实际值（ITSCADA 文档 §7 的做法）。"""
++    def _replace(match: 're.Match') -> str:
++        name = match.group(1)
++        if name not in dimensions:
++            raise RuleError('占位符 {%s} 没有对应的维度值' % name)
++        value = dimensions[name]
++        return '' if value is None else str(value)
++
++    return PLACEHOLDER_RE.sub(_replace, template or '')
++
++
++def build_resource_name(
++    template: str,
++    context: Mapping[str, Any],
++    fallback_template: Any = None,
++) -> str:
++    """按模板拼资源名。
++
++    模板里的占位符取不到值时（None 或空串），改用回退模板；
++    回退模板可以给一串，按顺序取第一个渲染出非空结果的；
++    没有回退模板时留空串占位。
++    """
++    missing = [False]
++
++    def _replace(match: 're.Match') -> str:
++        value = context.get(match.group(1))
++        if value is None or value == '':
++            missing[0] = True
++            return ''
++        return str(value)
++
++    rendered = RESOURCE_FIELD_RE.sub(_replace, template or '')
++    if missing[0] and fallback_template:
++        fallbacks = (fallback_template,) if isinstance(fallback_template, str) \
++            else tuple(fallback_template)
++        for candidate in fallbacks:
++            attempt = build_resource_name(candidate, context)
++            if attempt:
++                return attempt
++        return ''
++    return rendered
++
++
++def evaluate(
++    metric_rule,
++    ctx: RuleContext,
++    deltas: Optional[CounterDeltaStore] = None,
++) -> List[MetricValue]:
++    """执行一个指标的取值规则，返回若干 (维度, 值, 时间戳)。"""
++    rule = metric_rule.value_rule or {}
++    rule_type = rule.get('type')
++    handler = _HANDLERS.get(rule_type)
++    if handler is None:
++        raise RuleError('未知的取值规则类型：%s' % rule_type)
++    return handler(metric_rule, rule, ctx, deltas)
++
++
++# -- 各规则类型的实现 ---------------------------------------------------
++def _eval_raw(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    column = params.get('column')
++    policy = params.get('row_policy', 'first')
++    rows = ctx.rows
++    if policy == 'per_row':
++        return [
++            (_row_dimensions(metric_rule, row), row.get(column), ctx.now_ms)
++            for row in rows
++        ]
++    if policy == 'sum':
++        values = [_to_number(row.get(column)) for row in rows]
++        return [({}, _sum(values), ctx.now_ms)]
++    if not rows:
++        return []
++    return [({}, rows[0].get(column), ctx.now_ms)]
++
++
++def _eval_raw_filtered(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    column = params.get('column')
++    rows = [row for row in ctx.rows if _match_filter(row, params.get('filter', {}))]
++    if not rows:
++        return []
++    row = rows[0]
++    value = row.get(column)
++    cast = params.get('cast')
++    if cast == 'int':
++        value = _to_int(value)
++    # 维度要带上：指标名里的占位符（如 {#PORT}）要靠它替换，
++    # 不填的话组装消息时 substitute_placeholders 会直接抛异常。
++    dims = {}
++    for placeholder, column_name in metric_rule.dimension_bindings.items():
++        dims[placeholder] = row.get(column_name)
++    return [(dims, value, ctx.now_ms)]
++
++
++def _eval_aggregate(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    rows = [row for row in ctx.rows if _match_filter(row, params.get('filter', {}))]
++    group_by = params.get('group_by') or []
++    value_column = params.get('value_column', 'cnt')
++    if not group_by:
++        total = _sum([_to_number(row.get(value_column)) for row in rows])
++        return [({}, total, ctx.now_ms)]
++    groups = {}  # type: Dict[Tuple[str, ...], List[Mapping[str, Any]]]
++    for row in rows:
++        key = tuple(str(row.get(column)) for column in group_by)
++        groups.setdefault(key, []).append(row)
++    results = []
++    for _key, group_rows in groups.items():
++        dims = {}
++        for placeholder, column in metric_rule.dimension_bindings.items():
++            dims[placeholder] = group_rows[0].get(column)
++        total = _sum([_to_number(row.get(value_column)) for row in group_rows])
++        results.append((dims, total, ctx.now_ms))
++    return results
++
++
++def _eval_counter_delta(metric_rule, rule, ctx, deltas):
++    if deltas is None:
++        raise RuleError('counter_delta 需要差分基线存储')
++    params = rule.get('params', {})
++    column = params.get('column')
++    policy = params.get('row_policy', 'per_row')
++    results = []
++    if policy == 'per_row':
++        for row in ctx.rows:
++            dims = _row_dimensions(metric_rule, row)
++            value, _reason = deltas.rate(
++                metric_rule.metric_code, dims, _to_number(row.get(column)), ctx.now_ms
++            )
++            results.append((dims, value, ctx.now_ms))
++        return results
++    total = _sum([_to_number(row.get(column)) for row in ctx.rows])
++    value, _reason = deltas.rate(metric_rule.metric_code, {}, total, ctx.now_ms)
++    return [({}, value, ctx.now_ms)]
++
++
++def _eval_ratio_across(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    numerator = _side_value(params.get('numerator', {}), ctx)
++    denominator = _side_value(params.get('denominator', {}), ctx)
++    if not denominator:
++        return [({}, 0.0, ctx.now_ms)]
++    return [({}, round(numerator / denominator, 2), ctx.now_ms)]
++
++
++def _eval_series_point(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    position = params.get('position', 'last_non_null')
++    results = []
++    for key, values in ctx.series.items():
++        value, index = _pick_point(values, position)
++        if value is None:
++            continue
++        results.append(({'COMPONENT_ID': key}, value, _point_timestamp(ctx, index)))
++    return results
++
++
++def _eval_enum_map(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    mapping = params.get('mapping', {})
++    default = params.get('default', 'passthrough')
++    results = []
++    for dims, value, timestamp in _eval_series_point(metric_rule, rule, ctx, deltas):
++        key = _enum_key(value)
++        if key in mapping:
++            results.append((dims, mapping[key], timestamp))
++        elif default == 'passthrough':
++            results.append((dims, value, timestamp))
++        else:
++            results.append((dims, None, timestamp))
++    return results
++
++
++def _eval_gauge(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    unit = params.get('unit', '秒')
++    if unit not in ('秒', 's'):
++        raise RuleError('gauge 规则的时间单位不支持：%s' % unit)
++    results = []
++    now_seconds = ctx.now_ms / 1000.0
++    for key, values in ctx.series.items():
++        point, index = _pick_point(values, 'last_non_null')
++        if point is None:
++            continue
++        elapsed = now_seconds - float(point)
++        results.append(({'COMPONENT_ID': key}, round(elapsed, 2), _point_timestamp(ctx, index)))
++    return results
++
++
++def _eval_top_n(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    rows = list(ctx.rows)
++    sort_by = params.get('sort_by')
++    if sort_by is None:
++        rows = list(ctx.collections.get(params.get('collection', ''), ()))
++    reverse = params.get('order', 'desc') == 'desc'
++    if sort_by:
++        rows.sort(key=lambda row: _to_number(row.get(sort_by)), reverse=reverse)
++    limit = params.get('limit', 10)
++    selected = rows[:limit]
++    columns = params.get('columns')
++    if columns:
++        selected = [{key: row.get(key) for key in columns} for row in selected]
++    return [({}, selected, ctx.now_ms)]
++
++
++def _eval_raw_rows(metric_rule, rule, ctx, deltas):
++    return [({}, [dict(row) for row in ctx.rows], ctx.now_ms)]
++
++
++def _eval_collection_count(metric_rule, rule, ctx, deltas):
++    collection = ctx.collections.get(rule.get('params', {}).get('collection', ''), ())
++    return [({}, len(collection), ctx.now_ms)]
++
++
++def _eval_text_prefix_count(metric_rule, rule, ctx, deltas):
++    params = rule.get('params', {})
++    collection = ctx.collections.get(params.get('collection', ''), ())
++    field_name = params.get('field', 'sql_text')
++    prefixes = [p.lower() for p in params.get('prefixes', ())]
++    count = 0
++    for item in collection:
++        text = (item.get(field_name) or '').strip().lower()
++        if any(text.startswith(prefix) for prefix in prefixes):
++            count += 1
++    return [({}, count, ctx.now_ms)]
++
++
++def _eval_instance_field(metric_rule, rule, ctx, deltas):
++    field_name = rule.get('params', {}).get('field')
++    return [({}, ctx.instance.get(field_name), ctx.now_ms)]
++
++
++_HANDLERS = {
++    'raw': _eval_raw,
++    'raw_filtered': _eval_raw_filtered,
++    'aggregate': _eval_aggregate,
++    'counter_delta': _eval_counter_delta,
++    'ratio_across': _eval_ratio_across,
++    'series_point': _eval_series_point,
++    'enum_map': _eval_enum_map,
++    'gauge': _eval_gauge,
++    'top_n': _eval_top_n,
++    'raw_rows': _eval_raw_rows,
++    'collection_count': _eval_collection_count,
++    'text_prefix_count': _eval_text_prefix_count,
++    'instance_field': _eval_instance_field,
++}
++
++
++# -- 小工具 --------------------------------------------------------------
++def _point_timestamp(ctx, index):
++    """数据时间戳：A 类取与 value 同一下标的 timestamps[i]，其余取采集完成时刻。
++
++    实测里 timestamps 会出现 0（平台没给采集时刻），此时回退到采集时刻；
++    客户字段 clock 是 Long，这里统一转成整数。
++    """
++    if index is not None and 0 <= index < len(ctx.timestamps):
++        stamp = ctx.timestamps[index]
++        if stamp:
++            return int(stamp)
++    return ctx.now_ms
++
++
++def _row_dimensions(metric_rule, row):
++    dims = {}
++    for placeholder, column in metric_rule.dimension_bindings.items():
++        dims[placeholder] = row.get(column)
++    return dims
++
++
++def _match_filter(row, filters):
++    for key, expected in filters.items():
++        if key.endswith('_contains'):
++            actual = row.get(key[:-len('_contains')])
++            text = '' if actual is None else str(actual).lower()
++            keywords = expected if isinstance(expected, (list, tuple)) else [expected]
++            if not any(str(word).lower() in text for word in keywords):
++                return False
++        elif row.get(key) != expected:
++            return False
++    return True
++
++
++def _side_value(spec, ctx):
++    rows = ctx.rows_by_key.get(spec.get('sql_key'), ())
++    column = spec.get('value_column')
++    fn = spec.get('fn', 'sum')
++    values = [_to_number(row.get(column)) for row in rows]
++    if fn == 'sum':
++        return _sum(values)
++    if fn == 'max':
++        return max(values) if values else 0.0
++    if fn == 'count':
++        return float(len(values))
++    return _sum(values)
++
++
++def _pick_point(values, position):
++    """取时序上的一个点，返回 (值, 下标)。值为 null 的点跳过。"""
++    for index in range(len(values) - 1, -1, -1):
++        value = values[index]
++        if value is not None:
++            return value, index
++    return None, None
++
++
++def _enum_key(value):
++    if isinstance(value, float) and value.is_integer():
++        return str(int(value))
++    return str(value)
++
++
++def _to_number(value):
++    if value is None:
++        return 0.0
++    if isinstance(value, bool):
++        return float(value)
++    if isinstance(value, (int, float)):
++        return float(value)
++    try:
++        return float(value)
++    except (TypeError, ValueError):
++        return 0.0
++
++
++def _to_int(value):
++    if value is None:
++        return None
++    try:
++        return int(float(value))
++    except (TypeError, ValueError):
++        return None
++
++
++def _sum(values):
++    total = 0.0
++    for value in values:
++        total += value
++    if total.is_integer():
++        return int(total)
++    return total
++
++
++def _dimension_key(dimensions):
++    if not dimensions:
++        return ''
++    return '|'.join('%s=%s' % (key, dimensions[key]) for key in sorted(dimensions))
+diff --git a/tpops_kafka_collector/mapping/table.py b/tpops_kafka_collector/mapping/table.py
+new file mode 100644
+index 0000000..2760692
+--- /dev/null
++++ b/tpops_kafka_collector/mapping/table.py
+@@ -0,0 +1,223 @@
++# -*- coding: utf-8 -*-
++"""映射表加载与查表。
++
++映射规则是**数据**（JSON），这里是加载入口与查表接口。
++规则内容改了就改 ``data/mapping/`` 下的 JSON，不用改代码。
++"""
++from __future__ import print_function
++
++import io
++import json
++import os
++from dataclasses import dataclass
++from typing import Any, Dict, Mapping, Optional, Tuple
++
++from ..errors import MappingError
++
++REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++DATA_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
++FIELD_MAP_FILE = 'itscada_field_map.json'
++METRIC_RULES_FILE = 'metric_rules.json'
++ALARM_RULES_FILE = 'alarm_rules.json'
++# 旧的分类字段映射表已归档（2026-11-13）—— 现在的主映射表是
++# kafka_field_mapping.json，逐指标列出「响应的某个值 → Kafka 的某个字段」。
++# 这几个文件留作历史对照与字段集合校验的基准。
++ARCHIVE_DIR = 'archive'
++CATEGORY_MAPPING_FILES = {
++    'monitor_metrics': ARCHIVE_DIR + '/metric_mapping_monitor_metrics.json',
++    'command_center_sql': ARCHIVE_DIR + '/metric_mapping_command_center_sql.json',
++    'diagnostic': ARCHIVE_DIR + '/metric_mapping_diagnostic.json',
++    'instance': ARCHIVE_DIR + '/metric_mapping_instance.json',
++    'alarm': ARCHIVE_DIR + '/alarm_mapping.json',
++}
++
++
++@dataclass(frozen=True)
++class MetricRule:
++    """一个客户指标的取值规则。"""
++
++    metric_code: str
++    metric_name: str
++    resource_type: str
++    category: str
++    value_type: str
++    unit: Optional[str]
++    collect_cycle: Mapping[str, Any]
++    status: str
++    match_level: Optional[str]
++    enabled: bool
++    source: Mapping[str, Any]
++    value_rule: Mapping[str, Any]
++    placeholders: Tuple[str, ...]
++    resource_granularity: str
++    master_view: Optional[str]
++    node_scoped: bool
++    dimension_bindings: Mapping[str, str]
++    note: str
++    needs_confirmation: bool
++
++    @classmethod
++    def from_dict(cls, payload: Mapping[str, Any]) -> 'MetricRule':
++        return cls(
++            metric_code=payload['metric_code'],
++            metric_name=payload['metric_name'],
++            resource_type=payload['resource_type'],
++            category=payload['category'],
++            value_type=payload['value_type'],
++            unit=payload.get('unit'),
++            collect_cycle=payload.get('collect_cycle', {}),
++            status=payload['status'],
++            match_level=payload.get('match_level'),
++            enabled=bool(payload.get('enabled')),
++            source=payload.get('source', {}),
++            value_rule=payload.get('value_rule') or {},
++            placeholders=tuple(payload.get('placeholders', ())),
++            resource_granularity=payload.get('resource_granularity', 'instance'),
++            master_view=payload.get('master_view'),
++            node_scoped=bool(payload.get('node_scoped')),
++            dimension_bindings=payload.get('dimension_bindings', {}),
++            note=payload.get('note', ''),
++            needs_confirmation=bool(payload.get('needs_confirmation')),
++        )
++
++
++@dataclass(frozen=True)
++class AlarmDefinition:
++    """一条平台告警定义 → ITSCADA 告警指标的挂载关系。"""
++
++    alarm_id: str
++    alarm_name: str
++    alarm_kind: str
++    default_level: str
++    default_priority: Optional[int]
++    threshold: str
++    metric_code: str
++    metric_name: str
++    value_source: str
++    linked_customer_metric: Optional[str]
++
++
++class MappingTable:
++    """三份规则文件的只读视图。"""
++
++    def __init__(
++        self,
++        field_map: Mapping[str, Any],
++        metric_rules: Tuple[MetricRule, ...],
++        alarm_rules: Mapping[str, Any],
++        category_mappings: Mapping[str, Mapping[str, Any]],
++    ) -> None:
++        self._field_map = field_map
++        self._metric_rules = metric_rules
++        self._alarm_rules = alarm_rules
++        self._category_mappings = category_mappings
++        self._by_code = {rule.metric_code: rule for rule in metric_rules}
++
++    @classmethod
++    def load(cls, data_dir: str = DATA_DIR) -> 'MappingTable':
++        field_map = _read_json(os.path.join(data_dir, FIELD_MAP_FILE))
++        metric_payload = _read_json(os.path.join(data_dir, METRIC_RULES_FILE))
++        alarm_payload = _read_json(os.path.join(data_dir, ALARM_RULES_FILE))
++        category_mappings = {}
++        for key, filename in CATEGORY_MAPPING_FILES.items():
++            category_mappings[key] = _read_json(os.path.join(data_dir, filename))
++        rules = tuple(MetricRule.from_dict(item) for item in metric_payload['rules'])
++        return cls(field_map, rules, alarm_payload, category_mappings)
++
++    # -- 字段映射 ---------------------------------------------------------
++    @property
++    def field_map(self) -> Mapping[str, Any]:
++        return self._field_map
++
++    def message_fields(self, message_type: str) -> Tuple[Mapping[str, Any], ...]:
++        """'metric' / 'alarm' → 该消息的字段定义。"""
++        section = self._field_map.get('%s_message' % message_type)
++        if not section:
++            raise MappingError('字段映射表里没有 %s_message' % message_type)
++        return tuple(section['fields'])
++
++    def required_fields(self, message_type: str) -> Tuple[str, ...]:
++        section = self._field_map.get('%s_message' % message_type)
++        if not section:
++            raise MappingError('字段映射表里没有 %s_message' % message_type)
++        return tuple(section.get('required_fields', ()))
++
++    @property
++    def resource_name_template(self) -> str:
++        return self._field_map['resource_name']['template']
++
++    @property
++    def resource_name_fallback(self) -> str:
++        return self._field_map['resource_name']['fallback_template']
++
++    # -- 指标规则 ---------------------------------------------------------
++    @property
++    def metric_rules(self) -> Tuple[MetricRule, ...]:
++        return self._metric_rules
++
++    def metric_rule(self, metric_code: str) -> Optional[MetricRule]:
++        return self._by_code.get(metric_code)
++
++    def enabled_metric_rules(self) -> Tuple[MetricRule, ...]:
++        return tuple(rule for rule in self._metric_rules if rule.enabled)
++
++    def metrics_of_sql_key(self, sql_key: str) -> Tuple[MetricRule, ...]:
++        return tuple(
++            rule for rule in self._metric_rules
++            if rule.enabled and rule.source.get('sql_key') == sql_key
++        )
++
++    def metrics_of_channel(self, channel: str) -> Tuple[MetricRule, ...]:
++        return tuple(
++            rule for rule in self._metric_rules
++            if rule.enabled and rule.source.get('source') == channel
++        )
++
++    # -- 告警规则 ---------------------------------------------------------
++    @property
++    def alarm_rules(self) -> Mapping[str, Any]:
++        return self._alarm_rules
++
++    def alarm_definition(self, alarm_id: str) -> Optional[AlarmDefinition]:
++        raw = self._alarm_rules.get('definitions', {}).get(str(alarm_id))
++        if not raw:
++            return None
++        return AlarmDefinition(
++            alarm_id=str(alarm_id),
++            alarm_name=raw.get('alarm_name', ''),
++            alarm_kind=raw.get('alarm_kind', ''),
++            default_level=raw.get('default_level', ''),
++            default_priority=raw.get('default_priority'),
++            threshold=raw.get('threshold', ''),
++            metric_code=raw.get('metric_code', ''),
++            metric_name=raw.get('metric_name', ''),
++            value_source=raw.get('value_source', 'alarm_items_sum'),
++            linked_customer_metric=raw.get('linked_customer_metric'),
++        )
++
++    def severity_to_priority(self, severity: str) -> Optional[int]:
++        return self._alarm_rules.get('severity_to_priority', {}).get(severity)
++
++    def status_to_itscada(self, status: str) -> Optional[int]:
++        return self._alarm_rules.get('status_to_itscada', {}).get(status)
++
++    # -- 分类字段映射 -----------------------------------------------------
++    def category_mapping(self, category: str) -> Mapping[str, Any]:
++        """某个采集分类的字段映射表（monitor_metrics / … / alarm）。"""
++        if category not in self._category_mappings:
++            raise MappingError('没有这个分类的字段映射：%s' % category)
++        return self._category_mappings[category]
++
++    @property
++    def category_mappings(self) -> Mapping[str, Mapping[str, Any]]:
++        return self._category_mappings
++
++
++def _read_json(path: str) -> Dict[str, Any]:
++    if not os.path.isfile(path):
++        raise MappingError('映射文件不存在：%s' % path)
++    try:
++        with io.open(path, encoding='utf-8') as handle:
++            return json.load(handle)
++    except ValueError as exc:
++        raise MappingError('映射文件不是合法 JSON：%s（%s）' % (path, exc))
