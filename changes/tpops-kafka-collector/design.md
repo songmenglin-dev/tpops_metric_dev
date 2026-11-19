@@ -27,7 +27,7 @@
 | # | 约束 |
 |---|---|
 | C1 | 运行时 Python **3.7.9**；禁用海象、内建泛型注解、`zoneinfo`、`functools.cached_property` 等 3.8+ 语法 |
-| C2 | 依赖锁版本：`kafka-python==2.0.2`、`requests>=2.25,<3.2`、`openpyxl>=3.0,<3.12`、`pytest>=7,<8`；不新增依赖 |
+| C2 | 依赖锁版本：`kafka-python==2.0.2`、`requests>=2.25,<2.32`、`openpyxl>=3.0,<3.12`、`pytest>=7,<8`；不新增依赖 |
 | C3 | 单文件 < 400 行、函数 < 50 行；映射**表驱动**，不写死在代码里 |
 | C4 | 凭据只走环境变量；不入日志、不入消息、不入库 |
 | C5 | 跨模块 DTO 不可变（frozen dataclass） |
@@ -121,7 +121,7 @@
   - 恢复事件：`first_alarm_time` 不变 → 原键会把恢复消息永久去重丢弃；
     而客户字段表里 `recoverTime` 是「status=0 时必填」，恢复消息必须发得出去。
   - `last_alarm_time` 在恢复后**不变**（实测 last ≠ clear）→ 加它救不了；
-    这正是开发方案 §3.7「`last_alarm_time` 变化 → 幂等键变化」写错的��方。
+    这正是开发方案 §3.7「`last_alarm_time` 变化 → 幂等键变化」写错的地方。
   - `node_id`：收敛条目没有节点，其节点靠关联明细行回填，回填目标可能逐轮不同 →
     进键会导致同一告警因回填漂移而重复投递。
   - 平台原值而非 ITSCADA 枚举：枚举会把 `recovered` 与 `cleared` 压成同一个键。
@@ -179,6 +179,71 @@
   而调宽断言就把回归测试变成了摆设。期望值表既能卡住真值，也能表达「这里合法为 0」。
 - **替代方案**：只断言「能解析出值」——无法发现口径错（本次 F3 的缺陷正是这类）。
 - **后果**：期望值表需随平台数据变化时更新；由留档自动生成，避免手抄。
+
+### 决策 11：多 master 结果按 `node_scoped` 归集，不跨 master 合并
+
+- **选择**：归集口径由映射表的 `node_scoped` 字段决定 ——
+  `true` 的视图（`stat_database` / `activity_agg` / `activity_running` /
+  `activity_top10` / `dbstat_sum`）各 master 的结果**各自成一份数据**；
+  `false` 的视图（`stat_user_tables` / `database` / `locks` / `bgwriter` /
+  `settings` / `prepared_xacts`）**只取第一个 master 的结果**。
+  节点清单 SHALL **按 `node_id` 去重**后才下发。
+- **理由**：`node_scoped` 是**实测判定**的结论（`tools/distribution.py`：
+  各 master 结果不同 → 节点级，相同 → 实例级），已经固化在 `metric_rules.json` 里。
+  实测同一实例三个 master 的 `stat_database` 首行 `xact_commit`
+  分别为 153291 / 153299 / 146452 —— 确实不同，因此**跨 master 求和会得到无业务含义的
+  3 倍累计值**。反过来 `stat_user_tables` 等视图各 master 结果相同，
+  取三份就是三份重复。
+  节点清单对同一实例返回 12 条条目但只有 3 个唯一 `node_id`
+  （每个 node_id 同时以 CN 与 DN 各出现一次，其中 6 条 `role == "master"`），
+  不去重就会重复下发。
+- **替代方案**：(a) 一律取第一个 master —— 会丢掉节点级指标的节点区分，
+  与实测结论矛盾；(b) 一律各 master 一份 —— 实例级指标重复 3 倍；
+  (c) 跨 master 求和 —— 得到 3 倍假累计值，是最坏的一种。
+- **后果**：`scope.node.policy` 的语义被固化下来（`per_master` 对节点级视图、
+  取首个 master 对实例级视图）。**这是业务口径**：节点级视图的实例级指标
+  （如 `gaussdb.Xact_commit`）会在 3 个节点资源上各出现一次、值略有差异
+  （GaussDB 分布式下各 CN 的 `pg_stat_database` 是各自视角）。
+  该口径需在交付文档中逐条说明，并列入待客户确认项。
+
+### 决策 12：消息信封以客户字段表为准，开发方案 §3.1 视为过时
+
+- **选择**：最终 Kafka 消息的字段集以 `data/mapping/itscada_field_map.json`
+  的 `metric_message`（7 字段）/ `alarm_message`（13 字段）为准 ——
+  该文件直接取自客户两份对接方案 §6.2 / §3.2 的字段表，
+  且 `tools/mappings/message.py` 已按它实现并被测试覆盖。
+  开发方案 §3.1 的另一套信封（`msg_type` / `schema_version` / `instance_id` /
+  `metric_name` … 共 14/25 字段）是**映射层重构之前**的设计，已被取代，
+  本次 SHALL 同步修正开发方案 §3.1。
+- **理由**：客户对接方案是**外部契约**，其字段表是唯一权威；
+  开发方案是内部设计文档。两者冲突时以客户方案为准。
+  `itscada_field_map.json` 正是从客户方案逐字段落下来的，
+  且现有 164 个测试与 `build_kafka_mapping.py` 都已围绕它工作。
+- **替代方案**：按开发方案 §3.1 实现 —— 会推翻已被验证的 `message.py`，
+  且产出的字段集不是客户文档里的那份。
+- **后果**：本变更必须包含**开发方案 §3.1 的同步修改**（这不属于「附带漂移」，
+  而是本次直接改动的契约的真相源）。业务维度的落点同步确定为
+  `tags.dimension_values`（不是 `dimensions`），`COMPONENT_ID` 的大小写也统一为
+  `component_id`。
+
+### 决策 13：合并 SQL 的 SQL 文本在运行时按分页窗口生成
+
+- **选择**：包内携带 `merged_sql.json`（11 个视图定义 + `refresh_seconds` /
+  `refresh_tier` + `paging.views[].paged`），
+  由**运行时**渲染出带指定 `limit`/`offset` 的 SQL 文本；
+  SHALL NOT 打包一个固定的成品 `.sql` 文件。
+  分页容量由 `CMD_PAGE_SIZE`（默认 100）配置。
+- **理由**：`data/merged_sql/sql_merge.sql` 只是**第 1 页（offset=0）的成品**；
+  第 2 页起由 `tools/build_sql_merge.py --offset N` 现场生成。
+  若只打包成品文件，采集端根本没有翻页能力，
+  而表级视图在表数超过 100 时必须翻页才能取全。
+  把渲染逻辑放进包，采集端才能推进 offset。
+- **替代方案**：(a) 打包固定 SQL —— 无法翻页，B5 阻塞；
+  (b) 打包 N 个预生成的页 —— 页数取决于表数量，运行前无法确定；
+  (c) 用正则替换成品 SQL 里的 `limit N offset M` —— 脆弱，视图的 limit 各不相同
+  （`activity_running` 语义上限 20、`activity_top10` 上限 10），正则会误改。
+- **后果**：需要把 `build_sql_merge.py` 的渲染逻辑搬进包（与决策 2 的「搬而不重写」一致），
+  并加一条测试断言「包内渲染出的第 1 页 SQL 与 `data/merged_sql/sql_merge.sql` 一致」。
 
 ## 风险与验证
 

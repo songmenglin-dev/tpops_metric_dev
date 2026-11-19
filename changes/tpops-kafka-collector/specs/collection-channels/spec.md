@@ -11,18 +11,25 @@
 
 采集端 SHALL 按客户指标库的「采集更新周期 + 采集更新周期单位」分档调度，
 档位集合为 {30 秒, 60 秒, 1 分, 2 分, 5 分, 1 时, 24 时}。
+档位的排序 SHALL 以**时长**为准（秒数升序）；「60 秒」与「1 分」时长相同，
+视为**同一档**，SHALL NOT 视为两档。
 命令中心 SQL 的调度频率 SHALL 由它所覆盖指标中的**最高需求档**决定，
 SHALL NOT 为每个指标单独调度。
 
 #### Scenario: 档位到期序列
 
-- **WHEN** 给定 7 档指标分布，调度器运行若干 tick
+- **WHEN** 给定 7 档指标分布（按秒数升序），调度器运行若干 tick
 - **THEN** 每条合并 SQL 的执行时刻与它覆盖指标的最高档一致
 
 #### Scenario: 一条 SQL 服务多档
 
 - **WHEN** 某条 SQL 同时覆盖 1 分钟档与 5 分钟档指标
 - **THEN** 该 SQL 只在 1 分钟档执行一次，其结果同时供两档指标使用
+
+#### Scenario: 60 秒与 1 分同档
+
+- **WHEN** 某条 SQL 覆盖了 60 秒档指标与 1 分钟档指标
+- **THEN** 两者被视为同一档，该 SQL 的刷新周期为 60 秒
 
 ### Requirement: 监控指标接口的窗口与时间戳
 
@@ -75,9 +82,14 @@ SHALL NOT 在聚合口径未确认前自行求和。
 
 ### Requirement: 命令中心通道的执行
 
-B 类通道 SHALL 通过统一命令中心执行**单条合并 SQL**（`sql_merge.sql`），
-SHALL 按 `paging` 段对可增长视图分页下发，
+B 类通道 SHALL 通过统一命令中心执行**单条合并 SQL**，
+SHALL 按视图的刷新档位决定该视图的数据新鲜度，
 SHALL 遵守平台的输出硬上限。
+
+合并 SQL 的 SQL 文本 SHALL 由**运行时按分页窗口生成**（从 `merged_sql.json` 的视图定义
+与 `paging` 段渲染），SHALL NOT 依赖一个固定的成品 SQL 文件 ——
+固定文件只能覆盖第 1 页，无法翻页。
+分页容量 SHALL 可配（`CMD_PAGE_SIZE`，默认 100），SHALL NOT 超过平台的 `limit` 上限 1000。
 
 #### Scenario: 一次下发
 
@@ -130,6 +142,9 @@ SHALL 遵守平台的输出硬上限。
 SHALL 按 `limit ≤ 100` 分页取全，
 SHALL 按 `alarm_id + instance_id` 把明细行归并进收敛条目的 `details` 数组。
 
+平台的 `alarm_id` / `instance_id` 过滤**仅在 `is_convergence = false`（明细形态）时有效**；
+采集端 SHALL 按此约束设计查询，不得假设过滤条件在收敛形态下同样生效。
+
 #### Scenario: 超过 100 条
 
 - **WHEN** 某次查询的 `total_count` 为 250
@@ -139,6 +154,12 @@ SHALL 按 `alarm_id + instance_id` 把明细行归并进收敛条目的 `details
 
 - **WHEN** 同一 alarm_id + instance_id 有 3 条明细行
 - **THEN** 归并进同一收敛条目的 `details`，产出 1 条消息
+
+#### Scenario: 收敛形态下的过滤
+
+- **WHEN** 采集端以 `is_convergence = true` 拉取收敛列表
+- **THEN** 采集端不依赖 `alarm_id` / `instance_id` 过滤结果（该过滤在此形态下无效），
+  改由拉全量后在本地按 `alarm_id + instance_id` 归并
 
 ### Requirement: 历史告警增量与超期检测
 

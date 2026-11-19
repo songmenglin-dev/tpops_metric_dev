@@ -105,16 +105,21 @@ SHALL 对 `result` 字段做二次 `json.loads`。
 - **WHEN** 任务记录中的 `sql_text` 为 `******`
 - **THEN** 不影响结果解析（SQL 原文由采集端自己持有）
 
-### Requirement: 命令中心仅在 master 节点执行
+### Requirement: 命令中心仅在 master 节点执行，且节点清单按 node_id 去重
 
 命令中心客户端 SHALL 先取节点清单（`key-view-execute-node`），
-SHALL 只在 `role == "master"` 的节点上下发命令。
+SHALL 只在 `role == "master"` 的节点上下发命令，
+SHALL **按 `node_id` 去重**后才下发。
 节点清单 SHALL 按实例缓存（TTL 1 小时）。
+
+> 实测：节点清单对同一实例返回 12 条条目、只有 3 个唯一 `node_id`
+> （每个 node_id 同时以 CN 与 DN 各出现一次），其中 6 条 `role == "master"`。
+> 不去重就会向同一节点重复下发。
 
 #### Scenario: 存在多个 master
 
-- **WHEN** 目标实例有 3 个 master CN
-- **THEN** 命令下发到全部 master，返回结果按节点区分，不合并去重
+- **WHEN** 目标实例有 3 个 master CN（节点清单里对应 6 条 master 条目）
+- **THEN** 命令只向 3 个唯一 node_id 下发，返回结果按节点区分，不合并去重
 
 #### Scenario: 取不到 master
 
@@ -123,13 +128,22 @@ SHALL 只在 `role == "master"` 的节点上下发命令。
 
 ### Requirement: 命令中心并发上限与单条失败隔离
 
-命令中心并发下发数 SHALL 由 `CMD_CONCURRENCY` 控制（1~10），
-单条命令的失败 SHALL NOT 影响同批其他命令。
+命令中心并发下发数 SHALL 由 `CMD_CONCURRENCY` 控制（范围 1~10），
+**默认值 SHALL 为 2**（不是 9）：实测并发 ≥4 会触发平台侧参数竞争，
+产生假的「invalid SQL statement with syntax error」，且高并发总墙钟反而更长。
+单条命令的失败 SHALL NOT 影响同批其他命令；
+SHALL 逐条判任务状态，SHALL NOT 假设失败落在哪一批。
 
 #### Scenario: 批中一条失败
 
-- **WHEN** 一批 10 条命令中有 1 条失败
-- **THEN** 其余 9 条的结果仍被正常返回，失败的那条单独带错误信息
+- **WHEN** 一批命令中有 1 条失败
+- **THEN** 其余命令的结果仍被正常返回，失败的那条单独带错误信息
+
+#### Scenario: 高并发下的随机失败
+
+- **WHEN** 并发数被配到 8 且其中若干条随机失败
+- **THEN** 失败的每一条都被独立重试并最终返回（实测重试全部成功），
+  失败位置不假设为前 N 条
 
 ### Requirement: 慢 SQL 文本默认脱敏
 

@@ -18,7 +18,7 @@
 同时存在一个**已实测复现的缺陷**：映射层不认识「单条合并 SQL」的返回形态
 （`result` = 一行 11 个 `json_agg` 列），82 个 B 类指标在该形态下**静默产出 0 / None / 空列表**
 且不报错，而现有 164 个测试全绿也拦不住（回归样本还是旧的 11 条形态）。
-若按现状直接写采集端，交付的是「能跑但数据错」的版本 —— 方案 §7.1.1 明确指出
+若按现状直接写采集端，交付的是「能跑但数据错」的版本 —— 方案 §1.1 明确指出
 「错的数据比没有数据更危险」。
 
 ## 变更内容（What Changes）
@@ -33,9 +33,15 @@
 4. **顺带修两个恒为 0 的指标**：`gaussdb.Total_pct` 与 `GAUSSDB.session_usage`
    是跨视图比率，其读取的 `ctx.rows_by_key` 从未被任何生产路径填充过。
 
-保留不变的行为：客户侧 Kafka 消息信封（§3.1 已冻结）、Topic 名与分区策略（§3.2）、
-采集周期 7 档（§3.3）、取值口径 5 类转换（§3.4）、维度展开规则（§3.5）、
-3 个不可提供指标的处置（§3.6）、脱敏默认策略（§3.8）。
+保留不变的行为：客户侧 Kafka 消息信封（以 `data/mapping/itscada_field_map.json`
+的 7/13 字段为准 —— 该文件直接取自客户两份对接方案 §6.2 / §3.2，
+且 `tools/mappings/message.py` 已按它实现并被测试覆盖）、
+Topic 名与分区策略（§3.2）、采集周期 7 档（§3.3）、取值口径（§3.4）、
+维度展开规则（§3.5）、3 个不可提供指标的处置（§3.6）、脱敏默认策略（§3.8）。
+
+> **开发方案 §3.1 的另一套信封（14/25 字段，含 `msg_type` / `schema_version`）已过时**，
+> 那是映射层重构之前的设计，被客户字段表取代。本次同步修正 §3.1 —— 它不是「附带漂移」，
+> 而是本次直接改动的契约的真相源。
 
 ## 范围（Scope）
 
@@ -49,17 +55,26 @@
   - 波次 3：调度与测试（W19 调度器 / W20 健康端点 / W21 入口装配 / W22 回归夹具 /
     W23 测试）
   - 波次 4：交付文档（W24）
-- 采集端落地需要的映射表文件从 `data/mapping/`、`data/merged_sql/` 搬进
-  `tpops_kafka/mapping/data/`。
+- 采集端落地需要的映射表文件从 `data/mapping/`、`data/merged_sql/` **复制**进
+  `tpops_kafka/mapping/data/`（仓库原件保留，服务离线回放与文档生成）。
+- **开发方案中与本次改动直接相关的契约章节同步**：§3.1（消息信封 → 客户字段表的
+  7/13 字段）、§3.7 与 §4.5.4（告警幂等键）、§4.2.4 / §4.4 / §4.4.2 / §4.4.3
+  （合并 SQL 形态、102400 B 上限、分页）、§4.6.3（到期判定）、§5.5（配置项）、
+  §5.6.4（启动校验的列来源）、§6.2（回归样本）。
+  **这些不是「附带漂移」——它们是本次直接改动的契约的真相源**，
+  不同步就会让下一个实现者按旧文档写回旧口径。
 - 交付文档：逐条口径说明、疑似 OCR 错字清单、部署运行说明、不可提供指标清单。
 
 ### 范围外（Out of Scope）
 
 - **联调验收 P5**（2026-12-14~15）：需客户真实 Kafka 地址与 Topic 名，
   客户侧死线逾期中；本变更交付到「可在真实环境跑一轮」为止。
+  **验收项 D4（连续运行 ≥24 小时）不在本变更的完成证明内**，
+  按开发方案 §7.1.1 的裁剪顺序，它排在最后被让出。
 - **`data/mapping/archive/` 改名为 `classification/`**：属改名不属功能，另开变更。
 - **24 条评审意见现状核对表**：另开变更。
-- **开发方案 6 处「11 条合并 SQL」漂移同步**：另开变更。
+- **开发方案中与本次改动无关的「11 条合并 SQL」残留**（§7.1.1 时间线叙述、
+  §9.2 实测留档索引等）：另开变更。
 - 客户 ITSCADA 平台本身的开发与部署；其他数据库的采集（走 Agent）；
   TPOPS 平台自身的运维；数据的长期存储与历史回放。
 
@@ -69,11 +84,13 @@
 
 | 区域 | 影响 |
 |---|---|
-| **新增** `tpops_kafka/` | 7 个顶层模块 + `tpops/` 6 个 + `collectors/` 6 个 + `mapping/` 2 个 + `kafka/` 2 个 = 23 个新模块 |
+| **新增** `tpops_kafka/` | 顶层 8 个（`config` / `models` / `errors` / `retry` / `watermark` / `scheduler` / `health` / `main`）+ `tpops/` 6 个 + `collectors/` 5 个 + `mapping/` 7 个（5 个照搬 + `loader` + `masking`）+ `kafka/` 2 个 = **28 个新模块** |
 | **改** `tools/mappings/decode.py` | 新增 `decode_merged` / `merge_pages`；既有 `_rows_from_result` 不动 |
 | **改** `tools/build_response_rules.py` | 生成 `merged_views` 段、改写 `api_chain`、删除死代码 `IDEMPOTENCY['alarm']`、增加合并形态的列校验 |
 | **改** `tools/build_itscada_mapping.py` | `alarm_rules.json` 增加 `idempotency` 段 |
+| **改** `tools/build_sql_merge.py` 的渲染逻辑 | 搬进包（`tpops_kafka/mapping/sqlgen.py`），供运行时按 offset 生成 SQL |
 | **改** `data/mapping/response_rules.json`、`alarm_rules.json` | 生成物，随生成器更新 |
+| **改** `docs/开发方案-GaussDB指标与告警采集.md` | §3.1 / §3.7 / §4.5.4 等本次直接改动的契约章节 |
 | **新增** `tests/` 下的 unit / integration / fixtures / regression 四层 | 回归层回放 98 份留档 + 合并 SQL 留档 |
 | **外部依赖** | `kafka-python==2.0.2`（PLAINTEXT 生产者）、`requests`；均为既有锁版本，无新增依赖 |
 
