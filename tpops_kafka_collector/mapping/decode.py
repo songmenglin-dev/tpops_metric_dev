@@ -12,19 +12,37 @@
 - **locate**（定位）决定"取这一段里的哪部分"，是逐指标的条件。
 
 本模块只认这两样，不含任何业务计算 —— 业务计算在 ``rules.py``。
+
+**两条解码路径**（对应设计决策 3）：
+
+- 路径 P（既有）：``decode(body, shape, locate)`` —— ``result`` 直接是行列表
+  （旧的 11 条命令中心 SQL 形态、监控指标、诊断、实例接口）。
+- 路径 M（新增，生产路径）：``decode_merged(body, views)`` / ``merge_pages(...)``
+  —— ``result`` 是**一行**，该行的每个键是一个视图名，值是该视图的 JSON 字符串
+  （「一条合并 SQL」的形态）。
+
+两条路径**不共用形状**：一个 shape 只对应一种 body，不靠自动探测区分。
+把合并形态当行列表用会**静默产出 0**（82 个 B 类指标全错且不报错），
+详见 ``changes/tpops-kafka-collector/specs/mapping-and-rules/spec.md``。
 """
 from __future__ import print_function
 
 import json
-from typing import Any, List, Mapping, Optional, Sequence
+from dataclasses import dataclass
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .rules import RuleContext
+from ..errors import MappingError
 
-__all__ = ['DecodeError', 'decode']
+__all__ = ['DecodeError', 'MergedContexts', 'decode', 'decode_merged', 'merge_pages']
 
 
-class DecodeError(Exception):
-    """响应体不符合规则声明的形状。"""
+class DecodeError(MappingError):
+    """响应体不符合规则声明的形状。
+
+    继承 ``MappingError``（平台层异常体系）→ **不可重试**：
+    响应结构与预期不符要人工介入，重试只会重复拉同一个坏数据。
+    """
 
 
 def decode(
@@ -73,6 +91,177 @@ def decode(
             now_ms=now_ms,
         )
     raise DecodeError('未知的解码形状：%s' % kind)
+
+
+# -- 合并形态（路径 M）--------------------------------------------------
+
+@dataclass(frozen=True)
+class MergedContexts:
+    """「一条合并 SQL」的解码结果。
+
+    - ``by_sql_key``：视图名 → 该视图的 ``RuleContext``（``rows`` 是该视图的行）；
+    - ``rows_by_key``：视图名 → 该视图的行元组（跨视图规则直接用这个）。
+
+    ``by_sql_key`` 里每个上下文的 ``rows_by_key`` **也填好了全部视图**，
+    这样 ``ratio_across`` 这类跨视图规则不必再单独拿一份数据。
+    """
+
+    by_sql_key: Mapping[str, RuleContext]
+    rows_by_key: Mapping[str, Tuple[Mapping[str, Any], ...]]
+
+
+def decode_merged(
+    body: Any,
+    views: Mapping[str, Any],
+    now_ms: int = 0,
+) -> MergedContexts:
+    """把「一行 N 个 json_agg 列」的合并返回体解成每个视图的行列表。
+
+    :param body: HTTP 响应体（``{"result": "<平台的 JSON 字符串>"}``）
+    :param views: ``merged_views`` 段：视图名 → ``{json_column, paged, sql_ref}``
+    :param now_ms: 采集完成时刻（毫秒）
+
+    形态（实测）::
+
+        result = '[{"stat_database":"[{\\"datname\\":\\"lz\\",...}]", ...}]'
+
+    ``result`` 解析后是**恰好一行**，该行的每个键是一个视图名，值是该视图的
+    JSON 字符串。**不能把这一行当行列表返回** —— 那样每个视图的列拿到的是
+    一整段 JSON 字符串，取值时全部变成 0/None/空列表且不报错。
+
+    - 视图的列值为 ``''`` 或 ``null``（``json_agg`` 零行 → NULL → 平台渲染成空串）
+      → 该视图解成空列表 ``[]``，不抛异常；
+    - 列值不是合法 JSON → 抛 ``DecodeError``（不静默返回空列表）；
+    - ``result`` 不是恰好 1 行 → 抛 ``DecodeError``，并说明期望与实际行数。
+    """
+    row = _merged_row(body)
+    rows_by_key = {}  # type: Dict[str, Tuple[Mapping[str, Any], ...]]
+    for name in views:
+        column = _json_column_of(views[name], name)
+        rows_by_key[name] = _rows_of_view(row, name, column)
+    return _build_merged_contexts(rows_by_key, now_ms)
+
+
+def merge_pages(
+    bodies: Sequence[Any],
+    views: Mapping[str, Any],
+    now_ms: int = 0,
+) -> MergedContexts:
+    """把多页返回体按视图拼成完整视图行列表。
+
+    **只有声明 ``paged = true`` 的视图做跨页拼接**；固定视图只取第一页
+    （每页都会重复返回同样的全量数据，累加会翻倍）。
+
+    拼接放在映射层而不是采集端，是因为 ``row_policy: sum`` 的语义是
+    「整视图求和」—— 逐页解码逐页求值会**按页出值**，表一多就静默出错。
+    """
+    if not bodies:
+        raise DecodeError('没有可拼接的返回体')
+    per_page = [decode_merged(body, views, now_ms) for body in bodies]
+    rows_by_key = {}  # type: Dict[str, Tuple[Mapping[str, Any], ...]]
+    for name in views:
+        if _is_paged(views[name]):
+            merged = []  # type: List[Mapping[str, Any]]
+            for page in per_page:
+                merged.extend(page.rows_by_key.get(name, ()))
+            rows_by_key[name] = tuple(merged)
+        else:
+            rows_by_key[name] = per_page[0].rows_by_key.get(name, ())
+    return _build_merged_contexts(rows_by_key, now_ms)
+
+
+def _build_merged_contexts(
+    rows_by_key: Mapping[str, Tuple[Mapping[str, Any], ...]],
+    now_ms: int,
+) -> MergedContexts:
+    """给每个视图造一个上下文，并把**全部视图**的行填进 ``rows_by_key``。"""
+    by_sql_key = {}  # type: Dict[str, RuleContext]
+    for name, rows in rows_by_key.items():
+        by_sql_key[name] = RuleContext(
+            rows=rows,
+            rows_by_key=rows_by_key,
+            now_ms=now_ms,
+        )
+    return MergedContexts(by_sql_key=by_sql_key, rows_by_key=rows_by_key)
+
+
+def _merged_row(body: Any) -> Mapping[str, Any]:
+    """取出合并形态里的那一行（``result`` 解析后必须恰好一行）。"""
+    if not isinstance(body, Mapping):
+        raise DecodeError('合并形态的响应体必须是对象，实际是 %s' % type(body).__name__)
+    if 'result' not in body:
+        raise DecodeError('合并形态的响应体里没有 result')
+    payload = body['result']
+    if isinstance(payload, (bytes, str)):
+        text = payload.decode('utf-8') if isinstance(payload, bytes) else payload
+        if not text.strip():
+            raise DecodeError('合并形态的 result 是空字符串，期望 1 行，实际 0 行')
+        try:
+            payload = json.loads(text)
+        except ValueError as exc:
+            raise DecodeError('result 不是合法 JSON：%s' % exc)
+    if not isinstance(payload, list):
+        raise DecodeError('合并形态的 result 期望行列表，实际是 %s' % type(payload).__name__)
+    if len(payload) != 1:
+        raise DecodeError(
+            '合并形态的 result 期望 1 行，实际 %d 行' % len(payload)
+        )
+    row = payload[0]
+    if not isinstance(row, Mapping):
+        raise DecodeError('合并形态的那一行必须是对象，实际是 %s' % type(row).__name__)
+    return row
+
+
+def _rows_of_view(
+    row: Mapping[str, Any],
+    name: str,
+    column: str,
+) -> Tuple[Mapping[str, Any], ...]:
+    """取一个视图的行列表。空视图 → 空列表；坏 JSON → 抛异常。"""
+    if column not in row:
+        raise DecodeError('合并形态的那一行里没有视图 %s 的列 %s' % (name, column))
+    value = row[column]
+    if value is None:
+        return ()
+    if isinstance(value, (bytes, str)):
+        text = value.decode('utf-8') if isinstance(value, bytes) else value
+        if not text.strip():
+            # json_agg 对零行返回 NULL，平台渲染成空字符串
+            return ()
+        try:
+            value = json.loads(text)
+        except ValueError as exc:
+            raise DecodeError('视图 %s 的列 %s 不是合法 JSON：%s' % (name, column, exc))
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise DecodeError(
+            '视图 %s 的列 %s 期望行列表，实际是 %s' % (name, column, type(value).__name__)
+        )
+    rows = []  # type: List[Mapping[str, Any]]
+    for item in value:
+        if not isinstance(item, Mapping):
+            raise DecodeError(
+                '视图 %s 的列 %s 里有非对象的行：%s' % (name, column, type(item).__name__)
+            )
+        rows.append(item)
+    return tuple(rows)
+
+
+def _json_column_of(spec: Any, name: str) -> str:
+    """视图在合并那一行里对应的列名（默认与视图同名）。"""
+    if isinstance(spec, Mapping):
+        column = spec.get('json_column')
+        if column:
+            return str(column)
+    return name
+
+
+def _is_paged(spec: Any) -> bool:
+    """视图是否可增长（声明 ``paged = true``）。缺省为 false。"""
+    if isinstance(spec, Mapping):
+        return bool(spec.get('paged', False))
+    return False
 
 
 # -- 各形状的实现 -------------------------------------------------------

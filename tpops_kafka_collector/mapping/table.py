@@ -12,6 +12,8 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Tuple
 
+from ..errors import MappingError
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
 FIELD_MAP_FILE = 'itscada_field_map.json'
@@ -28,10 +30,6 @@ CATEGORY_MAPPING_FILES = {
     'instance': ARCHIVE_DIR + '/metric_mapping_instance.json',
     'alarm': ARCHIVE_DIR + '/alarm_mapping.json',
 }
-
-
-class MappingError(Exception):
-    """映射表缺失或结构不合法。"""
 
 
 @dataclass(frozen=True)

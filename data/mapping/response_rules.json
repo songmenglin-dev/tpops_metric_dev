@@ -8929,5 +8929,95 @@
       "needs_confirmation": false,
       "note": "累计值，每秒速率需按周期差分"
     }
-  ]
+  ],
+  "merged_views": {
+    "stat_database": {
+      "json_column": "stat_database",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "stat_database"
+      }
+    },
+    "stat_user_tables": {
+      "json_column": "stat_user_tables",
+      "paged": true,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "stat_user_tables"
+      }
+    },
+    "activity_agg": {
+      "json_column": "activity_agg",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "activity_agg"
+      }
+    },
+    "activity_running": {
+      "json_column": "activity_running",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "activity_running"
+      }
+    },
+    "activity_top10": {
+      "json_column": "activity_top10",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "activity_top10"
+      }
+    },
+    "locks": {
+      "json_column": "locks",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "locks"
+      }
+    },
+    "bgwriter": {
+      "json_column": "bgwriter",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "bgwriter"
+      }
+    },
+    "settings": {
+      "json_column": "settings",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "settings"
+      }
+    },
+    "database": {
+      "json_column": "database",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "database"
+      }
+    },
+    "prepared_xacts": {
+      "json_column": "prepared_xacts",
+      "paged": false,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "prepared_xacts"
+      }
+    },
+    "dbstat_sum": {
+      "json_column": "dbstat_sum",
+      "paged": true,
+      "sql_ref": {
+        "catalog": "data/merged_sql/sql_merge.sql",
+        "sql_key": "dbstat_sum"
+      }
+    }
+  }
 }

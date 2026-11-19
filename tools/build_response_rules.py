@@ -464,6 +464,78 @@ def _business_of(rule):
     }
 
 
+def _merged_view_names(sql_text):
+    """从合并 SQL 里解析出视图名（``json_agg(t) ... as <视图名>`` 的别名）。
+
+    视图列的写法是 ``(select json_agg(t) from ( <内层 SQL> ) t) as <视图名>``，
+    内层 SQL 里也有括号，正则按括号配平扫一遍才准。
+    """
+    names = []
+    marker = 'json_agg(t)'
+    position = 0
+    while True:
+        start = sql_text.find(marker, position)
+        if start < 0:
+            break
+        position = start + len(marker)
+        depth = 0
+        index = position
+        while index < len(sql_text):
+            char = sql_text[index]
+            if char == '(':
+                depth += 1
+            elif char == ')':
+                depth -= 1
+                if depth < 0:
+                    break
+            index += 1
+        match = re.match(r'\s+as\s+([a-z_][a-z0-9_]*)', sql_text[index + 1:])
+        if not match:
+            raise BuildError('合并 SQL 里有一处 json_agg 没有 as 别名')
+        names.append(match.group(1))
+    return names
+
+
+def _build_merged_views(merged):
+    """生成 ``merged_views`` 段：合并 SQL 的 11 个视图。
+
+    视图名以 ``merged_sql.json`` 的 ``batches[].sql_key`` 为准，
+    并与 ``sql_merge.sql`` 里实际的列别名**交叉校验** —— 对不上就报错退出，
+    绝不静默产出一份与 SQL 不匹配的映射表。
+
+    ``paged`` 取自 ``merged_sql.json`` 的 ``paging.views[].paged``，**不重新发明**；
+    没在该段里出现的视图按 ``paged = false`` 处理（固定视图每页全量重复取，
+    累加会翻倍）。
+    """
+    batches = merged.get('batches', [])
+    sql_keys = [batch['sql_key'] for batch in batches]
+    if len(set(sql_keys)) != len(sql_keys):
+        raise BuildError('merged_sql.json 的 sql_key 有重复：%s' % sql_keys)
+
+    merge_sql_path = os.path.join(REPO_ROOT, 'data', 'merged_sql', 'sql_merge.sql')
+    with io.open(merge_sql_path, encoding='utf-8') as fp:
+        sql_text = fp.read()
+    sql_view_names = _merged_view_names(sql_text)
+    if sorted(sql_view_names) != sorted(sql_keys):
+        raise BuildError(
+            'sql_merge.sql 的视图名与 merged_sql.json 的 sql_key 对不上：'
+            'SQL 里是 %s，JSON 里是 %s' % (sorted(sql_view_names), sorted(sql_keys))
+        )
+
+    paging_views = (merged.get('paging') or {}).get('views') or {}
+    views = {}
+    for sql_key in sql_keys:
+        views[sql_key] = {
+            'json_column': sql_key,
+            'paged': bool((paging_views.get(sql_key) or {}).get('paged', False)),
+            'sql_ref': {
+                'catalog': 'data/merged_sql/sql_merge.sql',
+                'sql_key': sql_key,
+            },
+        }
+    return views
+
+
 def build():
     metric_rules = _read_json(METRIC_RULES_PATH)['rules']
     manifest = _read_json(os.path.join(RESPONSE_DIR, '000manifest.json'))
@@ -479,6 +551,7 @@ def build():
         }
 
     shapes, rules = _build_shapes_and_rules(metric_rules, samples, merged_sql)
+    merged_views = _build_merged_views(merged)
     return {
         'version': '1.0',
         'generated_by': 'tools/build_response_rules.py',
@@ -496,6 +569,7 @@ def build():
         'channels': CHANNELS,
         'shapes': shapes,
         'rules': rules,
+        'merged_views': merged_views,
     }
 
 
