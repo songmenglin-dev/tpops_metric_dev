@@ -174,6 +174,7 @@ def _alarm_tags(record, details, context=None):
         'engine': record.get('engine'),
         'alarm_duration': record.get('alarm_duration'),
     }
-    if details:
-        tags['details'] = [dict(detail) for detail in details]
+    # details 恒定存在：明细缺失时输出空数组，不省略字段
+    # （规格「告警消息的投递单位」；省略会让客户侧要写「有就取、没有就当空」的分支）
+    tags['details'] = [dict(detail) for detail in (details or ())]
     return tags

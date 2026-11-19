@@ -460,3 +460,24 @@ def test_cross_view_ratio_on_the_measured_node_is_23_over_29(probe_nodes, merged
             assert value == round(CANONICAL_NUMERATOR / CANONICAL_DENOMINATOR, 2)
             assert value == 0.79
             assert value != 0
+
+
+# --- 告警投递单位：details 缺失时也必须存在（空数组，不是省略）-----------
+
+def test_alarm_tags_always_carry_details_array():
+    """规格「告警消息的投递单位」：`details` 缺失时 SHALL 输出空数组 `[]`，SHALL NOT 省略该字段。
+
+    省略字段会让客户侧要写「有就取、没有就当空」的分支；
+    统一输出 `[]` 才能让客户侧统一解析。
+    """
+    from tpops_kafka_collector.mapping.message import _alarm_tags
+
+    tags_without = _alarm_tags({'alarm_id': '2007010001'}, [])
+    assert 'details' in tags_without, 'details 为空时被省略了 —— 规格要求输出 []'
+    assert tags_without['details'] == []
+
+    tags_none = _alarm_tags({'alarm_id': '2007010001'}, None)
+    assert tags_none['details'] == []
+
+    tags_with = _alarm_tags({'alarm_id': '2007010001'}, [{'node_id': 'n1', 'host_ip': '1.2.3.4'}])
+    assert tags_with['details'] == [{'node_id': 'n1', 'host_ip': '1.2.3.4'}]

@@ -12340,7 +12340,8 @@
           "alarm_category": "节点状态",
           "alarm_type": "event",
           "engine": "gaussdb",
-          "alarm_duration": "4小时5分钟"
+          "alarm_duration": "4小时5分钟",
+          "details": []
         }
       }
     },
@@ -12600,7 +12601,8 @@
           "alarm_category": "节点状态",
           "alarm_type": "event",
           "engine": "gaussdb",
-          "alarm_duration": "5小时27分钟"
+          "alarm_duration": "5小时27分钟",
+          "details": []
         }
       }
     },

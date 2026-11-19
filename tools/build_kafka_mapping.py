@@ -45,6 +45,7 @@ RESPONSE_DIR = os.path.join(REPO_ROOT, 'data', 'metric_response')
 ALARM_DIR = os.path.join(REPO_ROOT, 'data', 'alarm')
 
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
+sys.path.insert(0, REPO_ROOT)  # 生产包 tpops_kafka_collector 在项目根
 
 from tpops_kafka_collector.mapping.decode import decode  # noqa: E402
 from tpops_kafka_collector.mapping.message import build_alarm_message, build_metric_message  # noqa: E402
