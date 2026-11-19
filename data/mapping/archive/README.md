@@ -1,4 +1,4 @@
-# 归档：旧的分类字段映射表
+# archive/ —— 旧的分类字段映射表（⚠️ 名字叫 archive，但它还在被生产代码加载）
 
 归档时间：2026-11-13
 归档原因：这套映射是**按类别**（A/B/C/D/E 五张表）组织的，
@@ -35,8 +35,26 @@ metric_mapping_*.json  （按类别，value 字段的来源写得很虚）
 - **告警侧的字段说明**：`alarm_mapping.json` 里的 `tpops_fields`
   详细列了每种告警记录形态的字段（收敛/明细各有哪些字段），
   这部分信息新表里按形态汇总保留
+- ⚠️ **仍被生产代码加载**：`tools/mappings/table.py` 的 `ARCHIVE_DIR` 常量指向本目录，
+  用这 5 个文件做**分类映射表的查表**（`MappingTable` 按类别取规则）。
+  **本目录不是死档，删了会直接跑不起来。**
+
+## 本目录的文件
+
+| 文件 | 作用 |
+|---|---|
+| `metric_mapping_monitor_metrics.json` | A 类（监控指标接口）的分类字段映射 |
+| `metric_mapping_command_center_sql.json` | B 类（命令中心 SQL）的分类字段映射 |
+| `metric_mapping_diagnostic.json` | C 类（诊断优化接口）的分类字段映射 |
+| `metric_mapping_instance.json` | D 类（实例接口）的分类字段映射 |
+| `alarm_mapping.json` | E 类（告警）的分类字段映射，含各告警记录形态的 `tpops_fields` 字段清单 |
 
 ## 不要改这里的文件
 
 要改映射条件，改 `data/mapping/kafka_field_mapping.json`
 （由生成器产出，跑 `python tools/build_kafka_mapping.py` 重新生成）。
+
+> **命名建议**：目录叫 `archive/` 但内容在用，容易被误当死档删掉。
+> 改成 `classification/` 更贴切（要动 `tools/mappings/table.py`、
+> `tools/build_field_mapping_doc.py`、`tests/test_field_mapping.py`、CLAUDE.md 与本 README）。
+> 属于改名不属功能变更，可以单独做。

@@ -150,3 +150,21 @@ python tools/capture_metric_response.py
   在每个文件第 2 步的 `request.body.params[0].param_value` 里**
 - 监控指标接口的时序响应用 2 小时窗口、`end_time` 回退 5 分钟；命令中心返回的是**当前快照**，
   累计计数类指标需自行差分
+
+## 本目录的文件
+
+98 个样本 + 1 个 manifest：
+
+| 文件 | 作用 |
+|---|---|
+| `000manifest.json` | **索引**：每个指标的通道、步骤、样本文件名、实测行数与列名。`tests/test_metric_response.py` 靠它核对「所有可提供指标都有样本」 |
+| `001_…` ~ `098_…json` | **逐指标原生 API 响应体**，一个指标一个文件。文件名格式 `NNN_<客户指标英文名>.json`，序号按抓取顺序 |
+
+> 客户指标英文名里有 OCR 错字（如 `GAUSSDB.Number_of_ansactions_mmitted_r_cond`、
+> `GAUSSDB.Checkpoint_count_eckpoint_ments`），**文件名照抄不改**——
+> 改了就对不上映射表。正确拼写等客户确认。
+
+> **这 98 个文件是「旧的 11 条合并 SQL」形态的留档。**
+> 生产形态已改为 **1 条**合并 SQL（见 [`../merged_sql/`](../merged_sql/)），
+> 那条 SQL 的实跑留档是 `../merged_sql/sql_merge_probe_result.json`。
+> 两套形态都要能解 —— 见 `docs/设计-合并SQL映射基准改造.md`。

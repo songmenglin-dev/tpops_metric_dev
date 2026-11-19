@@ -263,3 +263,51 @@ minutes (default 5). Pass `--lag 0` to query the raw, partly-empty tail.
 Note the interaction with window length — a 5-minute window is *shorter than the
 ingestion lag*, so without the shift almost the entire response is null. That is why
 the short file is nearly useless without compensation.
+
+---
+
+## 本目录的文件（速查）
+
+### 采集与实测（连真实 TPOPS 平台）
+
+| 文件 | 作用 | 产物 |
+|---|---|---|
+| `tpops_client.py` | **TPOPS HTTP 客户端**（mini-token 认证、错误分类、重试）。采集端落地时从这里提炼 | — |
+| `tpops_api_defs.py` | TPOPS API 目录定义（数据部分） | — |
+| `capture_metric_response.py` | 逐指标抓取**原生 API 响应** | `data/metric_response/*.json` |
+| `fetch_tpops_alarms.py` | 抓取告警侧数据（活动/历史 × 收敛/明细、告警定义） | `data/alarm/*.json` |
+| `fetch_builtin_commands.py` | 拉取统一命令中心的**内置命令清单** | `data/command_center/*.json` |
+| `cmd_center_api_samples.py` | 三跳接口的请求/响应**样本**（纯数据），供查询方案生成器引用 | — |
+
+### 映射表生成器（`data/mapping/` 的产物由它们生成）
+
+| 文件 | 作用 | 产物 |
+|---|---|---|
+| `build_customer_metric_mapping.py` | 判定客户指标里哪些 TPOPS 能提供 | `data/customer_metric_mapping.json`、`customer_metric_unsupported.csv` |
+| `build_metric_query_plan.py` | 逐指标查询方案 + 两份交付文档 | `data/customer_metric_query_plan.json`（不入库） |
+| `build_metric_value_rules.py` | 从开发方案 §4.3 抽取值规则 | `data/metric_value_rules.json`（不入库） |
+| `build_itscada_mapping.py` | 生成 ITSCADA 映射规则文件 | `data/mapping/metric_rules.json`、`alarm_rules.json` |
+| `build_response_rules.py` | 从实测响应体生成响应条件与 shape 定义 | `data/mapping/response_rules.json` |
+| `build_kafka_mapping.py` | 生成「响应值 → Kafka 字段」对应表 | `data/mapping/kafka_field_mapping.json` |
+| `build_sql_merge.py` | 把 N 条合并 SQL 再合成 1 条（按 `paging` 段套分页窗口） | `data/merged_sql/sql_merge.sql` |
+| `build_field_mapping_doc.py` | 渲染可读的字段对照表 | `docs/映射表-ITSCADA字段对照.md` |
+
+### 映射层执行代码（`tools/mappings/`）
+
+| 文件 | 作用 |
+|---|---|
+| `mappings/table.py` | 映射表加载与查表（`MappingTable` / `MetricRule` / `AlarmDefinition`） |
+| `mappings/decode.py` | 把实测 `response_body` 解成规则引擎要的 `RuleContext`（按 shape 声明） |
+| `mappings/rules.py` | 字段级转换规则：取值、占位符替换、资源名拼装、差分基线 |
+| `mappings/message.py` | 按 ITSCADA 字段规范组装指标消息与告警消息 |
+| `mappings/nodes.py` | 节点身份解析：`resourceName` 的取值口径 |
+
+### 辅助与演示
+
+| 文件 | 作用 |
+|---|---|
+| `distribution.py` | 实测判定**哪些指标的数据按节点分布**（结论固化进 `metric_rules.json` 的 `node_scoped`） |
+| `demo_mapping.py` | 演示：一条指标从 TPOPS 原始 JSON 到客户 Kafka JSON 的完整映射 |
+| `demo_alarm_metric_mapping.py` | 演示：把一条告警映射到它的指标 |
+| `xlsx_columns.py` | 按**表头名**定位 Excel 的列（不按位置猜，避免新增列导致整体读串位） |
+| `chm_to_md.py` | 把 GaussDB CHM 产品文档转成 Markdown（产出 `docs/api/`） |
