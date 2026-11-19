@@ -1,0 +1,115 @@
+{
+  "recommendation": {
+    "available_modes": [
+      "inline",
+      "batch-inline",
+      "sdd"
+    ],
+    "recommendation": {
+      "mode": "sdd",
+      "reasons": [
+        "The declared execution waves include parallel work, which SDD can dispatch and review independently."
+      ]
+    },
+    "facts": {
+      "workflow": "full",
+      "documented_task_count": 32,
+      "planned_task_count": 32,
+      "planned_wave_count": 6,
+      "has_parallel_wave": true,
+      "inline_threshold": 3
+    }
+  },
+  "waves": [
+    {
+      "id": "wave-0-mapping-baseline",
+      "strategy": "serial",
+      "tasks": [
+        "0.1",
+        "0.2",
+        "0.3",
+        "0.4",
+        "0.5",
+        "0.6",
+        "0.7"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "wave-1-skeleton-platform",
+      "strategy": "parallel",
+      "tasks": [
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.5",
+        "1.6",
+        "1.7",
+        "1.8",
+        "1.9"
+      ],
+      "depends_on": [
+        "wave-0-mapping-baseline"
+      ]
+    },
+    {
+      "id": "wave-2a-mapping-data",
+      "strategy": "serial",
+      "tasks": [
+        "2.1",
+        "2.2"
+      ],
+      "depends_on": [
+        "wave-1-skeleton-platform"
+      ]
+    },
+    {
+      "id": "wave-2b-channels",
+      "strategy": "parallel",
+      "tasks": [
+        "2.3",
+        "2.4",
+        "2.5",
+        "2.6",
+        "2.7",
+        "2.8",
+        "2.9",
+        "2.10"
+      ],
+      "depends_on": [
+        "wave-2a-mapping-data"
+      ]
+    },
+    {
+      "id": "wave-3-scheduling-testing",
+      "strategy": "serial",
+      "tasks": [
+        "3.1",
+        "3.2",
+        "3.3",
+        "3.4",
+        "3.5"
+      ],
+      "depends_on": [
+        "wave-2b-channels"
+      ]
+    },
+    {
+      "id": "wave-4-delivery-docs",
+      "strategy": "serial",
+      "tasks": [
+        "4.1"
+      ],
+      "depends_on": [
+        "wave-3-scheduling-testing"
+      ]
+    }
+  ],
+  "artifacts_hash": "sha256:eee95993246e69018184954d0e44cbaf746731a424c73c12deba8fae528926ea",
+  "contract_hash": "sha256:46a5301c9f793ff4c43bcec60e00524a6cfb560260244d012625c1e77e5990ac",
+  "workflow": "full",
+  "execution_plan_revision_at_recommendation": 1,
+  "created_at": "2026-11-19T05:51:17.114Z",
+  "hash": "sha256:1b8540f892a07f0f52ffec6f237b8c984c9dc051241622c22b99dc3bbbb7f758"
+}

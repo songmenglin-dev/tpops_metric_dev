@@ -144,29 +144,43 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
 - **Review gate**：review report 路径 `.superpowers/reviews/wave-1.md`；
   base = Wave 1 起始 SHA，head = Wave 1 结束 SHA；review receipt 必须为 `pass`
 
-### Wave 2
+### Wave 2a
 
-- **Wave ID**：`wave-2-collection-channels`
-- **任务**：2.1 映射数据复制 → 2.2 合并 SQL 运行时渲染 → 2.3 A 类窗口与切片 →
-  2.4 A 类采集器 → 2.5 命令中心三跳客户端 → 2.6 B 类采集器 → 2.7 C 类 → 2.8 D 类 →
-  2.9 E 类告警 → 2.10 慢 SQL 脱敏
+- **Wave ID**：`wave-2a-mapping-data`
+- **任务**：2.1 映射数据复制进包 → 2.2 合并 SQL 运行时渲染
 - **依赖 wave**：`wave-1-skeleton-platform`
+- **策略**：`serial`（2.2 的 SQL 渲染依赖 2.1 复制进来的 `merged_sql.json`）
+- **目标**：包内具备生产用的映射数据与按 offset 渲染 SQL 的能力
+- **输入**：Wave 1 的包；`data/mapping/`；`data/merged_sql/`
+- **输出**：`tpops_kafka_collector/mapping/data/`、`tpops_kafka_collector/mapping/sqlgen.py`
+- **完成标准**：
+  - 渲染出的第 1 页 SQL 与 `data/merged_sql/sql_merge.sql` **逐字符一致**
+  - 包内映射数据与仓库根 `data/` 一致（一致性测试通过）
+  - 渲染出的第 N 页 SQL 的 `offset` 正确推进，且只作用于可增长视图
+- **Review gate**：review report 路径 `.superpowers/reviews/wave-2a.md`；
+  base = Wave 2a 起始 SHA，head = Wave 2a 结束 SHA；review receipt 必须为 `pass`
+
+### Wave 2b
+
+- **Wave ID**：`wave-2b-channels`
+- **任务**：2.3 A 类窗口与切片 → 2.4 A 类采集器 → 2.5 命令中心三跳客户端 → 2.6 B 类采集器 →
+  2.7 C 类 → 2.8 D 类 → 2.9 E 类告警 → 2.10 慢 SQL 脱敏
+- **依赖 wave**：`wave-2a-mapping-data`
 - **策略**：`parallel`（三条采集链可并行：A=2.3+2.4、B=2.5+2.6、C/D/E=2.7+2.8+2.9；
-  2.1→2.2 是所有通道的前置）
+  2.10 掩码模块独立）
 - **目标**：五条通道全部产出数据；多 master 归集与分页拼接口径落地
-- **输入**：Wave 1 的包；`data/merged_sql/merged_sql.json`；`data/alarm/`；`data/metric_response/`
+- **输入**：Wave 2a 的包；`data/alarm/`；`data/metric_response/`
 - **输出**：`tpops_kafka_collector/tpops/{metrics,command_center,diagnostic,instances,alarms}.py`、
   `tpops_kafka_collector/collectors/{monitor,command_center,diagnostic,instance,alarm}.py`、
-  `tpops_kafka_collector/mapping/{sqlgen,masking}.py`、`tpops_kafka_collector/mapping/data/`
+  `tpops_kafka_collector/mapping/masking.py`
 - **完成标准**：
   - `pytest tests/regression -q` —— 98 个可提供指标全部产出数据（对应 D1）
   - 3 个不可提供指标无消息且丢弃计数递增（对应 D2）
   - 多 master 归集：节点级视图每 master 一份、实例级视图只一份、无 3 倍累加
-  - 分页：两页拼接后行数正确；空页不抛异常；渲染出的第 1 页与
-    `data/merged_sql/sql_merge.sql` 逐字符一致
+  - 分页：两页拼接后行数正确；空页不抛异常
   - 节点清单去重后只向唯一 `node_id` 下发
-- **Review gate**：review report 路径 `.superpowers/reviews/wave-2.md`；
-  base = Wave 2 起始 SHA，head = Wave 2 结束 SHA；review receipt 必须为 `pass`
+- **Review gate**：review report 路径 `.superpowers/reviews/wave-2b.md`；
+  base = Wave 2b 起始 SHA，head = Wave 2b 结束 SHA；review receipt 必须为 `pass`
 
 ### Wave 3
 
@@ -232,8 +246,8 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
 
 - **可用方式与推荐**：`ssf execution recommend <change-dir> [--wave <id>:<parallel|serial>:<task,...>[:<depends-on,...>]]`
 - **用户确认的模式**：`sdd` | `inline` | `batch-inline`（DP-4 决定）
-- **推荐理由 / 项目事实**：32 个任务 / 5 个 wave；波次 1、2 内部有真实并行度，
-  波次 0、3、4 存在强串行前置（接口先定、夹具最后建）。
+- **推荐理由 / 项目事实**：32 个任务 / 6 个 wave；波次 1、2b 内部有真实并行度，
+  波次 0、2a、3、4 存在强串行前置（接口先定、数据先就位、夹具最后建）。
 - **非推荐选择的风险确认**：`--acknowledge-recommendation`（若适用）
 - **执行计划命令**：`ssf execution plan <change-dir> --mode <mode> --confirm --reason <text> --wave <id>:<parallel|serial>:<task,...>[:<depends-on,...>] [--acknowledge-recommendation]`
 - **允许的修订**：将已有计划保留/升级为 `sdd`；先重新 recommend，并以 `--confirm` 生成新 revision
@@ -249,13 +263,14 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
 | Correctness | Pending | 待 build-executor 与 code-reviewer 阶段填充 |
 | Coherence | Pending | proposal / specs / design / tasks / 本合同四处口径一致（DP-2 已核对） |
 
-**需求 → 波次映射**（58 条全部有归属）
+**需求 → 波次映射**（58 条全部有归属，6 个 wave）
 
 | 波次 | 覆盖的需求 |
 |---|---|
 | Wave 0 | 合并 SQL 返回形态的解码、分页结果的拼接、解码错误的异常归属、告警幂等键包含状态、启动期映射校验、生产代码边界、取值规则的类型集（`ratio_across`）、指标幂等键 |
 | Wave 1 | 映射表驱动、映射数据在包内与仓库保持一致、唯一 JSON 序列化出口、值按客户指标表的数据类型序列化、消息字段的缺省约定、指标与告警使用不同 Topic、分区与压缩策略、Kafka 投递参数、投递失败不推进水位、幂等去重、水位与差分基线的持久化、启动期配置加载与快速失败、凭据仅来自环境变量且不入日志、结构化数据不可变、错误显式处理且不静默吞异常、指数退避重试、mini-token 认证、平台路径命名空间、自签证书、错误分类、缺值不产出假数据、累计计数的跨轮差分、实例重启归零的处理、维度展开 |
-| Wave 2 | 周期分档调度、监控指标接口的窗口与时间戳、监控指标分组码、监控指标多 series 的处理、命令中心通道的执行、诊断优化通道、实例元数据通道、告警通道的分页与归并、历史告警增量与超期检测、告警节点身份回填、告警消息的投递单位、多 master 结果的归集口径、命令中心三跳编排、命令中心仅在 master 节点执行，且节点清单按 node_id 去重、命令中心并发上限与单条失败隔离、慢 SQL 文本默认脱敏、业务维度的落点、不可提供指标的处置 |
+| Wave 2a | 映射数据在包内与仓库保持一致、命令中心通道的执行（分页渲染部分）
+| Wave 2b | 周期分档调度、监控指标接口的窗口与时间戳、监控指标分组码、监控指标多 series 的处理、命令中心通道的执行、诊断优化通道、实例元数据通道、告警通道的分页与归并、历史告警增量与超期检测、告警节点身份回填、告警消息的投递单位、多 master 结果的归集口径、命令中心三跳编排、命令中心仅在 master 节点执行，且节点清单按 node_id 去重、命令中心并发上限与单条失败隔离、慢 SQL 文本默认脱敏、业务维度的落点、不可提供指标的处置 |
 | Wave 3 | 调度器的到期驱动与并发组、单轮性能预算、单轮外部调用数与投递成功率可观测、健康端点、优雅退出、每轮结构化汇总日志、平台不保存历史快照、既有 per-view 形态保持可解 |
 | Wave 4 | 交付文档（含不可提供指标的书面清单） |
 

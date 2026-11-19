@@ -15,7 +15,8 @@
 |---|---|---|---|
 | 0 | 映射层能解合并 SQL 形态，82 个 B 类指标产出真值；告警幂等键含 `status`；跨视图比率不再为 0；开发方案的契约章节同步 | 无 | `pytest tests/test_merged_sql_mapping.py tests/test_rules.py tests/test_response_rules.py -q` |
 | 1 | `python -m tpops_kafka_collector.main` 能起、能收信号、空跑不报错；平台层具备「认证失败不重试」 | 波次 0 | `pytest tests/unit tests/integration -q` + 手工起进程收 SIGTERM 看退出码 |
-| 2 | A/B/C/D/E 五条通道全部产出数据 | 波次 1 | `pytest tests/regression -q`（98/98） |
+| 2a | 包内映射数据就位 + 合并 SQL 可按 offset 渲染 | 波次 1 | `pytest tests/unit/test_sqlgen.py tests/unit/test_mapping_data_sync.py -q` |
+| 2b | A/B/C/D/E 五条通道全部产出数据 | 波次 2a | `pytest tests/regression -q`（98/98） |
 | 3 | 常驻进程 + 水位推进 + 优雅退出 + 全量测试与门禁 | 波次 2 | `pytest --cov=tpops_kafka_collector --cov-fail-under=80 -q` + 杀进程重启演练 |
 | 4 | 交付文档齐备 | 波次 3 | 人工核对交付清单 |
 
@@ -124,7 +125,9 @@
   完成后进程在写文件途中被杀不会留下半截 JSON。
   证明：`pytest tests/unit/test_watermark.py -q`
 
-### 波次 2 —— 五条采集通道（W10~W18）
+### 波次 2a —— 映射数据与 SQL 渲染（W13）
+
+### 波次 2b —— 五条采集通道（W10~W18）
 
 - [ ] **2.1 映射数据复制进包**（W13-搬）：把 `data/mapping/` 的六张表、
   `data/merged_sql/merged_sql.json`（11 个视图定义 + 刷新档位 + paging 段）与
