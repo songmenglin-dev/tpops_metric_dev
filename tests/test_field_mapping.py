@@ -9,7 +9,7 @@ import sys
 import pytest
 
 from conftest import DATA_DIR, REPO_ROOT
-from mappings import MappingError, MappingTable, RuleContext, evaluate
+from tpops_kafka_collector.mapping import MappingError, MappingTable, RuleContext, evaluate
 
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
 

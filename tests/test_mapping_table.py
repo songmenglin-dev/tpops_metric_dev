@@ -6,7 +6,7 @@ import os
 import pytest
 
 from conftest import DATA_DIR
-from mappings import MappingTable
+from tpops_kafka_collector.mapping import MappingTable
 
 # 两份 ITSCADA 对接方案里的字段表（原文抄录，作为断言基准）。
 DOC_METRIC_FIELDS = [
@@ -66,7 +66,7 @@ def test_required_fields_are_declared(table):
 
 
 def test_unknown_message_type_raises(table):
-    from mappings import MappingError
+    from tpops_kafka_collector.mapping import MappingError
 
     with pytest.raises(MappingError):
         table.message_fields('unknown')

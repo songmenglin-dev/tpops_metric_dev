@@ -46,11 +46,11 @@ ALARM_DIR = os.path.join(REPO_ROOT, 'data', 'alarm')
 
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
 
-from mappings.decode import decode  # noqa: E402
-from mappings.message import build_alarm_message, build_metric_message  # noqa: E402
-from mappings.nodes import resolve_node_context  # noqa: E402
-from mappings.rules import CounterDeltaStore, evaluate  # noqa: E402
-from mappings.table import AlarmDefinition, MetricRule  # noqa: E402
+from tpops_kafka_collector.mapping.decode import decode  # noqa: E402
+from tpops_kafka_collector.mapping.message import build_alarm_message, build_metric_message  # noqa: E402
+from tpops_kafka_collector.mapping.nodes import resolve_node_context  # noqa: E402
+from tpops_kafka_collector.mapping.rules import CounterDeltaStore, evaluate  # noqa: E402
+from tpops_kafka_collector.mapping.table import AlarmDefinition, MetricRule  # noqa: E402
 
 FIELD_MAP_PATH = os.path.join(MAPPING_DIR, 'itscada_field_map.json')
 METRIC_RULES_PATH = os.path.join(MAPPING_DIR, 'metric_rules.json')

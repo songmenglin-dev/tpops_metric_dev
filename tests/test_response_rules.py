@@ -17,8 +17,8 @@ import pytest
 
 from conftest import DATA_DIR, REPO_ROOT
 
-from mappings.decode import DecodeError, decode
-from mappings.rules import CounterDeltaStore, evaluate
+from tpops_kafka_collector.mapping.decode import DecodeError, decode
+from tpops_kafka_collector.mapping.rules import CounterDeltaStore, evaluate
 
 RESPONSE_DIR = os.path.join(DATA_DIR, 'metric_response')
 RULES_PATH = os.path.join(DATA_DIR, 'mapping', 'response_rules.json')

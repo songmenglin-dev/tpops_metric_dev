@@ -17,8 +17,9 @@ import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE_DIR, 'tools'))
+sys.path.insert(0, BASE_DIR)
 
-from mappings import MappingTable, RuleContext, build_metric_message, evaluate  # noqa: E402
+from tpops_kafka_collector.mapping import MappingTable, RuleContext, build_metric_message, evaluate  # noqa: E402
 
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 

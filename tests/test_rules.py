@@ -6,7 +6,7 @@ import os
 import pytest
 
 from conftest import DATA_DIR
-from mappings import (
+from tpops_kafka_collector.mapping import (
     CounterDeltaStore,
     MappingTable,
     RuleContext,
@@ -15,7 +15,7 @@ from mappings import (
     build_metric_message,
     evaluate,
 )
-from mappings.rules import build_resource_name, substitute_placeholders
+from tpops_kafka_collector.mapping.rules import build_resource_name, substitute_placeholders
 
 
 @pytest.fixture(scope='module')

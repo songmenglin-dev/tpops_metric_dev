@@ -2,7 +2,7 @@
 """节点身份解析：resourceName 的取值口径。"""
 import pytest
 
-from mappings.nodes import (
+from tpops_kafka_collector.mapping.nodes import (
     find_node_by_id,
     find_node_by_ip,
     resolve_node_context,
