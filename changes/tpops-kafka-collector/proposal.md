@@ -11,7 +11,7 @@
 字段级规则（`data/mapping/` 六张表）、实测样本（`data/metric_response/` 98 份 +
 `data/merged_sql/`）、验收标准 D1~D8（§1.7）、WBS W01~W24（§7.2）。
 
-**但仓库里没有一行采集端代码** —— `tpops_kafka/` 这个包尚不存在。
+**但仓库里没有一行采集端代码** —— `tpops_kafka_collector/` 这个包尚不存在。
 当前只有映射层（`tools/mappings/` + `data/mapping/`）与离线回归样本。客户平台的看板
 至今拿不到一条本项目产出的数据。
 
@@ -23,7 +23,7 @@
 
 ## 变更内容（What Changes）
 
-1. **新建 `tpops_kafka/` 采集端**：常驻进程，按窗口与水位循环 —— 拉取 → 归一化 →
+1. **新建 `tpops_kafka_collector/` 采集端**：常驻进程，按窗口与水位循环 —— 拉取 → 归一化 →
    映射 → 序列化 → 投递 Kafka → **投递成功后才推进水位**。支持优雅退出与健康端点。
 2. **映射层改基准**：新增 `merged_views` 段与 `decode_merged` / `merge_pages`，
    让映射层能解「单条合并 SQL」的返回形态；既有 per-view 路径一字不动。
@@ -56,7 +56,7 @@ Topic 名与分区策略（§3.2）、采集周期 7 档（§3.3）、取值口�
     W23 测试）
   - 波次 4：交付文档（W24）
 - 采集端落地需要的映射表文件从 `data/mapping/`、`data/merged_sql/` **复制**进
-  `tpops_kafka/mapping/data/`（仓库原件保留，服务离线回放与文档生成）。
+  `tpops_kafka_collector/mapping/data/`（仓库原件保留，服务离线回放与文档生成）。
 - **开发方案中与本次改动直接相关的契约章节同步**：§3.1（消息信封 → 客户字段表的
   7/13 字段）、§3.7 与 §4.5.4（告警幂等键）、§4.2.4 / §4.4 / §4.4.2 / §4.4.3
   （合并 SQL 形态、102400 B 上限、分页）、§4.6.3（到期判定）、§5.5（配置项）、
@@ -84,12 +84,12 @@ Topic 名与分区策略（§3.2）、采集周期 7 档（§3.3）、取值口�
 
 | 区域 | 影响 |
 |---|---|
-| **新增** `tpops_kafka/` | 顶层 8 个（`config` / `models` / `errors` / `retry` / `watermark` / `scheduler` / `health` / `main`）+ `tpops/` 6 个 + `collectors/` 5 个 + `mapping/` 7 个（5 个复制自 `tools/mappings/` + `loader` + `sqlgen` + `masking`）+ `kafka/` 2 个 = **28 个新模块**。**这是唯一的生产代码** |
+| **新增** `tpops_kafka_collector/` | 顶层 8 个（`config` / `models` / `errors` / `retry` / `watermark` / `scheduler` / `health` / `main`）+ `tpops/` 6 个 + `collectors/` 5 个 + `mapping/` 7 个（5 个复制自 `tools/mappings/` + `loader` + `sqlgen` + `masking`）+ `kafka/` 2 个 = **28 个新模块**。**这是唯一的生产代码** |
 | **删** `tools/mappings/` | 复制进包并把 `tools/` 与 `tests/` 的 import 切到包内后删除（git 历史保留）。理由：双副本会静默分叉，而分叉就是「测试全绿但生产代码错」 |
-| **改** `tools/` 下 10+ 个脚本、`tests/` 下 8 个测试文件 | import 由 `tools.mappings` 改为 `tpops_kafka.mapping`；脚本的 `sys.path` 加项目根 |
+| **改** `tools/` 下 10+ 个脚本、`tests/` 下 8 个测试文件 | import 由 `tools.mappings` 改为 `tpops_kafka_collector.mapping`；脚本的 `sys.path` 加项目根 |
 | **改** `tools/build_response_rules.py` | 生成 `merged_views` 段、改写 `api_chain`、删除死代码 `IDEMPOTENCY['alarm']`、增加合并形态的列校验 |
 | **改** `tools/build_itscada_mapping.py` | `alarm_rules.json` 增加 `idempotency` 段 |
-| **改** `tools/build_sql_merge.py` 的渲染逻辑 | 复制进包（`tpops_kafka/mapping/sqlgen.py`），供运行时按 offset 生成 SQL |
+| **改** `tools/build_sql_merge.py` 的渲染逻辑 | 复制进包（`tpops_kafka_collector/mapping/sqlgen.py`），供运行时按 offset 生成 SQL |
 | **改** `data/mapping/response_rules.json`、`alarm_rules.json` | 生成物，随生成器更新 |
 | **改** `docs/开发方案-GaussDB指标与告警采集.md` | §3.1 / §3.7 / §4.5.4 / §5.1 等本次直接改动的契约章节 |
 | **新增** `tests/` 下的 unit / integration / fixtures / regression 四层 | 回归层回放 98 份留档 + 合并 SQL 留档 |
@@ -99,7 +99,7 @@ Topic 名与分区策略（§3.2）、采集周期 7 档（§3.3）、取值口�
 
 | 证明 | 命令 / 判据 |
 |---|---|
-| 进程可启动并优雅退出 | `python -m tpops_kafka.main` 起得来、收 SIGTERM 后退出码 0、水位文件完整 |
+| 进程可启动并优雅退出 | `python -m tpops_kafka_collector.main` 起得来、收 SIGTERM 后退出码 0、水位文件完整 |
 | 82 个 B 类指标在合并 SQL 形态下产出真值 | 回归层用 `data/merged_sql/sql_merge_probe_result.json` 回放，逐指标比对期望值表（不是「非零」判据） |
 | 98 个可提供指标全部有数据 | 回归层 98/98 通过（对应 D1） |
 | 3 个不可提供指标无消息且计数递增 | 单元断言（对应 D2） |

@@ -13,7 +13,7 @@
 | [`tools/`](tools/) | 离线脚本：抓取、生成映射表、渲染文档、演示 | [`tools/README.md`](tools/README.md) |
 | [`tests/`](tests/) | pytest 单元测试（TPOPS 与 Kafka 一律 mock） | [`tests/README.md`](tests/README.md) |
 | [`docs/`](docs/) | 开发方案、字段对照表、客户对接方案、API 参考 | [`docs/README.md`](docs/README.md) |
-| `tpops_kafka/` | **待建**：采集端（常驻进程）。当前仓库还没有这个包 | — |
+| `tpops_kafka_collector/` | **待建**：采集端（常驻进程）。当前仓库还没有这个包 | — |
 
 ## 根目录的文件
 
@@ -52,4 +52,4 @@ Scheduler(窗口 + 水位)
 ```
 
 已落地的是中间那一层：**映射表（数据）+ 映射层执行代码（`tools/mappings/`）+ 回归样本**。
-采集端落地时，这部分直接搬进 `tpops_kafka/`。
+采集端落地时，这部分直接搬进 `tpops_kafka_collector/`。

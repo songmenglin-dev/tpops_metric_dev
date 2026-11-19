@@ -7,8 +7,8 @@ workflow: full
 revision: null
 
 # === Hashes (fast staleness detection) ===
-artifacts_hash: sha256:2f8150b066498280612499381288113cb16d48a45efded8ccd05718ac64bf6ab
-contract_hash: sha256:cca6a213064cd0e2858803ee2d10cf82873438b1be30d4815eb40595e7db20d8
+artifacts_hash: sha256:90af76cbb35ff240bc333da319e3ff2340ca5fd193314c17faafdba21aa7a2a9
+contract_hash: sha256:3d13e965873aafcd80b00e8178e52e29c01e8bce020158264f9a546ee6e865ad
 
 # === Execution progress ===
 execution_mode: null

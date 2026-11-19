@@ -1911,7 +1911,7 @@ SQL-10 dbstat_sum        覆盖最快 1 分档  → 60 秒
 ### 5.1 目录结构
 
 ```
-tpops_kafka/
+tpops_kafka_collector/
 ├── main.py              # 入口：装配依赖、启动调度循环、信号处理、优雅退出
 ├── config.py            # 配置加载（环境变量 + 可选配置文件）
 ├── scheduler.py         # 到期调度、并发任务组编排、水位推进
@@ -2460,7 +2460,7 @@ pytest-cov<5
 | 语法 | 静态检查禁止 3.8+ 语法（可用 `vermin` 或自定义 AST 扫描） |
 | 风格 | `black` + `isort` + `ruff` |
 | 类型 | `mypy`（3.7 兼容模式） |
-| 测试 | `pytest --cov=tpops_kafka --cov-report=term-missing --cov-fail-under=80` |
+| 测试 | `pytest --cov=tpops_kafka_collector --cov-report=term-missing --cov-fail-under=80` |
 | 密钥扫描 | 提交前扫描硬编码凭据 |
 
 ---
@@ -2474,7 +2474,7 @@ pytest-cov<5
 
 | 阶段 | 内容 | 产出 | 退出准则 |
 |---|---|---|---|
-| **M1** | 骨架 + 配置 + 异常体系 + DTO + Kafka 生产者 + 序列化 + 健康端点 | 可启动、能收信号、空跑不报错 | `python -m tpops_kafka.main` 起停正常；序列化快照测试通过 |
+| **M1** | 骨架 + 配置 + 异常体系 + DTO + Kafka 生产者 + 序列化 + 健康端点 | 可启动、能收信号、空跑不报错 | `python -m tpops_kafka_collector.main` 起停正常；序列化快照测试通过 |
 | **M2** | `tpops/client.py` + 认证 + 错误分类 + 重试框架 | 平台层可用 | 认证失败不重试（T16）；错误分类单测通过 |
 | **M3** | **A 类采集器**（11 指标） | 11 个指标上 Kafka | 与 `data/metric_response/` 的 A 类留档**逐条比对一致** |
 | **M4** | **命令中心客户端**（三跳 + 并发 + 重试）+ 11 条合并 SQL | B 类基础设施 | 三跳解析回归 R2~R5 通过；单条 SQL 3~8 秒内返回 |
@@ -2553,7 +2553,7 @@ TPOPS 可提供性（结论 **98 可提供 / 3 无法提供**）；11-05~11-07 �
 错误分类、重试退避框架）。两条线都只依赖 `models.py`/`errors.py`，
 可以同一人串行切换，也可以两人并行。
 
-本周结束时的可验证状态：**`python -m tpops_kafka.main` 能起、能收信号、空跑不报错**，
+本周结束时的可验证状态：**`python -m tpops_kafka_collector.main` 能起、能收信号、空跑不报错**，
 且平台层已具备"认证失败不重试"的能力（登录失败会累计 `login_failed_attempts` 并锁号，
 盲目重试会直接把账号锁死）。
 

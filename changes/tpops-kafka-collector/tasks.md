@@ -14,25 +14,25 @@
 | 波次 | 交付结果 | 依赖 | 证明 |
 |---|---|---|---|
 | 0 | 映射层能解合并 SQL 形态，82 个 B 类指标产出真值；告警幂等键含 `status`；跨视图比率不再为 0；开发方案的契约章节同步 | 无 | `pytest tests/test_merged_sql_mapping.py tests/test_rules.py tests/test_response_rules.py -q` |
-| 1 | `python -m tpops_kafka.main` 能起、能收信号、空跑不报错；平台层具备「认证失败不重试」 | 波次 0 | `pytest tests/unit tests/integration -q` + 手工起进程收 SIGTERM 看退出码 |
+| 1 | `python -m tpops_kafka_collector.main` 能起、能收信号、空跑不报错；平台层具备「认证失败不重试」 | 波次 0 | `pytest tests/unit tests/integration -q` + 手工起进程收 SIGTERM 看退出码 |
 | 2 | A/B/C/D/E 五条通道全部产出数据 | 波次 1 | `pytest tests/regression -q`（98/98） |
-| 3 | 常驻进程 + 水位推进 + 优雅退出 + 全量测试与门禁 | 波次 2 | `pytest --cov=tpops_kafka --cov-fail-under=80 -q` + 杀进程重启演练 |
+| 3 | 常驻进程 + 水位推进 + 优雅退出 + 全量测试与门禁 | 波次 2 | `pytest --cov=tpops_kafka_collector --cov-fail-under=80 -q` + 杀进程重启演练 |
 | 4 | 交付文档齐备 | 波次 3 | 人工核对交付清单 |
 
 ## 任务
 
 ### 波次 0 —— 生产代码落位、映射层基准改造与契约同步（前置，W00）
 
-> **顺序约束**：先复制进包，再在包内改造。生产代码全部在 `tpops_kafka/`；
+> **顺序约束**：先复制进包，再在包内改造。生产代码全部在 `tpops_kafka_collector/`；
 > `tools/` 与 `data/` 只作参考。
 
-- [ ] **0.1 建包并复制映射层**：新建 `tpops_kafka/` 包骨架（`__init__.py`、
+- [ ] **0.1 建包并复制映射层**：新建 `tpops_kafka_collector/` 包骨架（`__init__.py`、
   `mapping/__init__.py`、`errors.py`、`models.py`），
-  把 `tools/mappings/{table,rules,decode,message,nodes}.py` **复制**进 `tpops_kafka/mapping/`
+  把 `tools/mappings/{table,rules,decode,message,nodes}.py` **复制**进 `tpops_kafka_collector/mapping/`
   （本步不改逻辑，只搬家）。
   完成后包内有一份与 `tools/mappings/` 等价的实现。
   证明：`pytest tests/ -q` 全绿（此时两边都还在，测试指向不变）
-- [ ] **0.2 在包内加 `merged_views` 段与合并形态解码**：在 `tpops_kafka/mapping/decode.py`
+- [ ] **0.2 在包内加 `merged_views` 段与合并形态解码**：在 `tpops_kafka_collector/mapping/decode.py`
   新增 `decode_merged` / `merge_pages`；改 `tools/build_response_rules.py` 生成
   `merged_views` 段（11 个视图，各带 `json_column` / `paged` / `sql_ref`；
   未声明 `paged` 的按 `false`），并校验它与 `data/merged_sql/merged_sql.json`
@@ -71,55 +71,55 @@
   证明：`grep -n "11 条合并 SQL" docs/开发方案-GaussDB指标与告警采集.md` 的结果中，
   与本次改动相关的章节不再出现；`pytest tests/test_generated_rules.py -q`
 - [ ] **0.7 把依赖切到包内并删除参考副本**：把 `tools/` 下 10+ 个脚本与 `tests/` 下 8 个
-  测试文件的 `import tools.mappings` 全部改为 `import tpops_kafka.mapping`；
+  测试文件的 `import tools.mappings` 全部改为 `import tpops_kafka_collector.mapping`；
   `tools/` 脚本的 `sys.path` 需同时加入项目根；**删除 `tools/mappings/`**（git 历史保留）；
-  加一条测试断言 `tpops_kafka/` 下无任何指向 `tools` / `data` 的 import。
+  加一条测试断言 `tpops_kafka_collector/` 下无任何指向 `tools` / `data` 的 import。
   完成后仓库里只剩一份映射层实现，且生产包自洽。
   证明：`pytest tests/ -q` 全绿 + `pytest tests/unit/test_package_boundary.py -q`
 
 ### 波次 1 —— 骨架与平台层（W01~W09）
 
-- [ ] **1.1 配置加载与启动校验**（W01）：新建 `tpops_kafka/config.py`，从环境变量加载
+- [ ] **1.1 配置加载与启动校验**（W01）：新建 `tpops_kafka_collector/config.py`，从环境变量加载
   §5.5 全部配置项，校验必填项与数值范围（窗口 ≥1、并发 1~10、页容量 ≤1000），
   缺失即快速失败且不发任何请求。完成后 `CMD_CONCURRENCY` 默认 2、`CMD_PAGE_SIZE` 默认 100。
   证明：`pytest tests/unit/test_config.py -q`
-- [ ] **1.2 DTO 与异常体系**（W02）：新建 `tpops_kafka/models.py`（`MetricPoint` /
+- [ ] **1.2 DTO 与异常体系**（W02）：新建 `tpops_kafka_collector/models.py`（`MetricPoint` /
   `AlarmDetail` / `AlarmRecord`，frozen dataclass，维度用排序后的元组保证可哈希；
-  `AlarmRecord.idempotency_key` 按波次 0 定的新键计算）与 `tpops_kafka/errors.py`
+  `AlarmRecord.idempotency_key` 按波次 0 定的新键计算）与 `tpops_kafka_collector/errors.py`
   （`TpopsError` 及 `AuthError` / `TransientError` / `ProtocolError` / `MappingError` /
   `ProduceError` 五个子类 + 可重试判定表；`DecodeError` 归入 `MappingError`）。
   证明：`pytest tests/unit/test_models.py -q`
-- [ ] **1.3 重试与退避框架**（W03）：新建 `tpops_kafka/retry.py`，指数退避 + 抖动，
+- [ ] **1.3 重试与退避框架**（W03）：新建 `tpops_kafka_collector/retry.py`，指数退避 + 抖动，
   重试判定集中于此。完成后 `AuthError`/`ProtocolError`/`MappingError`（含 `DecodeError`）
   立即上抛，`TransientError`/`ProduceError`/超时按 1s→2s→4s→8s 重试。
   证明：`pytest tests/unit/test_retry.py -q`
-- [ ] **1.4 JSON 序列化器**（W04）：新建 `tpops_kafka/kafka/serializer.py`，实现
+- [ ] **1.4 JSON 序列化器**（W04）：新建 `tpops_kafka_collector/kafka/serializer.py`，实现
   `itscada_field_map.json` 的信封（指标 7 字段 / 告警 13 字段），`ensure_ascii=False`、
   字段顺序固定、缺失值一律 `null`、时间 13 位毫秒、业务维度落 `tags.dimension_values`、
   值按客户表【数据类型】序列化（整数/浮点/字符/文本）。
   完成后全仓只有这一处 `json.dumps` 产出消息。
   证明：`pytest tests/unit/test_serializer.py -q`
-- [ ] **1.5 Kafka 生产者**（W05）：新建 `tpops_kafka/kafka/producer.py`，PLAINTEXT、
+- [ ] **1.5 Kafka 生产者**（W05）：新建 `tpops_kafka_collector/kafka/producer.py`，PLAINTEXT、
   `acks=all`、`enable_idempotence=False`、压缩与分区数可配、指标与告警分 Topic、
   Key 分别为 `instance_id` 与 `alarm_id`。完成后失败抛 `ProduceError`，
   调用方得以据此不推进水位。
   证明：`pytest tests/integration/test_producer.py -q`
-- [ ] **1.6 TPOPS HTTP 客户端**（W06）：新建 `tpops_kafka/tpops/client.py`，mini-token 认证
+- [ ] **1.6 TPOPS HTTP 客户端**（W06）：新建 `tpops_kafka_collector/tpops/client.py`，mini-token 认证
   （token 从响应头取）、401 强制刷新重试一次、`verify_tls=False` 默认、错误四分类。
   完成后认证失败不发起第二次认证。
   证明：`pytest tests/unit/test_client.py -q`
-- [ ] **1.7 映射表加载与启动校验**（W07）：新建 `tpops_kafka/mapping/loader.py`
-  加载**包内** `tpops_kafka/mapping/data/*.json` 并做启动期四类校验（来源列存在于实测留档的
+- [ ] **1.7 映射表加载与启动校验**（W07）：新建 `tpops_kafka_collector/mapping/loader.py`
+  加载**包内** `tpops_kafka_collector/mapping/data/*.json` 并做启动期四类校验（来源列存在于实测留档的
   实际返回列、可提供指标齐全、条目对应真实指标、占位符与维度绑定一一对应）。
   完成后校验全部在包内完成，运行时不需要仓库根目录。
   证明：`pytest tests/unit/test_mapping_loader.py -q`
-- [ ] **1.8 规则引擎**（W08）：在 `tpops_kafka/mapping/rules.py` 实现映射表在用的全部
+- [ ] **1.8 规则引擎**（W08）：在 `tpops_kafka_collector/mapping/rules.py` 实现映射表在用的全部
   13 种 `value_rule.type`（`raw` / `raw_filtered` / `aggregate` / `counter_delta` /
   `ratio_across` / `series_point` / `enum_map` / `gauge` / `top_n` / `raw_rows` /
   `collection_count` / `text_prefix_count` / `instance_field`），差分用实际采集时刻差，
   首轮无基线只记基线，计数归零丢弃本轮并记 ERROR。
   证明：`pytest tests/unit/test_rules.py -q`
-- [ ] **1.9 水位与差分基线持久化**（W09）：新建 `tpops_kafka/watermark.py`，
+- [ ] **1.9 水位与差分基线持久化**（W09）：新建 `tpops_kafka_collector/watermark.py`，
   写临时文件 + `os.replace` 的原子写，保存指标水位、差分基线、告警水位、幂等键 LRU。
   完成后进程在写文件途中被杀不会留下半截 JSON。
   证明：`pytest tests/unit/test_watermark.py -q`
@@ -128,60 +128,60 @@
 
 - [ ] **2.1 映射数据复制进包**（W13-搬）：把 `data/mapping/` 的六张表、
   `data/merged_sql/merged_sql.json`（11 个视图定义 + 刷新档位 + paging 段）与
-  `data/merged_sql/sql_merge.sql` **复制**进 `tpops_kafka/mapping/data/`；
+  `data/merged_sql/sql_merge.sql` **复制**进 `tpops_kafka_collector/mapping/data/`；
   加一条测试断言两份副本内容一致。完成后采集端包自洽，不依赖仓库根目录。
   证明：`pytest tests/unit/test_mapping_data_sync.py -q`
 - [ ] **2.2 合并 SQL 的运行时渲染**（W13-渲染）：把 `tools/build_sql_merge.py` 的渲染逻辑
-  **复制**进 `tpops_kafka/mapping/sqlgen.py`，按 `merged_sql.json` 的视图定义与 `paging` 段
+  **复制**进 `tpops_kafka_collector/mapping/sqlgen.py`，按 `merged_sql.json` 的视图定义与 `paging` 段
   渲染出带指定 `limit`/`offset` 的 SQL 文本（页容量取自 `CMD_PAGE_SIZE`）；
   加一条测试断言渲染出的第 1 页与 `data/merged_sql/sql_merge.sql` 逐字符一致。
   完成后采集端能按 offset 翻页。
   证明：`pytest tests/unit/test_sqlgen.py -q`
-- [ ] **2.3 A 类：窗口计算与时间戳切片**（W10）：新建 `tpops_kafka/tpops/metrics.py`，
+- [ ] **2.3 A 类：窗口计算与时间戳切片**（W10）：新建 `tpops_kafka_collector/tpops/metrics.py`，
   窗口 ≥1 小时、`end_time` 回退 5 分钟、`is_latest_point_only` 为字符串 `"false"`、
   12 个分组码硬编码、按档位切片并跳过 null 点。
   证明：`pytest tests/unit/test_metrics_window.py -q`
-- [ ] **2.4 A 类采集器**（W11）：新建 `tpops_kafka/collectors/monitor.py`，
+- [ ] **2.4 A 类采集器**（W11）：新建 `tpops_kafka_collector/collectors/monitor.py`，
   多 series 按组件逐条产出、维度键 `component_id` 归入 tags、空分组记告警日志。
   证明：`pytest tests/integration/test_collector_monitor.py -q`
-- [ ] **2.5 命令中心三跳客户端**（W12）：新建 `tpops_kafka/tpops/command_center.py`，
+- [ ] **2.5 命令中心三跳客户端**（W12）：新建 `tpops_kafka_collector/tpops/command_center.py`，
   `statistics.running == 0` 判结束、`result` 二次 `json.loads`、只在 master 下发、
   **节点清单按 `node_id` 去重**、节点清单按实例缓存 1 小时、并发可配（默认 2）、
   单条失败隔离、逐条重试。
   证明：`pytest tests/unit/test_command_center.py -q`
-- [ ] **2.6 B 类采集器**（W14）：新建 `tpops_kafka/collectors/command_center.py`，
+- [ ] **2.6 B 类采集器**（W14）：新建 `tpops_kafka_collector/collectors/command_center.py`，
   下发 1 条合并 SQL、按 `paging` 推进分页 offset、调用 `merge_pages` 拼整视图、
   按 `node_scoped` 归集多 master 结果（`true` 各 master 各自一份、
   `false` 只取第一个 master）、结果长度 >90% 上限记 WARNING、超限时缩小容量重试。
   证明：`pytest tests/integration/test_collector_command_center.py -q`
-- [ ] **2.7 C 类：诊断优化**（W15）：新建 `tpops_kafka/tpops/diagnostic.py` 与
+- [ ] **2.7 C 类：诊断优化**（W15）：新建 `tpops_kafka_collector/tpops/diagnostic.py` 与
   `collectors/diagnostic.py`，slow-sql-list / top-sql-list，
   集合条数与按 `sql_text` 前缀分类计数。
   证明：`pytest tests/integration/test_collector_diagnostic.py -q`
-- [ ] **2.8 D 类：实例元数据**（W16）：新建 `tpops_kafka/tpops/instances.py` 与
+- [ ] **2.8 D 类：实例元数据**（W16）：新建 `tpops_kafka_collector/tpops/instances.py` 与
   `collectors/instance.py`，`GET /rds/v3.2/instances` 取 `engine_version`，1 小时档。
   证明：`pytest tests/integration/test_collector_instance.py -q`
-- [ ] **2.9 E 类：告警拉取与归并**（W17）：新建 `tpops_kafka/tpops/alarms.py` 与
+- [ ] **2.9 E 类：告警拉取与归并**（W17）：新建 `tpops_kafka_collector/tpops/alarms.py` 与
   `collectors/alarm.py`，`limit ≤ 100` 分页取全、活动与历史各取收敛与明细、
   明细按 `alarm_id + instance_id` 归并进 `details`、
   收敛形态下不依赖平台侧 `alarm_id`/`instance_id` 过滤（改本地归并）、
   `first_alarm_time` 水位增量、30 天超期显式告警、节点身份回填
   （回填不到落第一个 master CN）。
   证明：`pytest tests/integration/test_collector_alarm.py -q`
-- [ ] **2.10 慢 SQL 脱敏与截断**（W18）：新建 `tpops_kafka/mapping/masking.py`，
+- [ ] **2.10 慢 SQL 脱敏与截断**（W18）：新建 `tpops_kafka_collector/mapping/masking.py`，
   字面量替换为 `?` 并截断到 512 字符，`SQL_MASKING_ENABLED` 可关。
   证明：`pytest tests/unit/test_masking.py -q`
 
 ### 波次 3 —— 调度、装配与测试（W19~W23）
 
-- [ ] **3.1 调度器**（W19）：新建 `tpops_kafka/scheduler.py`，到期驱动表、
+- [ ] **3.1 调度器**（W19）：新建 `tpops_kafka_collector/scheduler.py`，到期驱动表、
   按 SQL 覆盖指标的最高档定周期（同长度档位视为同档）、tick 内并发执行、
   汇总、水位推进、单组失败不拖垮其他组。完成后 60 秒档单轮墙钟 ≤25 秒。
   证明：`pytest tests/integration/test_scheduler.py -q`
-- [ ] **3.2 健康端点**（W20）：新建 `tpops_kafka/health.py`，`/healthz` 与 `/readyz`，
+- [ ] **3.2 健康端点**（W20）：新建 `tpops_kafka_collector/health.py`，`/healthz` 与 `/readyz`，
   依赖不可用时 `/readyz` 返回 503 且不泄露凭据。
   证明：`pytest tests/integration/test_health.py -q`
-- [ ] **3.3 入口装配与信号处理**（W21）：新建 `tpops_kafka/main.py`，装配依赖、
+- [ ] **3.3 入口装配与信号处理**（W21）：新建 `tpops_kafka_collector/main.py`，装配依赖、
   启动调度循环、捕获 SIGTERM/SIGINT、优雅退出（等在途请求 ≤30 秒、刷盘水位、
   flush producer、退出码 0）、每轮结构化汇总日志。
   证明：`pytest tests/integration/test_main.py -q` + 手工起进程发 SIGTERM 看退出码与水位文件
@@ -192,7 +192,7 @@
   证明：`pytest tests/regression -q`
 - [ ] **3.5 全量测试与门禁**（W23）：补齐单元/集成/回归三层，跑通覆盖率门禁
   （整体 ≥80%、映射层与规则引擎 ≥95%）与 3.7 语法门禁。
-  证明：`pytest --cov=tpops_kafka --cov-report=term-missing --cov-fail-under=80 -q`
+  证明：`pytest --cov=tpops_kafka_collector --cov-report=term-missing --cov-fail-under=80 -q`
   与 `pytest tests/test_py37_compat.py -q`
 
 ### 波次 4 —— 交付文档（W24）
@@ -212,12 +212,12 @@
   1.8 依赖 1.7；2.2 依赖 2.1；2.6 依赖 2.2、2.5；2.9 依赖 0.2；
   3.1 依赖 1.5、1.9、2.4、2.6、2.7、2.8、2.9；3.3 依赖 3.1、3.2。
   2.6 依赖 1.8（规则引擎）；3.4 依赖 2.1、2.2（夹具）。
-- **生产代码只有一份**：决策 2 定下 `tpops_kafka/` 是唯一生产代码。
+- **生产代码只有一份**：决策 2 定下 `tpops_kafka_collector/` 是唯一生产代码。
   波次 0 的 0.7 会把 `tools/` 与 `tests/` 的 import 全部切到包内并删除 `tools/mappings/`，
   从此仓库里不再有「映射层的第二份实现」—— 双副本分叉是静默走样的主要来源，
   与本次要修的「静默出 0」同属一类风险。
 - **映射数据仍是两份**：`data/mapping/`、`data/merged_sql/` 是参考与发布源，
-  `tpops_kafka/mapping/data/` 是生产用的副本（决策 9），由 2.1 的一致性测试守住防漂移。
+  `tpops_kafka_collector/mapping/data/` 是生产用的副本（决策 9），由 2.1 的一致性测试守住防漂移。
   数据文件本身是**声明**（不像代码那样会分叉），保留两份可接受。
 - **既有 164 个测试不搬迁**：留在 `tests/` 根，本次新增测试按四层分目录。
 - **裁剪预案**（若工期吃紧，按开发方案 §7.1.1 顺序让出范围，且必须同步下调验收口径）：

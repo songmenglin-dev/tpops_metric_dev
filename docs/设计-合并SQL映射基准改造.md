@@ -5,7 +5,7 @@
 | 日期 | 2026-11-19 |
 | 状态 | **待批准**（两个待决问题已拍板，见 §10） |
 | 范围 | 映射层（`tools/mappings/` + `data/mapping/`）+ 评审清单 + 开发方案同步 |
-| 不含 | 采集端 `tpops_kafka/`（尚未建立，本次不碰） |
+| 不含 | 采集端 `tpops_kafka_collector/`（尚未建立，本次不碰） |
 
 ---
 
@@ -87,7 +87,7 @@ gaussdb.Timezone                           -> []
 
 ### 非目标
 
-- **不写采集端**。`tpops_kafka/` 尚未建立，本次只把映射层和数据改到「采集端能直接接」的状态。
+- **不写采集端**。`tpops_kafka_collector/` 尚未建立，本次只把映射层和数据改到「采集端能直接接」的状态。
 - **不拆档**。合并 SQL 保持 **1 条全量**（已决策，代价见 §4.2）。
 - **不改客户字段信封**。`itscada_field_map.json` 的 `metric_message` / `alarm_message` 一个字不动。
 

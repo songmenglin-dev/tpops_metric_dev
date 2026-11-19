@@ -1,6 +1,6 @@
 # data/mapping/ —— 映射规则数据（表驱动）
 
-采集端落地时，这一层的文件要搬进 `tpops_kafka/`。
+采集端落地时，这一层的文件要搬进 `tpops_kafka_collector/`。
 **规则不写死在代码里**：改口径改这些文件，不改 `.py`。
 
 执行代码在 [`tools/mappings/`](../../tools/mappings/)。

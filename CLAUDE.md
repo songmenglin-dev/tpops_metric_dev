@@ -33,10 +33,10 @@ Scheduler(窗口 + 水位)
 
 ## 目录结构
 
-`tpops_kafka/` 是**待建**的采集端 —— 本仓库当前只有调研产物、映射规则与离线脚本：
+`tpops_kafka_collector/` 是**待建**的采集端 —— 本仓库当前只有调研产物、映射规则与离线脚本：
 
 ```
-tpops_kafka/              # 待建：采集端（编码阶段落地）
+tpops_kafka_collector/              # 待建：采集端（编码阶段落地）
 ├── main.py          # 入口：装配依赖、启动调度循环、信号处理
 ├── config.py        # 配置加载（环境变量 + 可选配置文件）
 ├── scheduler.py     # 轮询循环、水位推进、重试退避、优雅退出
@@ -53,7 +53,7 @@ tpops_kafka/              # 待建：采集端（编码阶段落地）
     └── serializer.py# JSON 序列化
 ```
 
-**映射层当前在 `tools/` 下**（规则数据 + 执行代码，采集端落地时搬进 `tpops_kafka/`）：
+**映射层当前在 `tools/` 下**（规则数据 + 执行代码，采集端落地时搬进 `tpops_kafka_collector/`）：
 
 ```
 data/mapping/             # 映射规则数据（**表驱动，不写死在代码里**）
@@ -122,7 +122,7 @@ conda run -n tpops python -m pytest -q
 ```bash
 cp .env.example .env        # 填 TPOPS_PASSWORD、KAFKA_* 等
 set -a && source .env && set +a
-python -m tpops_kafka.main
+python -m tpops_kafka_collector.main
 ```
 
 配置项（全部走环境变量，`.env` 已 gitignore）：

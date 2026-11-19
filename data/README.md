@@ -25,7 +25,7 @@
 
 | 目录 | 内容 | 说明 |
 |---|---|---|
-| [`mapping/`](mapping/) | **映射规则数据** —— 采集端落地时要搬进 `tpops_kafka/` 的那一层 | 见 [`mapping/README.md`](mapping/README.md) |
+| [`mapping/`](mapping/) | **映射规则数据** —— 采集端落地时要搬进 `tpops_kafka_collector/` 的那一层 | 见 [`mapping/README.md`](mapping/README.md) |
 | [`alarm/`](alarm/) | 告警侧留档（活动/历史 × 收敛/明细、告警定义目录、181 条规则配置） | 见 [`alarm/README.md`](alarm/README.md) |
 | [`command_center/`](command_center/) | 统一命令中心的内置命令清单（142 条）+ 通用 SQL 命令详情 | 见 [`command_center/README.md`](command_center/README.md) |
 | [`merged_sql/`](merged_sql/) | 11 个视图的合并 SQL、分页协议、实跑留档 | 见 [`merged_sql/README.md`](merged_sql/README.md) |

@@ -7,13 +7,13 @@
 
 - **变更名称**：`tpops-kafka-collector`
 - **要解决的问题**：
-  1. 仓库里没有一行采集端代码 —— 需求、映射规则、实测样本都齐了，但 `tpops_kafka/` 这个包尚不存在，
+  1. 仓库里没有一行采集端代码 —— 需求、映射规则、实测样本都齐了，但 `tpops_kafka_collector/` 这个包尚不存在，
      客户平台至今拿不到本项目产出的数据。
   2. 映射层不认识「单条合并 SQL」的返回形态（`result` = 一行 11 个 `json_agg` 列），
      82 个 B 类指标在该形态下**静默产出 0 / None / 空列表**且不报错，
      而现有 164 个测试全绿也拦不住（回归样本还是旧的 11 条形态）。
 - **范围内**：
-  - 新建 `tpops_kafka/` 采集端（28 个模块），实现 W01~W24 全部任务，分 5 个波次。
+  - 新建 `tpops_kafka_collector/` 采集端（28 个模块），实现 W01~W24 全部任务，分 5 个波次。
   - 映射层基准改造：新增 `merged_views` 段与 `decode_merged` / `merge_pages`；
     告警幂等键加 `status`；修跨视图比率恒为 0；把依赖切到包内并删除 `tools/mappings/`。
   - 同步开发方案中**与本次改动直接相关**的契约章节（§3.1 / §3.7 / §4.5.4 / §4.4 / §5.1 / §5.5 / §5.6.4 / §6.2）。
@@ -51,10 +51,10 @@
   7. 投递失败 → `ProduceError` → 水位未推进。
   8. 计数归零 → 值为 `null` + ERROR 日志 + 重建基线，不产生负速率。
   9. 认证失败 → 只发起一次认证请求。
-  10. `tpops_kafka/` 无任何指向 `tools` / `data` 的 import。
+  10. `tpops_kafka_collector/` 无任何指向 `tools` / `data` 的 import。
 - **验收检查**（全部为命令，逐条见 `tasks.md` 的证明列）：
   - `pytest tests/ -q` 全绿（含既有 164 个用例与本次新增）
-  - `pytest --cov=tpops_kafka --cov-fail-under=80 -q`；映射层与规则引擎 ≥95%
+  - `pytest --cov=tpops_kafka_collector --cov-fail-under=80 -q`；映射层与规则引擎 ≥95%
   - `pytest tests/test_py37_compat.py -q`；`ruff check` 通过（`target-version = "py37"`）
   - 回归层 98/98 通过
   - 手工：起进程 → 发 SIGTERM → 退出码 0 且水位文件完整
@@ -64,7 +64,7 @@
 
 - **架构约束**（`design.md` 决策 1、2、7、8）：
   - 依赖单向：`main → scheduler → collectors → tpops → client`；`mapping → models`；`kafka` 不反向依赖。
-  - `tpops_kafka/` 是**唯一生产代码**；不得 import `tools.*` / `data.*`，运行时不读仓库根。
+  - `tpops_kafka_collector/` 是**唯一生产代码**；不得 import `tools.*` / `data.*`，运行时不读仓库根。
   - 映射层**复制**进包（不重写），改造只在包内做；`tools/mappings/` 在切依赖后删除。
   - 并发用 `ThreadPoolExecutor`（HTTP I/O 密集，GIL 在等待时释放），不用 asyncio（3.7 兼容 + 无新依赖）。
   - 状态用 JSON 文件 + 「临时文件 + `os.replace`」原子写；单实例假设。
@@ -80,7 +80,7 @@
 - **依赖约束**：Python **3.7.9**；`kafka-python==2.0.2`、`requests>=2.25,<2.32`、
   `openpyxl>=3.0,<3.12`、`pytest>=7,<8`；**不新增依赖**；单文件 < 400 行、函数 < 50 行。
 - **数据约束**：
-  - 映射数据在包内 `tpops_kafka/mapping/data/` 持生产副本；仓库根 `data/` 为参考与发布源；
+  - 映射数据在包内 `tpops_kafka_collector/mapping/data/` 持生产副本；仓库根 `data/` 为参考与发布源；
     两侧一致性由测试守住。
   - 规则类型以映射表在用的 **13 种**为准；跨视图比率真名 `ratio_across`，**不得**简化为 `ratio`。
   - 告警幂等键 `(alarm_id, instance_id, first_alarm_time, status)`，用平台原值 status。
@@ -111,7 +111,7 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
 - **策略**：`serial`（0.1 是其余全部的前置；0.3/0.4 在 0.2 之后可并行，0.6 与 0.5 可并行）
 - **目标**：映射层能解合并形态且不静默出 0；生产代码边界成立；契约文档与实现一致
 - **输入**：`tools/mappings/`、`data/mapping/`、`data/merged_sql/`、`docs/开发方案-*.md`
-- **输出**：`tpops_kafka/mapping/`（含 `decode_merged` / `merge_pages`）、
+- **输出**：`tpops_kafka_collector/mapping/`（含 `decode_merged` / `merge_pages`）、
   `response_rules.json` 的 `merged_views` 段、`alarm_rules.json` 的 `idempotency` 段、
   `tests/test_merged_sql_mapping.py`、同步后的开发方案；`tools/mappings/` 已删除
 - **完成标准**：
@@ -133,12 +133,12 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
   1.7 依赖 1.2；1.8 依赖 1.7；1.9 依赖 1.2）
 - **目标**：进程可启动、可优雅退出；平台层具备「认证失败不重试」；映射层与规则引擎就位
 - **输入**：Wave 0 的包；`data/mapping/`；客户字段表
-- **输出**：`tpops_kafka/{config,models,errors,retry,watermark}.py`、
-  `tpops_kafka/kafka/{serializer,producer}.py`、`tpops_kafka/tpops/client.py`、
-  `tpops_kafka/mapping/{loader,rules}.py`
+- **输出**：`tpops_kafka_collector/{config,models,errors,retry,watermark}.py`、
+  `tpops_kafka_collector/kafka/{serializer,producer}.py`、`tpops_kafka_collector/tpops/client.py`、
+  `tpops_kafka_collector/mapping/{loader,rules}.py`
 - **完成标准**：
   - `pytest tests/unit tests/integration -q` 全绿
-  - `python -m tpops_kafka.main` 能起、能收 SIGTERM、退出码 0、水位文件完整
+  - `python -m tpops_kafka_collector.main` 能起、能收 SIGTERM、退出码 0、水位文件完整
   - 序列化器输出与 `itscada_field_map.json` 的字段集逐字段一致
   - 13 种 `value_rule.type` 全部有测试覆盖
 - **Review gate**：review report 路径 `.superpowers/reviews/wave-1.md`；
@@ -155,9 +155,9 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
   2.1→2.2 是所有通道的前置）
 - **目标**：五条通道全部产出数据；多 master 归集与分页拼接口径落地
 - **输入**：Wave 1 的包；`data/merged_sql/merged_sql.json`；`data/alarm/`；`data/metric_response/`
-- **输出**：`tpops_kafka/tpops/{metrics,command_center,diagnostic,instances,alarms}.py`、
-  `tpops_kafka/collectors/{monitor,command_center,diagnostic,instance,alarm}.py`、
-  `tpops_kafka/mapping/{sqlgen,masking}.py`、`tpops_kafka/mapping/data/`
+- **输出**：`tpops_kafka_collector/tpops/{metrics,command_center,diagnostic,instances,alarms}.py`、
+  `tpops_kafka_collector/collectors/{monitor,command_center,diagnostic,instance,alarm}.py`、
+  `tpops_kafka_collector/mapping/{sqlgen,masking}.py`、`tpops_kafka_collector/mapping/data/`
 - **完成标准**：
   - `pytest tests/regression -q` —— 98 个可提供指标全部产出数据（对应 D1）
   - 3 个不可提供指标无消息且丢弃计数递增（对应 D2）
@@ -177,9 +177,9 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
 - **策略**：`serial`（3.1 依赖 1.5+1.9+Wave 2 全部采集器；3.3 依赖 3.1+3.2；3.5 在最后）
 - **目标**：常驻进程 + 水位推进 + 优雅退出 + 全量测试与门禁通过
 - **输入**：Wave 2 的包；98 份留档；合并 SQL 留档
-- **输出**：`tpops_kafka/{scheduler,health,main}.py`、`tests/{unit,integration,regression,fixtures}/`
+- **输出**：`tpops_kafka_collector/{scheduler,health,main}.py`、`tests/{unit,integration,regression,fixtures}/`
 - **完成标准**：
-  - `pytest --cov=tpops_kafka --cov-report=term-missing --cov-fail-under=80 -q` 通过；
+  - `pytest --cov=tpops_kafka_collector --cov-report=term-missing --cov-fail-under=80 -q` 通过；
     映射层与规则引擎 ≥95%
   - `pytest tests/test_py37_compat.py -q` 与 `ruff check` 通过
   - 杀进程 → 重启演练：不重复、不丢失（水位只在投递成功后推进）
@@ -199,7 +199,7 @@ Batch Inline 是串行模式，不得描述为并行。批准后 `ssf execution 
 - **完成标准**：
   - `pytest tests/unit/test_delivery_docs.py -q` 通过（清单与映射表一致）
   - 98 个指标各有口径说明；3 个不可提供指标各有书面理由
-  - 环境变量表与 `tpops_kafka/config.py` 实际读取的变量一致
+  - 环境变量表与 `tpops_kafka_collector/config.py` 实际读取的变量一致
 - **Review gate**：review report 路径 `.superpowers/reviews/wave-4.md`；
   base = Wave 4 起始 SHA，head = Wave 4 结束 SHA；review receipt 必须为 `pass`
 

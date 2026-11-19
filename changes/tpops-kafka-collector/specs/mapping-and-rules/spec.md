@@ -42,7 +42,7 @@ SHALL NOT 在代码中硬编码任何客户指标名、列名、单位或维度�
 
 ### Requirement: 映射数据在包内与仓库保持一致
 
-包内的 `tpops_kafka/mapping/data/*.json` SHALL 与仓库的 `data/mapping/`、`data/merged_sql/`
+包内的 `tpops_kafka_collector/mapping/data/*.json` SHALL 与仓库的 `data/mapping/`、`data/merged_sql/`
 内容一致；采集端 SHALL 从包内读取映射数据。
 
 #### Scenario: 仓库侧改动未同步到包内

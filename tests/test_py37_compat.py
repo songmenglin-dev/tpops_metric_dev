@@ -21,7 +21,7 @@ import pytest
 
 from conftest import REPO_ROOT
 
-# 要检查的目录（相对仓库根）。tpops_kafka/ 尚未建立，出现了就一起检查。
+# 要检查的目录（相对仓库根）。tpops_kafka_collector/ 尚未建立，出现了就一起检查。
 SCAN_DIRS = ('tools', 'tests', 'data')
 SCAN_ROOT_FILES = True
 

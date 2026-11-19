@@ -10,7 +10,7 @@
 
 | # | 事实 | 出处 |
 |---|---|---|
-| F1 | `tpops_kafka/` 尚不存在；仓库只有映射层与离线脚本 | 目录结构 |
+| F1 | `tpops_kafka_collector/` 尚不存在；仓库只有映射层与离线脚本 | 目录结构 |
 | F2 | 映射层能解「`result` 即行列表」（旧的 11 条形态），164 个测试基于此 | `tools/mappings/` |
 | F3 | 合并 SQL 的返回形态是「一行 11 个 `json_agg` 列，列值是 JSON 字符串」，当前映射层解它会得到全 0 | 实测复现（`sql_merge_probe_result.json`） |
 | F4 | 合并 SQL 全量 1 条实测 8.39 秒；100 页翻页在 1 万张表时约 6 分钟一轮 | `data/merged_sql/README.md` |
@@ -39,7 +39,7 @@
 
 ### 目标
 
-- G1：`tpops_kafka/` 常驻进程，7×24 循环，把 98 个可提供指标与告警持续投递到 Kafka。
+- G1：`tpops_kafka_collector/` 常驻进程，7×24 循环，把 98 个可提供指标与告警持续投递到 Kafka。
 - G2：映射层能解合并 SQL 形态，82 个 B 类指标产出真值；既有 per-view 路径不受影响。
 - G3：告警恢复事件不再被去重丢弃；跨视图比率指标不再恒为 0。
 - G4：单元/集成覆盖率 ≥ 80%，映射层与规则引擎 ≥ 95%；Python 3.7 门禁常设。
@@ -56,7 +56,7 @@
 
 ### 决策 1：采集端按「平台层 / 采集层 / 映射层 / 投递层 / 调度层」五层单向依赖
 
-- **选择**：`tpops_kafka/` 下分 `tpops/`（只懂 TPOPS）、`collectors/`（通道分治）、
+- **选择**：`tpops_kafka_collector/` 下分 `tpops/`（只懂 TPOPS）、`collectors/`（通道分治）、
   `mapping/`（表驱动）、`kafka/`（唯一序列化出口）、顶层 `scheduler.py`/`main.py`/`models.py`/
   `errors.py`/`config.py`/`watermark.py`/`health.py`。
   依赖方向严格单向：`main → scheduler → collectors → tpops → client`，
@@ -66,25 +66,25 @@
 - **替代方案**：把 `tools/mappings/` 直接当生产包用（路径在 `tools/` 下，语义上是离线工具）；
   或扁平单包。两者都让「离线工具」与「生产代码」边界模糊，采集端上线时要连同一堆
   抓取脚本一起装。
-- **后果**：多一层搬运工作（把 `tools/mappings/*.py` 搬进 `tpops_kafka/mapping/`），
+- **后果**：多一层搬运工作（把 `tools/mappings/*.py` 搬进 `tpops_kafka_collector/mapping/`），
   但生产包自洽，不依赖 `tools/`。
 
-### 决策 2：生产代码全部在 `tpops_kafka/`，`tools/` 与 `data/` 只作参考
+### 决策 2：生产代码全部在 `tpops_kafka_collector/`，`tools/` 与 `data/` 只作参考
 
-- **选择**：`tpops_kafka/` 是**唯一的生产代码**。`tools/` 与 `data/` 是参考与离线工具，
+- **选择**：`tpops_kafka_collector/` 是**唯一的生产代码**。`tools/` 与 `data/` 是参考与离线工具，
   生产代码**不得**依赖它们：
-  - `tools/mappings/{table,rules,decode,message,nodes}.py` **复制**进 `tpops_kafka/mapping/`，
+  - `tools/mappings/{table,rules,decode,message,nodes}.py` **复制**进 `tpops_kafka_collector/mapping/`，
     全部改造（`decode_merged` / `merge_pages`、告警幂等键、跨视图比率）**只在包内做**。
   - 复制完成后，把 `tools/` 下 10+ 个脚本与 `tests/` 下 8 个测试文件的
-    `import tools.mappings` 全部改为 `import tpops_kafka.mapping`，然后**删除 `tools/mappings/`**
+    `import tools.mappings` 全部改为 `import tpops_kafka_collector.mapping`，然后**删除 `tools/mappings/`**
     （git 历史保留）。
-  - 映射数据在包内 `tpops_kafka/mapping/data/` 持有一份生产副本；
+  - 映射数据在包内 `tpops_kafka_collector/mapping/data/` 持有一份生产副本；
     仓库根 `data/mapping/`、`data/merged_sql/` 保留为参考与发布源，
     由一致性测试保证两侧不漂移。
 - **理由**：
-  1. **生产包必须自洽**。部署产物是 `tpops_kafka/`，运行时不能去读仓库根的 `tools/` 与
+  1. **生产包必须自洽**。部署产物是 `tpops_kafka_collector/`，运行时不能去读仓库根的 `tools/` 与
      `data/`（`tools/` 里有会连真实平台的脚本，边界不清）。
-  2. **双副本会静默分叉**。若 `tools/mappings/` 与 `tpops_kafka/mapping/` 并存，
+  2. **双副本会静默分叉**。若 `tools/mappings/` 与 `tpops_kafka_collector/mapping/` 并存，
      而 164 个现有测试测的是前者，那么**测试全绿并不代表生产代码正确** ——
      这与本次要修的「静默出 0」是同一类风险。切依赖 + 删副本是唯一能消除它的做法。
   3. 那 5 个模块已有 164 个通过的测试覆盖，逻辑正确且已被回归样本验证；
@@ -176,10 +176,10 @@
 ### 决策 9：映射数据文件随包搬运，仓库保留一份
 
 - **选择**：`data/mapping/` 与 `data/merged_sql/` 的映射表与 SQL 复制到
-  `tpops_kafka/mapping/data/`（随包发布），仓库原文件保留（离线工具与文档生成仍用它们）。
+  `tpops_kafka_collector/mapping/data/`（随包发布），仓库原文件保留（离线工具与文档生成仍用它们）。
 - **理由**：采集端要能独立部署成一个包，不能在运行时去读仓库根目录。
 - **替代方案**：运行时读仓库根 —— 部署产物不完整。
-- **后果**：两份副本需要保持一致 → 用「仓库是源、`tpops_kafka/mapping/data/` 是发布副本」
+- **后果**：两份副本需要保持一致 → 用「仓库是源、`tpops_kafka_collector/mapping/data/` 是发布副本」
   的约定，并在测试里断言两者内容一致（防止漂移）。
 
 ### 决策 10：测试分四层，回归层用「期望值表」而非「非零」判据
