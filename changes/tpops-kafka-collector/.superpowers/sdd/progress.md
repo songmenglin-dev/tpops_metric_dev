@@ -100,13 +100,26 @@
   ② 两条 ratio 指标的 `value_type` 都是「浮点」→ 走 `_as_float`，不存在被 `_as_int`
   截断成 0 的风险；③ 规则层的舍入**幂等**（对已 2 位的值再 round 不变），且它让期望值表
   比对的是**交付值本身**。→ 规格与实现**无不一致**。
-- **`pg_stat_activity.state` 平台侧盲区**（实施方提出）—— 已核实：实测留档 `activity_agg`
-  的 `state` 取值**只有 `{active, idle}`**，列只有 `{cnt, datname, state}`。
-  `gaussdb.Lockwaiting`（`state_contains:["lock"]`）与 `gaussdb.Waiting_conn`
-  （`state_contains:["wait"]`）在留档上**匹配 0 行** → 恒为 0。PG 9.2 系的
-  `pg_stat_activity.state` 本就没有 lock/wait 取值（那是 9.6+ 的 `wait_event` 体系），
-  这两条指标**可能结构性不可提供**（98 条可提供里的 2 条）。
-  → **待用户/客户决策**（是否列入 `data/mapping/open_items.json`）。
+- **`pg_stat_activity.state` 的两条指标恒为 0** —— **已澄清：不是可提供性问题。**
+
+  实测留档 `activity_agg` 的 `state` 取值**只有 `{active, idle}`**，
+  所以 `gaussdb.Lockwaiting`（`state_contains:["lock"]`）与
+  `gaussdb.Waiting_conn`（`state_contains:["wait"]`）在留档上匹配 0 行 → 值为 0。
+
+  控制器一度按**原生 PostgreSQL 9.2** 的 `state` 取值集推断「结构性不可提供」
+  —— **这个推断是错的**：GaussDB 是深度改造过的 openGauss 系，
+  `pg_stat_activity.state` **有额外的等待态**（`waiting on lock` 之类）。
+  **用户澄清**：恒为 0 是因为**测试实例本来就没有死锁、没有等待连接的负载**，
+  不是取不到值。
+
+  → 结论：这两条指标**可提供**，映射表的实现（子串包含）也是对的，
+  当前恒为 0 是**真实的 0**。**不列入 `open_items.json`**，
+  在交付文档里写一句「当前测试实例无锁等待/等待资源负载，该指标恒为 0 属正常」。
+
+  顺带记一条**口径备注**（不是缺陷）：`Waiting_conn` 的 `state_contains: ["wait"]`
+  是**宽口径** —— 会把 `waiting on lock` / `waiting on sync` / `waiting on clog`
+  等**所有**等待类状态都算进去，与它「等待资源的连接数」这个名称相符，
+  但交付文档里值得写明。
 
 ## Wave 1 —— wave-1-skeleton-platform（parallel）
 
