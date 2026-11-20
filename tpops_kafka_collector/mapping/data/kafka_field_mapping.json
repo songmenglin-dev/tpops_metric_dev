@@ -8039,22 +8039,8 @@
       "master_view": "divergent",
       "node_scoped": true,
       "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；活跃会话数 / 总连接数",
-      "message_count": 1,
-      "sample_message": {
-        "metricName": "连接使用率",
-        "metricCode": "gaussdb.Total_pct",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 0.0,
-        "unit": "个",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
-          "host_ip": "172.16.103.126"
-        }
-      },
+      "message_count": 0,
+      "sample_message": null,
       "evidence": {
         "sample_file": "056_gaussdb.Total_pct.json",
         "terminal_step": 3,
@@ -11847,22 +11833,8 @@
       "master_view": "divergent",
       "node_scoped": true,
       "remark": "一条消息；资源粒度：实例级（无占位符）；resourceName 指向数据来源的那个节点（数据按节点分布）；各 master 返回的结果不同（CN 侧会话视图，节点视角），实例级语义需要跨 master 归集（口径待确认）；在线会话数 / 总连接数",
-      "message_count": 1,
-      "sample_message": {
-        "metricName": "连接数使用率",
-        "metricCode": "GAUSSDB.session_usage",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 0.0,
-        "unit": "%",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": "cn_5001",
-          "host_ip": "172.16.103.126"
-        }
-      },
+      "message_count": 0,
+      "sample_message": null,
       "evidence": {
         "sample_file": "097_GAUSSDB.session_usage.json",
         "terminal_step": 3,

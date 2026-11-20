@@ -11,7 +11,7 @@
 - ``raw_rows``：整行列表
 - ``aggregate``：``filter`` 过滤 → ``fn: sum`` 求和；``group_by`` 按列分组（首次出现顺序）
 - ``counter_delta``：跨轮差分；首轮无基线**不产出值**
-- ``ratio_across``：分子 ÷ 分母；分母为 0 取 0；保留 2 位小数
+- ``ratio_across``：分子 ÷ 分母；**分母取不到（为 0 或视图缺失）→ 不产出**；保留 2 位小数
 - ``top_n``：按 ``sort_by`` 排序取前 ``limit`` 行，再投影 ``columns``
 
 **本模块刻意不 import 任何生产包** —— 连解码都不借：合并留档自己解析，
@@ -24,7 +24,8 @@
 - 求和口径见 ``changes/tpops-kafka-collector/specs/mapping-and-rules/spec.md``
   「直接取值」场景（``row_policy: sum`` → 所有行求和）；
 - ``counter_delta`` 首轮不产出值见同规格「累计计数的跨轮差分」；
-- ``ratio_across`` 分子 ÷ 分母、分母为 0 取 0 见同规格「跨视图比率」；
+- ``ratio_across`` 分子 ÷ 分母见同规格「跨视图比率」；**分母取不到（为 0 或视图缺失）
+  → 不产出**（M-3）依据的是同规格「缺值不产出假数据」——SHALL NOT 用 0 代替缺失值；
   **保留 2 位小数**见 ``changes/tpops-kafka-collector/specs/delivery-and-state/spec.md``
   「值按客户指标表的数据类型序列化」（比率类 SHALL 保留 2 位小数）；
 - ``top_n`` = 排序列 + 取前 N 行，见 ``docs/开发方案-GaussDB指标与告警采集.md`` §4.4。
@@ -233,10 +234,16 @@ def _derive_ratio(
     params: Mapping[str, Any],
     rows_by_key: Mapping[str, Sequence[Mapping[str, Any]]],
 ) -> List[Tuple[Dict[str, Any], Any]]:
-    numerator = _side_value(params.get('numerator') or {}, rows_by_key)
+    """跨视图比率。
+
+    **分母取不到（为 0 或视图缺失）→ 不产出**（不是 ``0.0``）：比率在分母为 0
+    时没有定义，编一个 0 出去等于把「取不到」说成「真的是 0」。
+    分母可用、分子为 0 → 比率就是 0（真的是没有活跃会话）。
+    """
     denominator = _side_value(params.get('denominator') or {}, rows_by_key)
     if not denominator:
-        return [({}, 0.0)]
+        return []
+    numerator = _side_value(params.get('numerator') or {}, rows_by_key)
     # 比率类按投递规格保留 2 位小数
     return [({}, round(numerator / denominator, 2))]
 
@@ -274,6 +281,9 @@ def _derive_top_n(
 
 # -- 排序（PostgreSQL 的 ORDER BY 口径）-----------------------------------
 
+# 最小时间（排序兜底）—— 带时区，才能和带时区的时间戳比较。
+_MIN_TIMESTAMP = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+
 def _sorted_rows(
     rows: Sequence[Mapping[str, Any]],
     sort_by: Optional[str],
@@ -283,18 +293,28 @@ def _sorted_rows(
 
     空值位置按 PostgreSQL 的 ``ORDER BY`` 默认口径：升序空值在后、降序空值在前
     （排序列来自 SQL 结果集，排序口径应与 SQL 自己的 ORDER BY 一致）。
+
+    **空串按空值处理**：平台把 NULL 的 ``query_start`` 渲染成空串（逐指标样本
+    是 ``''``、合并留档是 ``null`` —— 同一批行）。
     """
     if not sort_by:
         return list(rows)
     values = [row.get(sort_by) for row in rows]
     key_of = _sort_key_factory(values)
-    present = [(row, value) for row, value in zip(rows, values) if value is not None]
-    missing = [row for row, value in zip(rows, values) if value is None]
+    present = [(row, value) for row, value in zip(rows, values) if not _is_empty(value)]
+    missing = [row for row, value in zip(rows, values) if _is_empty(value)]
     present.sort(key=lambda pair: key_of(pair[1]), reverse=(order == 'desc'))
     ordered = [row for row, _value in present]
     if order == 'desc':
         return missing + ordered
     return ordered + missing
+
+
+def _is_empty(value: Any) -> bool:
+    """空值判定：``None`` 与**空串**都算空值（平台把 NULL 时间戳渲染成空串）。"""
+    if value is None:
+        return True
+    return isinstance(value, str) and not value.strip()
 
 
 def _sort_key_factory(values: Sequence[Any]):
@@ -303,13 +323,13 @@ def _sort_key_factory(values: Sequence[Any]):
     if kind == 'number':
         return lambda value: _num(value)
     if kind == 'timestamp':
-        return lambda value: _parse_timestamp(str(value).strip()) or datetime.datetime.min
+        return lambda value: _parse_timestamp(str(value).strip()) or _MIN_TIMESTAMP
     return lambda value: '' if value is None else str(value)
 
 
 def _value_kind(values: Sequence[Any]) -> str:
     for value in values:
-        if value is None:
+        if _is_empty(value):
             continue
         if isinstance(value, bool):
             return 'text'

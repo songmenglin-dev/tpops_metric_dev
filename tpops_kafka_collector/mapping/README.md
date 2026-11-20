@@ -32,7 +32,17 @@ data/mapping/                 # 规则数据（表驱动）
 tpops_kafka_collector/mapping/   # 规则执行代码
 ├── __init__.py               # 对外接口
 ├── table.py                  # 加载与查表（MappingTable / MetricRule / AlarmDefinition）
-├── rules.py                  # 取值规则引擎（raw / aggregate / counter_delta / …）
+├── rules.py                  # 取值规则引擎的对外接口 + 文档（13 种 value_rule.type）
+├── rules_context.py          #   上下文 / 异常 / 数值·过滤·维度工具
+├── rules_deltas.py           #   累计计数器的差分基线（首轮只建基线、归零记 ERROR）
+├── rules_naming.py           #   占位符替换、资源名拼装
+├── rules_sorting.py          #   PostgreSQL ORDER BY 口径的排序（top_n 用）
+├── rules_row.py              #   raw / raw_filtered / aggregate / raw_rows
+├── rules_series.py           #   series_point / enum_map / gauge
+├── rules_cross.py            #   counter_delta / ratio_across
+├── rules_collection.py       #   top_n / collection_count / text_prefix_count /
+│                             #     instance_field
+├── rules_engine.py           #   分派表（value_rule.type → 执行函数）
 ├── decode.py                 # response_body → RuleContext（按 shape + locate 解包，
 │                             #   含合并 SQL 的合并形态 decode_merged / merge_pages）
 ├── columns.py                # 列名校验（规则要取的列必须存在于实测留档的实际返回列）

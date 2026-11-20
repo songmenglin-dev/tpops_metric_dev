@@ -140,6 +140,14 @@ def test_every_rule_produces_a_value(rules, payload):
             # 而不是伪装成"验证通过"
             unverified.append(rule['metric_code'])
             continue
+        if rule_type == 'ratio_across':
+            # 跨视图比率：分子与分母来自**不同视图**（activity_agg / stat_database），
+            # 单视图留档里根本没有另一侧 —— 分母取不到时按口径「不产出」
+            # （M-3：不静默出 0），这两条规则的值由合并留档的期望值表守
+            # （tests/test_expected_values.py 覆盖它们）。
+            assert not ctx.rows_by_key, rule['metric_code']
+            assert not results, rule['metric_code']
+            continue
         if not results:
             failures.append('%s: 没有产出任何结果' % rule['metric_code'])
             continue

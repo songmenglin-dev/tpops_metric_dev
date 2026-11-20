@@ -406,9 +406,18 @@ def test_per_row_expansion_matches_observed_row_count(payload):
 
 
 def test_aggregate_expansion_produces_one_message(payload):
-    """整批聚合的指标只产出一条消息。"""
+    """整批聚合的指标只产出一条消息。
+
+    **跨视图比率例外**（取值表达式里有 ``÷``）：分子与分母来自不同视图，
+    单视图留档里根本没有另一侧 → 分母取不到时引擎按口径「不产出」（M-3，
+    不静默出 0），声明里如实记 0 条。这两条指标的真实值由**合并留档**的期望值表
+    守（``tests/test_expected_values.py`` 覆盖它们）。
+    """
     for mapping in payload['metric_mappings']:
         if _expansion_of(mapping) != 'aggregate':
+            continue
+        if '÷' in mapping['kafka_target']['value']:
+            assert mapping['message_count'] == 0, mapping['metric_code']
             continue
         assert mapping['message_count'] == 1, mapping['metric_code']
 
