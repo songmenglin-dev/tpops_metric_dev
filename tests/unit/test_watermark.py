@@ -192,6 +192,46 @@ def test_idempotency_lru_evicts_oldest_inserted_when_over_capacity():
     assert lru.contains('c') is True
 
 
+def test_idempotency_lru_refreshes_recency_on_duplicate_add():
+    """**真 LRU**：重复键要刷新它的新鲜度。
+
+    规格（``specs/delivery-and-state/spec.md:170``）写的是「最近 N 条消息的幂等键
+    集合（LRU，默认 10000 条）」。LRU 淘汰的是**最久未被使用**的键 ——
+    一个键被再次遇到（``add`` 返回 ``False``，调用方据此跳过重复投递）就是一次「使用」，
+    应当刷新它的新鲜度。
+
+    插入序淘汰（FIFO）在这里是**错的**：一条正在持续重复投递的告警，它的键会被
+    长期占用容量却仍被当成"最老"淘汰掉，真正久未出现的键反而留在集合里。
+    """
+    lru = IdempotencyKeyLRU(capacity=2)
+    lru.add('a')
+    lru.add('b')
+    # 'a' 再次出现 —— 是一次「使用」，刷新新鲜度
+    assert lru.add('a') is False
+    lru.add('c')
+
+    # LRU：'b' 最久未使用 → 被淘汰；'a' 刚用过 → 留下
+    assert lru.contains('a') is True
+    assert lru.contains('b') is False
+    assert lru.contains('c') is True
+
+
+def test_idempotency_lru_contains_does_not_refresh_recency():
+    """``contains`` 是**查询**不是「使用」—— 不能刷新新鲜度。
+
+    否则一条只被反复查询、实际不再投递的键会永久占着容量。
+    """
+    lru = IdempotencyKeyLRU(capacity=2)
+    lru.add('a')
+    lru.add('b')
+    assert lru.contains('a') is True
+    lru.add('c')
+
+    assert lru.contains('a') is False
+    assert lru.contains('b') is True
+    assert lru.contains('c') is True
+
+
 def test_idempotency_lru_capacity_is_configurable_and_has_default():
     assert DEFAULT_IDEMPOTENCY_LRU_CAPACITY == 10000
     assert IdempotencyKeyLRU()._capacity == DEFAULT_IDEMPOTENCY_LRU_CAPACITY

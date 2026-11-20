@@ -131,9 +131,11 @@ class WatermarkState:
 
 
 class IdempotencyKeyLRU:
-    """幂等键集合：容量上限可配，超限按**插入顺序**淘汰最早的条目。
+    """幂等键集合：容量上限可配，超限淘汰**最久未被使用**的条目。
 
-    命中已有键不刷新顺序，因此淘汰顺序 = 首次出现的顺序。
+    规格（``specs/delivery-and-state/spec.md:170``）要求的是 **LRU**：
+    ``add`` 遇到已存在的键（返回 ``False``，调用方据此跳过重复投递）算一次
+    「使用」，会刷新该键的新鲜度；``contains`` 是**查询**，不刷新。
     """
 
     def __init__(self, capacity: int = DEFAULT_IDEMPOTENCY_LRU_CAPACITY) -> None:
@@ -147,11 +149,17 @@ class IdempotencyKeyLRU:
         return self._capacity
 
     def contains(self, key: str) -> bool:
+        """查询键是否存在。**不刷新**新鲜度 —— 查询不是「使用」。"""
         return key in self._keys
 
     def add(self, key: str) -> bool:
-        """加入幂等键；已存在返回 ``False``（调用方据此跳过投递）。"""
+        """加入幂等键；已存在返回 ``False``（调用方据此跳过投递）。
+
+        重复键是一次「使用」—— 刷新它的新鲜度，这样持续重复投递的告警不会
+        因为「首次出现得早」而被当成最老条目淘汰掉。
+        """
         if key in self._keys:
+            self._keys.move_to_end(key)
             return False
         self._keys[key] = None
         while len(self._keys) > self._capacity:
@@ -159,7 +167,7 @@ class IdempotencyKeyLRU:
         return True
 
     def keys(self) -> Tuple[str, ...]:
-        """按插入顺序返回全部键（最早 → 最新）。"""
+        """按新鲜度返回全部键（最久未使用 → 最新使用）。"""
         return tuple(self._keys.keys())
 
     def __len__(self) -> int:
