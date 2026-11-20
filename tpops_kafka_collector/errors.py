@@ -15,6 +15,7 @@ from typing import Tuple  # noqa: F401  （仅用于 # type: 注释）
 
 __all__ = [
     'AuthError',
+    'DecodeError',
     'MappingError',
     'ProduceError',
     'ProtocolError',
@@ -48,6 +49,18 @@ class ProduceError(TpopsError):
     """Kafka 投递失败 —— 可重试，且不推进水位。"""
 
 
+class DecodeError(MappingError):
+    """响应体解不出来（合并 SQL 的 ``result`` 不是合法 JSON 等）—— 不可重试。
+
+    归属 ``MappingError``（规格「``DecodeError`` SHALL 继承 ``MappingError``」）：
+    响应结构与预期不符要人工介入，重试只会把同一个坏数据重复拉一遍。
+
+    **本类是异常体系里 ``DecodeError`` 的唯一实现** ——
+    ``tpops_kafka_collector.mapping.decode`` 从这里 import 并原样再导出，
+    不另起一份同名类（同名不同类会让 ``except`` 抓不住）。
+    """
+
+
 # 不可重试的类型：先判它们（明确排除），再判可重试的。
 NON_RETRYABLE = (AuthError, ProtocolError, MappingError)  # type: Tuple[type, ...]
 RETRYABLE = (TransientError, ProduceError)  # type: Tuple[type, ...]
@@ -61,6 +74,7 @@ def is_retryable(exc: BaseException) -> bool:
         AuthError                        ✗
         ProtocolError                    ✗
         MappingError                     ✗
+        DecodeError（MappingError 的子类） ✗
         TransientError                   ✓  指数退避 + 抖动
         ProduceError                     ✓  指数退避 + 抖动
         requests.Timeout / ConnectionError ✓  指数退避 + 抖动

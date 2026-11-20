@@ -1,0 +1,176 @@
+{
+  "version": "1.0",
+  "generated_by": "tools/build_observed_columns.py",
+  "generated_from": {
+    "merged_probe": "data/merged_sql/sql_merge_probe_result.json",
+    "metric_response": "data/metric_response/"
+  },
+  "note": "实测留档的**实际返回列**（事实基准）。启动期校验拿它比对映射表声明的来源列 —— 留档是事实，映射表是声明。由 tools/build_observed_columns.py 从留档生成，不许手改。",
+  "merged_views": {
+    "stat_database": [
+      "blk_read_time",
+      "blk_write_time",
+      "blks_hit",
+      "blks_read",
+      "cache_hit_ratio",
+      "conflicts",
+      "datname",
+      "deadlocks",
+      "numbackends",
+      "temp_bytes",
+      "temp_files",
+      "tup_deleted",
+      "tup_fetched",
+      "tup_inserted",
+      "tup_returned",
+      "tup_updated",
+      "xact_commit",
+      "xact_rollback"
+    ],
+    "stat_user_tables": [
+      "dead_tup_ratio",
+      "idx_scan",
+      "idx_tup_fetch",
+      "n_dead_tup",
+      "n_live_tup",
+      "n_tup_del",
+      "n_tup_hot_upd",
+      "n_tup_ins",
+      "n_tup_upd",
+      "relname",
+      "schemaname",
+      "seq_scan",
+      "seq_tup_read"
+    ],
+    "activity_agg": [
+      "cnt",
+      "datname",
+      "state"
+    ],
+    "activity_running": [
+      "datname",
+      "query",
+      "query_start",
+      "state",
+      "usename"
+    ],
+    "activity_top10": [
+      "datname",
+      "query",
+      "query_start",
+      "usename"
+    ],
+    "locks": [
+      "cnt",
+      "datname",
+      "locktype",
+      "mode"
+    ],
+    "bgwriter": [
+      "buffers_alloc",
+      "buffers_backend",
+      "buffers_backend_fsync",
+      "buffers_checkpoint",
+      "buffers_clean",
+      "checkpoints_req",
+      "checkpoints_timed",
+      "maxwritten_clean"
+    ],
+    "settings": [
+      "name",
+      "setting",
+      "unit"
+    ],
+    "database": [
+      "datname",
+      "encoding",
+      "size_bytes"
+    ],
+    "prepared_xacts": [
+      "prepared_xacts"
+    ],
+    "dbstat_sum": [
+      "blks_hit",
+      "blks_read",
+      "datname",
+      "idx_scan",
+      "n_dead_tup",
+      "n_live_tup",
+      "n_tup_del",
+      "n_tup_ins",
+      "n_tup_upd",
+      "numbackends",
+      "relname",
+      "schemaname",
+      "seq_scan",
+      "xact_commit",
+      "xact_rollback"
+    ]
+  },
+  "collections": {
+    "slow_sql_infos": [
+      "avg_cpu_time",
+      "avg_exec_time",
+      "avg_fetched_rows",
+      "avg_io_time",
+      "avg_returned_rows",
+      "buffer_hit_ratio",
+      "calls",
+      "component_name",
+      "db_name",
+      "node_id",
+      "node_name",
+      "query_plan",
+      "query_plan_optimize",
+      "schema_name",
+      "sql",
+      "sql_hit_ratio",
+      "sql_id",
+      "sql_text",
+      "total_cost_time",
+      "total_fetched_rows",
+      "total_returned_rows",
+      "user_name"
+    ],
+    "top_sql_infos": [
+      "avg_elapse_time",
+      "calls",
+      "calls_percent",
+      "cpu_percent",
+      "cpu_time",
+      "db_name",
+      "io_percent",
+      "io_time",
+      "max_elapse_time",
+      "min_elapse_time",
+      "node_id",
+      "node_name",
+      "returned_rows",
+      "sql_hit_ratio",
+      "sql_id",
+      "sql_text",
+      "total_elapse_time",
+      "tuple_read",
+      "user_name"
+    ]
+  },
+  "instance_fields": [
+    "agent_info",
+    "created_at",
+    "engine_name",
+    "engine_version",
+    "id",
+    "instance_status",
+    "mode",
+    "name"
+  ],
+  "series_metrics": [
+    "datanode_switch_status",
+    "gaussdb_instance_status",
+    "rds092_gaussv5_commit_counter",
+    "rds093_gaussv5_rollback_counter",
+    "rds133_cn_startup_time",
+    "rds400_gaussv5_total_counter",
+    "rds402_gaussv5_ddl_dml_dcl_count"
+  ]
+}

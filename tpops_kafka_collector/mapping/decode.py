@@ -30,17 +30,13 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple  # noqa: F401  （Dict/Tuple 仅用于 # type: 注释）
 
 from .rules import RuleContext
-from ..errors import MappingError
+from ..errors import DecodeError
 
 __all__ = ['DecodeError', 'MergedContexts', 'decode', 'decode_merged', 'merge_pages']
 
-
-class DecodeError(MappingError):
-    """响应体不符合规则声明的形状。
-
-    继承 ``MappingError``（平台层异常体系）→ **不可重试**：
-    响应结构与预期不符要人工介入，重试只会重复拉同一个坏数据。
-    """
+# ``DecodeError`` 的唯一实现在 ``tpops_kafka_collector.errors``（继承 ``MappingError``，
+# 不可重试）；这里只是再导出，保持 ``from ...mapping.decode import DecodeError``
+# 的旧引用可用 —— 同名不同类会让 ``except`` 抓不住。
 
 
 def decode(

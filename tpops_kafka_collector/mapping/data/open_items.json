@@ -1,0 +1,53 @@
+{
+  "note": "交付前需要客户确认的项。当前实现按「我们的默认」走，确认后改这里或对应映射文件即可。",
+  "items": [
+    {
+      "id": "value-type",
+      "topic": "value 的线格式",
+      "default": "按客户指标表【数据类型】序列化（整数/浮点→数字，字符/文本→字符串）",
+      "detail": "两份方案的字段表都写 value 为 String，但指标样例里是数字 75.3、告警样例里是字符串 \"95.5\"。"
+    },
+    {
+      "id": "metric-name-field",
+      "topic": "指标名字段的叫法",
+      "default": "用字段表的 metricName / metricCode",
+      "detail": "指标方案的字段表用 metricName/metricCode，告警方案的样例 JSON 里写的是 metric_name。"
+    },
+    {
+      "id": "resource-name",
+      "topic": "resourceName 与客户台账的对齐",
+      "default": "{host_ip}_{node_id}（节点 IP + TPOPS 节点 ID）；与节点无关的指标落到节点清单里的第一个 master CN",
+      "detail": "resourceName 只能表示一个节点 → 固定「节点 IP + 节点 ID」；表名/库名/端口这类业务维度改走 metricName/metricCode 的占位符与 tags.dimension_values。方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。"
+    },
+    {
+      "id": "collect-cycle",
+      "topic": "采集频率",
+      "default": "以客户指标表【数据更新周期】为准（30 秒~24 小时共 7 档）",
+      "detail": "方案建议「需告警的指标 1 分钟一次、无需告警的 5 分钟一次」，与客户表的分档不一致。"
+    },
+    {
+      "id": "status-enum",
+      "topic": "状态类指标的展示值转义",
+      "default": "平台枚举值原样透传（实测 1=正常、0=异常）",
+      "detail": "5 条状态类指标（实例状态、主备状态）的客户展示值转义未定义。"
+    },
+    {
+      "id": "alarm-metric-binding",
+      "topic": "告警挂到哪个客户指标",
+      "default": "257 条告警里只有 3 条能对应上客户指标（都指向 gaussdb.Tps），其余用 gaussdb.alarm.<alarm_id> 自造指标名",
+      "detail": "事件类告警没有对应的客户指标，需要客户确认这种挂法是否可接受。"
+    },
+    {
+      "id": "slow-sql-masking",
+      "topic": "慢 SQL 的 sql_text 能否外发",
+      "default": "默认脱敏：字面量替换为 ?，并截断到 512 字符",
+      "detail": "含业务 SQL 文本，需客户书面确认。"
+    },
+    {
+      "id": "a-class-multi-series",
+      "topic": "A 类多 series 的归集口径",
+      "default": "暂按逐组件各出一条消息（现状实现），维度键 COMPONENT_ID 归入 tags",
+      "detail": "A 类 11 个客户指标都是实例级一条消息，但平台按组件给出多条 series（rds092/rds093/rds400 各 3 条 CN、rds402 6 条 CN+DN、rds133 3 条 CN、gaussdb_instance_status 1 条 value、datanode_switch_status 9 条 DN）。合成方式属业务口径：速率类可求和，启动时刻可取最早，主备状态可按 DN 展开或归集为布尔。确认后由 metric_rules.json 的 value_rule 承载，不改消息信封。"
+    }
+  ]
+}
