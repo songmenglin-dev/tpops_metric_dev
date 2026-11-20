@@ -139,8 +139,38 @@
 - **`DecodeError` 收敛到 `errors.py`**（1.2 做的）：原先定义在 `mapping/decode.py`，
   若在 `errors.py` 另定义同名类会有两个不同的类，`except` 抓不住、`isinstance` 分裂。
 
-### 踩坑记录：实施方的工作目录
+### M-3（`ratio_across` 分母取不到 → 不产出）的涟漪 —— **留给 wave-1 审查处置**
 
+1.8 按 M-3 把 `ratio_across` 从「分母取不到返回 `0.0`」改成「**不产出**」后，
+`gaussdb.Total_pct` 与 `GAUSSDB.session_usage` 在**逐指标留档**回放下
+`message_count` 从 **1 变成 0**（`data/mapping/kafka_field_mapping.json` 已重生成，
+`sample_message` 变 `null`）。
+
+- 这是**修对了**：原来的 `value: 0.0` 正是「分母取不到却静默出 0」的缺陷形态。
+  合并形态留档下这两个指标有真实值（23/29 ≈ 0.79），逐指标留档里没有跨视图的分母，
+  所以「不产出」是正确行为。
+- **但 wave-0 的一条测试是照着缺陷行为写的**：
+  `tests/test_kafka_mapping.py::test_aggregate_expansion_produces_one_message`
+  断言 `Total_pct` 的 `message_count == 1` → 现在红。
+  该测试要更新为「跨视图比率在逐指标留档下不产出消息」，
+  并保留合并形态下有值（0.79）的证据。**不是把实现改回出 0.0。**
+
+### 1.4（序列化器）留下的尾巴 —— **留给 wave-1 审查处置**
+
+| 编号 | 内容 | 处置建议 |
+|---|---|---|
+| S-1 | `SerializerError` 定义在 `kafka/serializer.py` 内，未进 `errors.py` 异常体系 | 与 1.2 把 `DecodeError` 收敛到 `errors.py` 的做法不一致；建议统一进 `errors.py`（`MappingError` 子类，不可重试） |
+| S-2 | 序列化器**硬编码**了字段表（`METRIC_FIELDS`/`ALARM_FIELDS` 等），而 1.4 的测试比对的是**仓库根** `data/mapping/itscada_field_map.json` | 运行时用的是硬编码，**包内副本**（1.7 复制的）没有守卫。需一条断言：「包内副本的字段表 == 序列化器硬编码的字段表」 |
+| S-3 | `dumps()` 用紧凑分隔符（无空格） | 影响消息体**逐字节**格式。语义无差别（消费方解析 JSON），但属对外契约面 → 交付文档里写明；若客户要可读 JSON 需改 |
+| S-4 | `allow_nan=False` → NaN 抛 `SerializerError` | 合理。但 wave 2 的采集器要把 NaN 当 `null` 处理，否则会在投递层炸 |
+
+### 1.3（重试框架）的口径 —— 控制器已接受
+
+抖动取「**只增不减**」（实际等待 ∈ [基准退避, 基准×(1+jitter_ratio)]），不是常见的 full jitter。
+合同只写「指数退避 + 抖动」未指定形式，两种都是合法设计。若后续要求 full jitter，
+只需改 `compute_delay` 一处并同步测试。
+
+### 踩坑记录：实施方的工作目录
 派发实施方时**简报路径写成了相对路径**，而实施方的 shell 起始目录是**主仓库（master）**——
 相对路径解析到了 master 上，导致 1.1 的产出落在 master（它报的「基线 164 passed」
 就是这么来的：master 上还没有 wave 0 的测试），1.9 也先在 master 写了一份旧副本。
