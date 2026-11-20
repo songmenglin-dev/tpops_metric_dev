@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """C 类（诊断优化接口）采集器。
 
 对应规格 ``specs/collection-channels/spec.md``「诊断优化通道」、
@@ -43,7 +42,6 @@ from ..mapping.message import build_metric_message
 from ..mapping.nodes import select_master_node
 from ..mapping.rules import RuleContext, evaluate
 from ..tpops.diagnostic import (
-    COLLECTION_PATHS,
     COLLECTION_WINDOWS,
     fetch_diagnostic_collection,
 )
@@ -59,7 +57,7 @@ SQL_TEXT_FIELDS: Tuple[str, ...] = ('sql_text', 'sql', 'query_plan_optimize')
 CHANNEL = 'diagnostic'
 
 
-class DiagnosticCollector(object):
+class DiagnosticCollector:
     """C 类（诊断优化）采集器。
 
     :param client: 提供 ``post(path, payload)`` 的 TPOPS 客户端。
@@ -242,7 +240,7 @@ class DiagnosticCollector(object):
             raise
         except Exception as exc:
             raise MappingError(
-                '慢 SQL 文本脱敏失败（字段 {0}）：{1}'.format(field, exc)
+                f'慢 SQL 文本脱敏失败（字段 {field}）：{exc}'
             ) from exc
 
 

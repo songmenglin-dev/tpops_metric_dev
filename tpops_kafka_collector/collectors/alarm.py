@@ -236,7 +236,7 @@ def _definition_for(
         default_level='',
         default_priority=None,
         threshold='',
-        metric_code='gaussdb.alarm.{}'.format(alarm_id),
+        metric_code=f'gaussdb.alarm.{alarm_id}',
         metric_name=alarm_name,
         value_source='alarm_items_sum',
         linked_customer_metric=None,
