@@ -74,6 +74,7 @@ def test_load_config_reads_every_value_from_environment():
         TPOPS_BASE_URL='https://tpops.example:8002',
         TPOPS_VERIFY_TLS='true',
         TPOPS_REQUEST_TIMEOUT='90',
+        TPOPS_AUTH_FAILURE_COOLDOWN_SECONDS='120',
         KAFKA_BOOTSTRAP_SERVERS='kafka1:9092,kafka2:9092',
         KAFKA_TOPIC_METRICS='m.topic',
         KAFKA_TOPIC_ALARMS='a.topic',
@@ -107,6 +108,7 @@ def test_load_config_reads_every_value_from_environment():
     assert cfg.tpops_base_url == 'https://tpops.example:8002'
     assert cfg.tpops_verify_tls is True
     assert cfg.tpops_request_timeout == 90
+    assert cfg.tpops_auth_failure_cooldown == 120
     assert cfg.kafka_bootstrap_servers == ('kafka1:9092', 'kafka2:9092')
     assert cfg.kafka_topic_metrics == 'm.topic'
     assert cfg.kafka_topic_alarms == 'a.topic'
@@ -353,3 +355,29 @@ def test_load_config_opens_no_socket(monkeypatch):
     cfg = load_config(_env())
 
     assert isinstance(cfg, Config)
+
+
+# --------------------------------------------------------------------------
+# 认证失败静默期
+# --------------------------------------------------------------------------
+
+def test_auth_failure_cooldown_defaults_to_60_seconds():
+    """默认 60 秒。
+
+    平台的认证失败会累计 ``login_failed_attempts`` 并**锁号**，
+    没有静默期的话每轮轮询都会再试一次认证，等于慢性锁号。
+    """
+    cfg = load_config(_env())
+    assert cfg.tpops_auth_failure_cooldown == 60
+
+
+def test_auth_failure_cooldown_can_be_disabled_with_zero():
+    """0 = 关闭静默期（允许运维明确选择「立刻重试」）。"""
+    cfg = load_config(_env(TPOPS_AUTH_FAILURE_COOLDOWN_SECONDS='0'))
+    assert cfg.tpops_auth_failure_cooldown == 0
+
+
+def test_auth_failure_cooldown_rejects_negative_value():
+    with pytest.raises(ConfigError) as excinfo:
+        load_config(_env(TPOPS_AUTH_FAILURE_COOLDOWN_SECONDS='-1'))
+    assert 'TPOPS_AUTH_FAILURE_COOLDOWN_SECONDS' in str(excinfo.value)

@@ -456,6 +456,40 @@ def test_client_from_config_uses_configured_values():
     assert session.auth_calls()[0].timeout == 42
 
 
+def test_client_from_config_passes_auth_failure_cooldown():
+    """静默期要从配置取 —— 不然它只能靠构造参数，运维改不了。
+
+    行为断言（不碰私有属性）：配置 7 秒静默期，认证失败后第 6 秒再要 token
+    仍**不发请求**（静默期内），第 8 秒才允许再试一次。
+    """
+    from tpops_kafka_collector.config import Config
+
+    clock = {'now': 500.0}
+    session = FakeSession([
+        FakeResponse(status_code=401, json_body={}),
+        auth_ok(token='token-after-cooldown'),
+    ])
+    config = Config(
+        tpops_user=USER,
+        tpops_password=PASSWORD,
+        tpops_base_url=BASE_URL,
+        tpops_auth_failure_cooldown=7,
+    )
+
+    client = TpopsClient.from_config(config, session=session, clock=lambda: clock['now'])
+
+    with pytest.raises(AuthError):
+        client.token()
+
+    clock['now'] += 6.0
+    with pytest.raises(AuthError):
+        client.token()
+    assert len(session.auth_calls()) == 1, '静默期内不该再发认证请求'
+
+    clock['now'] += 2.0
+    assert client.token() == 'token-after-cooldown'
+
+
 # ---------------------------------------------------------------------------
 # 凭据不外泄
 # ---------------------------------------------------------------------------

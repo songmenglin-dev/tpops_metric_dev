@@ -2250,6 +2250,7 @@ class Scheduler:
 | `TPOPS_BASE_URL` | `https://172.16.103.193:8002` | 平台地址 |
 | `TPOPS_VERIFY_TLS` | `false` | 平台自签证书，默认不校验 |
 | `TPOPS_REQUEST_TIMEOUT` | `60` | 单次 HTTP 超时（秒）；指标接口另按需放大 |
+| `TPOPS_AUTH_FAILURE_COOLDOWN_SECONDS` | `60` | 认证失败后的静默期（秒）；期内不再发起认证请求。平台的认证失败会累计 `login_failed_attempts` 并**锁号**，没有静默期等于每轮轮询都试一次 → 慢性锁号。`0` = 关闭 |
 | `KAFKA_BOOTSTRAP_SERVERS` | — | **必填**；逗号分隔 |
 | `KAFKA_TOPIC_METRICS` | `gaussdb.metrics` | 指标 Topic |
 | `KAFKA_TOPIC_ALARMS` | `gaussdb.alarms` | 告警 Topic |

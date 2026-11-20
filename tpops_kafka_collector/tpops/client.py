@@ -156,7 +156,10 @@ class TpopsClient:
 
     @classmethod
     def from_config(
-        cls, config: Any, session: Optional[requests.Session] = None
+        cls,
+        config: Any,
+        session: Optional[requests.Session] = None,
+        clock: Optional[Any] = None,
     ) -> 'TpopsClient':
         """从 :class:`tpops_kafka_collector.config.Config` 装配客户端。"""
         return cls(
@@ -165,7 +168,9 @@ class TpopsClient:
             password=config.tpops_password,
             verify_tls=config.tpops_verify_tls,
             timeout=config.tpops_request_timeout,
+            auth_failure_cooldown=config.tpops_auth_failure_cooldown,
             session=session,
+            clock=clock,
         )
 
     def __repr__(self) -> str:

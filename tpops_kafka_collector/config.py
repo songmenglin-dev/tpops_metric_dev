@@ -48,6 +48,10 @@ class Config:
     tpops_base_url: str = 'https://172.16.103.193:8002'
     tpops_verify_tls: bool = False
     tpops_request_timeout: int = 60
+    #: 认证失败后的静默期（秒）。期内不再发起认证请求 ——
+    #: 平台的认证失败会累计 ``login_failed_attempts`` 并**锁号**，
+    #: 没有静默期的话每轮轮询都会再试一次，等于慢性锁号。
+    tpops_auth_failure_cooldown: int = 60
 
     # --- Kafka ---
     kafka_bootstrap_servers: Tuple[str, ...] = ()
@@ -245,6 +249,9 @@ def _tpops_fields(env: Mapping[str, str]) -> Dict[str, Any]:
         'tpops_base_url': _text(env, 'TPOPS_BASE_URL', 'https://172.16.103.193:8002'),
         'tpops_verify_tls': _bool(env, 'TPOPS_VERIFY_TLS', False),
         'tpops_request_timeout': _int(env, 'TPOPS_REQUEST_TIMEOUT', 60, minimum=1),
+        'tpops_auth_failure_cooldown': _int(
+            env, 'TPOPS_AUTH_FAILURE_COOLDOWN_SECONDS', 60, minimum=0
+        ),
     }
 
 
