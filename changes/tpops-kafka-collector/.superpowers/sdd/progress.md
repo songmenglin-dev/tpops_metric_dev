@@ -53,25 +53,60 @@
   A-2 的取舍：原 `tools/mappings/README.md` 已随目录删除，**搬进包内**为
   `tpops_kafka_collector/mapping/README.md`（而不是指向 git 历史）——
   里面是「怎么改规则」的活文档，指向历史等于让读者自己去考古。
-- [ ] **B**：82 个 B 类指标的期望值表（I-1）—— 独立期望值推导器 + 生成物
+- [x] **B**：82 个 B 类指标的期望值表（I-1）—— 独立期望值推导器 + 生成物
   `data/mapping/expected_values.json` + `tests/test_expected_values.py` 断言 82/82 相等
-  简报：`plans/r3-…/workspace/repair-r2-b-expected-values-brief.md` —— **待派发**
-- [ ] wave-0 在 revision 3 下的 review：base = `357ece4`（Wave 0 起始 SHA），
-  head = 修复落盘后的 HEAD，报告 → `.superpowers/sdd/reviews/wave-0-mapping-baseline.md`
+  简报：`plans/r3-…/workspace/repair-r2-b-expected-values-brief.md` —— **完成（`ec27614`）**
+  验证：类型分布 raw 54 / aggregate 12 / counter_delta 5 / raw_filtered 4 / raw_rows 3 /
+  top_n 2 / ratio_across 2 = 82，实测 82/82（逐条 × 3 个 master 节点 = 246 组值相等）；
+  生成器幂等（重跑 sha256 不变）；全量 344 passed；py37 44 passed；ruff 0。
+  控制器补充（`3a04aa5`）：合成守卫补大写样本，兑现「忽略大小写」的断言 ——
+  修复前把 `str(actual).lower()` 去掉测试照样绿。
+- [x] wave-0 在 revision 3 下的 review：base = `357ece4`，head = `3a04aa5`，
+  报告 → `.superpowers/sdd/reviews/wave-0-mapping-baseline.md` —— **verdict: pass**
+  （Critical 0 / Important 0 / Minor 7）。receipt 已签发，`execution show` 显示
+  wave-0 `receipt=pass`、**wave-1 已解锁**。
 
 ### 复审提出的 Minor 处置台账
 
 | 编号 | 内容 | 处置 |
 |---|---|---|
-| M-1 | 根文档指向已删 `tools/mappings/` | 修复轮次 2 任务 A |
+| M-1 | 根文档指向已删 `tools/mappings/` | 修复轮次 2 任务 A —— **已修** |
 | M-2 | `mapping/rules.py` 425 行 > 合同 400 行（与「复制不重写」互斥） | **留给 wave 1 任务 1.8**（规则引擎本就重写该文件） |
 | M-3 | `ratio_across` 分母取不到返回 `0.0` 而非「不产出」 | **留给 wave 1 任务 1.8** |
 | M-4 | 开发方案仍有 5 处指向已删目录的引用 | **留给 wave 4**（交付文档） |
 | M-5 | 进度账本过期 | 已修（见上） |
 | M-6 | 视图名提取逻辑两处各写一份 | 记录，不修（改动生成器有损幂等性的风险） |
 | M-7 | 启动期校验默认读仓库根 194 KB 留档 | **wave 2a 决策**：留档是否复制进包 |
-| M-8 | `decode_merged` 传空视图集静默返回零值 | 修复轮次 2 任务 A |
+| M-8 | `decode_merged` 传空视图集静默返回零值 | 修复轮次 2 任务 A —— **已修** |
 | M-9 | `RuleContext`/`MergedContexts` 不可变是浅层的 | 记录（与既有实现一致，非回归） |
+
+### revision 3 审查新增的 Minor（7 条，全部不阻塞）
+
+| 编号 | 内容 | 处置 |
+|---|---|---|
+| R-M1 | `raw_filtered`「首行 vs 末行」在留档上不可区分（每个 filter 恰命中 1 行）；且**规格未定义**多命中语义 | **留给 wave 1 任务 1.8**：补一条合成多命中守卫 + 规格写明「多命中取首个匹配行」。当前无生产风险（`pg_settings.name` 唯一） |
+| R-M2 | **`top_n` 的排序实为空操作**：引擎用 `_to_number(row.get(sort_by))` 排序，而排序列 `query_start` 是**时间戳字符串** → 全部退化成 `0.0`，输出顺序 = 留档顺序（恰好正确，因为 SQL 自带 `order by`） | **留给 wave 1 任务 1.8**：规则引擎重写时按 `ORDER BY` 口径真正排序。当前不产出错值，不阻塞 |
+| R-M3 | `raw` + `per_row` 的 12 条表级指标声明里带 `group_by: ["relname"]`，**引擎完全忽略** `group_by`（按「一行一条」执行）。留档 68 行 68 个不同 relname，两种理解等价 | **留给 wave 1 任务 1.8**：要么执行 `group_by`，要么从映射表删掉这个不生效的参数（后者更好） |
+| R-M4 | `.spec-superflow.yaml` 的 `contract_hash`/`artifacts_hash` 仍是 revision 2 旧值 | **已处理**：签 receipt 前跑 `ssf state rebuild` 刷新，`state check` 现为 consistent |
+| R-M5 | `mapping/rules.py` 423 行 > 400（= M-2） | 已在台账显式延期到 1.8，在 1.8 简报里写入「拆文件」要求 |
+| R-M6 | 映射层覆盖率 82%~95%（`decode.py` 82%、`columns.py` 88%、`rules.py` 92%），**未达合同「≥95%」** | 该门槛是 **wave 3** 完成标准；wave 3 规划时预留补测（尤其 `decode.py` 错误分支与 `columns.py` 多节点并集分支） |
+| R-M7 | R-M2 / R-M3 未进本台账 | 已补（本表） |
+
+### 控制器裁决（修复轮次 2 遗留）
+
+- **`ratio_across` 舍入位置**（实施方请裁决）—— **不改，规则层保留 `round(…,2)`**。
+  理由：① 投递规格 `delivery-and-state/spec.md:67`「比率类 SHALL 保留 2 位小数」是
+  **投递层**要求，序列化层已实现（`mapping/message.py:123 _as_float` → `round(float(value), 2)`）；
+  ② 两条 ratio 指标的 `value_type` 都是「浮点」→ 走 `_as_float`，不存在被 `_as_int`
+  截断成 0 的风险；③ 规则层的舍入**幂等**（对已 2 位的值再 round 不变），且它让期望值表
+  比对的是**交付值本身**。→ 规格与实现**无不一致**。
+- **`pg_stat_activity.state` 平台侧盲区**（实施方提出）—— 已核实：实测留档 `activity_agg`
+  的 `state` 取值**只有 `{active, idle}`**，列只有 `{cnt, datname, state}`。
+  `gaussdb.Lockwaiting`（`state_contains:["lock"]`）与 `gaussdb.Waiting_conn`
+  （`state_contains:["wait"]`）在留档上**匹配 0 行** → 恒为 0。PG 9.2 系的
+  `pg_stat_activity.state` 本就没有 lock/wait 取值（那是 9.6+ 的 `wait_event` 体系），
+  这两条指标**可能结构性不可提供**（98 条可提供里的 2 条）。
+  → **待用户/客户决策**（是否列入 `data/mapping/open_items.json`）。
 
 ## Wave 1 —— wave-1-skeleton-platform（parallel）
 

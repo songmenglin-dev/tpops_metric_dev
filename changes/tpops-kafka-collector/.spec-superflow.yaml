@@ -7,8 +7,8 @@ workflow: full
 revision: 3
 
 # === Hashes (fast staleness detection) ===
-artifacts_hash: sha256:eee95993246e69018184954d0e44cbaf746731a424c73c12deba8fae528926ea
-contract_hash: sha256:46a5301c9f793ff4c43bcec60e00524a6cfb560260244d012625c1e77e5990ac
+artifacts_hash: sha256:b425f6d353a9ae419b6f3e8bfd325397502360964cc6808e02511e2ed961383b
+contract_hash: sha256:59817bef6deb1e7fdc2029b1e6dd02e16d17cf33431aa4c53e363247360354f7
 
 # === Execution progress ===
 execution_mode: sdd
