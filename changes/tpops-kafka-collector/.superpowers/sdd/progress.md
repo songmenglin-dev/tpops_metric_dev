@@ -211,6 +211,49 @@ diff `workspace/review-wave1-r3.diff`（13197 行），
 `test_dimension_metrics_are_always_per_row` 断言该参数必须存在。
 留档 68 行 68 个不同 `relname` → 两种口径输出相同。
 
+### wave-1 审查结果 —— **pass**（Critical 0 / Important 0 / Minor 12）
+
+- 审查报告：`.superpowers/sdd/reviews/wave-1-skeleton-platform.md`
+- receipt：base `3a04aa5` / head `85e8a64`，**已签发 `pass`** → **wave-2a 已解锁**
+- 审查者**独立核实**（未采信实施方报告）：
+  - **W-5 前提为真**：kafka-python 2.0.2 的 `DEFAULT_CONFIG` 实测 27 键，
+    **确无** `enable_idempotence`（`acks`/`security_protocol`/`compression_type` 等均在）
+    → 键过滤是必需的，语义目标（幂等关闭）达成
+  - **W-6 推理链为真**：读插件源码确认 `computeArtifactsHash` 覆盖 `specs/**`
+    → `execution-plan.mjs:76` 判 stale → `:197` receipt 只认 `plan_hash`+`plan_revision`
+    → 改规格必作废全部 receipt。并核实三方哈希一致（yaml / execution-plan / 重算值）
+  - **W-4 无风险**：34 条带 `group_by` 的真实规则与 `dimension_bindings` **无一条冲突**
+    → 无运行时 `RuleError` 风险
+  - wave-0 的 `pass` receipt 仍然有效（报告字节 sha256 与 receipt 的 `report_sha256` 实测一致）
+
+**审查指出、放行前已修的 3 条 Minor**（`85e8a64`）：
+
+| 编号 | 内容 | 修法 |
+|---|---|---|
+| M-1 | `tpops/client.py` 403 行、`watermark.py` 404 行 越过合同「单文件 < 400 行」 | `require_fields` 拆到新的 `tpops/protocol.py`（协议级校验）；`IdempotencyKeyLRU` 挪到 `ids.py`（「键怎么算」与「哪些键投过了」是同一件事的两面）。现最长文件 399 行 |
+| M-2 | 三处文档仍写旧的 FIFO 语义（改 LRU 时的残留） | `watermark.py` 模块 docstring、`WatermarkStore.idempotency_keys()` docstring、`tests/unit/test_watermark.py` 模块 docstring 全部改成「淘汰最久未被使用的条目，重复键算一次使用」 |
+| M-4 | 唯一序列化出口守卫只扫 `kafka/`，守不住合同写的「全仓」 | 守卫扩到**整个** `tpops_kafka_collector/`，白名单逐个登记用途（`kafka/serializer.py` 消息出口、`watermark.py` 状态文件落盘）；另加一条测试守住白名单本身（登记的用途必须真的还在用）。**变异验证**：在 `mapping/` 放一个违规 `json.dumps` → 被抓 |
+
+### 待补清单（**本次执行不改 `tasks.md`** —— 改了会让执行计划 stale → wave-0/wave-1 的 receipt 全部作废）
+
+| 编号 | 内容 | 落地时机 |
+|---|---|---|
+| T-1 | `mapping/rules_*.py` ×9（1.8 的拆分） | 收尾后的独立小变更 |
+| T-2 | `kafka/records.py`（1.5 的拆分） | 同上 |
+| T-3 | `mapping/data/`（8 个 JSON + `__init__.py`） | 同上 |
+| T-4 | `rules.py` 的语义变更（M-3 的 x/0 不产出等）与 `decode.py` 的 `DecodeError` 收敛 | 同上 |
+| T-5 | wave-2a 任务 2.1 的范围缩窄（复制部分已由 1.7 完成） | 同上 |
+| T-6 | **规格改写**：`ratio_across` 分母为 0 → 不产出；`raw_filtered` 多命中语义 | **须在 wave 4 交付文档前落地** |
+| T-7 | `tools/build_observed_columns.py`（1.7 的生成器） | 同上 |
+| T-8 | `tpops/protocol.py`（控制器拆 `require_fields` 时新建） | 同上 |
+
+### wave-0 台账的 M-7 —— 已由 1.7 的方案解决
+
+「启动期校验默认读仓库根 194 KB 留档」：1.7 没把 194 KB 的测试留档塞进生产包，
+而是把「留档的**实际返回列**」抽成 3.6 KB 的包内声明 `observed_columns.json`
+（由 `tools/build_observed_columns.py` 从留档现算，带 `--check`）。
+M-7 就此关闭。
+
 ### 踩坑记录：实施方的工作目录
 派发实施方时**简报路径写成了相对路径**，而实施方的 shell 起始目录是**主仓库（master）**——
 相对路径解析到了 master 上，导致 1.1 的产出落在 master（它报的「基线 164 passed」

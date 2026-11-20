@@ -1,0 +1,10 @@
+{
+  "status": "pass",
+  "base": "3a04aa53e28fcec82241cf89d41679d170305736",
+  "head": "85e8a64834c052db066a3433797a3f380b4beff7",
+  "report": ".superpowers/sdd/reviews/wave-1-skeleton-platform.md",
+  "report_sha256": "sha256:5f5198bf3f1f84d5055884640d6377cf9fe1d973740f686499604d031b3631d5",
+  "plan_hash": "sha256:b4766c8ae9c06bd6685693405820aef9726b25fb5c9fd7b4ec4266146c310387",
+  "plan_revision": 3,
+  "recorded_at": "2026-11-20T05:05:46.241Z"
+}
