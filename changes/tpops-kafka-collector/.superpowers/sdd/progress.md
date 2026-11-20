@@ -254,6 +254,52 @@ diff `workspace/review-wave1-r3.diff`（13197 行），
 （由 `tools/build_observed_columns.py` 从留档现算，带 `--check`）。
 M-7 就此关闭。
 
+### wave-2a 审查结果 —— **pass**（Critical 0 / Important 0 / Minor 9）
+
+- 审查报告：`.superpowers/sdd/reviews/wave-2a-mapping-data.md`
+- receipt：base `85e8a64` / head `ff4993f`，**已签发 `pass`** → **wave-2b 已解锁**
+- 合同完成标准 **3/3 满足**（第 1 页与留档**整文件**逐字符一致；包内 9 份副本与仓库根一致；
+  第 N 页 offset 正确推进且只作用于可增长视图）
+- 审查者**独立核实**：
+  - 实施方纠正控制器简报「映射表副本一致性没有守卫」的说法**成立** ——
+    `tests/unit/test_mapping_loader.py:125` 确实守着 7 张表。但 wave-1 那条是**文本模式**比较
+    （通用换行转换，**抓不到 CRLF 漂移**），新文件是**二进制**比较 + 存在性/非空/仓库源
+    双向断言 + 3 条反例 → **有价值的加固，不是无谓重复**
+  - **三道闸全部在且各自非恒真**：①包内渲染 ≡ 包内留档 ②包内副本 ≡ 仓库根声明
+    ③生成器重跑 ≡ 仓库根归档产物。逐条推演「改了 A 忘改 B」的四种组合，无恒真环节、无断链。
+    `tools/build_sql_merge.py` 确实**无 `--check`**（argparse 只有 4 个参数），
+    闸③补上了此前无人看守的那一环
+  - **生产代码边界未突破**：`sqlgen` 三个路径常量全由 `__file__` 派生，读的是**包内**
+    `mapping/data/merged_sql.json`，无 tools/data import
+  - **复制逐字节**：sha256 独立核对两份新增副本 ≡ 仓库根；仓库根 `data/merged_sql/*` 未被改动
+
+**Minor-1 的控制器核实**：包内 `mapping/table.py` 的 `MappingTable.load()` 默认读
+**仓库根** `data/mapping`（`REPO_ROOT` 由 `__file__` 派生）。但**生产路径不走它** ——
+`loader.py` 用的是另一条装配路径，`MappingTable.load()` 只出现在 `tests/` 里。
+部署后调用它会响亮地抛 `MappingError`（不是静默），故判 Minor 而非 Important。
+
+### wave-2a 新增待补清单（**本次执行不改 `tasks.md`**）
+
+| 编号 | 内容 | 落地时机 |
+|---|---|---|
+| T-9 | `tools/build_sql_merge.py` 补 `--check` | 收尾后的独立小变更 |
+| T-10 | `MappingTable.load()` 的仓库根依赖定案（改包内默认 or 标注为仅测试用） | 同上 |
+| T-11 | 包内 `mapping/README.md` 更新（布局段过期 + 补「改了声明源要重新复制进包」的流程） | 同上 |
+| T-12 | **部署打包必须含 `mapping/data/*.json`** —— 仓库现无 `setup.py`/`pyproject.toml` | **wave 4 交付文档**（部署说明） |
+| T-13 | 补 `sql_key` 非空 与 `paged=true`+`strip_inner_limit=false` 的断言 | 收尾后的独立小变更 |
+| T-14 | 渲染长度上限断言 | 同上 |
+
+### 2.10 的偏离裁决（实施方提出）
+
+`SQL_MASKING_ENABLED=false` 时**仍执行截断**（只是不做字面量替换）—— **接受**。
+理由：① `sql_text_max_length` 是**独立配置项**，耦合两个独立约束会让一个布尔开关连带改掉
+字段长度契约；②「保留长度上限、放开内容脱敏」比「完全原样」更接近最严口径的底线 ——
+关掉脱敏已经是有人负责的明确决定，再顺手放开长度上限是搭便车；
+③ 当前 `metric_rules.json` 里 `sql_text` **只用于 `text_prefix_count` 计数、不外发**，
+两种解释在交付物上无差别，但客户确认外发口径后走「默认脱敏」。
+
+**另记**：脱敏模块**尚未接入采集链路** —— 真正外发 SQL 明细的接入点应在 wave 3 装配时接上。
+
 ### 踩坑记录：实施方的工作目录
 派发实施方时**简报路径写成了相对路径**，而实施方的 shell 起始目录是**主仓库（master）**——
 相对路径解析到了 master 上，导致 1.1 的产出落在 master（它报的「基线 164 passed」
