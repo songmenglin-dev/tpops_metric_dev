@@ -45,12 +45,17 @@
 
 ### 修复轮次 2（revision 3，串行派发，同分支避免 git 索引竞争）
 
-- [ ] **A**：新生产包 lint 44 → 0（I-2）+ `CLAUDE.md`/`README.md` 指向已删 `tools/mappings/`（M-1）
-  + `decode_merged` 传空 `views` 抛 `DecodeError`（M-8） —— **派发中**
+- [x] **A**：新生产包 lint 44 → 0（I-2）+ `CLAUDE.md`/`README.md` 指向已删 `tools/mappings/`（M-1）
+  + `decode_merged` 传空 `views` 抛 `DecodeError`（M-8） —— **完成（`afbb66f`）**
   简报：`plans/r3-…/workspace/repair-r2-a-lint-and-docs-brief.md`
+  验证：ruff 退出码 0 / pytest 241 passed（基线 238 + 新增 3）/ py37 41 passed /
+  生成器幂等（重跑 `build_response_rules.py` 后 `response_rules.json` 无 diff）
+  A-2 的取舍：原 `tools/mappings/README.md` 已随目录删除，**搬进包内**为
+  `tpops_kafka_collector/mapping/README.md`（而不是指向 git 历史）——
+  里面是「怎么改规则」的活文档，指向历史等于让读者自己去考古。
 - [ ] **B**：82 个 B 类指标的期望值表（I-1）—— 独立期望值推导器 + 生成物
   `data/mapping/expected_values.json` + `tests/test_expected_values.py` 断言 82/82 相等
-  简报：`plans/r3-…/workspace/repair-r2-b-expected-values-brief.md`
+  简报：`plans/r3-…/workspace/repair-r2-b-expected-values-brief.md` —— **待派发**
 - [ ] wave-0 在 revision 3 下的 review：base = `357ece4`（Wave 0 起始 SHA），
   head = 修复落盘后的 HEAD，报告 → `.superpowers/sdd/reviews/wave-0-mapping-baseline.md`
 
