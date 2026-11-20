@@ -122,11 +122,17 @@
 | 1.2 DTO 与异常体系 | ✅ 完成（32 用例） | `e5d3dbb` |
 | 1.7 映射表加载与启动校验 | ✅ 完成（15 用例） | `e5d3dbb` |
 | 1.9 水位与差分基线持久化 | ✅ 完成（26 用例） | `1eb0b66` |
-| 1.3 重试与退避框架 | 🔄 实施中 | — |
-| 1.4 JSON 序列化器 | 🔄 实施中 | — |
-| 1.6 TPOPS HTTP 客户端 | 🔄 实施中 | — |
-| 1.8 规则引擎（13 种 value_rule.type） | 🔄 实施中 | — |
-| 1.5 Kafka 生产者 | ⏸ 等 1.4（可能要它的序列化出口） | — |
+| 1.3 重试与退避框架 | ✅ 完成（32 用例，`retry.py` 覆盖率 100%） | `2d3bc39` |
+| 1.4 JSON 序列化器 | ✅ 完成（32 用例，AST 唯一出口守卫） | `bc29c53` |
+| 1.5 Kafka 生产者 | ✅ 完成（26 例纯 mock） | `172b93c` |
+| 1.6 TPOPS HTTP 客户端 | ✅ 完成（41 例，`client.py` 覆盖率 99%） | `b71d65c` |
+| 1.8 规则引擎（13 种 value_rule.type） | ✅ 完成（60 例，拆 9 模块） | `9c44453` |
+| 控制器补充：认证静默期外露为配置项 | ✅ 完成 | `4b95fb4` |
+
+**wave-1 全部 9 个任务已落地**，全量 **715 passed**，`ruff check tpops_kafka_collector/` 为 0，
+py37 门禁 77 passed。审查：base `3a04aa5` / head `4b95fb4`，
+diff `workspace/review-wave1-r3.diff`（13197 行），
+报告 → `.superpowers/sdd/reviews/wave-1-skeleton-platform.md`。
 
 ### 控制器在本波次做的裁决与修复
 
