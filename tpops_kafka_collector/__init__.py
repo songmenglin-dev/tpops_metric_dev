@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GaussDB 监控/告警数据采集端（生产包）。
 
 **这是本项目唯一的生产代码包** —— ``tools/`` 与 ``data/`` 只作参考与回归样本，
@@ -13,7 +12,6 @@
 - ``tpops_kafka_collector.ids``：幂等键的计算（告警 / 指标）；
 - ``tpops_kafka_collector.errors``：异常体系与「可重试 / 不可重试」判定。
 """
-from __future__ import print_function
 
 __all__ = ['__version__']
 

@@ -45,11 +45,13 @@ Scheduler(窗口 + 水位)
   → 采集器（A 监控指标 / B 命令中心 SQL / C 诊断优化 / D 实例 / E 告警）   ← 待建
   → TPOPS Client（mini-token 认证）                                        ← 待建
   → Normalizer（TPOPS 原始结构 → 内部 DTO）                                ← 待建
-  → FieldMapper（按映射表 + 取值规则 → 客户字段）                          ← data/mapping/ + tools/mappings/
+  → FieldMapper（按映射表 + 取值规则 → 客户字段）                          ← data/mapping/ + tpops_kafka_collector/mapping/
   → Serializer（唯一序列化出口，JSON）                                     ← 待建
   → Kafka Producer（PLAINTEXT）                                             ← 待建
   → 推进水位（投递成功才推进）
 ```
 
-已落地的是中间那一层：**映射表（数据）+ 映射层执行代码（`tools/mappings/`）+ 回归样本**。
-采集端落地时，这部分直接搬进 `tpops_kafka_collector/`。
+已落地的是中间那一层：**映射表（数据 `data/mapping/`）+ 映射层执行代码
+（`tpops_kafka_collector/mapping/`）+ 回归样本**。
+采集端落地时，映射层执行代码已搬进 `tpops_kafka_collector/`；映射数据仍在仓库根
+`data/mapping/`（wave 2a 再搬进包内）。

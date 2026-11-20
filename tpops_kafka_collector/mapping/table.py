@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
 """映射表加载与查表。
 
 映射规则是**数据**（JSON），这里是加载入口与查表接口。
 规则内容改了就改 ``data/mapping/`` 下的 JSON，不用改代码。
 """
-from __future__ import print_function
 
-import io
 import json
 import os
 from dataclasses import dataclass
@@ -163,15 +160,15 @@ class MappingTable:
 
     def message_fields(self, message_type: str) -> Tuple[Mapping[str, Any], ...]:
         """'metric' / 'alarm' → 该消息的字段定义。"""
-        section = self._field_map.get('%s_message' % message_type)
+        section = self._field_map.get(f'{message_type}_message')
         if not section:
-            raise MappingError('字段映射表里没有 %s_message' % message_type)
+            raise MappingError(f'字段映射表里没有 {message_type}_message')
         return tuple(section['fields'])
 
     def required_fields(self, message_type: str) -> Tuple[str, ...]:
-        section = self._field_map.get('%s_message' % message_type)
+        section = self._field_map.get(f'{message_type}_message')
         if not section:
-            raise MappingError('字段映射表里没有 %s_message' % message_type)
+            raise MappingError(f'字段映射表里没有 {message_type}_message')
         return tuple(section.get('required_fields', ()))
 
     @property
@@ -237,7 +234,7 @@ class MappingTable:
     def category_mapping(self, category: str) -> Mapping[str, Any]:
         """某个采集分类的字段映射表（monitor_metrics / … / alarm）。"""
         if category not in self._category_mappings:
-            raise MappingError('没有这个分类的字段映射：%s' % category)
+            raise MappingError(f'没有这个分类的字段映射：{category}')
         return self._category_mappings[category]
 
     @property
@@ -253,9 +250,9 @@ def _default_probe_path(data_dir: str) -> str:
 
 def _read_json(path: str) -> Dict[str, Any]:
     if not os.path.isfile(path):
-        raise MappingError('映射文件不存在：%s' % path)
+        raise MappingError(f'映射文件不存在：{path}')
     try:
-        with io.open(path, encoding='utf-8') as handle:
+        with open(path, encoding='utf-8') as handle:
             return json.load(handle)
     except ValueError as exc:
-        raise MappingError('映射文件不是合法 JSON：%s（%s）' % (path, exc))
+        raise MappingError(f'映射文件不是合法 JSON：{path}（{exc}）')

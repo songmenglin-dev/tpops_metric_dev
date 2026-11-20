@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """节点身份：resourceName 的取值口径。
 
 **resourceName 只能表示一个节点**（客户口径），所以统一用「节点 IP + 节点 ID」：
@@ -15,7 +14,6 @@
      "role": "master", "type": "CN", "component_id": "cn_5001",
      "node_ip": "172.16.103.126"}
 """
-from __future__ import print_function
 
 from typing import Any, Dict, Mapping, Optional, Sequence
 

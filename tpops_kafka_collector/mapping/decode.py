@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """把实测 response_body 解成规则引擎要的 RuleContext。
 
 **为什么需要这一层**：映射规则里写的是"取哪个平台的哪个列"，
@@ -25,7 +24,6 @@
 把合并形态当行列表用会**静默产出 0**（82 个 B 类指标全错且不报错），
 详见 ``changes/tpops-kafka-collector/specs/mapping-and-rules/spec.md``。
 """
-from __future__ import print_function
 
 import json
 from dataclasses import dataclass
@@ -90,7 +88,7 @@ def decode(
             collections={collection: tuple(rows)},
             now_ms=now_ms,
         )
-    raise DecodeError('未知的解码形状：%s' % kind)
+    raise DecodeError(f'未知的解码形状：{kind}')
 
 
 # -- 合并形态（路径 M）--------------------------------------------------
@@ -132,8 +130,14 @@ def decode_merged(
     - 视图的列值为 ``''`` 或 ``null``（``json_agg`` 零行 → NULL → 平台渲染成空串）
       → 该视图解成空列表 ``[]``，不抛异常；
     - 列值不是合法 JSON → 抛 ``DecodeError``（不静默返回空列表）；
-    - ``result`` 不是恰好 1 行 → 抛 ``DecodeError``，并说明期望与实际行数。
+    - ``result`` 不是恰好 1 行 → 抛 ``DecodeError``，并说明期望与实际行数；
+    - ``views`` 为空 → 抛 ``DecodeError``（**不静默返回全零**）。
+
+    **空视图集必须报错**：它通常意味着 ``merged_views`` 段没加载到（映射表缺失
+    或版本不匹配）。静默返回空上下文会让 82 个 B 类指标**全部变成 0**且不报错。
     """
+    if not views:
+        raise DecodeError('视图集为空：merged_views 段没有声明任何视图，无法解码合并形态')
     row = _merged_row(body)
     rows_by_key = {}  # type: Dict[str, Tuple[Mapping[str, Any], ...]]
     for name in views:
@@ -188,7 +192,7 @@ def _build_merged_contexts(
 def _merged_row(body: Any) -> Mapping[str, Any]:
     """取出合并形态里的那一行（``result`` 解析后必须恰好一行）。"""
     if not isinstance(body, Mapping):
-        raise DecodeError('合并形态的响应体必须是对象，实际是 %s' % type(body).__name__)
+        raise DecodeError(f'合并形态的响应体必须是对象，实际是 {type(body).__name__}')
     if 'result' not in body:
         raise DecodeError('合并形态的响应体里没有 result')
     payload = body['result']
@@ -199,16 +203,16 @@ def _merged_row(body: Any) -> Mapping[str, Any]:
         try:
             payload = json.loads(text)
         except ValueError as exc:
-            raise DecodeError('result 不是合法 JSON：%s' % exc)
+            raise DecodeError(f'result 不是合法 JSON：{exc}')
     if not isinstance(payload, list):
-        raise DecodeError('合并形态的 result 期望行列表，实际是 %s' % type(payload).__name__)
+        raise DecodeError(f'合并形态的 result 期望行列表，实际是 {type(payload).__name__}')
     if len(payload) != 1:
         raise DecodeError(
-            '合并形态的 result 期望 1 行，实际 %d 行' % len(payload)
+            f'合并形态的 result 期望 1 行，实际 {len(payload)} 行'
         )
     row = payload[0]
     if not isinstance(row, Mapping):
-        raise DecodeError('合并形态的那一行必须是对象，实际是 %s' % type(row).__name__)
+        raise DecodeError(f'合并形态的那一行必须是对象，实际是 {type(row).__name__}')
     return row
 
 
@@ -219,7 +223,7 @@ def _rows_of_view(
 ) -> Tuple[Mapping[str, Any], ...]:
     """取一个视图的行列表。空视图 → 空列表；坏 JSON → 抛异常。"""
     if column not in row:
-        raise DecodeError('合并形态的那一行里没有视图 %s 的列 %s' % (name, column))
+        raise DecodeError(f'合并形态的那一行里没有视图 {name} 的列 {column}')
     value = row[column]
     if value is None:
         return ()
@@ -231,18 +235,18 @@ def _rows_of_view(
         try:
             value = json.loads(text)
         except ValueError as exc:
-            raise DecodeError('视图 %s 的列 %s 不是合法 JSON：%s' % (name, column, exc))
+            raise DecodeError(f'视图 {name} 的列 {column} 不是合法 JSON：{exc}')
     if value is None:
         return ()
     if not isinstance(value, list):
         raise DecodeError(
-            '视图 %s 的列 %s 期望行列表，实际是 %s' % (name, column, type(value).__name__)
+            f'视图 {name} 的列 {column} 期望行列表，实际是 {type(value).__name__}'
         )
     rows = []  # type: List[Mapping[str, Any]]
     for item in value:
         if not isinstance(item, Mapping):
             raise DecodeError(
-                '视图 %s 的列 %s 里有非对象的行：%s' % (name, column, type(item).__name__)
+                f'视图 {name} 的列 {column} 里有非对象的行：{type(item).__name__}'
             )
         rows.append(item)
     return tuple(rows)
@@ -278,7 +282,7 @@ def _rows_from_result(body: Mapping[str, Any], shape: Mapping[str, Any]) -> List
         try:
             payload = json.loads(text)
         except ValueError as exc:
-            raise DecodeError('result 不是合法 JSON：%s' % exc)
+            raise DecodeError(f'result 不是合法 JSON：{exc}')
     return _as_rows(payload)
 
 
@@ -302,7 +306,7 @@ def _series_from_metric_infos(
             if points:
                 timestamps = tuple(points)
     if not series:
-        raise DecodeError('响应体里没有指标 %s 的 series' % metric_id)
+        raise DecodeError(f'响应体里没有指标 {metric_id} 的 series')
     return series, timestamps
 
 
@@ -317,7 +321,7 @@ def _dig(payload: Any, path: Sequence[str], shape: Mapping[str, Any]) -> Any:
         if isinstance(current, Mapping):
             if segment not in current:
                 raise DecodeError(
-                    '响应体里没有路径 %s（形状 %s）' % ('/'.join(walked), shape.get('kind'))
+                    f'响应体里没有路径 {"/".join(walked)}（形状 {shape.get("kind")}）'
                 )
             current = current[segment]
         elif isinstance(current, list):
@@ -325,11 +329,11 @@ def _dig(payload: Any, path: Sequence[str], shape: Mapping[str, Any]) -> Any:
                 current = current[int(segment)]
             except (IndexError, ValueError):
                 raise DecodeError(
-                    '响应体路径 %s 下标越界（形状 %s）' % ('/'.join(walked), shape.get('kind'))
+                    f'响应体路径 {"/".join(walked)} 下标越界（形状 {shape.get("kind")}）'
                 )
         else:
             raise DecodeError(
-                '响应体路径 %s 不是可下钻的容器（形状 %s）' % ('/'.join(walked), shape.get('kind'))
+                f'响应体路径 {"/".join(walked)} 不是可下钻的容器（形状 {shape.get("kind")}）'
             )
     return current
 
@@ -338,7 +342,7 @@ def _as_rows(payload: Any) -> List[Mapping[str, Any]]:
     if payload is None:
         return []
     if not isinstance(payload, list):
-        raise DecodeError('期望行列表，实际是 %s' % type(payload).__name__)
+        raise DecodeError(f'期望行列表，实际是 {type(payload).__name__}')
     rows = []  # type: List[Mapping[str, Any]]
     for item in payload:
         if isinstance(item, Mapping):

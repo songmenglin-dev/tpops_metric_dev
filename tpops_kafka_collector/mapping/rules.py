@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """字段级转换规则：取值、占位符替换、资源名拼装。
 
 规则本身在 ``data/mapping/`` 的 JSON 里，这里只负责**执行**规则。
 字段级映射（原始字段 → ITSCADA 字段）见 ``data/mapping/itscada_field_map.json``。
 """
-from __future__ import print_function
 
 import re
 from dataclasses import dataclass, field
@@ -78,7 +76,7 @@ def substitute_placeholders(template: str, dimensions: Mapping[str, Any]) -> str
     def _replace(match: 're.Match') -> str:
         name = match.group(1)
         if name not in dimensions:
-            raise RuleError('占位符 {%s} 没有对应的维度值' % name)
+            raise RuleError(f'占位符 {{{name}}} 没有对应的维度值')
         value = dimensions[name]
         return '' if value is None else str(value)
 
@@ -127,7 +125,7 @@ def evaluate(
     rule_type = rule.get('type')
     handler = _HANDLERS.get(rule_type)
     if handler is None:
-        raise RuleError('未知的取值规则类型：%s' % rule_type)
+        raise RuleError(f'未知的取值规则类型：{rule_type}')
     return handler(metric_rule, rule, ctx, deltas)
 
 
@@ -252,7 +250,7 @@ def _eval_gauge(metric_rule, rule, ctx, deltas):
     params = rule.get('params', {})
     unit = params.get('unit', '秒')
     if unit not in ('秒', 's'):
-        raise RuleError('gauge 规则的时间单位不支持：%s' % unit)
+        raise RuleError(f'gauge 规则的时间单位不支持：{unit}')
     results = []
     now_seconds = ctx.now_ms / 1000.0
     for key, values in ctx.series.items():
@@ -422,4 +420,4 @@ def _sum(values):
 def _dimension_key(dimensions):
     if not dimensions:
         return ''
-    return '|'.join('%s=%s' % (key, dimensions[key]) for key in sorted(dimensions))
+    return '|'.join(f'{key}={dimensions[key]!s}' for key in sorted(dimensions))

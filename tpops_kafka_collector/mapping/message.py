@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """按 ITSCADA 字段规范组装消息。
 
 两份对接方案（指标 / 告警）规定的字段集合就是这里输出的字段集合，
 不多不少；字段含义见 ``data/itscada_field_map.json``。
 """
-from __future__ import print_function
 
 from typing import Any, Dict, Mapping, Optional, Sequence
 
@@ -67,7 +65,10 @@ def build_alarm_message(
     if priority is None:
         priority = definition.default_priority
     content = _alarm_content(record, details)
-    value = metric_value if definition.value_source == 'latest_metric_value' else record.get('alarm_items_sum')
+    if definition.value_source == 'latest_metric_value':
+        value = metric_value
+    else:
+        value = record.get('alarm_items_sum')
     context = resolve_node_context(
         dict(resource_context or {},
              node_id=(record.get('node_id') or (resource_context or {}).get('node_id')),

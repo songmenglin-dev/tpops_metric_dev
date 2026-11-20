@@ -122,6 +122,38 @@ def test_empty_view_among_other_views_does_not_break_others():
     assert merged.rows_by_key['locks'][0]['mode'] == 'ExclusiveLock'
 
 
+# -- 空视图集（而不是空视图）------------------------------------------------
+
+def test_empty_views_mapping_raises_decode_error():
+    """视图集为空时必须报错，不能静默返回全零。
+
+    视图集为空通常意味着 ``merged_views`` 段没加载到（映射表缺失或版本不匹配）。
+    静默返回空上下文会让 82 个 B 类指标**全部变成 0**且不报错 ——
+    这正是本文件开头说的那种最危险的失败形态。
+    """
+    body = {'result': json.dumps([{'stat_database': '[]'}])}
+    with pytest.raises(DecodeError) as excinfo:
+        decode_merged(body, {})
+    message = str(excinfo.value)
+    assert '视图集为空' in message
+    assert '响应体' not in message, '消息必须说明是视图集的问题，而不是响应体坏'
+
+
+def test_empty_views_mapping_does_not_silently_return_zero_values():
+    body = {'result': json.dumps([{'stat_database': '[]'}])}
+    try:
+        merged = decode_merged(body, {})
+    except DecodeError:
+        return
+    pytest.fail('空视图集静默返回了 %r' % (dict(merged.rows_by_key),))
+
+
+def test_merge_pages_with_empty_views_raises_decode_error():
+    body = {'result': json.dumps([{'stat_database': '[]'}])}
+    with pytest.raises(DecodeError):
+        merge_pages([body], {})
+
+
 # -- 坏数据 ---------------------------------------------------------------
 
 MALFORMED_VIEW_JSON = '[{"datname": '

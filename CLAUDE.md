@@ -53,7 +53,7 @@ tpops_kafka_collector/              # 待建：采集端（编码阶段落地）
     └── serializer.py# JSON 序列化
 ```
 
-**映射层当前在 `tools/` 下**（规则数据 + 执行代码，采集端落地时搬进 `tpops_kafka_collector/`）：
+**映射层分两处**（执行代码已搬进生产包，映射数据暂留仓库根）：
 
 ```
 data/mapping/             # 映射规则数据（**表驱动，不写死在代码里**）
@@ -67,12 +67,18 @@ data/mapping/             # 映射规则数据（**表驱动，不写死在代�
 ├── alarm_rules.json         # 告警规则 + 257 条告警定义
 └── open_items.json          # 待客户确认的 7 项
 
-tools/mappings/           # 映射层执行代码
+tpops_kafka_collector/mapping/   # 映射层执行代码（**生产代码**）
 ├── table.py     # 映射表加载与查表
 ├── rules.py     # 字段级转换规则（类型、单位、缺省值）
 ├── nodes.py     # 节点身份解析（resourceName：节点 IP + 节点 ID；选 master CN）
-└── message.py   # 按 ITSCADA 字段规范组装消息
+├── message.py   # 按 ITSCADA 字段规范组装消息
+├── decode.py    # 响应体解码（含合并 SQL 的合并形态）
+├── columns.py   # 列名校验（列名与实测留档对齐）
+└── ids.py       # 标识与幂等键
 ```
+
+> **映射数据仍在仓库根 `data/mapping/`**（要等 wave 2a 任务 2.1 才复制进包内）。
+> `tools/` 与 `data/` 只作参考与离线工具，**不是生产依赖**。
 
 ```
 tests/     # 映射层单元测试（pytest）；TPOPS 与 Kafka 一律 mock
@@ -254,7 +260,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 8. **`resourceName` 与客户台账的对齐** —— **口径已定**：resourceName 只能表示一个节点 →
    固定 `{host_ip}_{node_id}`（节点 IP + TPOPS 节点 ID），指标与告警同规则；
    与节点无关的指标（命令中心实例级/表级/库级、诊断优化、实例接口）落到节点清单里的
-   **第一个 master CN**（`tools/mappings/nodes.py`）；表名/库名/端口等业务维度改走
+   **第一个 master CN**（`tpops_kafka_collector/mapping/nodes.py`）；表名/库名/端口等业务维度改走
    `metricName`/`metricCode` 的占位符与 `tags.dimension_values`。
    剩下的只是与 ITSCADA 台账录入的资源名称核对，模板在 `itscada_field_map.json` 的
    `resource_name` 段，改表即可、不改代码。
@@ -281,7 +287,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 | `data/customer_metric_query_plan.json` | 逐指标查询方案（生成物，采集端的实现依据） |
 | `docs/ITSCADA第三方指标数据接入对接方案V2.docx` | **客户侧指标接入规范**：字段表、占位符规则、指标表模板 |
 | `docs/ITSCADA第三方告警数据接入对接方案V2.docx` | **客户侧告警接入规范**：字段表、告警压缩规则 |
-| `tools/mappings/README.md` | 映射规则文件说明：字段含义、取值规则类型、怎么改 |
+| `tpops_kafka_collector/mapping/README.md` | 映射层说明：字段含义、取值规则类型、怎么改 |
 | `docs/映射表-ITSCADA字段对照.md` | **开发依据**：两张字段级映射表（指标 / 告警），原始字段 → ITSCADA 客户字段 |
 | `data/metric_response/README.md` | 逐指标**原生 API 响应体**留档（98 个文件）：格式、通道构成、重抓命令 |
 | `data/alarm/README.md` | 告警侧数据结构与抓取产物说明 |
