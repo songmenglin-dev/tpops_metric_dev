@@ -15,13 +15,19 @@
 键的**声明**（字段清单）在 ``data/mapping/alarm_rules.json`` 的 ``idempotency``
 段里，由 ``tools/build_itscada_mapping.py`` 从本模块的常量生成 ——
 声明与实现是同一份契约的两个副本，改一处必须改另一处。
+
+本模块同时提供**已投递键的有界集合** :class:`IdempotencyKeyLRU` ——
+「键怎么算」与「哪些键已经投过了」是同一件事的两面，放在一起。
 """
-from typing import Any, Mapping, Optional
+from collections import OrderedDict
+from typing import Any, Mapping, Optional, Tuple
 
 __all__ = [
     'ALARM_IDEMPOTENCY_FIELDS',
     'METRIC_IDEMPOTENCY_FIELDS',
     'KEY_SEPARATOR',
+    'DEFAULT_IDEMPOTENCY_LRU_CAPACITY',
+    'IdempotencyKeyLRU',
     'alarm_idempotency_key',
     'metric_idempotency_key',
 ]
@@ -34,6 +40,9 @@ METRIC_IDEMPOTENCY_FIELDS = ('instance_id', 'metric_name', 'dimensions', 'timest
 
 # 拼接分隔符。
 KEY_SEPARATOR = '|'
+
+#: 已投递幂等键集合的默认容量（specs/delivery-and-state/spec.md「幂等去重」）。
+DEFAULT_IDEMPOTENCY_LRU_CAPACITY = 10000
 
 
 def alarm_idempotency_key(
@@ -81,3 +90,47 @@ def _part(value: Any) -> str:
     if value is None:
         return ''
     return str(value)
+
+
+class IdempotencyKeyLRU:
+    """幂等键集合：容量上限可配，超限淘汰**最久未被使用**的条目。
+
+    规格（``specs/delivery-and-state/spec.md:170``）要求的是 **LRU**：
+    ``add`` 遇到已存在的键（返回 ``False``，调用方据此跳过重复投递）算一次
+    「使用」，会刷新该键的新鲜度；``contains`` 是**查询**，不刷新。
+    """
+
+    def __init__(self, capacity: int = DEFAULT_IDEMPOTENCY_LRU_CAPACITY) -> None:
+        if capacity <= 0:
+            raise ValueError(f'幂等键 LRU 容量必须为正整数，实际 {capacity!r}')
+        self._capacity = capacity
+        self._keys = OrderedDict()  # type: OrderedDict
+
+    @property
+    def capacity(self) -> int:
+        return self._capacity
+
+    def contains(self, key: str) -> bool:
+        """查询键是否存在。**不刷新**新鲜度 —— 查询不是「使用」。"""
+        return key in self._keys
+
+    def add(self, key: str) -> bool:
+        """加入幂等键；已存在返回 ``False``（调用方据此跳过投递）。
+
+        重复键是一次「使用」—— 刷新它的新鲜度，这样持续重复投递的告警不会
+        因为「首次出现得早」而被当成最老条目淘汰掉。
+        """
+        if key in self._keys:
+            self._keys.move_to_end(key)
+            return False
+        self._keys[key] = None
+        while len(self._keys) > self._capacity:
+            self._keys.popitem(last=False)
+        return True
+
+    def keys(self) -> Tuple[str, ...]:
+        """按新鲜度返回全部键（最久未使用 → 最新使用）。"""
+        return tuple(self._keys.keys())
+
+    def __len__(self) -> int:
+        return len(self._keys)

@@ -308,35 +308,82 @@ def test_value_type_none_keeps_value_untouched():
 
 
 # -- 唯一序列化出口 ------------------------------------------------------
-def test_kafka_package_has_only_one_json_dumps():
-    """``kafka/`` 包里只有 serializer.py 能调 ``json.dumps`` 产出消息。
+# -- 唯一序列化出口 ------------------------------------------------------
+#: 允许调用 json.dumps / json.dump 的地方，以及为什么允许。
+#: 合同要求「全仓只有这一处 json.dumps 产出消息」—— 精确的形态是：
+#: 只有 kafka/serializer.py 能产出消息；其余 json 编码是别的用途
+#: （状态文件落盘），必须逐个登记用途，不允许「扫不到就当没有」。
+_ALLOWED_JSON_WRITERS = {
+    'kafka/serializer.py': '唯一的消息序列化出口',
+    'watermark.py': '水位状态文件落盘（不是消息）',
+}
 
-    守卫范围是**投递层**：``tpops/`` 的 HTTP 请求体、``watermark.py`` 的
-    状态文件也要 json 编码，那不是「产出消息」。
-    """
-    kafka_dir = os.path.join(
+
+def _package_dir():
+    return os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        'tpops_kafka_collector', 'kafka',
+        'tpops_kafka_collector',
     )
+
+
+def _json_writer_calls(path):
+    """返回该文件里所有 json.dumps / json.dump 调用的行号。"""
+    with open(path, encoding='utf-8') as handle:
+        tree = ast.parse(handle.read(), filename=path)
+    hits = []
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Attribute)
+            and node.attr in ('dumps', 'dump')
+            and isinstance(node.value, ast.Name)
+            and node.value.id == 'json'
+        ):
+            hits.append(node.lineno)
+    return hits
+
+
+def test_package_has_only_one_json_dumps_for_messages():
+    """整个生产包里，产出消息的 json.dumps 只有一处。
+
+    合同：「完成后全仓只有这一处 json.dumps 产出消息」。
+    这里扫**整个** tpops_kafka_collector/（不是只扫投递层），
+    白名单逐个登记用途 —— 扫不到就当没有，正是这个守卫要防的失败形态。
+    """
+    package_dir = _package_dir()
     offenders = []
-    for name in sorted(os.listdir(kafka_dir)):
-        if not name.endswith('.py') or name == 'serializer.py':
-            continue
-        path = os.path.join(kafka_dir, name)
-        with open(path, encoding='utf-8') as handle:
-            tree = ast.parse(handle.read(), filename=path)
-        for node in ast.walk(tree):
-            if (
-                isinstance(node, ast.Attribute)
-                and node.attr in ('dumps', 'dump')
-                and isinstance(node.value, ast.Name)
-                and node.value.id == 'json'
-            ):
-                offenders.append(f'{name}:{node.lineno}')
+    for root, _dirs, files in os.walk(package_dir):
+        for name in sorted(files):
+            if not name.endswith('.py'):
+                continue
+            path = os.path.join(root, name)
+            relative = os.path.relpath(path, package_dir).replace(os.sep, '/')
+            if relative in _ALLOWED_JSON_WRITERS:
+                continue
+            for lineno in _json_writer_calls(path):
+                offenders.append(relative + ':' + str(lineno))
     assert not offenders, (
-        'kafka 包里除 serializer.py 外还有 json.dumps：'
-        f'{offenders} —— 消息只能有一个序列化出口'
+        '生产包里除已登记的 '
+        + str(sorted(_ALLOWED_JSON_WRITERS))
+        + ' 外还有 json.dumps：'
+        + str(offenders)
+        + ' —— 消息只能有一个序列化出口'
     )
+
+
+def test_allowed_json_writers_are_still_actually_used():
+    """白名单不能变成免死金牌 —— 登记的用途必须真的还在用。
+
+    否则有人删掉 serializer.py 的 json.dumps 之后，白名单会变成一个
+    永远生效的豁免，守卫就瞎了。
+    """
+    package_dir = _package_dir()
+    for relative in sorted(_ALLOWED_JSON_WRITERS):
+        path = os.path.join(package_dir, relative)
+        assert _json_writer_calls(path), (
+            relative + ' 登记为允许 json.dumps，但实际没有调用 —— 白名单该清理了'
+        )
+
+
 
 
 # -- 错误处理 ------------------------------------------------------------

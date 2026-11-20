@@ -37,6 +37,7 @@ from ..errors import (
     TpopsError,
     is_retryable,
 )
+from .protocol import require_fields
 
 LOGGER = logging.getLogger(__name__)
 
@@ -77,28 +78,6 @@ TOKEN_REFRESH_MARGIN_SECONDS = 60
 #: 绝不能马上再试。本客户端在静默期内直接复用上一次的失败结论（不再发请求），
 #: 静默期过了才允许下一次认证（配合调度器的轮询退避 —— 开发方案 §4.2.1）。
 AUTH_FAILURE_COOLDOWN_SECONDS = 60.0
-
-
-def require_fields(
-    payload: Mapping[str, Any], fields: Any, endpoint: str
-) -> Mapping[str, Any]:
-    """校验响应体含有约定字段，缺则抛 :class:`ProtocolError`。
-
-    :param payload: 平台响应体（解析后的对象）。
-    :param fields: 必须存在的字段名（可迭代）。
-    :param endpoint: 出错的接口标识（写进异常消息，便于定位）。
-    :raises ProtocolError: 缺字段 / 响应体不是对象。
-    """
-    if not isinstance(payload, Mapping):
-        raise ProtocolError(
-            f'TPOPS 响应结构异常（{endpoint}）：期望对象，实际 {type(payload).__name__}'
-        )
-    missing = [name for name in fields if name not in payload]
-    if missing:
-        raise ProtocolError(
-            f'TPOPS 响应缺少字段（{endpoint}）：{"、".join(sorted(missing))}'
-        )
-    return payload
 
 
 class TpopsClient:
