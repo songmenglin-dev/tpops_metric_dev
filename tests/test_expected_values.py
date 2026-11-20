@@ -240,11 +240,16 @@ CONTAINS_RULES = {
     'gaussdb.Waiting_conn': ('wait', 'waiting on lock'),
 }
 
+# 第三行故意用**大写** state：关键词是小写的，只有「忽略大小写」的子串包含
+# 才会命中它。把引擎的 ``.lower()`` 去掉，这条用例会红。
 CONTAINS_ROWS = (
     {'datname': 'db', 'state': 'active', 'cnt': 3},
     {'datname': 'db', 'state': 'waiting on lock', 'cnt': 5},
+    {'datname': 'db', 'state': 'WAITING ON LOCK', 'cnt': 7},
     {'datname': 'db', 'state': 'idle', 'cnt': 11},
 )
+
+CONTAINS_MATCHED_COUNT = 12  # 5 + 7：两条含关键词的行
 
 
 @pytest.mark.parametrize('metric_code', sorted(CONTAINS_RULES))
@@ -259,8 +264,8 @@ def test_state_contains_matches_rows_with_the_keyword(metric_code):
     results = evaluate(_engine_rule(rule_payload), ctx)
     pairs = _pairs(results)
     assert len(pairs) == 1, (metric_code, pairs)
-    # 只有含关键词的那行（cnt=5）被算进去
-    assert pairs[0][1] == 5, (metric_code, pairs)
+    # 只有含关键词的那两行（小写 5 + 大写 7）被算进去
+    assert pairs[0][1] == CONTAINS_MATCHED_COUNT, (metric_code, pairs)
     assert matching_state in CONTAINS_ROWS[1]['state']
 
 
