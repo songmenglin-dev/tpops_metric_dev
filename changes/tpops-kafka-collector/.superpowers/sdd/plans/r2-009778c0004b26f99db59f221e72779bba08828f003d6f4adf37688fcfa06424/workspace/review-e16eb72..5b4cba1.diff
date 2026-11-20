@@ -1,0 +1,1372 @@
+# Review package: e16eb72..HEAD
+
+## Commits
+5b4cba1 fix(mapping): 告警 details 恒为数组，不省略字段（规格「告警消息的投递单位」）
+c8538e8 feat(mapping): 告警幂等键含 status，跨视图比率钉住，列校验对实测留档
+
+## Files changed
+ data/mapping/alarm_rules.json            |  12 ++
+ data/mapping/kafka_field_mapping.json    |   6 +-
+ tests/test_merged_sql_mapping.py         | 120 ++++++++++++++++++
+ tests/test_response_rules.py             | 181 ++++++++++++++++++++++++++-
+ tests/test_rules.py                      | 120 ++++++++++++++++++
+ tools/build_itscada_mapping.py           |  22 ++++
+ tools/build_kafka_mapping.py             |   1 +
+ tools/build_response_rules.py            |  68 ++++++++++-
+ tpops_kafka_collector/__init__.py        |   1 +
+ tpops_kafka_collector/ids.py             |  83 +++++++++++++
+ tpops_kafka_collector/mapping/columns.py | 204 +++++++++++++++++++++++++++++++
+ tpops_kafka_collector/mapping/message.py |   5 +-
+ tpops_kafka_collector/mapping/table.py   |  42 ++++++-
+ 13 files changed, 854 insertions(+), 11 deletions(-)
+
+## Diff
+diff --git a/data/mapping/alarm_rules.json b/data/mapping/alarm_rules.json
+index 7c677ed..d080e66 100644
+--- a/data/mapping/alarm_rules.json
++++ b/data/mapping/alarm_rules.json
+@@ -22,20 +22,32 @@
+   "status_to_itscada": {
+     "activated": 1,
+     "recovered": 0,
+     "cleared": 0,
+     "cleared_by_user": 0
+   },
+   "value_sources": {
+     "latest_metric_value": "取告警时刻该客户指标的最近一次采样值",
+     "alarm_items_sum": "取收敛条目的 alarm_items_sum（命中节点数）"
+   },
++  "idempotency": {
++    "alarm": {
++      "fields": [
++        "alarm_id",
++        "instance_id",
++        "first_alarm_time",
++        "status"
++      ],
++      "status_domain": "platform_raw",
++      "note": "键含 status（平台原值 activated/recovered/cleared/cleared_by_user）——ITSCADA 整数枚举会把 recovered 与 cleared 压成同一个键。不含 node_id（收敛条目的节点靠明细行回填，逐轮可能不同）与 last_alarm_time（恢复后它不变）。计算见 tpops_kafka_collector/ids.py。"
++    }
++  },
+   "counts": {
+     "total_definitions": 257,
+     "linked_to_customer_metric": 3,
+     "event_fallback": 254
+   },
+   "definitions": {
+     "5101162": {
+       "alarm_name": "处于锁等待状态下的会话比率异常",
+       "alarm_kind": "metric",
+       "default_level": "紧急",
+diff --git a/data/mapping/kafka_field_mapping.json b/data/mapping/kafka_field_mapping.json
+index 842a467..b71e4ad 100644
+--- a/data/mapping/kafka_field_mapping.json
++++ b/data/mapping/kafka_field_mapping.json
+@@ -12333,21 +12333,22 @@
+         "value": "1",
+         "unit": null,
+         "tags": {
+           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+           "instance_name": "gauss-6374",
+           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+           "host_ip": "172.16.103.126",
+           "alarm_category": "节点状态",
+           "alarm_type": "event",
+           "engine": "gaussdb",
+-          "alarm_duration": "4小时5分钟"
++          "alarm_duration": "4小时5分钟",
++          "details": []
+         }
+       }
+     },
+     {
+       "shape": "active_detail",
+       "label": "活动告警 · 明细行",
+       "message_type": "alarm",
+       "tpops_response_source": {
+         "records": [
+           {
+@@ -12593,21 +12594,22 @@
+         "value": "14",
+         "unit": null,
+         "tags": {
+           "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+           "instance_name": "gauss-6374",
+           "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+           "host_ip": "172.16.103.126",
+           "alarm_category": "节点状态",
+           "alarm_type": "event",
+           "engine": "gaussdb",
+-          "alarm_duration": "5小时27分钟"
++          "alarm_duration": "5小时27分钟",
++          "details": []
+         }
+       }
+     },
+     {
+       "shape": "history_detail",
+       "label": "历史告警 · 明细行",
+       "message_type": "alarm",
+       "tpops_response_source": {
+         "records": [
+           {
+diff --git a/tests/test_merged_sql_mapping.py b/tests/test_merged_sql_mapping.py
+index e6314da..b2c6ab3 100644
+--- a/tests/test_merged_sql_mapping.py
++++ b/tests/test_merged_sql_mapping.py
+@@ -16,20 +16,21 @@
+ """
+ import io
+ import json
+ import os
+ 
+ import pytest
+ 
+ from conftest import DATA_DIR, REPO_ROOT
+ 
+ from tpops_kafka_collector.errors import MappingError, is_retryable
++from tpops_kafka_collector.mapping import evaluate
+ from tpops_kafka_collector.mapping.decode import (
+     DecodeError,
+     decode,
+     decode_merged,
+     merge_pages,
+ )
+ 
+ MERGED_DIR = os.path.join(DATA_DIR, 'merged_sql')
+ PROBE_PATH = os.path.join(MERGED_DIR, 'sql_merge_probe_result.json')
+ MERGED_SQL_PATH = os.path.join(MERGED_DIR, 'merged_sql.json')
+@@ -354,10 +355,129 @@ def test_transient_and_produce_errors_are_retryable():
+ 
+ def test_read_timeout_would_have_been_misclassified_by_exact_name_match():
+     """回归锚点：类名精确相等会把 ReadTimeout 判成不可重试。
+ 
+     这个断言固定住「必须走基类链」这个实现约束 —— 若有人把判定改回
+     `type(exc).__name__ in (...)`，本用例立刻失败。
+     """
+     assert 'ReadTimeout' != 'Timeout'
+     assert issubclass(requests.exceptions.ReadTimeout, requests.exceptions.Timeout)
+     assert is_retryable(requests.exceptions.ReadTimeout()) is True
++
++
++# -- 跨视图比率（ratio_across）--------------------------------------------
++#
++# **这个文件守的是「静默出 0」**：跨视图比率的分子分母来自**两个不同的视图**，
++# 只解一个视图的话分母取不到 → 比率恒为 0，且**不报错**。
++# 回归样本是真实留档 ``data/merged_sql/sql_merge_probe_result.json``。
++
++RATIO_RULES = ('gaussdb.Total_pct', 'GAUSSDB.session_usage')
++
++# 留档里的标准比值（分子/分母）—— 开发方案 §4.2.4 与执行合同里的验收数字。
++CANONICAL_NUMERATOR = 23
++CANONICAL_DENOMINATOR = 29
++
++
++class _RatioRule(object):
++    """规则引擎只认 ``value_rule``（跨视图比率不涉及维度绑定）。"""
++
++    def __init__(self, metric_code, params):
++        self.metric_code = metric_code
++        self.value_rule = {'type': 'ratio_across', 'params': params}
++        self.dimension_bindings = {}
++
++
++def _ratio_params(metric_code):
++    """从映射表里取这条指标的比值参数（分子/分母各来自哪个视图的哪一列）。"""
++    for rule in _load(RULES_PATH)['rules']:
++        if rule['metric_code'] == metric_code:
++            return rule['business']['value_rule']['params']
++    raise AssertionError('映射表里没有 %s' % metric_code)
++
++
++def _archive_sides(node):
++    """从留档的原始行里算出分子与分母（不借用实现里的算术）。"""
++    row = json.loads(node['result'])[0]
++    numerator = sum(item['cnt'] for item in json.loads(row['activity_agg']))
++    denominator = sum(item['numbackends'] for item in json.loads(row['stat_database']))
++    return numerator, denominator
++
++
++@pytest.fixture(scope='module')
++def probe_nodes():
++    """留档里的每个 master 节点（一个节点 = 一次合并 SQL 的返回）。"""
++    return _load(PROBE_PATH)['nodes']
++
++
++@pytest.mark.parametrize('metric_code', RATIO_RULES)
++def test_cross_view_ratio_equals_the_ratio_derived_from_the_archive(
++    probe_nodes, merged_views, metric_code
++):
++    """跨视图比率必须等于留档原始行算出的比值，而不是 0。
++
++    期望值从**留档自己的行**推出（分子=activity_agg 的 cnt 之和，
++    分母=stat_database 的 numbackends 之和）—— 不复制实现的算术，
++    这样实现的算错了这里也会跟着错。
++    """
++    params = _ratio_params(metric_code)
++    numerator_spec = params['numerator']
++    denominator_spec = params['denominator']
++    # 分子分母确实来自两个不同的视图 —— 少解一个就恒为 0
++    assert numerator_spec['sql_key'] != denominator_spec['sql_key']
++
++    for node_name in sorted(probe_nodes):
++        node = probe_nodes[node_name]
++        merged = decode_merged({'result': node['result']}, merged_views)
++        ctx = merged.by_sql_key[numerator_spec['sql_key']]
++
++        results = evaluate(_RatioRule(metric_code, params), ctx)
++        assert results, (metric_code, node_name)
++
++        # 期望值：直接从留档原始行算
++        numerator, denominator = _archive_sides(node)
++        assert numerator > 0 and denominator > 0
++
++        value = results[0][1]
++        assert value == round(numerator / denominator, 2), (metric_code, node_name, value)
++        assert value != 0, (metric_code, node_name)
++
++
++def test_cross_view_ratio_on_the_measured_node_is_23_over_29(probe_nodes, merged_views):
++    """留档里的标准比值 23/29 —— 两条比值指标都拿到 0.79，不是 0。"""
++    params = _ratio_params('gaussdb.Total_pct')
++    canonical_nodes = [
++        name for name in sorted(probe_nodes)
++        if _archive_sides(probe_nodes[name]) == (CANONICAL_NUMERATOR, CANONICAL_DENOMINATOR)
++    ]
++    assert canonical_nodes, '留档里没有 23/29 的节点了'
++
++    for node_name in canonical_nodes:
++        node = probe_nodes[node_name]
++        merged = decode_merged({'result': node['result']}, merged_views)
++        ctx = merged.by_sql_key[params['numerator']['sql_key']]
++        for metric_code in RATIO_RULES:
++            rule_params = _ratio_params(metric_code)
++            value = evaluate(_RatioRule(metric_code, rule_params), ctx)[0][1]
++            assert value == round(CANONICAL_NUMERATOR / CANONICAL_DENOMINATOR, 2)
++            assert value == 0.79
++            assert value != 0
++
++
++# --- 告警投递单位：details 缺失时也必须存在（空数组，不是省略）-----------
++
++def test_alarm_tags_always_carry_details_array():
++    """规格「告警消息的投递单位」：`details` 缺失时 SHALL 输出空数组 `[]`，SHALL NOT 省略该字段。
++
++    省略字段会让客户侧要写「有就取、没有就当空」的分支；
++    统一输出 `[]` 才能让客户侧统一解析。
++    """
++    from tpops_kafka_collector.mapping.message import _alarm_tags
++
++    tags_without = _alarm_tags({'alarm_id': '2007010001'}, [])
++    assert 'details' in tags_without, 'details 为空时被省略了 —— 规格要求输出 []'
++    assert tags_without['details'] == []
++
++    tags_none = _alarm_tags({'alarm_id': '2007010001'}, None)
++    assert tags_none['details'] == []
++
++    tags_with = _alarm_tags({'alarm_id': '2007010001'}, [{'node_id': 'n1', 'host_ip': '1.2.3.4'}])
++    assert tags_with['details'] == [{'node_id': 'n1', 'host_ip': '1.2.3.4'}]
+diff --git a/tests/test_response_rules.py b/tests/test_response_rules.py
+index c1bdba9..e67decd 100644
+--- a/tests/test_response_rules.py
++++ b/tests/test_response_rules.py
+@@ -2,28 +2,36 @@
+ """response_rules.json 的映射条件必须在实测 response_body 上真的成立。
+ 
+ 这份测试是「映射条件」与「实测数据」之间唯一的连接点：
+ - 每个 enabled 规则都要能从留档里解出 RuleContext；
+ - 解出来的上下文交给规则引擎，要能产出至少一个非空值；
+ - 定位里写的列名，必须真的在实测响应体的列集合里。
+ """
+ import io
+ import json
+ import os
++import subprocess
+ import sys
+ from dataclasses import dataclass
+ from typing import Any, Mapping
+ 
+ import pytest
+ 
+ from conftest import DATA_DIR, REPO_ROOT
+ 
++sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
++import build_response_rules  # noqa: E402
++
++from tpops_kafka_collector.mapping.columns import (
++    merged_archive_view_columns,
++    source_column_problems,
++)
+ from tpops_kafka_collector.mapping.decode import DecodeError, decode
+ from tpops_kafka_collector.mapping.rules import CounterDeltaStore, evaluate
+ 
+ RESPONSE_DIR = os.path.join(DATA_DIR, 'metric_response')
+ RULES_PATH = os.path.join(DATA_DIR, 'mapping', 'response_rules.json')
+ 
+ 
+ def _load(path):
+     with io.open(path, encoding='utf-8') as fp:
+         return json.load(fp)
+@@ -202,16 +210,183 @@ def test_ratio_across_sources_are_all_decoded(rules, payload):
+         params = rule['business']['value_rule']['params']
+         for side in ('numerator', 'denominator'):
+             shape_id = 'cmd_rows_%s' % params[side]['sql_key']
+             assert shape_id in payload['shapes'], (rule['metric_code'], side, shape_id)
+ 
+ 
+ # -- 文件是最新的 ---------------------------------------------------------
+ 
+ def test_file_is_up_to_date():
+     """文件必须与生成器输出一致（规则改了要重新生成）。"""
+-    sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
+-    import build_response_rules
+-
+     current = _load(RULES_PATH)
+     fresh = build_response_rules.build()
+     assert current == fresh, 'response_rules.json 过期，请运行 tools/build_response_rules.py'
++
++
++# -- 合并形态的列校验（实测留档为准）--------------------------------------
++#
++# **这个文件守的是「映射表与真实数据脱节」**：合并形态的视图名与来源列必须
++# 能在实测留档（``data/merged_sql/sql_merge_probe_result.json``）里对上。
++# 对不上时生成器必须**报错退出**，不能静默产出一份取不到列的映射表。
++
++MERGED_PROBE_PATH = os.path.join(DATA_DIR, 'merged_sql', 'sql_merge_probe_result.json')
++
++# 子进程里跑生成器：留档路径与输出路径指到临时目录，退出码才是真的退出码。
++_GENERATOR_WRAPPER = '''\
++import sys
++
++sys.path.insert(0, %(tools_dir)r)
++import build_response_rules as g
++
++g.MERGED_PROBE_PATH = %(probe_path)r
++g.OUTPUT_PATH = %(output_path)r
++
++try:
++    sys.exit(g.main(sys.argv[1:]))
++except g.BuildError as exc:
++    print('生成失败：' + str(exc))
++    sys.exit(2)
++'''
++
++
++def _run_generator(tmp_path, probe_payload):
++    """把留档换成给定的内容，跑一遍生成器，返回 (returncode, stdout+stderr)。
++
++    用子进程跑（退出码才是真的退出码），并把留档路径与输出路径指到临时目录 ——
++    不碰仓库里的文件。
++    """
++    probe_path = tmp_path / 'sql_merge_probe_result.json'
++    with io.open(probe_path, 'w', encoding='utf-8') as fp:
++        json.dump(probe_payload, fp, ensure_ascii=False)
++    wrapper = tmp_path / 'run_generator.py'
++    wrapper.write_text(_GENERATOR_WRAPPER % {
++        'tools_dir': os.path.join(REPO_ROOT, 'tools'),
++        'probe_path': str(probe_path),
++        'output_path': str(tmp_path / 'out.json'),
++    }, encoding='utf-8')
++    process = subprocess.run(
++        [sys.executable, str(wrapper)],
++        capture_output=True,
++        text=True,
++    )
++    return process.returncode, process.stdout + process.stderr
++
++
++def test_generator_rejects_a_bogus_view_name(tmp_path):
++    """留档里多出一个视图 → 生成器报错退出（不静默产出错的映射表）。"""
++    payload = _load(MERGED_PROBE_PATH)
++    node_name = sorted(payload['nodes'])[0]
++    row = json.loads(payload['nodes'][node_name]['result'])[0]
++    row['no_such_view'] = '[]'
++    payload['nodes'][node_name]['result'] = json.dumps([row])
++
++    returncode, output = _run_generator(tmp_path, payload)
++    assert returncode != 0, output
++    assert 'no_such_view' in output
++
++
++def test_generator_rejects_a_bogus_source_column(tmp_path):
++    """规则要取的列不在留档的实际列里 → 生成器报错退出。"""
++    payload = _load(MERGED_PROBE_PATH)
++    for node_name in payload['nodes']:
++        node = payload['nodes'][node_name]
++        row = json.loads(node['result'])[0]
++        rows = json.loads(row['stat_database'])
++        for item in rows:
++            item.pop('numbackends', None)
++        row['stat_database'] = json.dumps(rows)
++        node['result'] = json.dumps([row])
++
++    returncode, output = _run_generator(tmp_path, payload)
++    assert returncode != 0, output
++    assert 'numbackends' in output
++
++
++def test_generator_tolerates_a_view_empty_on_one_node(tmp_path):
++    """某个节点这一轮没有行 → 不算「列不存在」。
++
++    列的判定取各节点的**并集**：一个视图在某个 master 上没有命中行，
++    是正常现象（那台机器上没有锁、没有长事务），不代表这个列不存在。
++    """
++    payload = _load(MERGED_PROBE_PATH)
++    node_name = sorted(payload['nodes'])[0]
++    row = json.loads(payload['nodes'][node_name]['result'])[0]
++    row['stat_database'] = '[]'
++    payload['nodes'][node_name]['result'] = json.dumps([row])
++
++    returncode, output = _run_generator(tmp_path, payload)
++    assert returncode == 0, output
++
++
++def test_generator_accepts_the_real_archive():
++    """真实留档必须通过校验（否则上面两条测试就是「一律失败」的假阳性）。"""
++    payload = _load(MERGED_PROBE_PATH)
++    columns = merged_archive_view_columns(payload)
++    rules = _load(os.path.join(DATA_DIR, 'mapping', 'metric_rules.json'))['rules']
++    assert not source_column_problems(rules, columns)
++
++
++def test_mapping_table_load_validates_source_columns():
++    """加载映射表时按 §5.6.4 校验来源列（实测留档为准）。
++
++    对不上就抛 ``MappingError``（不可重试 → 启动失败）。
++    """
++    from tpops_kafka_collector.errors import MappingError
++    from tpops_kafka_collector.mapping import MappingTable
++
++    # 真实留档 → 校验通过
++    MappingTable.load()
++
++    # 留档里少一列 → 加载即失败
++    payload = _load(MERGED_PROBE_PATH)
++    for node in payload['nodes'].values():
++        row = json.loads(node['result'])[0]
++        rows = json.loads(row['stat_database'])
++        for item in rows:
++            item.pop('numbackends', None)
++        row['stat_database'] = json.dumps(rows)
++        node['result'] = json.dumps([row])
++
++    import tempfile
++    with tempfile.TemporaryDirectory() as tmp:
++        path = os.path.join(tmp, 'probe.json')
++        with io.open(path, 'w', encoding='utf-8') as fp:
++            json.dump(payload, fp, ensure_ascii=False)
++        with pytest.raises(MappingError) as excinfo:
++            MappingTable.load(probe_path=path)
++    assert 'numbackends' in str(excinfo.value)
++
++
++def test_no_production_code_references_the_deleted_archive():
++    """``data/command_center/results/`` 已于 2026-11-13 删除 —— 代码里不得再引用。
++
++    只看**字符串常量**（文档字符串里的历史说明不算）—— 一旦代码真去读那个
++    目录，启动期的来源列校验就会因为「留档不在」而失效。
++    """
++    import ast
++
++    package_dir = os.path.join(REPO_ROOT, 'tpops_kafka_collector')
++    offenders = []
++    for root, dirs, files in os.walk(package_dir):
++        dirs[:] = [d for d in dirs if d != '__pycache__']
++        for name in files:
++            if not name.endswith('.py'):
++                continue
++            path = os.path.join(root, name)
++            with io.open(path, encoding='utf-8') as fp:
++                tree = ast.parse(fp.read(), filename=path)
++            docstrings = set()
++            for node in ast.walk(tree):
++                if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef)):
++                    doc = ast.get_docstring(node, clean=False)
++                    if doc:
++                        docstrings.add(doc)
++            for node in ast.walk(tree):
++                if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
++                    continue
++                if node.value in docstrings:
++                    continue
++                if 'command_center/results' in node.value:
++                    offenders.append(
++                        '%s:%s' % (os.path.relpath(path, REPO_ROOT), node.lineno)
++                    )
++    assert not offenders, offenders
+diff --git a/tests/test_rules.py b/tests/test_rules.py
+index cc5dde5..f5990df 100644
+--- a/tests/test_rules.py
++++ b/tests/test_rules.py
+@@ -1,18 +1,25 @@
+ # -*- coding: utf-8 -*-
+ """取值规则引擎与 ITSCADA 消息组装。"""
++import io
+ import json
+ import os
+ 
+ import pytest
+ 
+ from conftest import DATA_DIR
++from tpops_kafka_collector.ids import (
++    ALARM_IDEMPOTENCY_FIELDS,
++    METRIC_IDEMPOTENCY_FIELDS,
++    alarm_idempotency_key,
++    metric_idempotency_key,
++)
+ from tpops_kafka_collector.mapping import (
+     CounterDeltaStore,
+     MappingTable,
+     RuleContext,
+     RuleError,
+     build_alarm_message,
+     build_metric_message,
+     evaluate,
+ )
+ from tpops_kafka_collector.mapping.rules import build_resource_name, substitute_placeholders
+@@ -537,10 +544,123 @@ def test_command_center_rows_match_real_probe_result(table):
+             break
+     for rule in table.enabled_metric_rules():
+         sql_key = rule.source.get('sql_key')
+         if not sql_key or not rule.value_rule:
+             continue
+         rule_type = rule.value_rule['type']
+         if rule_type not in ('raw', 'counter_delta'):
+             continue
+         column = rule.value_rule['params'].get('column')
+         assert column in columns[sql_key], (rule.metric_code, column, sql_key)
++
++
++# -- 幂等键（开发方案 §3.7 / §4.5.4，设计决策 5）------------------------
++#
++# **这个文件守的是「恢复事件被去重丢弃」**：同一条告警的触发（activated）
++# 与恢复（recovered）必须得到**两个不同的幂等键** —— 客户字段表里
++# ``recoverTime`` 在 status=0 时必填，恢复消息发不出去就等于丢了恢复事件。
++#
++# 键里**不含** ``node_id``（收敛条目的节点靠明细行回填，可能逐轮不同）
++# 与 ``last_alarm_time``（恢复后它不变，实测 last ≠ clear）。
++
++ALARM_RULES_PATH = os.path.join(DATA_DIR, 'mapping', 'alarm_rules.json')
++
++
++@pytest.fixture(scope='module')
++def alarm_rules():
++    with io.open(ALARM_RULES_PATH, encoding='utf-8') as fp:
++        return json.load(fp)
++
++
++def test_alarm_idempotency_key_differs_between_activated_and_recovered():
++    """同一告警的触发与恢复 → 两个不同的键（恢复事件不会被去重丢弃）。"""
++    activated = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'activated')
++    recovered = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'recovered')
++    assert activated != recovered
++
++
++def test_alarm_idempotency_key_is_stable_when_status_unchanged():
++    """同一告警重复采集、状态不变 → 同一个键（只产出一条消息）。"""
++    first = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'activated')
++    second = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'activated')
++    assert first == second
++
++
++def test_alarm_idempotency_key_uses_platform_raw_status():
++    """``status`` 用平台原值 —— ITSCADA 枚举把 recovered 与 cleared 都映射成 0，
++    用枚举会让这两种状态共用一个键。"""
++    recovered = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'recovered')
++    cleared = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'cleared')
++    assert recovered != cleared
++
++
++def test_alarm_idempotency_key_excludes_node_id_and_last_alarm_time():
++    """键里不含 node_id / last_alarm_time —— 两者都会在恢复后变化或漂移。"""
++    assert ALARM_IDEMPOTENCY_FIELDS == (
++        'alarm_id', 'instance_id', 'first_alarm_time', 'status',
++    )
++    key = alarm_idempotency_key('a-1', 'inst-1', 1793767902000, 'activated')
++    assert 'node_id' not in key
++    assert 'last_alarm_time' not in key
++
++
++def test_metric_idempotency_key_differs_across_dimensions():
++    """维度参与拼接 —— 同一指标在不同维度上各产出一个值 → 两个键。"""
++    one = metric_idempotency_key('inst-1', 'GAUSSDB.connections', {'DBNAME': 'a'}, 100)
++    two = metric_idempotency_key('inst-1', 'GAUSSDB.connections', {'DBNAME': 'b'}, 100)
++    assert one != two
++
++
++def test_metric_idempotency_key_is_order_independent_over_dimensions():
++    """维度按键排序 —— 插入顺序不同也得到同一个键。"""
++    one = metric_idempotency_key('inst-1', 'm', {'A': '1', 'B': '2'}, 100)
++    two = metric_idempotency_key('inst-1', 'm', {'B': '2', 'A': '1'}, 100)
++    assert one == two
++
++
++def test_metric_idempotency_key_fields():
++    assert METRIC_IDEMPOTENCY_FIELDS == (
++        'instance_id', 'metric_name', 'dimensions', 'timestamp',
++    )
++
++
++def test_alarm_idempotency_declaration_matches_the_implementation(alarm_rules):
++    """``alarm_rules.json`` 的 ``idempotency`` 段与实现列出的字段必须相同。
++
++    声明（数据）与实现（代码）是同一份契约的两个副本 —— 改一处必须改另一处。
++    """
++    declared = alarm_rules['idempotency']['alarm']['fields']
++    assert list(declared) == list(ALARM_IDEMPOTENCY_FIELDS)
++
++
++def test_alarm_idempotency_declaration_uses_platform_raw_status(alarm_rules):
++    assert alarm_rules['idempotency']['alarm']['status_domain'] == 'platform_raw'
++
++
++def test_alarm_idempotency_every_declared_field_changes_the_key(alarm_rules):
++    """声明里的每个字段都必须真的参与键的计算（不是写进 JSON 的摆设）。"""
++    values = {
++        'alarm_id': 'a-1',
++        'instance_id': 'inst-1',
++        'first_alarm_time': 1793767902000,
++        'status': 'activated',
++    }
++    base = alarm_idempotency_key(**values)
++    for field in alarm_rules['idempotency']['alarm']['fields']:
++        changed = dict(values)
++        changed[field] = 'other'
++        assert alarm_idempotency_key(**changed) != base, field
++
++
++def test_response_rules_declares_the_metric_idempotency_fields():
++    """``response_rules.json`` 每条规则的 ``idempotency`` 与实现列出的字段相同。
++
++    指标幂等键的声明在映射表里（``business.idempotency``），实现在
++    ``tpops_kafka_collector/ids.py`` —— 同一份契约的两个副本。
++    """
++    path = os.path.join(DATA_DIR, 'mapping', 'response_rules.json')
++    with io.open(path, encoding='utf-8') as fp:
++        payload = json.load(fp)
++    assert payload['rules']
++    for rule in payload['rules']:
++        assert rule['business']['idempotency'] == list(METRIC_IDEMPOTENCY_FIELDS), \
++            rule['metric_code']
+diff --git a/tools/build_itscada_mapping.py b/tools/build_itscada_mapping.py
+index 203a00c..e9f8ee0 100644
+--- a/tools/build_itscada_mapping.py
++++ b/tools/build_itscada_mapping.py
+@@ -23,25 +23,34 @@
+     python tools/build_itscada_mapping.py
+ """
+ from __future__ import print_function
+ 
+ import distribution
+ 
+ import io
+ import json
+ import os
+ import re
++import sys
+ 
+ import openpyxl
+ import xlsx_columns
+ 
+ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++if BASE_DIR not in sys.path:
++    sys.path.insert(0, BASE_DIR)
++
++# 幂等键的字段清单只有一份：生产包 ``tpops_kafka_collector/ids.py`` 是实现，
++# 本生成器把它写进 ``alarm_rules.json`` 的 ``idempotency`` 段做**声明** ——
++# 声明与实现同源，改一处不会漏另一处（键的**格式**不在这里写死）。
++from tpops_kafka_collector.ids import ALARM_IDEMPOTENCY_FIELDS
++
+ XLSX_PATH = os.path.join(BASE_DIR, '高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx')
+ MAPPING_PATH = os.path.join(BASE_DIR, 'data', 'customer_metric_mapping.json')
+ QUERY_PLAN_PATH = os.path.join(BASE_DIR, 'data', 'customer_metric_query_plan.json')
+ VALUE_RULES_PATH = os.path.join(BASE_DIR, 'data', 'metric_value_rules.json')
+ MERGED_SQL_PATH = os.path.join(BASE_DIR, 'data', 'merged_sql', 'merged_sql.json')
+ ALARM_METRIC_CATALOG = os.path.join(BASE_DIR, 'data', 'alarm', 'catalog_metric.json')
+ ALARM_EVENT_CATALOG = os.path.join(BASE_DIR, 'data', 'alarm', 'catalog_event.json')
+ OUT_DIR = os.path.join(BASE_DIR, 'data', 'mapping')
+ METRIC_RULES_OUT = os.path.join(OUT_DIR, 'metric_rules.json')
+ ALARM_RULES_OUT = os.path.join(OUT_DIR, 'alarm_rules.json')
+@@ -715,20 +724,33 @@ def build_alarm_rules():
+         'status_to_itscada': {
+             'activated': 1,
+             'recovered': 0,
+             'cleared': 0,
+             'cleared_by_user': 0,
+         },
+         'value_sources': {
+             'latest_metric_value': '取告警时刻该客户指标的最近一次采样值',
+             'alarm_items_sum': '取收敛条目的 alarm_items_sum（命中节点数）',
+         },
++        'idempotency': {
++            'alarm': {
++                'fields': list(ALARM_IDEMPOTENCY_FIELDS),
++                'status_domain': 'platform_raw',
++                'note': (
++                    '键含 status（平台原值 activated/recovered/cleared/cleared_by_user）——'
++                    'ITSCADA 整数枚举会把 recovered 与 cleared 压成同一个键。'
++                    '不含 node_id（收敛条目的节点靠明细行回填，逐轮可能不同）与 '
++                    'last_alarm_time（恢复后它不变）。'
++                    '计算见 tpops_kafka_collector/ids.py。'
++                ),
++            },
++        },
+         'counts': {
+             'total_definitions': len(definitions),
+             'linked_to_customer_metric': len([
+                 d for d in definitions.values() if d['linked_customer_metric']
+             ]),
+             'event_fallback': len([
+                 d for d in definitions.values() if not d['linked_customer_metric']
+             ]),
+         },
+         'definitions': definitions,
+diff --git a/tools/build_kafka_mapping.py b/tools/build_kafka_mapping.py
+index 1bdf05c..766e571 100644
+--- a/tools/build_kafka_mapping.py
++++ b/tools/build_kafka_mapping.py
+@@ -38,20 +38,21 @@ import io
+ import json
+ import os
+ import sys
+ 
+ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ MAPPING_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
+ RESPONSE_DIR = os.path.join(REPO_ROOT, 'data', 'metric_response')
+ ALARM_DIR = os.path.join(REPO_ROOT, 'data', 'alarm')
+ 
+ sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
++sys.path.insert(0, REPO_ROOT)  # 生产包 tpops_kafka_collector 在项目根
+ 
+ from tpops_kafka_collector.mapping.decode import decode  # noqa: E402
+ from tpops_kafka_collector.mapping.message import build_alarm_message, build_metric_message  # noqa: E402
+ from tpops_kafka_collector.mapping.nodes import resolve_node_context  # noqa: E402
+ from tpops_kafka_collector.mapping.rules import CounterDeltaStore, evaluate  # noqa: E402
+ from tpops_kafka_collector.mapping.table import AlarmDefinition, MetricRule  # noqa: E402
+ 
+ FIELD_MAP_PATH = os.path.join(MAPPING_DIR, 'itscada_field_map.json')
+ METRIC_RULES_PATH = os.path.join(MAPPING_DIR, 'metric_rules.json')
+ RESPONSE_RULES_PATH = os.path.join(MAPPING_DIR, 'response_rules.json')
+diff --git a/tools/build_response_rules.py b/tools/build_response_rules.py
+index 816f4d9..03ecd7e 100644
+--- a/tools/build_response_rules.py
++++ b/tools/build_response_rules.py
+@@ -24,23 +24,35 @@
+ """
+ from __future__ import print_function
+ 
+ import io
+ import json
+ import os
+ import re
+ import sys
+ 
+ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++if REPO_ROOT not in sys.path:
++    sys.path.insert(0, REPO_ROOT)
++
++# 来源列校验的实现只有一份：生产包 ``tpops_kafka_collector/mapping/columns.py``。
++# 生成器与采集端用同一套逻辑，声明与事实不会各写各的。
++from tpops_kafka_collector.ids import METRIC_IDEMPOTENCY_FIELDS
++from tpops_kafka_collector.mapping.columns import (
++    merged_archive_view_columns,
++    source_column_problems,
++)
++
+ MAPPING_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
+ RESPONSE_DIR = os.path.join(REPO_ROOT, 'data', 'metric_response')
+ MERGED_SQL_PATH = os.path.join(REPO_ROOT, 'data', 'merged_sql', 'merged_sql.json')
++MERGED_PROBE_PATH = os.path.join(REPO_ROOT, 'data', 'merged_sql', 'sql_merge_probe_result.json')
+ METRIC_RULES_PATH = os.path.join(MAPPING_DIR, 'metric_rules.json')
+ OUTPUT_PATH = os.path.join(MAPPING_DIR, 'response_rules.json')
+ 
+ CN_KEY_RE = re.compile(r'^cn_\d+$')
+ DN_KEY_RE = re.compile(r'^dn_\d+$')
+ IP_DN_KEY_RE = re.compile(r'^\d+\.\d+\.\d+\.\d+-dn_\d+$')
+ 
+ # 通道 → 命令中心链路的固定步骤。中间跳不含业务数据，但写进文件，
+ # 采集端照着这个顺序走，不用再回翻开发方案。
+ CHANNELS = {
+@@ -103,23 +115,25 @@ CHANNELS = {
+             {
+                 'step': 'instances',
+                 'api': 'GET /rds/v3.2/instances',
+                 'purpose': '实例元数据',
+             },
+         ],
+         'terminal': 'instances',
+     },
+ }
+ 
++# 指标幂等键的字段（开发方案 §4.5.4）—— 实现在生产包 ``tpops_kafka_collector/ids.py``，
++# 本文件只把它**声明**进映射表（同一份契约的两个副本）。
++# 告警幂等键在 alarm_rules.json 里声明（键含 status，见设计决策 5），本文件不重复声明。
+ IDEMPOTENCY = {
+-    'metric': ['instance_id', 'metric_name', 'dimensions', 'timestamp'],
+-    'alarm': ['alarm_id', 'instance_id', 'node_id', 'first_alarm_time', 'last_alarm_time'],
++    'metric': list(METRIC_IDEMPOTENCY_FIELDS),
+ }
+ 
+ 
+ class BuildError(Exception):
+     """生成期校验不通过。"""
+ 
+ 
+ def _read_json(path):
+     with io.open(path, encoding='utf-8') as fp:
+         return json.load(fp)
+@@ -489,20 +503,69 @@ def _merged_view_names(sql_text):
+                 if depth < 0:
+                     break
+             index += 1
+         match = re.match(r'\s+as\s+([a-z_][a-z0-9_]*)', sql_text[index + 1:])
+         if not match:
+             raise BuildError('合并 SQL 里有一处 json_agg 没有 as 别名')
+         names.append(match.group(1))
+     return names
+ 
+ 
++def _assert_archive_matches_views(merged_views, metric_rules):
++    """用**实测留档**校验合并形态的视图名与来源列。
++
++    留档（``data/merged_sql/sql_merge_probe_result.json``）是**事实**，
++    映射表是**声明** —— 两者对不上就报错退出，绝不静默产出一份
++    与真实返回不匹配的映射表（那会让采集端取到不存在的列、静默出 0）。
++
++    两条校验：
++    1. **视图名**：留档里每个节点的 ``result`` 解析后是**一行**，该行的键
++       就是实际返回的视图名，必须与 ``merged_views`` 段一致；
++    2. **来源列**：每条命令中心规则要取的列，必须真实出现在留档该视图的
++       实际返回列里（开发方案 §5.6.4）。
++    """
++    payload = _read_json(MERGED_PROBE_PATH)
++    archive_views = _archive_view_names(payload)
++    declared = sorted(merged_views)
++    if sorted(archive_views) != declared:
++        raise BuildError(
++            '实测留档的视图名与映射表对不上：留档里是 %s，映射表里是 %s'
++            % (sorted(archive_views), declared)
++        )
++    columns = merged_archive_view_columns(payload)
++    problems = source_column_problems(metric_rules, columns)
++    if problems:
++        raise BuildError('来源列与实测留档对不上：\n  ' + '\n  '.join(problems))
++
++
++def _archive_view_names(payload):
++    """留档里实际返回的视图名（每个节点的 result 解析后那一行的键）。"""
++    names = set()
++    for node_name in sorted(payload.get('nodes') or {}):
++        node = payload['nodes'][node_name] or {}
++        raw = node.get('result')
++        if not raw:
++            continue
++        text = raw.decode('utf-8') if isinstance(raw, bytes) else raw
++        try:
++            rows = json.loads(text)
++        except ValueError as exc:
++            raise BuildError('留档节点 %s 的 result 不是合法 JSON：%s' % (node_name, exc))
++        if not isinstance(rows, list) or len(rows) != 1:
++            raise BuildError(
++                '留档节点 %s 的 result 期望 1 行，实际 %s 行'
++                % (node_name, len(rows) if isinstance(rows, list) else '?')
++            )
++        names.update(rows[0].keys())
++    return names
++
++
+ def _build_merged_views(merged):
+     """生成 ``merged_views`` 段：合并 SQL 的 11 个视图。
+ 
+     视图名以 ``merged_sql.json`` 的 ``batches[].sql_key`` 为准，
+     并与 ``sql_merge.sql`` 里实际的列别名**交叉校验** —— 对不上就报错退出，
+     绝不静默产出一份与 SQL 不匹配的映射表。
+ 
+     ``paged`` 取自 ``merged_sql.json`` 的 ``paging.views[].paged``，**不重新发明**；
+     没在该段里出现的视图按 ``paged = false`` 处理（固定视图每页全量重复取，
+     累加会翻倍）。
+@@ -545,20 +608,21 @@ def build():
+     samples = {}
+     for item in manifest['metrics']:
+         path = os.path.join(RESPONSE_DIR, item['file'])
+         samples[item['customer_metric']] = {
+             'file': item['file'],
+             'steps': _read_json(path),
+         }
+ 
+     shapes, rules = _build_shapes_and_rules(metric_rules, samples, merged_sql)
+     merged_views = _build_merged_views(merged)
++    _assert_archive_matches_views(merged_views, metric_rules)
+     return {
+         'version': '1.0',
+         'generated_by': 'tools/build_response_rules.py',
+         'generated_from': {
+             'metric_rules': 'data/mapping/metric_rules.json',
+             'response_samples': 'data/metric_response/',
+             'merged_sql': 'data/merged_sql/merged_sql.json',
+         },
+         'note': (
+             '以实测 response_body 为基准的映射条件。extract 段（shape + locate）'
+diff --git a/tpops_kafka_collector/__init__.py b/tpops_kafka_collector/__init__.py
+index c17de92..974cc1c 100644
+--- a/tpops_kafka_collector/__init__.py
++++ b/tpops_kafka_collector/__init__.py
+@@ -3,17 +3,18 @@
+ 
+ **这是本项目唯一的生产代码包** —— ``tools/`` 与 ``data/`` 只作参考与回归样本，
+ 运行时不从那里 import（见 ``changes/tpops-kafka-collector/design.md`` 决策 2）。
+ 
+ 分层（依赖单向）::
+ 
+     main → scheduler → collectors → tpops → client
+                         ↘ mapping → models
+ 
+ - ``tpops_kafka_collector.mapping``：映射层 —— 客户口径的规则执行与响应解码；
++- ``tpops_kafka_collector.ids``：幂等键的计算（告警 / 指标）；
+ - ``tpops_kafka_collector.errors``：异常体系与「可重试 / 不可重试」判定。
+ """
+ from __future__ import print_function
+ 
+ __all__ = ['__version__']
+ 
+ __version__ = '0.1.0'
+diff --git a/tpops_kafka_collector/ids.py b/tpops_kafka_collector/ids.py
+new file mode 100644
+index 0000000..0c925ad
+--- /dev/null
++++ b/tpops_kafka_collector/ids.py
+@@ -0,0 +1,83 @@
++"""幂等键的计算（采集端唯一实现）。
++
++设计决策 5（``changes/tpops-kafka-collector/design.md``）：
++
++- 告警键 = ``(alarm_id, instance_id, first_alarm_time, status)``；
++  ``status`` 用**平台原值**（``activated`` / ``recovered`` / ``cleared`` /
++  ``cleared_by_user``），**不是** ITSCADA 整数枚举 —— 枚举会把
++  ``recovered`` 与 ``cleared`` 压成同一个键。
++- **不含** ``node_id``：收敛条目的节点靠关联明细行回填，回填目标可能逐轮不同
++  → 进键会让同一条告警因回填漂移而重复投递。
++- **不含** ``last_alarm_time``：恢复后它**不变**（实测 last ≠ clear），
++  加它救不了「恢复事件被去重丢弃」的问题。
++- 指标键 = ``instance_id + metric_name + 排序后的 dimensions + timestamp``。
++
++键的**声明**（字段清单）在 ``data/mapping/alarm_rules.json`` 的 ``idempotency``
++段里，由 ``tools/build_itscada_mapping.py`` 从本模块的常量生成 ——
++声明与实现是同一份契约的两个副本，改一处必须改另一处。
++"""
++from typing import Any, Mapping, Optional
++
++__all__ = [
++    'ALARM_IDEMPOTENCY_FIELDS',
++    'METRIC_IDEMPOTENCY_FIELDS',
++    'KEY_SEPARATOR',
++    'alarm_idempotency_key',
++    'metric_idempotency_key',
++]
++
++# 告警幂等键的字段（顺序即拼接顺序）。声明与实现共用这一份清单。
++ALARM_IDEMPOTENCY_FIELDS = ('alarm_id', 'instance_id', 'first_alarm_time', 'status')
++
++# 指标幂等键的字段（顺序即拼接顺序）。
++METRIC_IDEMPOTENCY_FIELDS = ('instance_id', 'metric_name', 'dimensions', 'timestamp')
++
++# 拼接分隔符。
++KEY_SEPARATOR = '|'
++
++
++def alarm_idempotency_key(
++    alarm_id: Any,
++    instance_id: Any,
++    first_alarm_time: Any,
++    status: Any,
++) -> str:
++    """告警幂等键。
++
++    :param alarm_id: 平台告警 ID
++    :param instance_id: 实例 ID
++    :param first_alarm_time: 首次告警时间（毫秒）
++    :param status: **平台原值**状态（``activated`` / ``recovered`` /
++        ``cleared`` / ``cleared_by_user``）—— 不要传 ITSCADA 整数枚举，
++        枚举会把 ``recovered`` 与 ``cleared`` 压成同一个键。
++
++    同一条告警的触发与恢复得到**不同的**键，恢复事件不会被去重丢弃；
++    状态不变时重复采集得到**相同的**键。
++    """
++    parts = (alarm_id, instance_id, first_alarm_time, status)
++    return KEY_SEPARATOR.join(_part(value) for value in parts)
++
++
++def metric_idempotency_key(
++    instance_id: Any,
++    metric_name: Any,
++    dimensions: Optional[Mapping[str, Any]] = None,
++    timestamp: Any = None,
++) -> str:
++    """指标幂等键：``instance_id + metric_name + 排序后的 dimensions + timestamp``。
++
++    ``dimensions`` 按键排序后拼接，保证同一组维度无论插入顺序如何都得到同一个键。
++    """
++    dim_text = ','.join(
++        f'{key}={dimensions[key]}'
++        for key in sorted(dimensions or {})
++    )
++    parts = (instance_id, metric_name, dim_text, timestamp)
++    return KEY_SEPARATOR.join(_part(value) for value in parts)
++
++
++def _part(value: Any) -> str:
++    """键的单个片段：``None`` 折成空串，其余转字符串。"""
++    if value is None:
++        return ''
++    return str(value)
+diff --git a/tpops_kafka_collector/mapping/columns.py b/tpops_kafka_collector/mapping/columns.py
+new file mode 100644
+index 0000000..cdf518e
+--- /dev/null
++++ b/tpops_kafka_collector/mapping/columns.py
+@@ -0,0 +1,204 @@
++"""来源列校验：规则要取的列必须真实存在于**实测留档**的实际返回列里。
++
++对应开发方案 §5.6.4「启动期校验」的第一条（每条规则的 ``source_column``
++存在于对应 SQL 的实际返回列中），也是规格
++``changes/tpops-kafka-collector/specs/mapping-and-rules/spec.md``
++「启动期映射校验」的实现。
++
++**权威来源是实测留档**（留档是事实，映射表是声明）：
++
++- ``data/merged_sql/sql_merge_probe_result.json`` —— 合并形态（生产路径）的
++  实际返回列；每个 ``nodes[*].result`` 解析后是**一行**，该行的键是视图名，
++  值是该视图的 JSON 字符串。
++- ``data/metric_response/`` —— 98 份逐指标留档，旧 per-view 形态的实测返回。
++
++开发方案 §5.6.4 原写的 ``data/command_center/results/`` 已于 2026-11-13
++删除，**不得再引用**。
++
++本模块是**纯函数**（只比较规则与列集合，不读文件、不连平台）——
++留档由调用方（生成器 / 启动加载器）读进来。
++"""
++import json
++from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple
++
++from ..errors import MappingError
++
++__all__ = [
++    'merged_archive_view_columns',
++    'required_source_columns',
++    'source_column_problems',
++    'validate_source_columns',
++]
++
++# 规则参数里可能指向列名的键。
++_COLUMN_PARAMS = ('column', 'value_column')
++
++
++def merged_archive_view_columns(
++    payload: Mapping[str, Any],
++) -> Dict[str, Set[str]]:
++    """从合并形态的实测留档里取出每个视图的**实际返回列**。
++
++    :param payload: ``data/merged_sql/sql_merge_probe_result.json`` 的内容；
++        ``nodes[*].result`` 是平台返回的 JSON 字符串（解析后恰好一行，
++        该行的键是视图名，值是该视图的 JSON 字符串）。
++
++    多个节点的列取**并集** —— 某个节点这一轮没返回的行不代表列不存在。
++    """
++    columns = {}  # type: Dict[str, Set[str]]
++    nodes = payload.get('nodes') or {}
++    for name in sorted(nodes):
++        node = nodes[name] or {}
++        raw = node.get('result')
++        if not raw:
++            continue
++        row = _single_row(raw, name)
++        for view, body in row.items():
++            bucket = columns.setdefault(view, set())
++            for item in _rows_of_view(body, view, name):
++                bucket.update(item.keys())
++    return columns
++
++
++def required_source_columns(
++    rules: Iterable[Any],
++) -> Dict[str, Set[Tuple[str, str]]]:
++    """每条规则要取的列，按视图分组。
++
++    :param rules: 规则，可以是 ``data/mapping/metric_rules.json`` 的字典，
++        也可以是包内 ``MetricRule`` —— 两者都带 ``metric_code`` /
++        ``source`` / ``value_rule``。
++
++    :return: ``{视图名: {(指标名, 列名), ...}}``；只收命令中心（B 类）规则的列，
++        其余通道的列来自各自的接口形态，不在这份合并留档里。
++    """
++    needed = {}  # type: Dict[str, Set[Tuple[str, str]]]
++    for rule in rules:
++        code, source, value_rule = _rule_parts(rule)
++        if source.get('source') != 'command_center_sql':
++            continue
++        params = (value_rule.get('params') or {}) if value_rule else {}
++        if value_rule and value_rule.get('type') == 'ratio_across':
++            # 跨视图比率：分子分母各来自一个视图
++            for side in ('numerator', 'denominator'):
++                spec = params.get(side) or {}
++                _add(needed, spec.get('sql_key'), code, spec.get('value_column'))
++            continue
++        view = source.get('sql_key')
++        for name in _columns_of_params(params):
++            _add(needed, view, code, name)
++    return needed
++
++
++def source_column_problems(
++    rules: Iterable[Any],
++    columns_by_view: Mapping[str, Set[str]],
++) -> List[str]:
++    """比较规则要的列与实测留档的实际列，返回**问题清单**（空 = 全部通过）。
++
++    问题文本带规则名、期望的列名与实际可用列名，便于直接定位。
++    """
++    problems = []  # type: List[str]
++    needed = required_source_columns(rules)
++    for view in sorted(needed):
++        available = columns_by_view.get(view)
++        if available is None:
++            problems.append(f'视图 {view} 不在实测留档里')
++            continue
++        for code, column in sorted(needed[view]):
++            if column not in available:
++                problems.append(
++                    f'{code} 要取的列 {column} 不在实测留档视图 {view} 的实际列里'
++                    f'（实际列有 {sorted(available)}）'
++                )
++    return problems
++
++
++def validate_source_columns(
++    rules: Iterable[Any],
++    columns_by_view: Mapping[str, Set[str]],
++) -> None:
++    """来源列校验不通过 → 抛不可重试的 ``MappingError``（启动失败）。"""
++    problems = source_column_problems(rules, columns_by_view)
++    if problems:
++        raise MappingError('来源列校验不通过：\n  ' + '\n  '.join(problems))
++
++
++def _rule_parts(rule: Any) -> Tuple[str, Mapping[str, Any], Mapping[str, Any]]:
++    """取出一条规则的 ``(指标名, source, value_rule)``。
++
++    规则可以是字典（``data/mapping/metric_rules.json``），
++    也可以是包内 ``MetricRule``（同名属性）。
++    """
++    if isinstance(rule, Mapping):
++        code = rule.get('metric_code') or ''
++        source = rule.get('source') or {}
++        value_rule = rule.get('value_rule') or {}
++    else:
++        code = getattr(rule, 'metric_code', '') or ''
++        source = getattr(rule, 'source', None) or {}
++        value_rule = getattr(rule, 'value_rule', None) or {}
++    return code, source, value_rule
++
++
++def _columns_of_params(params: Mapping[str, Any]) -> List[str]:
++    """一条规则的取值参数里引用到的所有列名。"""
++    names = []  # type: List[str]
++    for key in _COLUMN_PARAMS:
++        if params.get(key):
++            names.append(params[key])
++    for key in (params.get('filter') or {}):
++        names.append(key[:-len('_contains')] if key.endswith('_contains') else key)
++    for key in (params.get('group_by') or []):
++        names.append(key)
++    if params.get('sort_by'):
++        names.append(params['sort_by'])
++    for key in (params.get('columns') or []):
++        names.append(key)
++    return names
++
++
++def _add(
++    needed: Dict[str, Set[Tuple[str, str]]],
++    view: Any,
++    code: str,
++    column: Any,
++) -> None:
++    if not view or not column:
++        return
++    needed.setdefault(view, set()).add((code, column))
++
++
++def _single_row(raw: Any, node_name: str) -> Mapping[str, Any]:
++    """合并形态的 ``result`` 解析后必须恰好一行（键是视图名）。"""
++    text = raw.decode('utf-8') if isinstance(raw, bytes) else raw
++    try:
++        payload = json.loads(text)
++    except ValueError as exc:
++        raise MappingError(f'留档节点 {node_name} 的 result 不是合法 JSON：{exc}')
++    if not isinstance(payload, list) or len(payload) != 1:
++        raise MappingError(
++            f'留档节点 {node_name} 的 result 期望 1 行，实际 {len(payload or [])} 行'
++        )
++    return payload[0]
++
++
++def _rows_of_view(body: Any, view: str, node_name: str) -> List[Mapping[str, Any]]:
++    """一个视图的列值是 JSON 字符串（行列表）。"""
++    if body is None:
++        return []
++    text = body.decode('utf-8') if isinstance(body, bytes) else body
++    if not str(text).strip():
++        return []
++    try:
++        rows = json.loads(text)
++    except ValueError as exc:
++        raise MappingError(
++            f'留档节点 {node_name} 的视图 {view} 不是合法 JSON：{exc}'
++        )
++    if not isinstance(rows, list):
++        raise MappingError(
++            f'留档节点 {node_name} 的视图 {view} 期望行列表，'
++            f'实际是 {type(rows).__name__}'
++        )
++    return [row for row in rows if isinstance(row, Mapping)]
+diff --git a/tpops_kafka_collector/mapping/message.py b/tpops_kafka_collector/mapping/message.py
+index 85a32b7..5a6361b 100644
+--- a/tpops_kafka_collector/mapping/message.py
++++ b/tpops_kafka_collector/mapping/message.py
+@@ -167,13 +167,14 @@ def _alarm_tags(record, details, context=None):
+     tags = {
+         'instance_id': record.get('instance_id'),
+         'instance_name': record.get('instance_name'),
+         'node_id': context.get('node_id') or record.get('node_id'),
+         'host_ip': context.get('host_ip') or record.get('host_ip'),
+         'alarm_category': record.get('alarm_category'),
+         'alarm_type': record.get('alarm_type'),
+         'engine': record.get('engine'),
+         'alarm_duration': record.get('alarm_duration'),
+     }
+-    if details:
+-        tags['details'] = [dict(detail) for detail in details]
++    # details 恒定存在：明细缺失时输出空数组，不省略字段
++    # （规格「告警消息的投递单位」；省略会让客户侧要写「有就取、没有就当空」的分支）
++    tags['details'] = [dict(detail) for detail in (details or ())]
+     return tags
+diff --git a/tpops_kafka_collector/mapping/table.py b/tpops_kafka_collector/mapping/table.py
+index 2760692..ece0413 100644
+--- a/tpops_kafka_collector/mapping/table.py
++++ b/tpops_kafka_collector/mapping/table.py
+@@ -6,26 +6,30 @@
+ """
+ from __future__ import print_function
+ 
+ import io
+ import json
+ import os
+ from dataclasses import dataclass
+ from typing import Any, Dict, Mapping, Optional, Tuple
+ 
+ from ..errors import MappingError
++from .columns import merged_archive_view_columns, validate_source_columns
+ 
+ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ DATA_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
+ FIELD_MAP_FILE = 'itscada_field_map.json'
+ METRIC_RULES_FILE = 'metric_rules.json'
+ ALARM_RULES_FILE = 'alarm_rules.json'
++# 合并形态的实测留档 —— **来源列的权威来源**（开发方案 §5.6.4）。
++# 旧的 ``data/command_center/results/`` 已于 2026-11-13 删除，不得再引用。
++PROBE_FILE = 'sql_merge_probe_result.json'
+ # 旧的分类字段映射表已归档（2026-11-13）—— 现在的主映射表是
+ # kafka_field_mapping.json，逐指标列出「响应的某个值 → Kafka 的某个字段」。
+ # 这几个文件留作历史对照与字段集合校验的基准。
+ ARCHIVE_DIR = 'archive'
+ CATEGORY_MAPPING_FILES = {
+     'monitor_metrics': ARCHIVE_DIR + '/metric_mapping_monitor_metrics.json',
+     'command_center_sql': ARCHIVE_DIR + '/metric_mapping_command_center_sql.json',
+     'diagnostic': ARCHIVE_DIR + '/metric_mapping_diagnostic.json',
+     'instance': ARCHIVE_DIR + '/metric_mapping_instance.json',
+     'alarm': ARCHIVE_DIR + '/alarm_mapping.json',
+@@ -107,29 +111,57 @@ class MappingTable:
+         alarm_rules: Mapping[str, Any],
+         category_mappings: Mapping[str, Mapping[str, Any]],
+     ) -> None:
+         self._field_map = field_map
+         self._metric_rules = metric_rules
+         self._alarm_rules = alarm_rules
+         self._category_mappings = category_mappings
+         self._by_code = {rule.metric_code: rule for rule in metric_rules}
+ 
+     @classmethod
+-    def load(cls, data_dir: str = DATA_DIR) -> 'MappingTable':
++    def load(
++        cls,
++        data_dir: str = DATA_DIR,
++        validate_columns: bool = True,
++        probe_path: Optional[str] = None,
++    ) -> 'MappingTable':
++        """加载映射表。
++
++        :param validate_columns: 启动期校验来源列（开发方案 §5.6.4）——
++            每条规则要取的列必须真实存在于**实测留档**的实际返回列里。
++            对不上就抛 ``MappingError``（不可重试）→ 启动失败并打印差异。
++        :param probe_path: 合并形态的实测留档路径；缺省按 ``data_dir`` 的
++            同级 ``merged_sql/`` 推导（映射数据搬进包内时路径跟着搬）。
++        """
+         field_map = _read_json(os.path.join(data_dir, FIELD_MAP_FILE))
+         metric_payload = _read_json(os.path.join(data_dir, METRIC_RULES_FILE))
+         alarm_payload = _read_json(os.path.join(data_dir, ALARM_RULES_FILE))
+         category_mappings = {}
+         for key, filename in CATEGORY_MAPPING_FILES.items():
+             category_mappings[key] = _read_json(os.path.join(data_dir, filename))
+         rules = tuple(MetricRule.from_dict(item) for item in metric_payload['rules'])
+-        return cls(field_map, rules, alarm_payload, category_mappings)
++        table = cls(field_map, rules, alarm_payload, category_mappings)
++        if validate_columns:
++            if probe_path is None:
++                probe_path = _default_probe_path(data_dir)
++            table.validate_source_columns(probe_path)
++        return table
++
++    def validate_source_columns(self, probe_path: str) -> None:
++        """校验每条规则的来源列都存在于实测留档的实际返回列中。
++
++        留档是**事实**，映射表是**声明** —— 两者对不上就启动失败
++        （``MappingError`` 不可重试），否则采集端会取到不存在的列、静默出 0。
++        """
++        payload = _read_json(probe_path)
++        columns = merged_archive_view_columns(payload)
++        validate_source_columns(self._metric_rules, columns)
+ 
+     # -- 字段映射 ---------------------------------------------------------
+     @property
+     def field_map(self) -> Mapping[str, Any]:
+         return self._field_map
+ 
+     def message_fields(self, message_type: str) -> Tuple[Mapping[str, Any], ...]:
+         """'metric' / 'alarm' → 该消息的字段定义。"""
+         section = self._field_map.get('%s_message' % message_type)
+         if not section:
+@@ -206,18 +238,24 @@ class MappingTable:
+         """某个采集分类的字段映射表（monitor_metrics / … / alarm）。"""
+         if category not in self._category_mappings:
+             raise MappingError('没有这个分类的字段映射：%s' % category)
+         return self._category_mappings[category]
+ 
+     @property
+     def category_mappings(self) -> Mapping[str, Mapping[str, Any]]:
+         return self._category_mappings
+ 
+ 
++def _default_probe_path(data_dir: str) -> str:
++    """合并形态实测留档的路径（映射数据同级目录下的 ``merged_sql/``）。"""
++    parent = os.path.dirname(os.path.abspath(data_dir))
++    return os.path.join(parent, 'merged_sql', PROBE_FILE)
++
++
+ def _read_json(path: str) -> Dict[str, Any]:
+     if not os.path.isfile(path):
+         raise MappingError('映射文件不存在：%s' % path)
+     try:
+         with io.open(path, encoding='utf-8') as handle:
+             return json.load(handle)
+     except ValueError as exc:
+         raise MappingError('映射文件不是合法 JSON：%s（%s）' % (path, exc))
