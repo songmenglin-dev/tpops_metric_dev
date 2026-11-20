@@ -170,6 +170,41 @@
 合同只写「指数退避 + 抖动」未指定形式，两种都是合法设计。若后续要求 full jitter，
 只需改 `compute_delay` 一处并同步测试。
 
+### ⚠️ 规格自相矛盾：「跨视图比率」的分母为 0 —— **控制器裁决 + 规格改写延后**
+
+`specs/mapping-and-rules/spec.md:156` 写「分母为 0 时**结果为 0**，SHALL NOT 抛出除零异常」，
+而同文件「缺值不产出假数据」要求取不到值时**不产出该条消息**、SHALL NOT 用 0 代替缺失值。
+这两条在 **x/0** 上直接冲突。
+
+**裁决（控制器）**：
+
+| 情形 | 行为 | 理由 |
+|---|---|---|
+| 分母**取不到**（视图缺失 / 无该列 / 无数据） | **不产出** | 「缺值不产出假数据」 |
+| 分母取到但**值为 0**（x/0） | **不产出** | 比率在分母为 0 时**无定义**；输出 `0.0` 等于把「算不出来」说成「真的是 0%」，与本项目「不静默出 0」的口径相反 |
+| 分子为 0、分母为正（0/x） | **产出 `0.0`** | 那是真的「没有活跃会话」，0 是有意义的值 |
+
+→ 1.8 的实现（`mapping/rules_cross.py::eval_ratio_across`）**符合裁决**。
+
+**规格那一行必须改写，但本次执行内不改** —— 原因已实测：
+
+- `specs/**` 参与 `artifacts_hash`（`hash.mjs::computeArtifactsHash` 覆盖
+  proposal + specs/*/spec.md + design.md + tasks.md）
+- 实测：改一行规格 → `ssf execution show` 立刻变 `current: false` /
+  `valid: false` / `failures: ["execution plan is stale: artifacts hash mismatch"]`
+- 而 receipt 只在 `plan_hash` 与 `plan_revision` 都匹配时才被承认
+  （`execution-plan.mjs:197`）→ 一旦 `execution revise`，**wave-0 已签的 `pass` receipt 作废**，
+  wave-0 要重审一轮
+
+→ 决策：**执行期间不动规格**（这是 wave-0 实施方单方面改合同那次的同一个坑，不能再踩）。
+规格改写列入**本变更收尾后的独立小变更**，并在本账本与 wave-1 审查报告里显式记录该偏差。
+
+**R-M3 的口径偏离已接受**：控制器原建议「从映射表删掉这个不生效的参数」，
+1.8 选「执行 `group_by`」，理由充分 —— `group_by` 由 `dimension_bindings` 自动派生
+（`build_itscada_mapping.py:420`），且 wave-0 既有测试
+`test_dimension_metrics_are_always_per_row` 断言该参数必须存在。
+留档 68 行 68 个不同 `relname` → 两种口径输出相同。
+
 ### 踩坑记录：实施方的工作目录
 派发实施方时**简报路径写成了相对路径**，而实施方的 shell 起始目录是**主仓库（master）**——
 相对路径解析到了 master 上，导致 1.1 的产出落在 master（它报的「基线 164 passed」
