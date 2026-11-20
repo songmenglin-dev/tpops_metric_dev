@@ -112,6 +112,43 @@
 
 - [ ] 1.1~1.9（配置 / DTO+异常 / 重试 / 序列化 / 生产者 / 客户端 / 映射表加载 / 规则引擎 / 水位）
 - 简报已生成：`workspace/task-1.{1..9}-brief.md`
+- 共享执行约定：`workspace/wave1-execution-brief.md`（硬约束 / TDD / 1.7-2.1 拆分裁决 / 1.8 的 Minor 清单）
+
+### 任务级状态
+
+| 任务 | 状态 | 提交 |
+|---|---|---|
+| 1.1 配置加载与启动校验 | ✅ 完成（47 用例） | `e5d3dbb` |
+| 1.2 DTO 与异常体系 | ✅ 完成（32 用例） | `e5d3dbb` |
+| 1.7 映射表加载与启动校验 | ✅ 完成（15 用例） | `e5d3dbb` |
+| 1.9 水位与差分基线持久化 | ✅ 完成（26 用例） | `1eb0b66` |
+| 1.3 重试与退避框架 | 🔄 实施中 | — |
+| 1.4 JSON 序列化器 | 🔄 实施中 | — |
+| 1.6 TPOPS HTTP 客户端 | 🔄 实施中 | — |
+| 1.8 规则引擎（13 种 value_rule.type） | 🔄 实施中 | — |
+| 1.5 Kafka 生产者 | ⏸ 等 1.4（可能要它的序列化出口） | — |
+
+### 控制器在本波次做的裁决与修复
+
+- **1.7 / 2.1 依赖倒置**（已获用户确认）：1.7 做「复制七张映射表进包 + loader + 四类启动期校验」，
+  2.1 退化为「防漂移同步测试 + 补齐 `merged_sql.json`/`sql_merge.sql` 的复制」。
+  合同与 `tasks.md` **均未改动**。
+- **幂等键集合改成真 LRU**（`92e3223`）：规格 `delivery-and-state/spec.md:170` 写的是 LRU，
+  实现却是插入序淘汰（FIFO）—— 语义不等价。`add()` 遇重复键刷新新鲜度，
+  `contains()` 是查询不刷新。TDD：先加两条会失败的测试。
+- **`DecodeError` 收敛到 `errors.py`**（1.2 做的）：原先定义在 `mapping/decode.py`，
+  若在 `errors.py` 另定义同名类会有两个不同的类，`except` 抓不住、`isinstance` 分裂。
+
+### 踩坑记录：实施方的工作目录
+
+派发实施方时**简报路径写成了相对路径**，而实施方的 shell 起始目录是**主仓库（master）**——
+相对路径解析到了 master 上，导致 1.1 的产出落在 master（它报的「基线 164 passed」
+就是这么来的：master 上还没有 wave 0 的测试），1.9 也先在 master 写了一份旧副本。
+
+- 已修：主仓库残留已清理（`rm -rf` 未跟踪的 `tpops_kafka_collector/`、`tests/unit/`、
+  `.superpowers/sdd/plans/`），产出搬回 worktree；主仓库 `git status` 现为 clean。
+- 后续派发**一律用绝对路径**，并在提示词开头要求实施方先 `ls` 确认 worktree 目录。
+- 提交纪律：**实施方一律不 `git commit`**（并发会抢 `.git/index.lock`），由控制器统一提交。
 
 ### 已知合同口径不一致（**不要改合同**，会改 contract_hash 使计划与 receipt 失效）
 
