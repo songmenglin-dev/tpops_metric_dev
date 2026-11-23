@@ -411,7 +411,19 @@ Token Plan 配额上限（HTTP 429）把 wave-2b 的 6 个实施方同时打断�
   - 报告：`.superpowers/sdd/reviews/wave-2b-channels.md`
   - receipt：**已签发 `fail`**（base `c816358` → head `e072dcd`）
   - wave-3 **保持未解锁**（`execution show` 显示 wave-3 `eligible: false`）
-- 修复轮次 1：**进行中** —— 简报 `workspace/repair-r1-brief.md`
+- 修复轮次 1：**代码已落地**（`e97c45d` + `b10b706`），**定向复审已派发**
+  - 简报 `workspace/repair-r1-brief.md`；实施方报告 `workspace/repair-r1-report.md`
+  - 三条 Critical 全部修完（详见下）；四条 Important 全修
+  - 控制器独立复核：C-2 差分消息 0/0 → 0/135 条；C-3 三 master 各 45 条不串；
+    I-2 断言从 `> 0` 变成两条精确值断言（`checked == comparable` + `== 1700`）
+  - **控制器自查发现实施方报告有一处不准确**：报告称「全包 0 个函数 > 50 行」，
+    实测 `collectors/alarm.py::collect_alarms` 是 **51 行**（超 1 行）。
+    控制器已自己修掉（`b10b706`，抽出 `_fetch_four_shapes`），
+    并用 spy 断言四次调用的 `(is_active, is_convergence, instance_id)` 与重构前
+    **逐项相同**（收敛形态仍不传 `instance_id` —— 合同口径「告警收敛形态下
+    不依赖平台侧 `alarm_id` / `instance_id` 过滤」）
+  - 全量 **1295 passed**；`ruff` 0；py37 门禁 120 passed；
+    合同 / tasks / `data/mapping/` **一行未动**
 
 ### wave-2b 审查的三条 Critical（控制器独立复核，全部复现成立）
 
@@ -461,6 +473,23 @@ Token Plan 配额上限（HTTP 429）把 wave-2b 的 6 个实施方同时打断�
 > 的情况下提前开工**的（`ssf execution show` 当时显示 wave-3 `eligible: false`）。
 > 代码已落盘且测试全绿，本次会话补交并入账。**wave-3 的其余任务（3.1 / 3.3 / 3.5）
 > 在 wave-2b 的 receipt 签发之前不启动**。
+
+### 平台画像固化文件（用户决策，2026-11-23）
+
+**实例 ID 不走配置** —— 采集端连上 TPOPS 后自己发现，固化到文件，以文件为准。
+
+| 项 | 决定 |
+|---|---|
+| 发现方式 | `GET /rds/v3.2/instances` 取实例列表 → 选目标实例 → 固化 |
+| 固化文件 | `state_dir/platform_profile.json`（原子写，与 `watermark.py` 同一套） |
+| **选择规则** | **不按 `mode` 筛选**（用户明确决定）。1 个 → 直接用；多个 → 取 **master 节点数最多**的（多 master 归集逻辑按分布式拓扑写的）；master 数相同 → 取第一个 + **记 WARNING 列出全部候选**；0 个 → 明确报错 |
+| 复用时机 | 固化后**不再每轮重新发现**（否则平台列表顺序一变就静默切换目标实例，水位与差分基线错位）；启动时**核对**实例还在吗 / `engine_name` 变了吗 / master 数变了吗 |
+| 可编辑性 | 运维换实例 → 改这个文件即可，**不用改代码、不用改配置** |
+| 落地位置 | wave-3 任务 **3.3**（入口装配）—— 简报已补该节 |
+
+**记一条口径**：平台的实例列表接口与节点清单接口**已经存在**
+（`tpops/instances.py::fetch_instances` / `fetch_instance_nodes`），
+本项不需要新建平台层能力，只是把 D 类采集器顺带取到的信息**独立成画像文件**。
 
 ## Wave 4 —— wave-4-delivery-docs（serial）
 
