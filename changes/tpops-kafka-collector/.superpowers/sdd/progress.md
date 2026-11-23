@@ -545,6 +545,31 @@ Token Plan 配额上限（HTTP 429）把 wave-2b 的 6 个实施方同时打断�
 **归到 3.5b 而不是留给「收尾后的独立小变更」** —— 因为 wave-4 只跑 `tests/regression`，
 守卫缺口留着就等于交付物缺一道闸。
 
+### 开发方案 §4.6.3 的 SQL 档位表**与实际映射表对不上**（控制器实测，留给 wave 4）
+
+控制器从 `tpops_kafka_collector/mapping/data/metric_rules.json` 现算
+（按 `sql_key` 取**最短档** = 最高需求档）：
+
+| 刷新周期 | sql_key |
+|---|---|
+| 60 秒 | `activity_agg`、`dbstat_sum`、`locks`、`prepared_xacts`、`settings`、`stat_database` |
+| 120 秒 | `activity_running`、`database`、`stat_user_tables` |
+| 300 秒 | `activity_top10`、`bgwriter` |
+
+开发方案 §4.6.3 的表与之有 **4 处不一致**：
+
+| sql_key | 文档写 | 实算 |
+|---|---|---|
+| `stat_user_tables` | 覆盖最快 5 分档 → 300 秒 | 覆盖 2 分档 → **120 秒** |
+| `bgwriter` | 覆盖最快 1 分档 → 60 秒 | 只覆盖 5 分档 → **300 秒** |
+| `database` | 覆盖最快 1 分档 → 60 秒 | 覆盖 2 分档 → **120 秒** |
+| `activity_detail` | SQL-4，覆盖 60 秒档 | **这个 sql_key 不存在**（实际是 `activity_top10`，5 分档） |
+
+**处置**：**实现以实算为准**（开发方案自己也写了「以实算为准」，
+且 `docs/` 不参与 `artifacts_hash`，改它不会让执行计划 stale）。
+但**文档要改** —— 归到 **wave-4 交付文档**，否则客户拿到的开发方案
+与采集端真实刷新频率对不上。**本次执行内不改 `docs/`**。
+
 ### 平台画像固化文件（用户决策，2026-11-23）
 
 **实例 ID 不走配置** —— 采集端连上 TPOPS 后自己发现，固化到文件，以文件为准。

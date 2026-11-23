@@ -99,38 +99,58 @@ def build_runtime(config, *, client=None, producer=None, ...) -> Runtime
 `main()` 只负责「装 → 起 → 收信号 → 优雅退 → exit(0)」。
 这样测试能直接调 `build_runtime` 换掉外部依赖，**不需要改生产代码**。
 
-## 四、每轮汇总日志的字段名（规格点名了，别自创）
+## 四、每轮汇总日志的字段名（**开发方案 §4.9.1 已定死，别自创**）
 
-规格 `specs/runtime-and-config/spec.md`「每轮结构化汇总日志」要求这一行包含：
+`docs/开发方案-GaussDB指标与告警采集.md` §4.9.1 给了样例行：
 
-```
-tick 号、耗时、拉取数、转换数、投递数、失败数、丢弃的不可提供指标数、窗口数、告警数
-```
-
-另外 `specs/delivery-and-state/spec.md`「单轮外部调用数与投递成功率可观测」点名：
-
-```
-calls（外部调用次数）、delivery_rate（投递成功率）、failed（失败计数）
+```log
+2026-11-06 10:20:30 INFO  tick=1234 elapsed=14.8s fetched=1043 mapped=1041
+  produced=1041 failed=0 dropped_unsupported=3 windows=9 alarms=2
 ```
 
-**要求**：`log_format=json` 时这一行是**一个 JSON 对象**，字段名就用上面的中英对照：
+规格 `specs/runtime-and-config/spec.md`「每轮结构化汇总日志」要求的字段与之一致，
+另外 `specs/delivery-and-state/spec.md`「单轮外部调用数与投递成功率可观测」点名
+`calls` 与 `delivery_rate`。
 
-| 规格用词 | 建议字段名 |
+**要求**：`log_format=json` 时这一行是**一个 JSON 对象**，字段名就用上表：
+
+| 字段 | 含义 |
 |---|---|
-| tick 号 | `tick` |
-| 耗时 | `elapsed_ms` |
-| 拉取数 | `fetched` |
-| 转换数 | `converted` |
-| 投递数 | `delivered` |
-| 失败数 | `failed` |
-| 丢弃的不可提供指标数 | `unsupported_dropped` |
-| 窗口数 | `windows` |
-| 告警数 | `alarms` |
-| 外部调用次数 | `calls` |
-| 投递成功率 | `delivery_rate` |
+| `tick` | 轮次序号 |
+| `elapsed` | 本轮墙钟耗时 |
+| `fetched` | 从各通道取回的原始行数 |
+| `mapped` | 转换后待投递的指标消息数 |
+| `produced` | 成功投递数 |
+| `failed` | 投递失败数 |
+| `dropped_unsupported` | 不可提供指标计数（= 3，见第一节） |
+| `windows` | 本轮执行的 SQL 条数 |
+| `alarms` | 本轮告警条数 |
+| `calls` | 外部调用次数（单轮 SHALL NOT 超过 42，超出记 WARNING） |
+| `delivery_rate` | 投递成功率（成功投递数 ÷ 计划投递数） |
 
 规格的 Scenario 还要求「**各计数之和自洽**（投递数 + 失败数 ≤ 转换数）」——
 这条要有守卫测试。
+
+另按 §4.9.2 记一条 INFO 日志：「本轮丢弃 N 个不可提供指标（累计 M）」。
+
+## 四之二、健康端点的探针接线（3.2 已实现，**3.3 要接上**）
+
+`health.py`（3.2 交付）提供 `ReadinessMonitor` + `DependencyProbe(name, check)`，
+`check` 返回 `bool` / `str`（不就绪原因）/ `DependencyStatus` / `None`（不就绪）。
+**探针要轻量**（读标志位），不能在里面发网络请求。
+
+**3.3 要接的两个探针**（对应规格「`/readyz` SHALL 在 TPOPS 认证不可用时返回 503」
+与设计方案 §4.9.3「最近 3 分钟内至少成功完成 1 轮 → 200，否则 503」）：
+
+| 探针名 | 判据 |
+|---|---|
+| `tpops` | 最近一次 TPOPS 认证成功（用 `TpopsClient` 的认证状态/冷却状态） |
+| `scheduler` | 最近一次 tick 成功完成且未超过 3 分钟 |
+
+健康响应体的形状**由 3.2 定死了**（`dependencies[]` 列表），**不要改 `health.py`** ——
+设计方案 §4.9.3 那份更丰富的响应体（`last_tick_at` / `produced_total` /
+`dropped_unsupported_total` / `watermark`）**不是规格要求**，
+按现在的 `dependencies[]` 形态接即可。
 
 ## 五、平台画像模块的落点与复用
 
