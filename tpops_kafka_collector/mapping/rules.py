@@ -26,12 +26,13 @@
 """
 
 from .rules_context import MetricValue, RuleContext, RuleError
-from .rules_deltas import CounterDeltaStore
+from .rules_deltas import CounterDeltaStore, ScopedCounterDeltaStore
 from .rules_engine import HANDLERS, RULE_TYPES, evaluate
 from .rules_naming import build_resource_name, substitute_placeholders
 
 __all__ = [
     'CounterDeltaStore',
+    'ScopedCounterDeltaStore',
     'HANDLERS',
     'MetricValue',
     'RULE_TYPES',

@@ -28,7 +28,9 @@ from tpops_kafka_collector.collectors.command_center import (
 from tpops_kafka_collector.errors import MappingError
 from tpops_kafka_collector.mapping.loader import load_mapping
 from tpops_kafka_collector.mapping.message import serialize_value
+from tpops_kafka_collector.mapping.nodes import select_master_node
 from tpops_kafka_collector.mapping.rules import CounterDeltaStore
+from tpops_kafka_collector.mapping.rules_naming import substitute_placeholders
 from tpops_kafka_collector.tpops.command_center_result import (
     NodeTask,
     SqlOutcome,
@@ -429,6 +431,15 @@ def test_collected_values_equal_the_expected_table(mapping, probe_nodes, node_ro
 
     期望值表由**独立推导器**从实测留档原始行推出
     （``tools/expected_deriver.py``），不是抄规则引擎的输出。
+
+    **这条守卫覆盖全部 82 条指标码**（不是 47 条）：
+
+    - 期望值表的键是**模板码**（``GAUSSDB.[{#DATNAME}]_committed_transactions``），
+      消息里的 ``metricCode`` 是**占位符替换后的码**
+      （``GAUSSDB.lz_committed_transactions``）—— 必须按替换后的码去匹配，
+      否则维度展开型的指标一条都比不到（``continue`` 静默跳过）；
+    - ``checked`` 断言**精确条数**（不是 ``> 0``）—— 「比少了」直接失败；
+    - 期望值为 ``None`` 的维度**不许产出消息**（缺值不产出假数据）。
     """
     cc = FakeCommandCenter(pages_by_node=probe_nodes, nodes=node_rows)
     result = _collector(cc, mapping).collect(instance_id=INSTANCE_ID)
@@ -444,28 +455,121 @@ def test_collected_values_equal_the_expected_table(mapping, probe_nodes, node_ro
     node_id_by_name = dict(
         (row['node_name'], row['node_id']) for row in node_rows
     )
-    # 期望值表存的是**原始值**，消息里是按客户表【数据类型】**定型后**的值
-    # （整数指标会走 int()，浮点走 round(...,2)）—— 比较时要用同一套定型。
-    value_type_by_code = dict(
-        (rule.metric_code, rule.value_type) for rule in mapping.metric_rules
+    all_node_ids = sorted(set(node_id_by_name.values()))
+    host_node_id = select_master_node(node_rows)['node_id']
+    rules = dict(
+        (rule.metric_code, rule) for rule in mapping.metric_rules
+        if rule.enabled and rule.source.get('source') == 'command_center_sql'
     )
+
     checked = 0
+    comparable = 0
+    compared_codes = set()
     for metric_code, entry in expected_table['expected'].items():
+        rule = rules[metric_code]
         for node_name, items in entry['round1'].items():
             node_id = node_id_by_name.get(node_name)
             if node_id is None:
                 continue
-            values = produced.get(metric_code) or {}
-            if node_id not in values:
+            # 与节点无关的指标只落在**承载资源名**的那个 master 上
+            targets = all_node_ids if rule.node_scoped else [host_node_id]
+            if node_id not in targets:
                 continue
-            expected_value = serialize_value(
-                items[0]['value'], value_type_by_code.get(metric_code),
-            )
-            assert values[node_id] == expected_value, (
-                metric_code, node_name, values[node_id], expected_value,
-            )
-            checked += 1
-    assert checked > 0, '一条都没比上 —— 断言形同虚设'
+            for item in items:
+                code = substitute_placeholders(metric_code, item['dimensions'])
+                if item['value'] is None:
+                    # 期望值为 None → 本轮**不该产出**消息（缺值不产出假数据）
+                    assert code not in produced, (
+                        '缺值的维度不该产出消息', metric_code, code,
+                    )
+                    continue
+                comparable += 1
+                values = produced.get(code) or {}
+                assert node_id in values, (
+                    '采集器没为这条产出消息', metric_code, code, node_name,
+                )
+                expected_value = serialize_value(item['value'], rule.value_type)
+                assert values[node_id] == expected_value, (
+                    metric_code, node_name, values[node_id], expected_value,
+                )
+                checked += 1
+                compared_codes.add(metric_code)
+
+    assert checked == comparable, (
+        '比到的条数比应比的少', checked, comparable,
+    )
+    assert checked == EXPECTED_COMPARISONS, (
+        '比到的条数与期望值表对不上', checked, EXPECTED_COMPARISONS,
+    )
+    # 82 条指标码里，**有期望值**的那些一条都不许漏
+    assert compared_codes == _codes_with_expected_values(expected_table), (
+        '有期望值的指标码没被比到',
+        sorted(_codes_with_expected_values(expected_table) - compared_codes),
+    )
+
+
+#: 期望值表在**第一轮**（差分指标还没基线）的逐维度比对条数。
+#: 82 条指标码 × 3 个 master × 各自主机上的维度条目数 —— 由期望值表算出。
+EXPECTED_COMPARISONS = 1700
+
+
+def _codes_with_expected_values(expected_table):
+    """期望值表里**有期望值**的指标码集合（其余是「本轮无值」）。"""
+    codes = set()
+    for metric_code, entry in expected_table['expected'].items():
+        for items in entry['round1'].values():
+            if any(item['value'] is not None for item in items):
+                codes.add(metric_code)
+                break
+    return codes
+
+
+def test_every_b_class_rule_is_covered_by_the_produced_messages(
+    mapping, probe_nodes, node_rows
+):
+    """**82 条指标码一条不落**（按模板码归并消息）。
+
+    第一轮有 6 条指标码**产不出消息**，且都是**有据可依**的：
+
+    - 5 个 ``counter_delta`` 指标：首轮**只建基线**（差分的定义），
+      第二轮才产出 —— 由 ``test_collector_command_center_deltas.py`` 覆盖；
+    - ``gaussdb.locks.accessexclusive[{#DBNAME}]``：留档里**一条
+      ``AccessExclusiveLock`` 锁都没有**（期望值表里它的条目是空列表），
+      本来就没有值可产出。
+
+    其余 76 条必须在第一轮就产出消息。
+    """
+    cc = FakeCommandCenter(pages_by_node=probe_nodes, nodes=node_rows)
+    result = _collector(cc, mapping).collect(instance_id=INSTANCE_ID)
+
+    produced_codes = set(_template_code(message) for message in result.messages)
+    rules = [
+        rule for rule in mapping.metric_rules
+        if rule.enabled and rule.source.get('source') == 'command_center_sql'
+    ]
+    assert len(rules) == 82
+    missing = sorted(rule.metric_code for rule in rules
+                     if rule.metric_code not in produced_codes)
+    assert missing == sorted(NO_VALUE_CODES), missing
+
+
+#: 第一轮产不出消息的指标码（5 个首轮只建基线的差分指标 + 1 个留档里无值的）。
+NO_VALUE_CODES = (
+    'GAUSSDB.[{#DATNAME}]_delete_records_per_second',
+    'GAUSSDB.[{#DATNAME}]_fetch_records_per_second',
+    'GAUSSDB.[{#DATNAME}]_insert_records_per_second',
+    'GAUSSDB.[{#DATNAME}]_return_records_per_second',
+    'GAUSSDB.[{#DATNAME}]_update_records_per_second',
+    'gaussdb.locks.accessexclusive[{#DBNAME}]',
+)
+
+
+def _template_code(message):
+    """消息的 ``metricCode`` → **模板码**（把维度值换回 ``{#XXX}``）。"""
+    code = message['metricCode']
+    for placeholder, value in (message['tags'].get('dimension_values') or {}).items():
+        code = code.replace(str(value), '{#%s}' % placeholder)
+    return code
 
 
 def test_expected_table_covers_the_b_class_rules(mapping):
@@ -514,3 +618,87 @@ def test_missing_merged_views_is_a_loud_failure(mapping):
         CommandCenterCollector(
             client=None, mapping=NoViews(), command_center=cc,
         )
+
+
+# ---------------------------------------------------------------------------
+# 8. 节点清单取不到必须记 ERROR（不静默吞异常）
+# ---------------------------------------------------------------------------
+
+def test_master_nodes_failure_is_logged_as_error(
+    mapping, probe_nodes, node_rows, caplog
+):
+    """节点清单取不到 → **必须记 ERROR**（原来静默吞掉，资源名会指错节点）。"""
+    class BrokenCommandCenter(FakeCommandCenter):
+        def master_nodes(self, instance_id):
+            raise RuntimeError('节点清单接口 503')
+
+    cc = BrokenCommandCenter(pages_by_node=probe_nodes, nodes=node_rows)
+    with caplog.at_level('ERROR', logger='tpops_kafka_collector'):
+        _collector(cc, mapping).collect(instance_id=INSTANCE_ID)
+
+    assert '节点清单取不到' in caplog.text
+    assert '节点清单接口 503' in caplog.text
+
+
+def test_missing_master_nodes_capability_is_logged_as_error(
+    mapping, probe_nodes, node_rows, caplog
+):
+    """客户端**没有** ``master_nodes`` 能力 → 同样要记 ERROR（装配错了）。"""
+    class NoMasterNodes(FakeCommandCenter):
+        master_nodes = None
+
+    cc = NoMasterNodes(pages_by_node=probe_nodes, nodes=node_rows)
+    with caplog.at_level('ERROR', logger='tpops_kafka_collector'):
+        _collector(cc, mapping).collect(instance_id=INSTANCE_ID)
+
+    assert '没有 master_nodes' in caplog.text
+
+
+# ---------------------------------------------------------------------------
+# 9. 配置接入与页容量回报
+# ---------------------------------------------------------------------------
+
+def test_from_config_takes_the_page_size_from_the_config(mapping, probe_nodes, node_rows):
+    """``from_config`` 用 ``CMD_PAGE_SIZE``（配置里的页容量）装配。"""
+    from tpops_kafka_collector.config import Config
+
+    config = Config(tpops_user='u', tpops_password='p', cmd_page_size=37)
+    cc = FakeCommandCenter(pages_by_node=probe_nodes, nodes=node_rows)
+    collector = CommandCenterCollector.from_config(
+        client=None, mapping=mapping, command_center=cc, config=config,
+    )
+
+    result = collector.collect(instance_id=INSTANCE_ID)
+
+    assert result.page_size == 37
+    assert 'limit 37' in cc.sql_texts[0]
+
+
+def test_result_reports_the_shrunk_page_size(mapping, probe_nodes, node_rows):
+    """超限缩小页容量后，回报的 ``page_size`` 是**缩小后**的值。"""
+    calls = []
+
+    class ShrinkingCommandCenter(FakeCommandCenter):
+        def execute_sql(self, instance_id, sql_text, limit='1000'):
+            calls.append(sql_text)
+            if len(calls) == 1:
+                return SqlOutcome(
+                    sql_text=sql_text, ok=False,
+                    error='output size(131072 B) exceeds the threshold(102400 B)',
+                    attempts=1,
+                )
+            return FakeCommandCenter.execute_sql(self, instance_id, sql_text, limit)
+
+    def _page_for(offset):
+        count = 5 if offset < 10 else 2
+        return _growable_page(row_count=count, offset=offset)
+
+    cc = ShrinkingCommandCenter(
+        pages_by_node={name: None for name in probe_nodes},
+        rows_by_node={name: _page_for for name in probe_nodes},
+        nodes=node_rows,
+    )
+    result = _collector(cc, mapping, page_size=100).collect(instance_id=INSTANCE_ID)
+
+    assert len(calls) >= 2
+    assert result.page_size == 50, '回报的页容量应是缩小后的那个'

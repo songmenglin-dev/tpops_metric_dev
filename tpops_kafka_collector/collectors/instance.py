@@ -22,7 +22,7 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple  # noqa: F401  （List 仅用于 # type: 注释）
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..errors import MappingError
 from ..mapping.message import build_metric_message
@@ -142,14 +142,27 @@ class InstanceCollector:
 
         nodes = self._node_registry.nodes(instance_id)
         now_ms = int(self._clock())
+        messages = self._collect_messages(instance, nodes, now_ms)
+        return InstanceCollectResult(
+            messages=tuple(messages),
+            tier_seconds=self._tier_seconds,
+            tier_label=self._tier_label,
+        )
+
+    def _collect_messages(
+        self,
+        instance: Any,
+        nodes: Sequence[Mapping[str, Any]],
+        now_ms: int,
+    ) -> List[Dict[str, Any]]:
+        """按规则取值并组装消息（**缺值不产出**）。"""
         messages = []  # type: List[Dict[str, Any]]
         for rule in self._rules:
             value = self._rule_value(rule, instance, now_ms)
             if value is None:
-                field = _field_name(rule)
                 LOGGER.error(
                     'D 类指标的 %s 取不到（实例 %s）—— 不产出该条消息',
-                    field, instance_id,
+                    _field_name(rule), instance.instance_id,
                 )
                 continue
             messages.append(build_metric_message(
@@ -158,17 +171,13 @@ class InstanceCollector:
                 dimensions={},
                 value=value,
                 resource_context={
-                    'instance_id': instance_id,
+                    'instance_id': instance.instance_id,
                     'instance_name': instance.name,
                 },
                 timestamp=now_ms,
                 nodes=nodes,
             ))
-        return InstanceCollectResult(
-            messages=tuple(messages),
-            tier_seconds=self._tier_seconds,
-            tier_label=self._tier_label,
-        )
+        return messages
 
     # ------------------------------------------------------------------
     # 取值

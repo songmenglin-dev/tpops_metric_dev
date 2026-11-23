@@ -11,7 +11,13 @@ git 历史保留；见 ``changes/tpops-kafka-collector/design.md`` 决策 2）�
 """
 
 from .table import AlarmDefinition, MappingTable, MetricRule
-from .rules import CounterDeltaStore, RuleContext, RuleError, evaluate
+from .rules import (
+    CounterDeltaStore,
+    RuleContext,
+    RuleError,
+    ScopedCounterDeltaStore,
+    evaluate,
+)
 from .nodes import resolve_node_context, select_master_node
 from .message import build_alarm_message, build_metric_message
 from .decode import (
@@ -33,6 +39,7 @@ __all__ = [
     'MetricRule',
     'RuleContext',
     'RuleError',
+    'ScopedCounterDeltaStore',
     'build_alarm_message',
     'build_metric_message',
     'decode',

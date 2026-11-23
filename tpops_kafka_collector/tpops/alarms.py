@@ -165,7 +165,10 @@ def fetch_all_alarm_records(
         collected.extend(page.records)
         if not page.records:
             break
-        if len(collected) >= page.total_count:
+        # ``total_count`` 为 0 / 缺失时**不能**据此判结束 ——
+        # 平台偶尔不返回总数，据此停下就只取第一页（静默丢数据）。
+        # 真正的结束判据是「不满一页」。
+        if page.total_count > 0 and len(collected) >= page.total_count:
             break
         if len(page.records) < limit:
             # 平台返回了不满一页 —— 后面没有了

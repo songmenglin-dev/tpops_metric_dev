@@ -98,6 +98,33 @@ class AlarmDefinition:
     linked_customer_metric: Optional[str]
 
 
+def build_alarm_definition(
+    alarm_rules: Mapping[str, Any],
+    alarm_id: Any,
+) -> Optional[AlarmDefinition]:
+    """按 ``alarm_id`` 从告警规则表里取一条定义。
+
+    **唯一的告警定义查表实现** —— ``MappingTable``（离线工具用）与
+    ``mapping.loader.LoadedMapping``（**生产装配用的那个**）共用这一份，
+    避免两处分叉。查不到返回 ``None``（调用方按「自造指标名」兜底）。
+    """
+    raw = (alarm_rules or {}).get('definitions', {}).get(str(alarm_id))
+    if not raw:
+        return None
+    return AlarmDefinition(
+        alarm_id=str(alarm_id),
+        alarm_name=raw.get('alarm_name', ''),
+        alarm_kind=raw.get('alarm_kind', ''),
+        default_level=raw.get('default_level', ''),
+        default_priority=raw.get('default_priority'),
+        threshold=raw.get('threshold', ''),
+        metric_code=raw.get('metric_code', ''),
+        metric_name=raw.get('metric_name', ''),
+        value_source=raw.get('value_source', 'alarm_items_sum'),
+        linked_customer_metric=raw.get('linked_customer_metric'),
+    )
+
+
 class MappingTable:
     """三份规则文件的只读视图。"""
 
@@ -208,21 +235,7 @@ class MappingTable:
         return self._alarm_rules
 
     def alarm_definition(self, alarm_id: str) -> Optional[AlarmDefinition]:
-        raw = self._alarm_rules.get('definitions', {}).get(str(alarm_id))
-        if not raw:
-            return None
-        return AlarmDefinition(
-            alarm_id=str(alarm_id),
-            alarm_name=raw.get('alarm_name', ''),
-            alarm_kind=raw.get('alarm_kind', ''),
-            default_level=raw.get('default_level', ''),
-            default_priority=raw.get('default_priority'),
-            threshold=raw.get('threshold', ''),
-            metric_code=raw.get('metric_code', ''),
-            metric_name=raw.get('metric_name', ''),
-            value_source=raw.get('value_source', 'alarm_items_sum'),
-            linked_customer_metric=raw.get('linked_customer_metric'),
-        )
+        return build_alarm_definition(self._alarm_rules, alarm_id)
 
     def severity_to_priority(self, severity: str) -> Optional[int]:
         return self._alarm_rules.get('severity_to_priority', {}).get(severity)

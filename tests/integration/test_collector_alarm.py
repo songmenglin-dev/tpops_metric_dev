@@ -25,7 +25,6 @@ from tpops_kafka_collector.collectors.alarm import (
 )
 from tpops_kafka_collector.ids import alarm_idempotency_key
 from tpops_kafka_collector.mapping.loader import load_mapping
-from tpops_kafka_collector.mapping.table import MappingTable
 from tpops_kafka_collector.tpops.alarms import (
     ALARM_RECORDS_PATH,
     MAX_LIMIT,
@@ -145,8 +144,13 @@ def detail_row(alarm_id='2007010001', instance_id=TARGET_INSTANCE, node=None, **
 
 @pytest.fixture(scope='module')
 def mapping():
-    bundle = load_mapping()
-    return MappingTable(bundle.field_map, bundle.metric_rules, bundle.alarm_rules, {})
+    """**生产装配用的映射对象**（``load_mapping()`` 的返回值）。
+
+    之前这里手工拼了个 ``MappingTable`` —— 那个对象比生产对象多两个查表方法
+    （``alarm_definition`` / ``metric_rule``），把「E 类采集器用生产映射对象
+    必崩」的缺陷**掩盖**掉了（C-1）。这里必须用 ``load_mapping()``。
+    """
+    return load_mapping()
 
 
 def _real_alarm_ids(count):
@@ -483,3 +487,81 @@ def test_replay_archived_alarm_samples(mapping):
     history_message = result.messages[1].message
     assert history_message['status'] == 0
     assert len(history_message['tags']['details']) == 14
+
+
+# ---------------------------------------------------------------------------
+# 11. 生产映射对象（C-1）
+# ---------------------------------------------------------------------------
+
+def test_collector_works_with_the_production_mapping_object():
+    """E 类采集器用**生产装配的映射对象**（``load_mapping()``）能正常产出消息。
+
+    之前的集成测试手工拼了个 ``MappingTable`` —— 它比生产对象多两个查表方法
+    （``alarm_definition`` / ``metric_rule``），把「生产装配下 E 类采集器
+    100% 抛 ``AttributeError``、全部告警不产出」的缺陷**掩盖**掉了。
+    """
+    bundle = load_mapping()
+    assert hasattr(bundle, 'alarm_definition'), '生产映射对象没有告警定义查表'
+    assert hasattr(bundle, 'metric_rule'), '生产映射对象没有指标规则查表'
+
+    client = FakeAlarmClient({(True, True): [convergence_row()]})
+    result = collect_alarms(
+        client, bundle,
+        nodes=[MASTER_NODE, SECOND_MASTER_NODE],
+        instance_id=TARGET_INSTANCE,
+    )
+
+    assert len(result.messages) == 1
+    assert result.messages[0].message['alarmId'] == '2007010001'
+
+
+def test_production_mapping_object_finds_the_same_definitions():
+    """生产对象的查表结果与离线工具用的 ``MappingTable`` **一致**。"""
+    from tpops_kafka_collector.mapping.table import MappingTable
+
+    bundle = load_mapping()
+    table = MappingTable(bundle.field_map, bundle.metric_rules, bundle.alarm_rules, {})
+
+    alarm_ids = sorted(bundle.alarm_rules.get('definitions', {}).keys())
+    assert alarm_ids, '告警定义目录是空的'
+    for alarm_id in alarm_ids[:20]:
+        produced = bundle.alarm_definition(alarm_id)
+        assert produced is not None, alarm_id
+        assert produced == table.alarm_definition(alarm_id), alarm_id
+
+    rule = bundle.metric_rules[0]
+    assert bundle.metric_rule(rule.metric_code) == rule
+    assert bundle.metric_rule('不存在的指标码') is None
+
+
+# ---------------------------------------------------------------------------
+# 12. 分页健壮性（total_count 缺失）
+# ---------------------------------------------------------------------------
+
+def test_pagination_continues_when_total_count_is_zero(mapping):
+    """``total_count`` 为 0（平台没给总数）时**不能**据此判结束。
+
+    据此停下就只取第一页 —— 静默丢数据。真正的结束判据是「不满一页」。
+    """
+    class NoTotalCountClient(FakeAlarmClient):
+        def post(self, path, payload=None):
+            body = dict(payload or {})
+            self.calls.append((path, body))
+            key = (bool(body.get('is_active')), bool(body.get('is_convergence')))
+            records = list(self._pages.get(key, ()))
+            offset = int(body.get('offset', 0))
+            limit = int(body.get('limit', MAX_LIMIT))
+            return {
+                'records': records[offset:offset + limit],
+                'total_count': 0,
+            }
+
+    rows = [convergence_row(alarm_id='a-{0:03d}'.format(i)) for i in range(150)]
+    client = NoTotalCountClient({(True, True): rows})
+
+    result = _collect(client, mapping)
+
+    assert len(result.messages) == 150
+    offsets = [body.get('offset') for body in client.bodies()
+               if body['is_convergence'] and body['is_active']]
+    assert offsets == [0, 100], '总数缺失时必须靠「不满一页」停下来'
