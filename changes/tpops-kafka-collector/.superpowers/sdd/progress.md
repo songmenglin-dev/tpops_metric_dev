@@ -11,6 +11,17 @@
 > 并要求 wave 0 内把新生产包自己的 lint 清零，让门禁真正成立。
 > 合同与 tasks.md 的文字**不再改动**，避免再次 stale。
 
+## 📍 交接说明（新会话从这里进）
+
+**`changes/tpops-kafka-collector/.superpowers/sdd/HANDOFF.md`** —— 交接说明的入口。
+
+进度快照（2026-11-23）：
+wave-0 / wave-1 / wave-2a / wave-2b 的 receipt **全部 pass**；
+**wave-3 已解锁（eligible: true）**，32 个任务已完成 28 个，
+剩余 **3.1 调度器 / 3.3 入口装配 / 3.5 全量门禁**，之后是 wave-4 交付文档。
+
+门禁：1295 passed · ruff 0 · py37 门禁 120 passed。
+
 ## Wave 0 —— wave-0-mapping-baseline（serial）
 
 - [x] 0.1 建包并复制映射层            （edd7666）
