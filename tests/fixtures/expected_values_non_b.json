@@ -1,0 +1,604 @@
+{
+  "deriver": "tools/expected_deriver_non_b.py",
+  "expected": {
+    "GAUSSDB.DML_slow_queries": {
+      "channel": "diagnostic",
+      "expected": [
+        {
+          "dimensions": {},
+          "value": 0
+        }
+      ],
+      "sample_file": "021_GAUSSDB.DML_slow_queries.json",
+      "value_rule_type": "text_prefix_count"
+    },
+    "GAUSSDB.Number_of_ansactions_mmitted_r_cond": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5002"
+          },
+          "value": 11.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5001"
+          },
+          "value": 9.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5003"
+          },
+          "value": 10.0
+        }
+      ],
+      "sample_file": "001_GAUSSDB.Number_of_ansactions_mmitted_r_cond.json",
+      "value_rule_type": "series_point"
+    },
+    "GAUSSDB.Number_of_llback_ansactions_r_cond": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5002"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5001"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5003"
+          },
+          "value": 0.0
+        }
+      ],
+      "sample_file": "002_GAUSSDB.Number_of_llback_ansactions_r_cond.json",
+      "value_rule_type": "series_point"
+    },
+    "GAUSSDB.PG_Service_Status": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "value"
+          },
+          "value": 1.0
+        }
+      ],
+      "sample_file": "058_GAUSSDB.PG_Service_Status.json",
+      "value_rule_type": "series_point"
+    },
+    "GAUSSDB.Primary_status": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.126-dn_6005"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.126-dn_6009"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.127-dn_6002"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.128-dn_6006"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.127-dn_6004"
+          },
+          "value": 1.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.128-dn_6007"
+          },
+          "value": 1.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.126-dn_6001"
+          },
+          "value": 1.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.127-dn_6008"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.128-dn_6003"
+          },
+          "value": 0.0
+        }
+      ],
+      "sample_file": "067_GAUSSDB.Primary_status.json",
+      "value_rule_type": "series_point"
+    },
+    "GAUSSDB.Select_slow_queries": {
+      "channel": "diagnostic",
+      "expected": [
+        {
+          "dimensions": {},
+          "value": 0
+        }
+      ],
+      "sample_file": "020_GAUSSDB.Select_slow_queries.json",
+      "value_rule_type": "text_prefix_count"
+    },
+    "GAUSSDB.Service_availability_testing": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "value"
+          },
+          "value": "正常"
+        }
+      ],
+      "sample_file": "022_GAUSSDB.Service_availability_testing.json",
+      "value_rule_type": "enum_map"
+    },
+    "GAUSSDB.Standby_status": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.126-dn_6005"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.126-dn_6009"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.127-dn_6002"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.128-dn_6006"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.127-dn_6004"
+          },
+          "value": 1.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.128-dn_6007"
+          },
+          "value": 1.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.126-dn_6001"
+          },
+          "value": 1.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.127-dn_6008"
+          },
+          "value": 0.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "172.16.103.128-dn_6003"
+          },
+          "value": 0.0
+        }
+      ],
+      "sample_file": "066_GAUSSDB.Standby_status.json",
+      "value_rule_type": "series_point"
+    },
+    "GAUSSDB.Total_slow_queries": {
+      "channel": "diagnostic",
+      "expected": [
+        {
+          "dimensions": {},
+          "value": 1
+        }
+      ],
+      "sample_file": "019_GAUSSDB.Total_slow_queries.json",
+      "value_rule_type": "collection_count"
+    },
+    "gaussdb.QPS": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5002"
+          },
+          "value": 28.13
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5001"
+          },
+          "value": 24.87
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5003"
+          },
+          "value": 27.03
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "dn_6001"
+          },
+          "value": 81.67
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "dn_6004"
+          },
+          "value": 84.66
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "dn_6007"
+          },
+          "value": 40.52
+        }
+      ],
+      "sample_file": "031_gaussdb.QPS.json",
+      "value_rule_type": "series_point"
+    },
+    "gaussdb.Starttime": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5002"
+          },
+          "value": 1793616989.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5001"
+          },
+          "value": 1793616818.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5003"
+          },
+          "value": 1793616988.0
+        }
+      ],
+      "sample_file": "059_gaussdb.Starttime.json",
+      "value_rule_type": "series_point"
+    },
+    "gaussdb.Status": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "value"
+          },
+          "value": 1.0
+        }
+      ],
+      "sample_file": "063_gaussdb.Status.json",
+      "value_rule_type": "series_point"
+    },
+    "gaussdb.Top10sql": {
+      "channel": "diagnostic",
+      "expected": [
+        {
+          "dimensions": {},
+          "value": [
+            {
+              "avg_elapse_time": "67.5475",
+              "calls": "1",
+              "calls_percent": ".65",
+              "cpu_percent": "89.93",
+              "cpu_time": "36.5350",
+              "db_name": "xzl",
+              "io_percent": "18.04",
+              "io_time": "0.0420",
+              "max_elapse_time": "67.5475",
+              "min_elapse_time": "67.5475",
+              "node_id": "40abc563810e462a97b065e718189a59no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "1011577308",
+              "sql_text": "INSERT INTO mk_ca_cf_mp_pq (dist_code, wo_no, area_code, amt_ym, other_col)\nSELECT\n    \n    CASE WHEN random() < ? THEN ? ELSE lpad((floor(random()*?)::int)::text,?,?) END AS dist_code,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS wo_no,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS area_code,\n    \n    (ARRAY[?,?,?,?,?,?])[floor(random()*?)+?] AS amt_ym,\n    \n    ? || md5(random()::text) AS other_col\nFROM generate_series(?, ?);",
+              "total_elapse_time": "67.5475",
+              "tuple_read": "276",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "67.5475",
+              "calls": "1",
+              "calls_percent": ".65",
+              "cpu_percent": "89.93",
+              "cpu_time": "36.5350",
+              "db_name": "xzl",
+              "io_percent": "18.04",
+              "io_time": "0.0420",
+              "max_elapse_time": "67.5475",
+              "min_elapse_time": "67.5475",
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "1011577308",
+              "sql_text": "INSERT INTO mk_ca_cf_mp_pq (dist_code, wo_no, area_code, amt_ym, other_col)\nSELECT\n    \n    CASE WHEN random() < ? THEN ? ELSE lpad((floor(random()*?)::int)::text,?,?) END AS dist_code,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS wo_no,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS area_code,\n    \n    (ARRAY[?,?,?,?,?,?])[floor(random()*?)+?] AS amt_ym,\n    \n    ? || md5(random()::text) AS other_col\nFROM generate_series(?, ?);",
+              "total_elapse_time": "67.5475",
+              "tuple_read": "276",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "67.5475",
+              "calls": "1",
+              "calls_percent": ".65",
+              "cpu_percent": "89.93",
+              "cpu_time": "36.5350",
+              "db_name": "xzl",
+              "io_percent": "18.04",
+              "io_time": "0.0420",
+              "max_elapse_time": "67.5475",
+              "min_elapse_time": "67.5475",
+              "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "1011577308",
+              "sql_text": "INSERT INTO mk_ca_cf_mp_pq (dist_code, wo_no, area_code, amt_ym, other_col)\nSELECT\n    \n    CASE WHEN random() < ? THEN ? ELSE lpad((floor(random()*?)::int)::text,?,?) END AS dist_code,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS wo_no,\n    \n    ? || lpad((floor(random()*?)::int)::text,?,?) AS area_code,\n    \n    (ARRAY[?,?,?,?,?,?])[floor(random()*?)+?] AS amt_ym,\n    \n    ? || md5(random()::text) AS other_col\nFROM generate_series(?, ?);",
+              "total_elapse_time": "67.5475",
+              "tuple_read": "276",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "0.4603",
+              "calls": "4",
+              "calls_percent": "2.61",
+              "cpu_percent": "5.96",
+              "cpu_time": "2.4215",
+              "db_name": "xzl",
+              "io_percent": "1.25",
+              "io_time": "0.0029",
+              "max_elapse_time": "0.5280",
+              "min_elapse_time": "0.4232",
+              "node_id": "40abc563810e462a97b065e718189a59no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "2823194886",
+              "sql_text": "ANALYZE mk_ca_cf_mp_pq;",
+              "total_elapse_time": "1.8411",
+              "tuple_read": "4985",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "0.4603",
+              "calls": "4",
+              "calls_percent": "2.61",
+              "cpu_percent": "5.96",
+              "cpu_time": "2.4215",
+              "db_name": "xzl",
+              "io_percent": "1.25",
+              "io_time": "0.0029",
+              "max_elapse_time": "0.5280",
+              "min_elapse_time": "0.4232",
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "2823194886",
+              "sql_text": "ANALYZE mk_ca_cf_mp_pq;",
+              "total_elapse_time": "1.8411",
+              "tuple_read": "4985",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "0.4603",
+              "calls": "4",
+              "calls_percent": "2.61",
+              "cpu_percent": "5.96",
+              "cpu_time": "2.4215",
+              "db_name": "xzl",
+              "io_percent": "1.25",
+              "io_time": "0.0029",
+              "max_elapse_time": "0.5280",
+              "min_elapse_time": "0.4232",
+              "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "2823194886",
+              "sql_text": "ANALYZE mk_ca_cf_mp_pq;",
+              "total_elapse_time": "1.8411",
+              "tuple_read": "4985",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "0.2639",
+              "calls": "1",
+              "calls_percent": ".65",
+              "cpu_percent": "0.66",
+              "cpu_time": "0.2684",
+              "db_name": "xzl",
+              "io_percent": "34.90",
+              "io_time": "0.0813",
+              "max_elapse_time": "0.2639",
+              "min_elapse_time": "0.2639",
+              "node_id": "40abc563810e462a97b065e718189a59no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "3689157740",
+              "sql_text": "CREATE INDEX idx_mk_ca_cf_mp_pq_wo_ac ON mk_ca_cf_mp_pq (wo_no) LOCAL;",
+              "total_elapse_time": "0.2639",
+              "tuple_read": "1445",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "0.2639",
+              "calls": "1",
+              "calls_percent": ".65",
+              "cpu_percent": "0.66",
+              "cpu_time": "0.2684",
+              "db_name": "xzl",
+              "io_percent": "34.90",
+              "io_time": "0.0813",
+              "max_elapse_time": "0.2639",
+              "min_elapse_time": "0.2639",
+              "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "3689157740",
+              "sql_text": "CREATE INDEX idx_mk_ca_cf_mp_pq_wo_ac ON mk_ca_cf_mp_pq (wo_no) LOCAL;",
+              "total_elapse_time": "0.2639",
+              "tuple_read": "1445",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "0.2639",
+              "calls": "1",
+              "calls_percent": ".65",
+              "cpu_percent": "0.66",
+              "cpu_time": "0.2684",
+              "db_name": "xzl",
+              "io_percent": "34.90",
+              "io_time": "0.0813",
+              "max_elapse_time": "0.2639",
+              "min_elapse_time": "0.2639",
+              "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "3689157740",
+              "sql_text": "CREATE INDEX idx_mk_ca_cf_mp_pq_wo_ac ON mk_ca_cf_mp_pq (wo_no) LOCAL;",
+              "total_elapse_time": "0.2639",
+              "tuple_read": "1445",
+              "user_name": "xzl"
+            },
+            {
+              "avg_elapse_time": "0.2570",
+              "calls": "1",
+              "calls_percent": ".65",
+              "cpu_percent": "0.65",
+              "cpu_time": "0.2626",
+              "db_name": "xzl",
+              "io_percent": "30.23",
+              "io_time": "0.0704",
+              "max_elapse_time": "0.2570",
+              "min_elapse_time": "0.2570",
+              "node_id": "40abc563810e462a97b065e718189a59no14",
+              "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+              "returned_rows": "0",
+              "sql_hit_ratio": "0",
+              "sql_id": "1563636692",
+              "sql_text": "CREATE INDEX idx_mk_ca_cf_mp_pq_wo_ac ON mk_ca_cf_mp_pq (wo_no, area_code) LOCAL;",
+              "total_elapse_time": "0.2570",
+              "tuple_read": "15818",
+              "user_name": "xzl"
+            }
+          ]
+        }
+      ],
+      "sample_file": "035_gaussdb.Top10sql.json",
+      "value_rule_type": "top_n"
+    },
+    "gaussdb.Tps": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5002"
+          },
+          "value": 11.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5001"
+          },
+          "value": 9.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5003"
+          },
+          "value": 10.0
+        }
+      ],
+      "sample_file": "030_gaussdb.Tps.json",
+      "value_rule_type": "series_point"
+    },
+    "gaussdb.Uptimestr": {
+      "channel": "monitor_metrics",
+      "expected": [
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5002"
+          },
+          "value": 883011.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5001"
+          },
+          "value": 883182.0
+        },
+        {
+          "dimensions": {
+            "COMPONENT_ID": "cn_5003"
+          },
+          "value": 883012.0
+        }
+      ],
+      "sample_file": "060_gaussdb.Uptimestr.json",
+      "value_rule_type": "gauge"
+    },
+    "gaussdb.server_version": {
+      "channel": "instance",
+      "expected": [
+        {
+          "dimensions": {},
+          "value": "V2.0-10.0.0"
+        }
+      ],
+      "sample_file": "061_gaussdb.server_version.json",
+      "value_rule_type": "instance_field"
+    }
+  },
+  "generated_by": "tools/build_regression_fixtures.py",
+  "metric_count": 16,
+  "now_ms": 1794500000000,
+  "version": 1
+}

@@ -1,0 +1,398 @@
+[
+  {
+    "api": "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/key-view-execute-node",
+      "path_params": {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
+    "response_body": {
+      "nodes": [
+        {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "role": "master",
+          "type": "CN",
+          "distributed_id": "",
+          "component_id": "cn_5001",
+          "node_ip": "172.16.103.126",
+          "detail": ""
+        },
+        {
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "role": "master",
+          "type": "CN",
+          "distributed_id": "",
+          "component_id": "cn_5002",
+          "node_ip": "172.16.103.127",
+          "detail": ""
+        },
+        {
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "role": "master",
+          "type": "CN",
+          "distributed_id": "",
+          "component_id": "cn_5003",
+          "node_ip": "172.16.103.128",
+          "detail": ""
+        },
+        {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "role": "master",
+          "type": "DN",
+          "distributed_id": "60011",
+          "component_id": "dn_6001",
+          "node_ip": "172.16.103.126",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60011",
+          "component_id": "dn_6002",
+          "node_ip": "172.16.103.127",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60011",
+          "component_id": "dn_6003",
+          "node_ip": "172.16.103.128",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "role": "master",
+          "type": "DN",
+          "distributed_id": "60042",
+          "component_id": "dn_6004",
+          "node_ip": "172.16.103.127",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60042",
+          "component_id": "dn_6005",
+          "node_ip": "172.16.103.126",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60042",
+          "component_id": "dn_6006",
+          "node_ip": "172.16.103.128",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "role": "master",
+          "type": "DN",
+          "distributed_id": "60073",
+          "component_id": "dn_6007",
+          "node_ip": "172.16.103.128",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60073",
+          "component_id": "dn_6008",
+          "node_ip": "172.16.103.127",
+          "detail": "Normal"
+        },
+        {
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "role": "slave",
+          "type": "DN",
+          "distributed_id": "60073",
+          "component_id": "dn_6009",
+          "node_ip": "172.16.103.126",
+          "detail": "Normal"
+        }
+      ]
+    }
+  },
+  {
+    "api": "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+    "request": {
+      "api": "POST /rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "method": "POST",
+      "uri": "/rds/gaussdb/v3/command-center/customer-commands/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "query_params": {},
+      "body": {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "node_ids": [
+          "3881c04403394ee1b36a2bf873e69007no14",
+          "40abc563810e462a97b065e718189a59no14",
+          "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
+        ],
+        "params": [
+          {
+            "param_name": "sql_text",
+            "param_value": "select datname, numbackends, xact_commit, xact_rollback, deadlocks, conflicts, blks_read, blks_hit, blk_read_time, blk_write_time, tup_inserted, tup_updated, tup_deleted, tup_returned, tup_fetched, temp_files, temp_bytes, case when (blks_hit + blks_read) > 0 then round(blks_hit * 100.0 / (blks_hit + blks_read), 2) else 0 end as cache_hit_ratio from pg_stat_database order by datname"
+          },
+          {
+            "param_name": "limit",
+            "param_value": "1000"
+          }
+        ]
+      },
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      }
+    },
+    "response_body": {
+      "job_id": "c1014565-6efa-4441-b7f4-722a15d503f0",
+      "node_tasks": [
+        {
+          "task_id": "ffa469b2-c4a1-4ed4-908e-6f41cb2b3a66",
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14"
+        },
+        {
+          "task_id": "7b02f18d-051f-4bc4-96e8-548026546849",
+          "node_id": "40abc563810e462a97b065e718189a59no14"
+        },
+        {
+          "task_id": "fe51a64d-e441-47cb-8a25-5d4bb344a97c",
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
+        }
+      ]
+    }
+  },
+  {
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=c1014565-6efa-4441-b7f4-722a15d503f0",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records?job_id=c1014565-6efa-4441-b7f4-722a15d503f0",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/task-records",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d"
+      },
+      "query_params": {
+        "job_id": "c1014565-6efa-4441-b7f4-722a15d503f0"
+      },
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
+    "response_body": {
+      "total_count": 3,
+      "statistics": {
+        "total": 3,
+        "succeed": 3,
+        "failed": 0,
+        "running": 0,
+        "other": 0
+      },
+      "job_status": "running",
+      "tasks": [
+        {
+          "task_id": "fe51a64d-e441-47cb-8a25-5d4bb344a97c",
+          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+          "instance_name": "gauss-6374",
+          "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+          "agent_req_id": "ComOmCmd-fe51a64d-e441-47cb-8a25-5d4bb344a97c",
+          "status": "succeed",
+          "params": [
+            {
+              "param_name": "limit",
+              "param_value": "1000",
+              "sensitive": false
+            },
+            {
+              "param_name": "sql_text",
+              "param_value": "******",
+              "sensitive": true
+            }
+          ],
+          "is_redirect": false,
+          "download_file_id": null,
+          "error_msg": null,
+          "start_time": 1794454217831,
+          "finish_time": 1794454222709,
+          "expire_time": 1794713417830
+        },
+        {
+          "task_id": "ffa469b2-c4a1-4ed4-908e-6f41cb2b3a66",
+          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+          "instance_name": "gauss-6374",
+          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+          "agent_req_id": "ComOmCmd-ffa469b2-c4a1-4ed4-908e-6f41cb2b3a66",
+          "status": "succeed",
+          "params": [
+            {
+              "param_name": "limit",
+              "param_value": "1000",
+              "sensitive": false
+            },
+            {
+              "param_name": "sql_text",
+              "param_value": "******",
+              "sensitive": true
+            }
+          ],
+          "is_redirect": false,
+          "download_file_id": null,
+          "error_msg": null,
+          "start_time": 1794454217831,
+          "finish_time": 1794454222753,
+          "expire_time": 1794713417830
+        },
+        {
+          "task_id": "7b02f18d-051f-4bc4-96e8-548026546849",
+          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+          "instance_name": "gauss-6374",
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "agent_req_id": "ComOmCmd-7b02f18d-051f-4bc4-96e8-548026546849",
+          "status": "succeed",
+          "params": [
+            {
+              "param_name": "limit",
+              "param_value": "1000",
+              "sensitive": false
+            },
+            {
+              "param_name": "sql_text",
+              "param_value": "******",
+              "sensitive": true
+            }
+          ],
+          "is_redirect": false,
+          "download_file_id": null,
+          "error_msg": null,
+          "start_time": 1794454217831,
+          "finish_time": 1794454222842,
+          "expire_time": 1794713417830
+        }
+      ]
+    }
+  },
+  {
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/fe51a64d-e441-47cb-8a25-5d4bb344a97c/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/fe51a64d-e441-47cb-8a25-5d4bb344a97c/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/fe51a64d-e441-47cb-8a25-5d4bb344a97c/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "c1014565-6efa-4441-b7f4-722a15d503f0",
+        "task_id": "fe51a64d-e441-47cb-8a25-5d4bb344a97c"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
+    "response_body": {
+      "node_id": "5a3cd027ad5c4f9bbb67d728c6d279c0no14",
+      "node_name": "gauss-6374_gaussdbv5_hcs2-0_2",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "[{\"datname\":\"lz\",\"numbackends\":\"0\",\"xact_commit\":\"22259\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"1107\",\"blks_hit\":\"706219\",\"blk_read_time\":\"22.6960000000000015\",\"blk_write_time\":\"0\",\"tup_inserted\":\"2244\",\"tup_updated\":\"369\",\"tup_deleted\":\"780\",\"tup_returned\":\"2333129\",\"tup_fetched\":\"213264\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.84\"},{\"datname\":\"postgres\",\"numbackends\":\"26\",\"xact_commit\":\"14651303\",\"xact_rollback\":\"36\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"7916\",\"blks_hit\":\"116845320\",\"blk_read_time\":\"32.8599999999999994\",\"blk_write_time\":\"0\",\"tup_inserted\":\"10248868\",\"tup_updated\":\"507288\",\"tup_deleted\":\"4451289\",\"tup_returned\":\"181732718\",\"tup_fetched\":\"44967679\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.99\"},{\"datname\":\"template0\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"template1\",\"numbackends\":\"0\",\"xact_commit\":\"290155\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"520\",\"blks_hit\":\"8179486\",\"blk_read_time\":\"9.95500000000000007\",\"blk_write_time\":\"0\",\"tup_inserted\":\"1086\",\"tup_updated\":\"2025\",\"tup_deleted\":\"54\",\"tup_returned\":\"10132199\",\"tup_fetched\":\"3533414\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.99\"},{\"datname\":\"templatea\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"templatem\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"xzl\",\"numbackends\":\"0\",\"xact_commit\":\"29426\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"1058\",\"blks_hit\":\"986474\",\"blk_read_time\":\"17.4939999999999998\",\"blk_write_time\":\"0\",\"tup_inserted\":\"101244\",\"tup_updated\":\"92\",\"tup_deleted\":\"122\",\"tup_returned\":\"3228285\",\"tup_fetched\":\"287504\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.89\"}]",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "download_file_id": null
+    }
+  },
+  {
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/ffa469b2-c4a1-4ed4-908e-6f41cb2b3a66/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/ffa469b2-c4a1-4ed4-908e-6f41cb2b3a66/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/ffa469b2-c4a1-4ed4-908e-6f41cb2b3a66/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "c1014565-6efa-4441-b7f4-722a15d503f0",
+        "task_id": "ffa469b2-c4a1-4ed4-908e-6f41cb2b3a66"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
+    "response_body": {
+      "node_id": "3881c04403394ee1b36a2bf873e69007no14",
+      "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "[{\"datname\":\"lz\",\"numbackends\":\"0\",\"xact_commit\":\"21290\",\"xact_rollback\":\"1\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"1117\",\"blks_hit\":\"794795\",\"blk_read_time\":\"21.847999999999999\",\"blk_write_time\":\"0\",\"tup_inserted\":\"2244\",\"tup_updated\":\"369\",\"tup_deleted\":\"780\",\"tup_returned\":\"2123515\",\"tup_fetched\":\"232854\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.86\"},{\"datname\":\"postgres\",\"numbackends\":\"24\",\"xact_commit\":\"16840146\",\"xact_rollback\":\"25\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"9459\",\"blks_hit\":\"127698493\",\"blk_read_time\":\"42.2819999999999965\",\"blk_write_time\":\"0\",\"tup_inserted\":\"10248868\",\"tup_updated\":\"507288\",\"tup_deleted\":\"4451289\",\"tup_returned\":\"192530562\",\"tup_fetched\":\"50291771\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.99\"},{\"datname\":\"template0\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"template1\",\"numbackends\":\"0\",\"xact_commit\":\"230614\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"563\",\"blks_hit\":\"9725790\",\"blk_read_time\":\"11.4949999999999992\",\"blk_write_time\":\"0\",\"tup_inserted\":\"1086\",\"tup_updated\":\"2025\",\"tup_deleted\":\"54\",\"tup_returned\":\"10305204\",\"tup_fetched\":\"3822094\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.99\"},{\"datname\":\"templatea\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"templatem\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"xzl\",\"numbackends\":\"0\",\"xact_commit\":\"28302\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"1120\",\"blks_hit\":\"1146672\",\"blk_read_time\":\"18.4579999999999984\",\"blk_write_time\":\"0\",\"tup_inserted\":\"101244\",\"tup_updated\":\"92\",\"tup_deleted\":\"122\",\"tup_returned\":\"2946515\",\"tup_fetched\":\"322396\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.90\"}]",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "download_file_id": null
+    }
+  },
+  {
+    "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/7b02f18d-051f-4bc4-96e8-548026546849/detail",
+    "request": {
+      "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/7b02f18d-051f-4bc4-96e8-548026546849/detail",
+      "method": "GET",
+      "uri": "/rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/c1014565-6efa-4441-b7f4-722a15d503f0/task-record/7b02f18d-051f-4bc4-96e8-548026546849/detail",
+      "path_params": {
+        "cmd_id": "73722acc-bff6-4d04-adc0-bc1e1fa1eb7d",
+        "job_id": "c1014565-6efa-4441-b7f4-722a15d503f0",
+        "task_id": "7b02f18d-051f-4bc4-96e8-548026546849"
+      },
+      "query_params": {},
+      "body": null,
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn"
+      }
+    },
+    "response_body": {
+      "node_id": "40abc563810e462a97b065e718189a59no14",
+      "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+      "status": "succeed",
+      "is_redirect": false,
+      "result": "[{\"datname\":\"lz\",\"numbackends\":\"1\",\"xact_commit\":\"22350\",\"xact_rollback\":\"3\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"1140\",\"blks_hit\":\"715501\",\"blk_read_time\":\"24.093\",\"blk_write_time\":\"0\",\"tup_inserted\":\"2244\",\"tup_updated\":\"369\",\"tup_deleted\":\"780\",\"tup_returned\":\"2356279\",\"tup_fetched\":\"216980\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.84\"},{\"datname\":\"postgres\",\"numbackends\":\"26\",\"xact_commit\":\"16743934\",\"xact_rollback\":\"31\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"8307\",\"blks_hit\":\"116866889\",\"blk_read_time\":\"35.4200000000000017\",\"blk_write_time\":\"0\",\"tup_inserted\":\"10248868\",\"tup_updated\":\"507288\",\"tup_deleted\":\"4451289\",\"tup_returned\":\"181861605\",\"tup_fetched\":\"44973999\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.99\"},{\"datname\":\"template0\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"template1\",\"numbackends\":\"0\",\"xact_commit\":\"291619\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"520\",\"blks_hit\":\"8183615\",\"blk_read_time\":\"10.7460000000000004\",\"blk_write_time\":\"0\",\"tup_inserted\":\"1086\",\"tup_updated\":\"2025\",\"tup_deleted\":\"54\",\"tup_returned\":\"10143267\",\"tup_fetched\":\"3534840\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.99\"},{\"datname\":\"templatea\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"templatem\",\"numbackends\":\"0\",\"xact_commit\":\"0\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"0\",\"blks_hit\":\"0\",\"blk_read_time\":\"0\",\"blk_write_time\":\"0\",\"tup_inserted\":\"0\",\"tup_updated\":\"0\",\"tup_deleted\":\"0\",\"tup_returned\":\"0\",\"tup_fetched\":\"0\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"0\"},{\"datname\":\"xzl\",\"numbackends\":\"0\",\"xact_commit\":\"29351\",\"xact_rollback\":\"0\",\"deadlocks\":\"0\",\"conflicts\":\"0\",\"blks_read\":\"1056\",\"blks_hit\":\"988320\",\"blk_read_time\":\"17.4409999999999989\",\"blk_write_time\":\"0\",\"tup_inserted\":\"101244\",\"tup_updated\":\"92\",\"tup_deleted\":\"122\",\"tup_returned\":\"3233668\",\"tup_fetched\":\"287998\",\"temp_files\":\"0\",\"temp_bytes\":\"0\",\"cache_hit_ratio\":\"99.89\"}]",
+      "out_format": "json",
+      "out_mode": "array",
+      "out_type": "map",
+      "download_file_id": null
+    }
+  }
+]

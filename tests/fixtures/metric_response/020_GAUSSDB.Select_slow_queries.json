@@ -1,0 +1,60 @@
+[
+  {
+    "api": "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list",
+    "request": {
+      "api": "POST /rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list",
+      "method": "POST",
+      "uri": "/rds/gaussdb/v3/instances/83cd68f2e4cb40b4b7e69240479ffa26in14/slow-sql-list",
+      "path_params": {
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14"
+      },
+      "query_params": {},
+      "body": {
+        "start_time": 1794368142103,
+        "end_time": 1794454542103,
+        "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+        "threshold": 1000,
+        "threshold_unit": "ms",
+        "node_ids": [
+          "3881c04403394ee1b36a2bf873e69007no14",
+          "40abc563810e462a97b065e718189a59no14",
+          "5a3cd027ad5c4f9bbb67d728c6d279c0no14"
+        ]
+      },
+      "headers": {
+        "X-Mini-Token": "<token>",
+        "X-Language": "zh-cn",
+        "Content-Type": "application/json"
+      }
+    },
+    "response_body": {
+      "slow_sql_infos": [
+        {
+          "db_name": "postgres",
+          "schema_name": "\"$user\",public",
+          "sql_id": "24214886",
+          "user_name": "rdsAdmin",
+          "sql_text": "create database lz;",
+          "query_plan": "Check the reported query_plan time is 2026-11-11 17:43:46.252179+08, at this time the SQL is not slow.",
+          "query_plan_optimize": " id |                                               operation                                                \n----+--------------------------------------------------------------------------------------------------------\n  1 | Check the reported query_plan time is 2026-11-11 17:43:46.252179+08, at this time the SQL is not slow. \n",
+          "calls": 1,
+          "avg_exec_time": "7.7806",
+          "avg_cpu_time": "0.1062",
+          "avg_io_time": "0.0009",
+          "avg_returned_rows": 0,
+          "sql": "",
+          "avg_fetched_rows": 0,
+          "buffer_hit_ratio": "0.00",
+          "sql_hit_ratio": "0",
+          "node_id": "40abc563810e462a97b065e718189a59no14",
+          "node_name": "gauss-6374_gaussdbv5_hcs2-0_1",
+          "component_name": "cn_5002",
+          "total_cost_time": "7.7806",
+          "total_returned_rows": "0",
+          "total_fetched_rows": "0"
+        }
+      ],
+      "total": 1
+    }
+  }
+]
