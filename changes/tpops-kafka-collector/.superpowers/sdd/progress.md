@@ -407,7 +407,47 @@ Token Plan 配额上限（HTTP 429）把 wave-2b 的 6 个实施方同时打断�
 ## Wave 2b —— wave-2b-channels（parallel）
 
 - [x] 2.3~2.10（A 类 / 命令中心 / B 类 / C 类 / D 类 / E 类 / 脱敏）
-- 审查：**已重新派发独立审查**（base `c816358` → head `e072dcd`），receipt 待签
+- 审查（轮次 1）：**verdict = fail**（Critical 3 / Important 4 / Minor 12）
+  - 报告：`.superpowers/sdd/reviews/wave-2b-channels.md`
+  - receipt：**已签发 `fail`**（base `c816358` → head `e072dcd`）
+  - wave-3 **保持未解锁**（`execution show` 显示 wave-3 `eligible: false`）
+- 修复轮次 1：**进行中** —— 简报 `workspace/repair-r1-brief.md`
+
+### wave-2b 审查的三条 Critical（控制器独立复核，全部复现成立）
+
+| 编号 | 缺陷 | 复核证据 |
+|---|---|---|
+| **C-1** | E 类采集器用生产映射对象必崩。`collectors/alarm.py` 调 `mapping.alarm_definition()` / `mapping.metric_rule()`，但这两个方法**只在 `mapping/table.py::MappingTable` 上**；生产对象 `load_mapping()` 返回的 `LoadedMapping` 没有 → **E 类通道 100% 抛 `AttributeError`**（全部告警不产出）。集成测试用 `MappingTable` 手工拼 fixture，**掩盖了缺陷** | 控制器复现：`AttributeError: 'LoadedMapping' object has no attribute 'alarm_definition'` |
+| **C-2** | B 类 5 个 `counter_delta` 指标**永不产出**。`collectors/command_center.py::_fetch_pages` 调 `decode_merged(body, self._views)` **漏传 `now_ms`** → `ctx.now_ms` 恒 0 → 差分判定「采集时刻未推进」→ 值恒 `None`。冒烟枪：`self._clock` 赋值后全文未用 | 控制器实测：`now_ms` 恒 0 → 两轮各 0 条有值；`now_ms` 递增 → 第二轮 9 条 |
+| **C-3** | 差分基线**跨 master 共享**。`self._deltas` 一个 `CounterDeltaStore` 被 3 个 master 共用，而基线键 `(metric_code, dimension_key)` **不含 node** → 互相覆盖 | 控制器实测：共享 store → 3 个 master 只有 1 个拿到 9 条；每 master 独立 store → 3 个都拿到 9 条 |
+
+**三条的共同形态是「不报错、但数据没有/数据错」** —— 正是合同 Escalation Rules
+明列的不得继续实现的情形。它们能溜过去，是因为
+`tests/regression/`（225 passed）与 `tests/test_expected_values.py`（82/82）
+**只测映射层**（`decode_merged` + `evaluate`），**完全没有走到采集器**。
+
+### I-2 的控制器独立复算（与审查者同向）
+
+- 期望值表里的 (指标,节点) 对数 = **246**
+- 那条断言实际比对 = **113**
+- **33 个指标码从未被比到**（审查者算出 35 —— 统计口径不同，结论一致）
+
+根因有两层：① 断言按**模板码**去匹配 `produced`，而 `produced` 的键是
+**替换后的码** → `continue` 静默跳过；② 采集器对 table/database/port 粒度的
+55 个指标**根本没产出消息**（只有 instance 粒度产出）。
+修复时两层都要查清。
+
+### wave-2b 新增待补清单
+
+| 编号 | 内容 | 落地时机 |
+|---|---|---|
+| T-15 | 规格改写：告警「新增」判定（实现比规格更安全，`first_alarm_time` / `last_alarm_time` / `clear_alarm_time` 任一变化即算） | **wave 4 交付文档前** |
+| T-16 | 回归层补**采集器级**用例（TPOPS 与 Kafka 全 mock）—— 现有回归只测映射层 | wave-2b 修复轮次 1 |
+| T-17 | `CMD_PAGE_SIZE` 接到采集器（`sqlgen.render_sql_with_config` 现无生产调用方） | wave-2b 修复轮次 1 |
+| T-18 | 不可提供指标（3 条）的**丢弃计数**机制 | wave 3（每轮汇总日志） |
+| T-19 | 告警分页 `total_count ≤ 0` 的健壮性 | wave-2b 修复轮次 1 |
+| T-20 | 包边界测试补「文件读取面」（现在只守 import 边界） | 收尾后的独立小变更 |
+| T-21 | `MappingTable.load()` 的仓库根依赖定案（延续 T-10） | 同上 |
 
 ## Wave 3 —— wave-3-scheduling-testing（serial）
 
