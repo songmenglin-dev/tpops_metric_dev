@@ -317,6 +317,7 @@ _ALLOWED_JSON_WRITERS = {
     'kafka/serializer.py': '唯一的消息序列化出口',
     'watermark.py': '水位状态文件落盘（不是消息）',
     'health.py': '健康端点响应体（不是消息，不进 Kafka）',
+    'logging_setup.py': '日志行的 JSON 编码（不是消息，不进 Kafka）',
 }
 
 

@@ -26,7 +26,9 @@
 - **采集器实例必须跨轮复用** —— 差分要靠「上一轮的基线」才算得出速率，
   每轮新建一个采集器就等于每轮都只有首轮（只建基线、不出值）；
 - 同一轮的多个 master **共用一个存储**，但基线**按节点隔离**
-  （``ScopedCounterDeltaStore``）—— 基线键不含节点，不隔离就会互相覆盖。
+  （``ScopedCounterDeltaStore``）—— 基线键不含节点，不隔离就会互相覆盖；
+  作用域是 ``f'{instance_id}:{node_id}'`` —— **实例 ID 也要带上**，
+  采集器对象在多实例间复用时视图缓存是共享的。
 
 采集器**不推进水位**（那是 wave 3 调度器的职责），只返回结果。
 """
@@ -175,7 +177,7 @@ class CommandCenterCollector:
             nodes=self._master_nodes(instance_id),
             instance_id=instance_id,
             instance_name=instance_name,
-            delta_store=self._delta_store,
+            delta_store=lambda node_id: self._delta_store(instance_id, node_id),
         )
         return CommandCenterCollectResult(
             messages=tuple(messages),
@@ -301,14 +303,18 @@ class CommandCenterCollector:
             merged.append((node_id, contexts))
         return tuple(merged)
 
-    def _delta_store(self, node_id: Any) -> ScopedCounterDeltaStore:
+    def _delta_store(self, instance_id: str, node_id: Any) -> ScopedCounterDeltaStore:
         """该 master 的差分基线视图。
 
         **按节点隔离** —— 基线键 ``(metric_code, dimension_key)`` 不含节点，
         三个 master 共用一个存储时基线会互相覆盖（实测 2/3 的 master 恒为
         ``None``，还可能算出跨节点的速率）。
+
+        **作用域还要带上实例 ID** —— 采集器对象在多实例间复用时，
+        视图缓存是共享的；只用 ``node_id`` 做键的话，两个实例的同名节点
+        会共用一个视图 → 基线互相覆盖 → **不报错、但速率是错的**。
         """
-        key = str(node_id)
+        key = f'{instance_id}:{node_id}'
         store = self._scoped_deltas.get(key)
         if store is None:
             store = ScopedCounterDeltaStore(self._deltas, key)
