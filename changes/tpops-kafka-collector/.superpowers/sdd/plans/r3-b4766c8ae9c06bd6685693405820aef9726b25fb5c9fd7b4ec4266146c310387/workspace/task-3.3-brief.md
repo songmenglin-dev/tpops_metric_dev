@@ -111,6 +111,22 @@ Scheduler                   → 3.1 已完成
 4. 平台没有实例 → 明确报错，指明「实例列表为空」
 ```
 
+**⚠️ 「master 节点数」的口径 —— 按 `node_id` 去重后计数，不是数条目数。**
+
+实测留档（分布式实例 `gauss-6374`）的节点清单：
+
+```
+节点总数 12   role: master 6 / slave 6   type: DN 9 / CN 3
+master 的 6 条里，_0_0 / _0_1 / _0_2 各出现两次（一次 CN、一次 DN）
+→ 唯一的 master node_id 只有 **3 个**
+```
+
+数条目会得 6（虚高一倍），**必须按唯一 `node_id` 计数**。
+`tpops/command_center_nodes.py::_select_masters` 已经有现成的「挑 master + 按
+node_id 去重」逻辑 —— **复用它，不要另写一份**。
+
+参考值：分布式实例 = 3 个唯一 master；集中式实例 = 1 个 master DN。
+
 **不要用 `mode == 'Combined'` 过滤** —— 用户已明确决定不按 mode 筛选。
 `mode` 字段仍然**记录**在画像里（便于排查），但不参与选择。
 
