@@ -411,7 +411,12 @@ Token Plan 配额上限（HTTP 429）把 wave-2b 的 6 个实施方同时打断�
   - 报告：`.superpowers/sdd/reviews/wave-2b-channels.md`
   - receipt：**已签发 `fail`**（base `c816358` → head `e072dcd`）
   - wave-3 **保持未解锁**（`execution show` 显示 wave-3 `eligible: false`）
-- 修复轮次 1：**代码已落地**（`e97c45d` + `b10b706`），**定向复审已派发**
+- 修复轮次 1：**代码已落地 + 定向复审 pass**（Critical 0 / Important 0 / Minor 7）
+  - **receipt 已签发 `pass`**（base `e072dcd` → head `356d52f`）→ **wave-3 已解锁**
+  - 复审者做了变异测试验证可证伪性：删 C-1 的两个方法 → 21 个用例红；
+    强制 `now_ms=0` → 4 个用例红；去掉 C-3 的作用域 → 3 个用例红
+  - 复审者另指出实施方报告有 3 处不准确断言（「0 个函数 >50 行」等），
+    其余数字（1295/1700/135/76/344/ruff/py37）全部属实
   - 简报 `workspace/repair-r1-brief.md`；实施方报告 `workspace/repair-r1-report.md`
   - 三条 Critical 全部修完（详见下）；四条 Important 全修
   - 控制器独立复核：C-2 差分消息 0/0 → 0/135 条；C-3 三 master 各 45 条不串；
@@ -448,6 +453,26 @@ Token Plan 配额上限（HTTP 429）把 wave-2b 的 6 个实施方同时打断�
 **替换后的码** → `continue` 静默跳过；② 采集器对 table/database/port 粒度的
 55 个指标**根本没产出消息**（只有 instance 粒度产出）。
 修复时两层都要查清。
+
+### ⚠️ 流程坑：`ssf execution review --verdict pass` 会删掉整个 workspace
+
+签发 pass receipt 时，`scripts/lib/execution-plan.mjs:172` 会
+`rmSync(planScopedPaths.workspace, {recursive: true, force: true})` ——
+它认为「任务简报、diff 包、进度笔记对这个执行计划是可再生的」。
+
+**本项目的简报不可再生** —— 里面编码了用户决策（选择所有实例、
+差分基线只能用 `import_baselines_from`、日志中心化初始化、映射层覆盖率
+缺口清单），工具重新生成不出来。
+
+所幸全部已提交进 git，从 `071c138` 恢复 33 个文件，内容逐条核对无误。
+
+**操作纪律**：
+1. 简报**必须提交进仓库**（不能只留在工作区）—— 本次正是靠这个救回来的
+2. 签发 pass receipt 后**主动恢复** workspace（`git checkout <上一提交> -- <workspace>`）
+3. **wave-3 签发 pass 后同样会被删** —— 恢复后再进 wave-4
+
+（这是同一类问题的**第二次**发生 —— 账本里 429 事故那节记过一次，
+「工作区工件被误删」。那次是并发 agent 的 git 操作，这次是工具本身的设计。）
 
 ### wave-2b 新增待补清单
 
