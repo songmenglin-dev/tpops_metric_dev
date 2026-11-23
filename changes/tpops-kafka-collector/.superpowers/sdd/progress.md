@@ -302,6 +302,25 @@ M-7 就此关闭。
 | T-13 | 补 `sql_key` 非空 与 `paged=true`+`strip_inner_limit=false` 的断言 | 收尾后的独立小变更 |
 | T-14 | 渲染长度上限断言 | 同上 |
 
+### 2026-11-23 控制器自查发现的合同违反（wave-2b 范围内）
+
+审查派发前，控制器对全部生产文件做了一次行数与函数长度自查，发现两处**合同违反**
+（合同 C3：单文件 < 400 行、函数 < 50 行）：
+
+| 位置 | 实测 | 合同 | 拆分方案 |
+|---|---|---|---|
+| `collectors/command_center.py` | **463 行** | < 400 | 第 348 行起的模块级辅助函数（`_command_center_rules` / `_merged_views` / `_has_more` / `_approx_size_bytes` / `_host_node_id` / `_page_signature` / `_same_as_previous` / `_is_output_limit_error` / `_tier_of`）挪到新模块 `collectors/command_center_helpers.py` |
+| 同上，`_fetch_pages` | **64 行** | < 50 | 拆成「单页取数」与「翻页编排」两段 |
+| 同上，`_build_messages` | **59 行** | < 50 | 拆成「按规则取值」与「组装消息」两段 |
+
+其余 30 个生产文件**全部达标**（最长的三个恰好 399 行：`tpops/command_center.py`、
+`mapping/loader.py`、`kafka/producer.py`）。
+
+**处置**：本次**不在审查进行中改** —— 改了会让 wave-2b 的审查 diff 失配。
+等 wave-2b 的 receipt 签发后，作为 wave-2b 的**修复轮次**处理
+（与 wave-0 的「修复轮次 2」同一模式：审查 → 修复 → 定向复审）。
+若独立审查者也报出这条，两条合并处理。
+
 ### 2.10 的偏离裁决（实施方提出）
 
 `SQL_MASKING_ENABLED=false` 时**仍执行截断**（只是不做字面量替换）—— **接受**。
