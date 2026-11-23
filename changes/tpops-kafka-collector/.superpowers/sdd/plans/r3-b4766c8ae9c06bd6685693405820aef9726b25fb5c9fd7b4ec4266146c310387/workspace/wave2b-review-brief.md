@@ -7,8 +7,13 @@
 - **Diff 文件：** 见派发提示词
 - **波次 ID:** `wave-2b-channels`（parallel）
 - **实施方报告：** `.../workspace/task-2.{3,4,5,6,7,8,9,10}-report.md`
-  （2.4 / 2.6 / 2.9 的报告是**控制器代写**的 —— 那些实施方被 Token Plan 配额
+  （2.4 / 2.6 / 2.7 / 2.8 / 2.9 的报告是**控制器代写**的 —— 那些实施方被 Token Plan 配额
   上限（429）打断，没来得及写报告；报告开头已标明）
+- **⚠️ 补交提交 `e072dcd`**：429 事故中**漏掉**的三个文件
+  （`tpops_kafka_collector/tpops/diagnostic.py`、`tpops_kafka_collector/tpops/alarms.py`、
+  `tests/integration/test_collector_diagnostic.py`）在此提交里 —— 这三个文件
+  **从未被审过**，本次必须一并审。特别是：**2.7 的平台层与 2.9 的平台层
+  （`tpops/alarms.py`）此前从未进入任何一次审查**。
 - **共享执行约定：** `.../workspace/wave2b-execution-brief.md`
 - **合同：** `changes/tpops-kafka-collector/execution-contract.md`
 - **任务清单：** `changes/tpops-kafka-collector/tasks.md` §波次 2b
