@@ -26,7 +26,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, FrozenSet, Mapping, Optional, Tuple
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 from ..errors import MappingError, ProtocolError
 from .table import AlarmDefinition, MetricRule, build_alarm_definition

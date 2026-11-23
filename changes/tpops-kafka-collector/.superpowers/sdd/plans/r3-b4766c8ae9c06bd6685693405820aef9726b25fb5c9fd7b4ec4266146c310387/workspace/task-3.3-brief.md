@@ -53,6 +53,71 @@
 每轮结束记录：本轮执行了哪些组、各组耗时、消息条数、投递成功率、外部调用次数、
 水位推进到哪。**用 `logging`，不用 `print`**。
 
+---
+
+# 日志的**中心化初始化**（`logging_setup.py`）
+
+## 现状（2026-11-23 实测）
+
+- 全包 **75 处**日志调用，覆盖 22 个模块，每个模块都有
+  `LOGGER = logging.getLogger(__name__)` —— 惯用法正确，**零 `print` 违规** ✓
+- **但全包没有一处 `basicConfig` / `dictConfig` / `Formatter` / `Handler`**
+- `config.py` 里**已经定义了 `log_level` 与 `log_format`（支持 `text` / `json`），
+  却没有任何代码消费它们**
+
+**实测的运行时后果**（Python 的 `lastResort` 兜底，级别 WARNING）：
+
+| 级别 | 现在的实际效果 |
+|---|---|
+| DEBUG / INFO | ❌ **全丢**（9 处 INFO） |
+| WARNING / ERROR | ⚠️ 输出了，但是**裸格式** —— 无时间戳、无级别、无模块名 |
+
+22 个 ERROR 与 35 个 WARNING 挤在一起长这样：
+
+```
+告警采集完成：收敛 12 条 + 明细 40 行 → 产出 38 条消息
+监控指标空分组告警：分组码 FODR 未返回任何指标
+```
+
+**没有时间戳 → 事后排查没法用。** 入口 `main.py` 属于本任务，
+日志初始化也归本任务。
+
+## 要做的
+
+### ① 中心化初始化（新建 `tpops_kafka_collector/logging_setup.py`）
+
+- **消费** `config.log_level` 与 `config.log_format`（现在定义了没人用）
+- `text` 格式：`时间 | 级别 | 模块 | 消息`
+- `json` 格式：**每行一个 JSON**（客户的数据要进 Kafka，日志大概率也要进
+  客户的日志平台 —— 这个能力 `config` 里已经预留了）
+- 输出到 **stderr**（常驻进程的标准做法；日志轮转是运维的事，不要自己写文件）
+- **幂等**：重复调用不叠加 handler（`basicConfig(force=...)` 在 3.8+ 才有，
+  py37 要自己判 `root.handlers`）
+
+### ② 第三方库降噪
+
+`kafka-python` 内部日志默认会刷屏 → 把 `kafka`、`urllib3` 等压到 WARNING/ERROR。
+
+### ③ 异常路径带堆栈
+
+现有 22 处 `LOGGER.error` 大多是 `%s` 拼消息，**没有 `exc_info=True`** ——
+排查时看不到堆栈。异常路径应带堆栈（`LOGGER.exception(...)` 或 `exc_info=True`）。
+
+### ④ 敏感信息不落日志（合同硬要求）
+
+凭据、mini-token、业务 SQL 文本**都不能进日志**。
+脱敏失败时异常只带**字段名**（已如此），要统一审一遍全部 75 处。
+
+### ⑤ 元测试（守住"配置真的生效"）
+
+```
+配 DEBUG → INFO 日志真的能输出
+配 JSON  → 真的输出 JSON 行（逐行 json.loads 得通）
+```
+
+**否则会重演 `log_level` / `log_format` 的处境** —— 定义了、代码写了、
+但没人调用。
+
 ## 装配顺序（注意依赖）
 
 ```

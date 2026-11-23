@@ -82,6 +82,23 @@ class ScheduleEntry:
 > （水位推进就是本任务的职责），测试里用的是 `'instance-a'` / `'b-class'`
 > 这类随意取值。**本次就要把约定定死**，否则多实例下水位会互相覆盖。
 
+### ⚠️ 差分基线的恢复：**只能用 `import_baselines_from`，不能用 `put_baseline`**
+
+wave-2b 修复后，B 类采集器的差分基线是**带作用域**的
+（`ScopedCounterDeltaStore`，作用域 = 节点），作用域并进了维度键
+（`scope:key`）。而 `watermark.py` 有两个写基线的口子：
+
+| API | 键 | 能不能用 |
+|---|---|---|
+| `put_baseline(metric_code, dimension_key, ...)` | `(metric_code, dimension_key)` —— **无作用域** | ❌ **不能用** |
+| `import_baselines_from(delta_store)` | 整个字典**原样搬运**（键已带作用域） | ✅ **只能用这个** |
+
+**用 `put_baseline` 会静默失效**：写进去的键没有作用域，
+采集器按 `scope:key` 去找，永远找不到 → 每轮都判定「首轮无基线」→
+**重启后速率永远算不出来，而且不报任何错**。
+
+这正是「不报错但数据错」的形态。**恢复基线一律走 `import_baselines_from`。**
+
 **周期必须表驱动**（`data/mapping/metric_rules.json` 的 `collect_cycle`），
 不写死。从映射表现算出的实际档位分布（实现时以实算为准）：
 
