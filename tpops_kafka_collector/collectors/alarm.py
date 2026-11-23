@@ -100,12 +100,11 @@ def collect_alarms(
     now = int(now_ms) if now_ms is not None else int(time.time() * 1000)
     limit_ms = _as_millis(watermark)
 
-    active_convergence = fetch_all_alarm_records(client, True, True, limit)
-    active_detail = fetch_all_alarm_records(client, True, False, limit,
-                                             instance_id=instance_id)
-    history_convergence = fetch_all_alarm_records(client, False, True, limit)
-    history_detail = fetch_all_alarm_records(client, False, False, limit,
-                                             instance_id=instance_id)
+    records = _fetch_four_shapes(client, limit, instance_id)
+    active_convergence = records['active_convergence']
+    active_detail = records['active_detail']
+    history_convergence = records['history_convergence']
+    history_detail = records['history_detail']
 
     _warn_history_gap(history_convergence, now, retention_days)
     _warn_downtime_gap(limit_ms, now, retention_days)
@@ -127,6 +126,36 @@ def collect_alarms(
         convergence_count=len(active_convergence) + len(history_convergence),
         detail_count=len(active_detail) + len(history_detail),
     )
+
+
+def _fetch_four_shapes(
+    client: Any,
+    limit: int,
+    instance_id: Optional[str],
+) -> Dict[str, Tuple[Mapping[str, Any], ...]]:
+    """取告警的四种形态（活动/历史 × 收敛/明细）。
+
+    平台的告警接口用 ``is_active`` 与 ``is_convergence`` 两个布尔区分形态，
+    四种组合要分别拉 —— 收敛列表给的是「一条告警一行」，明细给的是
+    「一条告警多行明细」。
+
+    **收敛形态不传 ``instance_id``** —— 合同口径「告警收敛形态下不依赖平台侧
+    ``alarm_id`` / ``instance_id`` 过滤」；明细形态才按实例收窄。
+
+    :param instance_id: 只采集该实例的明细（``None`` = 不限）。
+    """
+    def fetch(is_active: bool, is_convergence: bool,
+              scoped: bool) -> Tuple[Mapping[str, Any], ...]:
+        return fetch_all_alarm_records(
+            client, is_active, is_convergence, limit,
+            instance_id=instance_id if scoped else None)
+
+    return {
+        'active_convergence': fetch(True, True, False),
+        'active_detail': fetch(True, False, True),
+        'history_convergence': fetch(False, True, False),
+        'history_detail': fetch(False, False, True),
+    }
 
 
 # ---------------------------------------------------------------------------
