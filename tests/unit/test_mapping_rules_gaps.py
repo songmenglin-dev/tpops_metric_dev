@@ -316,10 +316,13 @@ def test_sort_rows_compares_timestamps_by_time_not_by_text():
 
 
 def test_sort_rows_falls_back_to_text_order_for_the_two_digit_offset_format():
-    """留档里的 ``+08``（两位时区）在 Python 3.7 的 ``%z`` 下解析不了。
+    """留档里的 ``+08``（两位时区）格式。
 
-    当前行为：按**文本**比（同一偏移下与按时间一致）。这条测试把现状钉住，
-    便于将来改时间戳格式时看到差异。
+    **2026-11-23 更新**：``mapping/rules_sorting.py`` 已加**两位时区归一化**
+    （``+08`` → ``+08:00``），所以这一列现在**按时间**比，不再退化成字典序。
+    本用例的**断言不变**（同一偏移下字典序与时间序一致），
+    但它现在守的是「归一化后按时间比的结果仍然正确」。
+    归一化本身的守卫见 ``tests/unit/test_rules_sorting_offsets.py``。
     """
     rows = [
         {'ts': '2026-11-18 16:27:07.557567+08'},

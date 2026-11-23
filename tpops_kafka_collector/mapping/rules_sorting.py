@@ -17,6 +17,7 @@
 与 SQL 自己的 ``ORDER BY``（NULL 升序在后）正好相反。
 """
 import datetime
+import re
 from typing import Any, Callable, List, Mapping, Optional, Sequence
 
 from .rules_context import to_number
@@ -25,6 +26,20 @@ from .rules_context import to_number
 TIMESTAMP_FORMATS = (
     '%Y-%m-%d %H:%M:%S.%f%z',
     '%Y-%m-%d %H:%M:%S%z',
+)
+
+# 两位时区（平台实测的 ``+08``）→ 补成 ``+08:00``。
+#
+# Python 3.7.9 的 ``_strptime`` 里 ``%z`` 的正则是
+# ``(?P<z>[+-]\d\d:?[0-5]\d(:?[0-5]\d(\.\d{1,6})?)?|Z)`` —— 必须匹配到时区，
+# 且至少四位数字，``+08`` 匹配不上 → ``strptime`` 直接 ``ValueError``。
+# 不归一化的话，平台的**真实数据**一条都解析不了，排序会退化成**字典序**：
+# 同偏移下碰巧一致，**混偏移**时整列判成 text（或解析不了的行被当成最小时间）
+# → **Top N 取错行，且不报任何错**。
+#
+# 锚在「日期 + 时间」之后，避免把日期末尾的 ``-18`` 误当成偏移。
+_TWO_DIGIT_OFFSET = re.compile(
+    r'^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?)([+-])(\d{2})$'
 )
 
 # 最小时间（排序兜底）—— 带时区，才能和带时区的时间戳比较。
@@ -99,14 +114,23 @@ def _timestamp_key(value: Any) -> datetime.datetime:
 def parse_timestamp(text: str) -> Optional[datetime.datetime]:
     """解析 GaussDB 的时间戳文本；解析不了给 None。
 
+    **先归一化两位时区**（``+08`` → ``+08:00``）——
+    Python 3.7 的 ``%z`` 不认 ``+HH``，不归一化的话平台真实数据一条都解析不了。
+
     没有时区的按 UTC 处理（统一成 aware，避免 aware/naive 混比报错）。
     """
+    normalized = _normalize_offset(text.strip())
     for fmt in TIMESTAMP_FORMATS:
         try:
-            parsed = datetime.datetime.strptime(text, fmt)
+            parsed = datetime.datetime.strptime(normalized, fmt)
         except ValueError:
             continue
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=datetime.timezone.utc)
         return parsed
     return None
+
+
+def _normalize_offset(text: str) -> str:
+    """把结尾的**两位时区**补成 ``+HH:MM``（其余原样返回）。"""
+    return _TWO_DIGIT_OFFSET.sub(r'\1\2\3:00', text)

@@ -15,6 +15,7 @@ import logging
 from typing import Any, List, Optional, Tuple
 
 from .kafka.records import alarm_record, metric_record
+from .schedule import CHANNEL_ALARM
 from .scheduler_types import (
     DeliveryStats,
     TaskFailure,
@@ -84,7 +85,9 @@ class MessageDelivery:
             records.append(metric_record(message))
             keys.append(key)
         if not records:
-            if not outcome.messages:
+            if not outcome.messages and channel != CHANNEL_ALARM:
+                # **告警通道本来就不产出指标消息**（告警走 ``outcome.alarms``），
+                # 不排除它 → 每 30 秒一条无意义的 WARNING，会把真告警淹掉。
                 LOGGER.warning(
                     '本轮该组没有产出任何指标消息（空结果）—— channel=%s instance=%s',
                     channel, instance_id,
