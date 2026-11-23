@@ -29,9 +29,13 @@ import json
 import os
 
 from integration.test_collector_command_center_deltas import (
+    DELTA_AMOUNT_BY_NODE_NAME,
+    DELTA_CODES,
     ELAPSED_SECONDS,
     ROUND1_NOW_MS,
     DeltaCommandCenter,
+    _node_id_by_name,
+    _rates_by_node,
 )
 from regression.collector_support import (
     COMMAND_CENTER_CHANNEL,
@@ -139,6 +143,60 @@ def test_b_class_produces_every_providable_metric(mapping, nodes, manifest):
                      if rule.metric_code not in produced)
     # 留档里一条 ``AccessExclusiveLock`` 锁都没有 → 这个指标本来就没有值
     assert missing == ['gaussdb.locks.accessexclusive[{#DBNAME}]'], missing
+
+
+def test_every_master_computes_its_own_rate_in_the_regression_layer(
+    mapping, nodes, manifest
+):
+    """回归层也要能拦住「差分基线跨 master 污染」（wave-2b 遗留 Minor **M-N4**）。
+
+    **为什么回归层要补这条**：wave-2b 的 C-3 就是这种形态 ——
+    把差分作用域去掉后，``tests/regression`` 仍然全绿（B 类回归只断言
+    「产出的指标码集合」，**不比对各 master 的速率**）。
+    而 **wave 4 的交付文档验收只跑 ``tests/regression``** ——
+    守卫缺口留着就等于交付物缺一道闸。
+
+    **口径**与 ``tests/integration/test_collector_command_center_deltas.py``
+    同源：三个 master 的累计计数增量被故意设成 6000 / 3000 / 9000，
+    基线共享时三个速率**全错**（实测 100/50/150 会变成 50/None/200），
+    基线按节点隔离后才各归各。
+    """
+    probe = load_json(MERGED_PROBE_PATH)['nodes']
+    cc = DeltaCommandCenter(probe, nodes)
+    state = {'round': 0}
+
+    def _clock():
+        return ROUND1_NOW_MS + state['round'] * ELAPSED_SECONDS * 1000
+
+    collector = CommandCenterCollector(
+        client=None, mapping=mapping, command_center=cc,
+        deltas=CounterDeltaStore(), clock=_clock,
+    )
+    # 第一轮只建基线，第二轮才算得出速率。
+    for index in (0, 1):
+        state['round'] = index
+        cc.round_index = index
+        result = collector.collect(instance_id=INSTANCE_ID)
+
+    rates = _rates_by_node(result.messages)
+    node_id_by_name = _node_id_by_name(nodes)
+    expected_by_node = {}
+    for node_name, amount in DELTA_AMOUNT_BY_NODE_NAME.items():
+        node_id = node_id_by_name.get(node_name)
+        if node_id:
+            expected_by_node[node_id] = amount // ELAPSED_SECONDS
+
+    assert len(expected_by_node) == 3, expected_by_node
+    for node_id, expected in expected_by_node.items():
+        values = rates.get(node_id) or {}
+        assert values, '节点 %s 一条差分指标都没产出' % node_id
+        for code in DELTA_CODES:
+            assert values.get(code) == expected, (
+                node_id, code, values.get(code), expected,
+            )
+    # 三个 master 的速率必须**互不相同** —— 否则这条断言抓不到「基线被共享」。
+    distinct = set(expected_by_node.values())
+    assert len(distinct) == 3, expected_by_node
 
 
 
