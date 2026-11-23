@@ -82,15 +82,23 @@ Scheduler                   → 3.1 已完成
 ```json
 {
   "version": 1,
-  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-  "instance_name": "gauss-6374",
-  "mode": "Combined",
-  "engine_name": "gaussdbv5",
-  "engine_version": "V2.0-10.0.0",
-  "master_count": 3,
   "instances": [
-    {"instance_id": "...", "instance_name": "gauss-6374", "mode": "Combined"},
-    {"instance_id": "...", "instance_name": "gauss-75a2", "mode": "Ha"}
+    {
+      "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+      "instance_name": "gauss-6374",
+      "mode": "Combined",
+      "engine_name": "gaussdbv5",
+      "engine_version": "V2.0-10.0.0",
+      "master_count": 3
+    },
+    {
+      "instance_id": "c35b8d078cae4a9eb05d616ed5cf032fin14",
+      "instance_name": "gauss-75a2",
+      "mode": "Ha",
+      "engine_name": "gaussdbv5",
+      "engine_version": "V2.0-10.0.0",
+      "master_count": 1
+    }
   ],
   "discovered_at": "2026-11-23T04:00:00Z"
 }
@@ -99,19 +107,22 @@ Scheduler                   → 3.1 已完成
 **原子写**：与 `watermark.py` 同一套 —— 同目录临时文件 → `fsync` → `os.replace`。
 可以复用 `watermark.py` 里已有的原子写辅助函数。
 
-## 发现与选择规则（**不按 mode 筛选**）
+## 发现规则：**选择所有实例**
 
 ```
-1. 平台只有 1 个实例                    → 直接用
-2. 有多个实例 → 取「master 节点数最多」的那个
-   （理由：采集器的多 master 归集逻辑是按分布式拓扑写的；
-     节点清单用 GET /rds/gaussdb/v3/instances/{id}/key-view-execute-node 取）
-3. 若多个实例的 master 数相同 → 取实例列表的第一个，
-   但必须记 WARNING 并列出全部候选（不静默）
-4. 平台没有实例 → 明确报错，指明「实例列表为空」
+1. 取平台实例列表（GET /rds/v3.2/instances）
+2. **全部实例都要采集** —— 不挑、不筛、不取第一个
+3. 平台没有实例 → 明确报错，指明「实例列表为空」
 ```
 
-**⚠️ 「master 节点数」的口径 —— 按 `node_id` 去重后计数，不是数条目数。**
+**这是用户明确的决定**：采集端面向「连什么平台都能跑」，
+一个平台上挂了几个实例就采几个，**不假设只有一个**。
+这与 `CLAUDE.md` 的原始设计一致：「命令中心是「instance_id + node_ids 下发」，
+无法一次带多实例 → 采集端**按实例循环**」。
+
+**不按 `mode` 筛选** —— `mode` 字段仍然**记录**在画像里（便于排查），但不参与选择。
+
+### ⚠️ 「master 节点数」的口径 —— 按 `node_id` 去重后计数，不是数条目数
 
 实测留档（分布式实例 `gauss-6374`）的节点清单：
 
@@ -125,45 +136,64 @@ master 的 6 条里，_0_0 / _0_1 / _0_2 各出现两次（一次 CN、一次 DN
 `tpops/command_center_nodes.py::_select_masters` 已经有现成的「挑 master + 按
 node_id 去重」逻辑 —— **复用它，不要另写一份**。
 
-参考值：分布式实例 = 3 个唯一 master；集中式实例 = 1 个 master DN。
+`master_count` 只是**记录**与**拓扑核对**用，不参与选择。
 
-**不要用 `mode == 'Combined'` 过滤** —— 用户已明确决定不按 mode 筛选。
-`mode` 字段仍然**记录**在画像里（便于排查），但不参与选择。
+## 多实例的键隔离（**必查**）
+
+采集多个实例时，下面这些键**必须能区分实例**，否则会互相覆盖：
+
+| 键 | 现状 | 结论 |
+|---|---|---|
+| 告警幂等键 | `alarm_idempotency_key(alarm_id, instance_id, first_alarm_time, status)` | ✅ **已含 instance_id** |
+| 指标幂等键 | `metric_idempotency_key(instance_id, metric_name, dimensions, timestamp)` | ✅ **已含 instance_id** |
+| `resourceName` | `{host_ip}_{node_id}`，node_id 来自**该实例**的节点清单 | ✅ **天然区分** |
+| 差分基线作用域 | `ScopedCounterDeltaStore(self._deltas, node_id)` | ⚠️ 同一平台 node_id 跨实例唯一，**但作用域应显式带上 instance_id** 更稳（`f'{instance_id}:{node_id}'`）—— 同一采集器对象循环多个实例时作用域缓存是共享的 |
+| **指标水位 `stream`** | 生产代码**尚未调用** `advance_metric`（水位推进归 wave 3 任务 3.1 的调度器） | ⚠️ **`stream` 键的约定还没定 —— 本次就要定成含 instance_id**，例如 `f'{instance_id}:{channel}'` |
+| **告警水位 `stream`** | 同上 | ⚠️ 同上，按实例分开 |
+
+> 这两条水位键**现在是空白**（测试里用的是 `'instance-a'` / `'b-class'` 这类随意取值），
+> 正好趁 3.1 还没写把约定定下来。
 
 ## 固化后不再自动重新发现
 
 ```
 启动时：
   固化文件存在  → 读它（**以文件为准**），但顺手核对：
-                     · 该 instance_id 在平台实例列表里还在吗？
+                     · 画像里的每个 instance_id 在平台实例列表里还在吗？
+                     · 平台列表里有没有**新增**的实例？
                      · engine_name 变了吗（平台升级 → 指标码可能变）？
                    核对不过 → 明确记 ERROR / 告警，**不要静默继续**
-  固化文件不存在 → 发现 → 选择 → 原子写入固化文件
+  固化文件不存在 → 发现 → 记录全部实例 → 原子写入固化文件
 ```
 
 **为什么不能每轮重新发现**：平台实例列表的顺序可能变，也可能客户后来加了实例。
-每轮重新发现会导致**静默切换目标实例** —— 水位与差分基线全部错位，
+每轮重新发现会导致**静默增删采集目标** —— 水位与差分基线全部错位，
 而且是「不报错但数据错」的形态。
 
-**文件可手工编辑**：运维要换实例，改这个文件即可（下一轮启动生效），
+> **新增实例怎么办**：平台多了一个实例，画像里没有 —— 记 **WARNING**
+> 并提示「删除画像文件可重新发现」，**但不自动加**（加了就等于每轮重新发现）。
+> 这与「新增实例要人工确认」是一回事。
+
+**文件可手工编辑**：运维要增删实例，改这个文件即可（下一轮启动生效），
 **不用改代码、不用改配置**。这就是「固化」的价值。
 
 ## 核对内容
 
 | 核对项 | 不一致时 |
 |---|---|
-| `instance_id` 不在平台实例列表里 | ERROR：该实例已不存在（被删/重建？），需人工确认 |
+| 画像里的某个 `instance_id` 不在平台实例列表里 | ERROR：该实例已不存在（被删/重建？），需人工确认 |
+| 平台列表里有**画像没记录**的实例 | WARNING：平台新增了实例，画像需人工更新（删画像文件可重新发现） |
 | `engine_name` 与画像记录的不同 | WARNING：平台已升级，平台指标码可能已变，映射表可能需要重新生成 |
 | `master_count` 与画像记录的不同 | WARNING：拓扑变了（扩缩容），多 master 归集口径要复核 |
 
 ## 要有守卫测试
 
-- 「实例列表只有一个」→ 选中它并写入画像
-- 「实例列表有多个且 master 数不同」→ 选中 master 最多的那个
-- 「实例列表有多个且 master 数相同」→ 取第一个 + 记 WARNING（**断言有这条日志**）
+- 「实例列表只有一个」→ 画像里记它
+- 「实例列表有多个」→ **画像里全部都记**（**断言条数与顺序都对**）
 - 「实例列表为空」→ 抛明确异常
 - 「固化文件已存在」→ **不重新发现**（断言平台列表接口**没被调用**）
-- 「固化文件的 instance_id 不在平台列表里」→ 记 ERROR
+- 「画像里的 instance_id 不在平台列表里」→ 记 ERROR
+- 「平台列表有画像没记录的实例」→ 记 WARNING
 - 原子写：中途失败不会留下半截 JSON
 
 ## 硬约束

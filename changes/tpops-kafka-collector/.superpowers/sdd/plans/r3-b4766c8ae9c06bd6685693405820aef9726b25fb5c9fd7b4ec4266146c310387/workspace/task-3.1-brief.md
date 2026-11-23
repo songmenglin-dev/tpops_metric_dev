@@ -45,6 +45,43 @@ class ScheduleEntry:
 | `diagnostic` | 300 秒 | 5 分钟档的 C 类指标 |
 | `instance` | 3600 秒 | 1 小时档的 D 类指标 |
 
+## ⚠️ 每个任务组内部要**按实例循环**
+
+采集端面向「连什么平台都能跑」—— 一个平台上挂了几个实例就采几个
+（实例清单来自 wave-3 任务 3.3 的**平台画像固化文件** `platform_profile.json`）。
+
+```
+一个 tick 内：
+  1. 找出本 tick 到期的任务组
+  2. 每个到期的组，对画像里的**每个实例**执行一次
+     （命令中心无法一次带多实例 —— 「instance_id + node_ids 下发」）
+  3. 全部完成 → 汇总 → 推进水位
+```
+
+**「按实例循环」在哪个层次做，有讲究**：
+
+| 做法 | 单 tick 墙钟 | 评价 |
+|---|---|---|
+| 组并发 → 组内实例串行 | max(组耗时) × 实例数 | 2 个实例就翻倍，逼近 25 秒预算 |
+| **组 × 实例两维并发** | max(组耗时, 实例耗时) | ✅ 推荐 |
+
+60 秒档单轮墙钟 **P95 ≤ 25 秒** 是合同完成标准 —— 实例变多时只有两维并发才守得住。
+
+### 水位与基线的键**必须带 instance_id**
+
+多实例下这些键若不带实例就会互相覆盖：
+
+| 键 | 约定 |
+|---|---|
+| 指标水位 `stream` | `f'{instance_id}:{channel}'`（如 `83cd68f2…in14:command_center`） |
+| 告警水位 `stream` | `f'{instance_id}:alarm'` |
+| 差分基线作用域 | `f'{instance_id}:{node_id}'`（`ScopedCounterDeltaStore` 的 scope） |
+| 幂等键 | ✅ 已含 instance_id（`metric_idempotency_key` / `alarm_idempotency_key`） |
+
+> **`stream` 键的约定现在还是空白** —— 生产代码尚未调用 `advance_metric`
+> （水位推进就是本任务的职责），测试里用的是 `'instance-a'` / `'b-class'`
+> 这类随意取值。**本次就要把约定定死**，否则多实例下水位会互相覆盖。
+
 **周期必须表驱动**（`data/mapping/metric_rules.json` 的 `collect_cycle`），
 不写死。从映射表现算出的实际档位分布（实现时以实算为准）：
 
