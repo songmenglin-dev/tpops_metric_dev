@@ -139,7 +139,7 @@ def load_mapping(
 
 def validate_mapping(bundle: LoadedMapping) -> None:
     """跑完四类校验；有不通过的就抛 ``MappingError``（带完整差异清单）。"""
-    problems = []  # type: List[str]
+    problems: List[str] = []
     problems.extend(check_source_columns(bundle.metric_rules, bundle.observed))
     problems.extend(check_providable_coverage(bundle.metric_rules, bundle.customer_metrics))
     problems.extend(check_rule_entries(bundle.metric_rules, bundle.customer_metrics))
@@ -186,7 +186,7 @@ def _parse_customer_metrics(payload: Mapping[str, Any]) -> Tuple[CustomerMetric,
     items = payload.get('items')
     if not isinstance(items, list):
         raise ProtocolError('customer_metric_mapping.json 缺少 items 数组')
-    metrics = []  # type: List[CustomerMetric]
+    metrics: List[CustomerMetric] = []
     for item in items:
         code = item.get('customer_metric')
         if not code:
