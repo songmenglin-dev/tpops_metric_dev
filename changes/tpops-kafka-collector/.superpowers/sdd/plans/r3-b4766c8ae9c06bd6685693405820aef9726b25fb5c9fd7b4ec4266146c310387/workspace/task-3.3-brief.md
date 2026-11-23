@@ -59,11 +59,102 @@
 config.load_config()        → 启动期校验（缺变量即退出，不发任何请求）
 WatermarkStore.load()       → 从磁盘恢复水位 / 差分基线 / 幂等键
 TPOPSClient                 → mini-token 认证（惰性，首次请求时才认证）
+PlatformProfile.load_or_discover()  → 见下节：实例信息从平台发现并固化
 MessageProducer             → PLAINTEXT，指标/告警分 Topic
 五个采集器                   → monitor / command_center / diagnostic / instance / alarm
 HealthServer                → 3.2 已完成
 Scheduler                   → 3.1 已完成
 ```
+
+---
+
+# 平台画像固化文件（`platform_profile.json`）
+
+## 目标
+
+**实例 ID 不走配置** —— 采集端连上 TPOPS 后**自己发现**，然后**固化到文件**，
+之后以文件为准。这样换平台、换实例都不用改配置或改代码。
+
+## 文件位置与格式
+
+放在 `state_dir` 下（`STATE_DIR` 配置项，默认 `./state`）：
+
+```json
+{
+  "version": 1,
+  "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
+  "instance_name": "gauss-6374",
+  "mode": "Combined",
+  "engine_name": "gaussdbv5",
+  "engine_version": "V2.0-10.0.0",
+  "master_count": 3,
+  "instances": [
+    {"instance_id": "...", "instance_name": "gauss-6374", "mode": "Combined"},
+    {"instance_id": "...", "instance_name": "gauss-75a2", "mode": "Ha"}
+  ],
+  "discovered_at": "2026-11-23T04:00:00Z"
+}
+```
+
+**原子写**：与 `watermark.py` 同一套 —— 同目录临时文件 → `fsync` → `os.replace`。
+可以复用 `watermark.py` 里已有的原子写辅助函数。
+
+## 发现与选择规则（**不按 mode 筛选**）
+
+```
+1. 平台只有 1 个实例                    → 直接用
+2. 有多个实例 → 取「master 节点数最多」的那个
+   （理由：采集器的多 master 归集逻辑是按分布式拓扑写的；
+     节点清单用 GET /rds/gaussdb/v3/instances/{id}/key-view-execute-node 取）
+3. 若多个实例的 master 数相同 → 取实例列表的第一个，
+   但必须记 WARNING 并列出全部候选（不静默）
+4. 平台没有实例 → 明确报错，指明「实例列表为空」
+```
+
+**不要用 `mode == 'Combined'` 过滤** —— 用户已明确决定不按 mode 筛选。
+`mode` 字段仍然**记录**在画像里（便于排查），但不参与选择。
+
+## 固化后不再自动重新发现
+
+```
+启动时：
+  固化文件存在  → 读它（**以文件为准**），但顺手核对：
+                     · 该 instance_id 在平台实例列表里还在吗？
+                     · engine_name 变了吗（平台升级 → 指标码可能变）？
+                   核对不过 → 明确记 ERROR / 告警，**不要静默继续**
+  固化文件不存在 → 发现 → 选择 → 原子写入固化文件
+```
+
+**为什么不能每轮重新发现**：平台实例列表的顺序可能变，也可能客户后来加了实例。
+每轮重新发现会导致**静默切换目标实例** —— 水位与差分基线全部错位，
+而且是「不报错但数据错」的形态。
+
+**文件可手工编辑**：运维要换实例，改这个文件即可（下一轮启动生效），
+**不用改代码、不用改配置**。这就是「固化」的价值。
+
+## 核对内容
+
+| 核对项 | 不一致时 |
+|---|---|
+| `instance_id` 不在平台实例列表里 | ERROR：该实例已不存在（被删/重建？），需人工确认 |
+| `engine_name` 与画像记录的不同 | WARNING：平台已升级，平台指标码可能已变，映射表可能需要重新生成 |
+| `master_count` 与画像记录的不同 | WARNING：拓扑变了（扩缩容），多 master 归集口径要复核 |
+
+## 要有守卫测试
+
+- 「实例列表只有一个」→ 选中它并写入画像
+- 「实例列表有多个且 master 数不同」→ 选中 master 最多的那个
+- 「实例列表有多个且 master 数相同」→ 取第一个 + 记 WARNING（**断言有这条日志**）
+- 「实例列表为空」→ 抛明确异常
+- 「固化文件已存在」→ **不重新发现**（断言平台列表接口**没被调用**）
+- 「固化文件的 instance_id 不在平台列表里」→ 记 ERROR
+- 原子写：中途失败不会留下半截 JSON
+
+## 硬约束
+
+- 画像文件**不含凭据**（凭据只走环境变量）
+- 画像文件里的 `discovered_at` 用 **UTC ISO 格式**
+- 不可变数据：内部用 frozen dataclass 承载，读出来即不可变
 
 ## 硬约束
 
