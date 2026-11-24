@@ -499,11 +499,100 @@ Token Plan 配额上限（HTTP 429）把 wave-2b 的 6 个实施方同时打断�
 
 ## Wave 3 —— wave-3-scheduling-testing（serial）
 
-- [ ] 3.1 调度器
+- [x] 3.1 调度器（`2ac93e1`）
 - [x] 3.2 健康端点（`b33ef96`，17 例）
-- [ ] 3.3 入口装配与信号处理
+- [x] 3.3 入口装配与信号处理（`bee0bc6`）
 - [x] 3.4 回归夹具与期望值表（`7343c0b`，225 例）
-- [ ] 3.5 全量测试与门禁
+- [x] 3.5a 映射层覆盖率补测（`2711bc4`，92.4% → 99.9%）
+- [x] 3.5b 全量门禁：杀进程重启演练 / M-N4 / P95 实测（`93f5b4c`）
+- [ ] **wave-3 修复轮**（见下节，2026-11-24 起）
+
+### 2026-11-24 会话 —— wave-3 独立审查（**fail**）
+
+上一会话的账本快照停在「3.1 / 3.3 / 3.5 未完成」—— 实际这三个任务**早已落盘**，
+只是复选框没勾。补记：3.1 = `2ac93e1`、3.5a = `2711bc4`、3.3 = `bee0bc6`、3.5b = `93f5b4c`。
+**教训**：账本复选框是**人工**维护的，与 git 历史会漂移 —— 下次先 `git log` 对账再报进度。
+
+**审查范围**：base `356d52f`（wave-2b pass receipt 的 head）→ head `3a71cb6`。
+派了**三个互不通气的独立审查方**（合同与规格合规 / 数据正确性+变异验证 / 代码质量与范围），
+合并为总报告 `.superpowers/sdd/reviews/wave-3-scheduling-testing.md`。
+
+**结论：verdict = fail**（Critical 0 / Important 9 / Minor 17）。
+**已签 fail receipt**：`ssf execution review --wave wave-3-scheduling-testing --base 356d52f --head 3a71cb6`。
+
+#### ⚠️ 三份分报告结论不一致 —— 控制器裁定采信 fail
+
+| 维度 | 结论 | Important |
+|---|---|---|
+| 合同与规格合规 | **pass** | 0 |
+| 代码质量与范围 | fail | 6 |
+| 数据正确性 + 变异验证 | fail | 4 |
+
+合同维度的 5 条完成标准**确实全部通过**（1560 passed / TOTAL 95.12% / 映射层 99.92% /
+py37 147 passed / ruff 0 / P95 15.017s / 真进程 SIGTERM 退出码 0）。
+但**完成标准本身没覆盖**四类风险：在途请求被放弃时的退出、外部调用数的真实性、
+告警通道的守卫、非优雅退出后的续传。
+→ **「pass 的判定范围比实际风险面窄」，不是「没问题」。** 这条要记住：
+**完成标准通过 ≠ 波次通过**，完成标准是必要条件不是充分条件。
+
+#### 9 条 Important（合并去重后）
+
+**行为缺陷（实现与已批准的口径不符）**
+
+| # | 内容 | 位置 |
+|---|---|---|
+| A1 | **采集节奏 = 采集耗时 + 轮询间隔**，实际比客户档位长 ~29%（30 秒档实测 38.7s、60 秒档实测 77s）→ **82/98 条指标欠服务**，且无任何信号 | `lifecycle.py:93-97`（偏离 3.1 简报「sleep 到下一个 tick 边界」） |
+| A2 | **「超时 30 秒放弃等待 → 退出码 0、不挂死」在真实路径不成立** —— py3.7 的 `atexit.register(_python_exit)` 会 `t.join()` 线程池工作线程；实测进程被拖 11s，生产最多拖 `TPOPS_REQUEST_TIMEOUT=60` 秒 | `lifecycle.py:100-121` + `scheduler.py:232` |
+| A3 | **「单轮外部调用数」是写死的常数**（A 类报 2 实为 13、B 类报页数少算 3 倍）→ 真实已 >42 却报 20 → **42 次预算告警永不触发** | `executors.py:55-59` / `scheduler_report.py:27` |
+| A4 | **节点清单只在启动取一次，取失败就永久降级 `resourceName`**（ERROR 不带堆栈、该路径零测试） | `main.py:222-243` |
+| A5 | **运行期从不落盘水位/幂等键**（唯一 `save()` 在退出路径）→ SIGKILL/OOM 后丢整个进程生命周期的去重状态；B 类 82 条快照指标键含采集时刻 → **客户侧也无法去重** | `lifecycle.py:156-161` |
+
+**守卫缺失（当前行为对，但没有守卫 —— 一次改动就静默劣化）**
+
+| # | 内容 | 位置 |
+|---|---|---|
+| B1 | 告警通道「投递失败不推进告警水位」零守卫 → 变异 M11 全量仍绿 → **告警静默丢失** | `scheduler_delivery.py:134-139` |
+| B2 | 告警幂等去重（批内 `seen` + 跨轮 `has_key`）零守卫 → 变异 M14 全量仍绿 → **告警重复投递** | `scheduler_delivery.py:121-129` |
+| B3 | 三条「保命」分支零覆盖：`_tick_safely`（主循环最后一道防线）/ 装配失败退 3 / `/readyz`「跑了但全挂」 | `lifecycle.py:124-129`、`main.py:266/268/280/304-306` |
+
+**硬约束**
+
+| # | 内容 | 位置 |
+|---|---|---|
+| C1 | `platform_profile.reconcile` **55 行** > 50 行（全包唯一越线函数）；实施方报告称「最长 49 行」不实 | `platform_profile.py:243-298` |
+
+#### 变异验证（15/15，沙箱 `/tmp`，还原后均重跑全量）
+
+必做 7 条里 **M1/M2/M3/M5/M6/M7 全部变红**（守得住）；
+**M4 不可区分**（`put_baseline` 与 `import_baselines_from` 键形状完全相同 → 控制器口径 #2 的理由与实现不符）；
+**M11 / M14 全量仍绿** → B1 / B2 两条守卫为假。
+
+#### 控制器独立复核过的关键结论（不照抄分报告）
+
+- py3.7.9 的 `concurrent.futures.thread` 确有 `atexit.register(_python_exit)` + `t.join()`（conda env 实测源码）；
+- `fetch_metric_catalog` 确系每轮对 12 个分组码各发一次 GET、无缓存（`tpops/metrics.py:362-367`）；
+- `scheduler_delivery.py` 未覆盖行 = `124, 127, 134-139`，**与 M11/M14 的盲区完全吻合**；
+- `platform_profile.reconcile` 确系 55 行，且是全包唯一越线函数。
+
+#### 修复轮分组（2026-11-24 派发，文件归属严格不重叠）
+
+| 组 | 覆盖 | 负责文件 |
+|---|---|---|
+| **R-A 运行时** | A1 A2 A4 A5 B3 | `lifecycle.py` `main.py` `scheduler.py` + `tests/unit/test_scheduler.py` `tests/integration/test_main.py` `tests/integration/test_kill_restart_drill.py` 新建 `tests/unit/test_lifecycle.py` |
+| **R-B 可观测性** | A3 + Minor 措辞 | `executors.py` `tpops/client.py` `tpops/metrics.py` `scheduler_report.py` + `tests/unit/test_client.py` `tests/unit/test_metrics_window.py` 新建 `tests/unit/test_executors.py` 新建 `tests/unit/test_scheduler_report.py` |
+| **R-C 守卫与结构** | B1 B2 C1 + Minor M1/M2/M3/M9 | `scheduler_delivery.py` `platform_profile.py` `scheduler_types.py` `mapping/rules_sorting.py` + 新建 `tests/unit/test_scheduler_alarm_guards.py` `tests/unit/test_platform_profile.py` `tests/unit/test_package_boundary.py` `tests/unit/test_rules_sorting_offsets.py` |
+
+**控制器定案的口径**（实施方照做，不重新设计）：
+
+1. **A1**：对齐 tick 边界（本轮起点 `t0`，睡 `max(0, interval - (now - t0))`）；超时不堆积、不累积漂移。
+2. **A2**：`scheduler._collect_all` 改成显式 `pool.shutdown(wait=False)`；退出路径在「水位落盘 + producer flush」完成后**显式 `os._exit(0)`**。
+3. **A4**：节点清单失败**退避重试 3 次** → 仍失败则**该实例不参与采集**（ERROR + `exc_info=True`）；
+   **全部**实例失败 → **启动失败**（非 0 退出码）。**不引入每轮重取**（会与 R-B 的调用计数口径打架）。
+4. **A5**：**每轮 tick 正常结束后** `watermark.save()` 一次（放 lifecycle 层，保持 scheduler 纯粹）→ 崩溃最多丢一轮；
+   另补 **SIGKILL 版**杀进程演练。
+5. **A3**：真实 HTTP 计数（线程安全、含重试）+ 目录按轮缓存 + 各通道报真实值。
+   **42 次预算保持不变**（改规格会作废前四个 receipt）—— 若实测仍超 42，由控制器裁决，**实施方不得自行改 42 或改规格**。
+
 
 > **⚠️ 治理偏差记录**：3.2 与 3.4 是 2026-11-20 那次会话**在 wave-2b 审查未签发
 > 的情况下提前开工**的（`ssf execution show` 当时显示 wave-3 `eligible: false`）。
