@@ -1034,7 +1034,10 @@ def test_deploy_exit_codes_exist_in_the_production_code():
     )
     assert real, '生产代码里没有 EXIT_* 常量了？—— 若改名，把这条守卫一起改'
     text = _read(DEPLOY_DOC_PATH)
-    quoted_codes = set(int(m) for m in re.findall(r'退出码\s*(\d+)', text))
+    # 文档里退出码常写成**加粗**的（``退出码 **2**``）—— 先去掉 markdown 强调标记
+    # 再取数字，否则最显眼的那几处声明根本匹配不到（第二轮复审 M4 的半个洞）
+    plain = text.replace('*', '')
+    quoted_codes = set(int(m) for m in re.findall(r'退出码\s*(\d+)', plain))
     assert quoted_codes, '部署说明里一个退出码都没提 —— 格式变了？'
     unknown = quoted_codes - real
     assert not unknown, (
@@ -1044,27 +1047,64 @@ def test_deploy_exit_codes_exist_in_the_production_code():
 
 
 def test_deploy_required_sections_are_present():
-    """部署说明的**必备小节**不能被删掉。
+    """部署说明的**必备小节**不能被删掉（标题在 **且** 正文非空）。
 
-    第二轮复审 M5：整节删掉「优雅退出」，守卫全绿。
+    第二轮复审 M5 的三个叠加洞：
+      (a) 只做标题子串匹配；
+      (b) ``startswith('#')`` 把 ``` 围栏里的 **shell 注释**（``# 1) 拷贝产物``）
+          当成章节标题 —— 实测删掉整节后守卫报的却是别的章节缺失；
+      (c) **只查标题不查正文** —— 删掉整节「运行期文件」仍全绿。
+    现在：先剥掉代码围栏，再要求「标题存在 **且** 该节正文非空」。
     """
     text = _read(DEPLOY_DOC_PATH)
-    # 只认**章节标题行**（以 # 开头）—— 正文里提一嘴不算有这一节
+    stripped = _strip_code_fences(text)
+    lines = stripped.splitlines()
     headings = [
-        line.lstrip('#').strip()
-        for line in text.splitlines()
+        (index, line.lstrip('#').strip())
+        for index, line in enumerate(lines)
         if line.startswith('#')
     ]
     required_sections = (
-        '环境变量', '启动', '优雅退出', '状态目录', '健康检查', '日志', '排障',
+        '环境变量', '部署步骤', '启动', '优雅退出', '运行期文件',
+        '健康检查', '日志', '排障',
     )
-    missing = [
-        name for name in required_sections
-        if not any(name in heading for heading in headings)
-    ]
-    assert not missing, (
-        '部署说明缺少必备小节（标题行里找不到）：%s' % '、'.join(missing)
-    )
+    problems = []
+    for name in required_sections:
+        matched = [
+            index for index, heading in headings if name in heading
+        ]
+        if not matched:
+            problems.append('%s（缺这一节）' % name)
+            continue
+        # 该节的正文：从标题行到下一个标题行之间，必须有内容
+        bodies = []
+        for index in matched:
+            end = len(lines)
+            for other, _ in headings:
+                if other > index:
+                    end = other
+                    break
+            body = [
+                l for l in lines[index + 1:end]
+                if l.strip() and not l.startswith('#')
+            ]
+            bodies.append(len(body))
+        if not any(count > 0 for count in bodies):
+            problems.append('%s（标题在但正文是空的）' % name)
+    assert not problems, '部署说明的必备小节有问题：%s' % '、'.join(problems)
+
+
+def _strip_code_fences(text):
+    """去掉 ``` 围起来的代码块（里面的 ``#`` 注释不是章节标题）。"""
+    out = []
+    inside = False
+    for line in text.splitlines():
+        if line.strip().startswith('```'):
+            inside = not inside
+            continue
+        if not inside:
+            out.append(line)
+    return '\n'.join(out)
 
 
 def test_value_rule_column_matches_the_mapping_table():
