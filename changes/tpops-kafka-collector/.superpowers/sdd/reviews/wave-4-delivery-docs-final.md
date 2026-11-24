@@ -9,7 +9,7 @@
 > - `workspace/wave4-repair-report.md`（两轮修复的实施报告）
 
 - **波次**：`wave-4-delivery-docs`
-- **审查范围**：`15a076b → 2650399` → `9860bac` → `2a08501`
+- **审查范围**：`15a076b → 2650399` → `9860bac` → `2a08501` → `308ad55`
 - **结论**：**verdict = pass**
 - **计数**：**Critical 0 / Important 0（未闭环项）**
 
@@ -126,6 +126,6 @@ tools/build_delivery_docs.py --check           三份「一致」，exit 0
 
 ```
 ssf execution review changes/tpops-kafka-collector \
-  --wave wave-4-delivery-docs --base 9860bac --head 2a08501 \
+  --wave wave-4-delivery-docs --base 2a08501 --head 308ad55 \
   --report .superpowers/sdd/reviews/wave-4-delivery-docs-final.md --verdict pass
 ```
