@@ -806,25 +806,25 @@ def test_unconsumed_env_vars_are_disclosed_as_inert():
     """
     expected = config_env_vars()
     unconsumed = _unconsumed_config_keys(expected)
+    # **「读了但没有行为效果」**的一类：值确实被读出来传给了库，但那个参数
+    # 在当前用法下不起作用 —— 自动判据看不出来，只能显式登记。
+    #   KAFKA_TOPIC_PARTITIONS → 传给 KafkaProducer(partitions=...)，但采集端
+    #   **不创建 Topic、也不校验分区数**，实际分区数由 broker 决定 → 改了没用。
+    unconsumed = set(unconsumed) | set(KNOWN_INERT_ENV_VARS)
     assert unconsumed, '没有空转变量了？—— 若已全部接上，把这条守卫删掉'
     text = _read(DEPLOY_DOC_PATH)
     for name in sorted(unconsumed):
         assert name in text, '配置项 %s 没被生产代码消费，部署说明里却没提' % name
-        line = _line_mentioning(text, name)
-        assert line, '部署说明里找不到 %s 所在的那一行' % name
+        # 提到它的行可能有好几处（前置条件表、变量表…），
+        # 只要**其中一处**写明了「改了也不生效」就算披露到位
+        lines = [l for l in text.splitlines() if name in l]
         inert_words = ('未消费', '未生效', '没有影响', '尚未被消费', '未被消费')
-        assert any(word in line for word in inert_words), (
+        assert any(
+            any(word in line for word in inert_words) for line in lines
+        ), (
             '配置项 %s 没被生产代码消费，但部署说明没说明「改了也不生效」：%s'
-            % (name, line.strip()[:120])
+            % (name, ' / '.join(l.strip()[:100] for l in lines[:2]))
         )
-
-
-def _line_mentioning(text, name):
-    """部署说明里提到某个变量名的那一行。"""
-    for line in text.splitlines():
-        if name in line:
-            return line
-    return ''
 
 
 def _unconsumed_config_keys(expected):
@@ -853,5 +853,256 @@ def _unconsumed_config_keys(expected):
             env_arg = value.args[1] if len(value.args) > 1 else None
             if isinstance(env_arg, ast.Str) and env_arg.s.isupper():
                 pairs.append((key.s, env_arg.s))
-    body = _production_source_text().replace(config_source, '')
-    return set(env_name for key, env_name in pairs if key not in body)
+    # 判据：**键名出现在哪些函数里**，这些函数**有没有被调用过**。
+    # 只看「名字出现过」会把「定义在没人调用的函数里」误判成已消费 ——
+    # 第二轮复审就是这么发现 KAFKA_TOPIC_PARTITIONS 漏网的
+    # （producer.ensure_topics() 里用了，但它**没有生产调用方**）。
+    defined, called, usage = _production_function_usage()
+    unconsumed = set()
+    for key, env_name in pairs:
+        holders = usage.get(key) or set()
+        if not holders:
+            unconsumed.add(env_name)
+            continue
+        if any(name not in defined or name in called for name in holders):
+            continue          # 至少有一处是在**被调用**的函数里用 → 算消费
+        unconsumed.add(env_name)
+    return unconsumed
+
+
+def _production_function_usage():
+    """生产包里的函数定义、被调用的函数名，以及「配置键名 → 用到它的函数名」。"""
+    import ast
+    root = os.path.join(REPO_ROOT, 'tpops_kafka_collector')
+    defined = set()
+    called = set()
+    usage = {}
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d != '__pycache__']
+        for name in filenames:
+            if not name.endswith('.py'):
+                continue
+            path = os.path.join(dirpath, name)
+            with open(path, 'r', encoding='utf-8') as handle:
+                source = handle.read()
+            tree = ast.parse(source, filename=path)
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    defined.add(node.name)
+                    body = ast.dump(node)
+                    for key in re.findall(r"'([a-z][a-z0-9_]{3,})'", body):
+                        usage.setdefault(key, set()).add(node.name)
+                elif isinstance(node, ast.Call):
+                    func = node.func
+                    if isinstance(func, ast.Name):
+                        called.add(func.id)
+                    elif isinstance(func, ast.Attribute):
+                        called.add(func.attr)
+    return defined, called, usage
+
+
+# --------------------------------------------------------------------------
+# 6. 第二轮复审指出的 7 条 —— 全是「守卫守不住」的洞
+# --------------------------------------------------------------------------
+#
+# wave-4 第二轮复审结论：9 条**文档**发现已全部闭环（复审方自己重放生产流水线验过），
+# 但**守卫守不住** —— 首轮 6 条恒绿变异里 5 条仍绿，另有两处新守卫有洞。
+#
+# 下面这批守卫的共同点：**判据从「关键词」升级为「语义 / 真相源」**。
+#   关键词判断（「文本里有没有『组件』两个字」）挡不住语义错误
+#   （「所有组件求和后出一条」照样含「组件」）。
+
+#: A 类归集口径里**禁止**出现的表述（这些是语义错误的说法）
+_FORBIDDEN_A_COLLECTION = (
+    '合成一条', '求和后', '合并成一条', '汇总为一条', '聚合成一条',
+    '求和出一条', '合并后一条',
+)
+
+#: **「读了但没有行为效果」**的环境变量（自动判据看不出来，显式登记）。
+#: 见 ``test_unconsumed_env_vars_are_disclosed_as_inert`` 的说明。
+KNOWN_INERT_ENV_VARS = ('KAFKA_TOPIC_PARTITIONS',)
+
+
+def test_a_class_collection_forbids_synthetic_aggregation():
+    """A 类口径不得出现「合成/求和后出一条」这类**语义错误**的说法。
+
+    第二轮复审：上一版守卫只查「含不含『组件』」「含不含『每个 master 各出一条』」，
+    所以「组件级：所有组件求和后出一条」这种**完全相反**的说法能通过。
+    """
+    rows = builder.parse_metric_spec_rows(_read(SPEC_PATH))
+    a_rows = [r for r in rows if r.get('取数通道') == '监控指标接口']
+    assert a_rows, '口径说明里没有 A 类行 —— 守卫空转了？'
+    for row in a_rows:
+        code = (row.get('客户指标英文名') or '').strip('`')
+        text = row.get('归集口径') or ''
+        for bad in _FORBIDDEN_A_COLLECTION:
+            assert bad not in text, (
+                'A 类指标 %s 的归集口径出现了语义错误的说法「%s」：%s'
+                % (code, bad, text)
+            )
+
+
+def test_troubleshooting_log_quotes_check_every_fragment():
+    """排障表引用的日志：**每一个** ≥4 字的中文片段都必须在生产代码里存在。
+
+    第二轮复审：上一版只取**最长**的中文片段，<6 字的直接跳过 →
+    「命令中心 …… 重试后成功」（最长片段 5 字）能通过。
+    现在改成**逐片段**检查，阈值降到 4 字。
+    """
+    text = _read(DEPLOY_DOC_PATH)
+    quoted = re.findall(r'日志(?:报|有)?[「]([^」]{6,})[」]', text)
+    assert quoted, '排障表里一条日志引用都没解析到 —— 表格格式变了？'
+    universe = _production_string_literals()
+    missing = []
+    for quote in quoted:
+        for run in set(_cjk_runs(quote)):
+            if len(run) < 4:
+                continue
+            if run not in universe:
+                missing.append('%s（片段：%s）' % (quote, run))
+    assert not missing, (
+        '排障表引用了生产代码里不存在的日志片段：%s' % '；'.join(missing)
+    )
+
+
+def test_deploy_required_flags_match_the_config_source():
+    """部署说明的「必填」列必须与 ``config.py`` 的**必填判定**一致。
+
+    第二轮复审 M3：把 ``TPOPS_PASSWORD`` 的必填从「是」改成「否」，守卫全绿。
+    """
+    from tpops_kafka_collector.config import ConfigError  # noqa: F401
+    import tpops_kafka_collector.config as config_mod
+    required = _required_env_vars()
+    rows = _deploy_env_rows()
+    for row in rows:
+        name = (row.get('变量') or '').strip('`')
+        if not name:
+            continue
+        flag = (row.get('必填') or '').strip().replace('*', '').strip()
+        if name in required:
+            assert flag == '是', (
+                '环境变量 %s 在 config.py 里是必填（缺失即抛 ConfigError），'
+                '但部署说明写的是「%s」' % (name, flag)
+            )
+        else:
+            assert flag != '是', (
+                '环境变量 %s 在 config.py 里不是必填，部署说明却写「是」' % name
+            )
+    del config_mod
+
+
+def _required_env_vars():
+    """config.py 里**缺失即报错**的环境变量名（``_require`` / ``_servers``）。"""
+    import ast
+    config_path = os.path.join(REPO_ROOT, 'tpops_kafka_collector', 'config.py')
+    with open(config_path, 'r', encoding='utf-8') as handle:
+        tree = ast.parse(handle.read(), filename=config_path)
+    required = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+            continue
+        if node.func.id not in ('_require', '_servers'):
+            continue
+        for arg in node.args[1:2]:
+            if isinstance(arg, ast.Str):
+                required.add(arg.s)
+    return required
+
+
+def _deploy_env_rows():
+    """部署说明里的环境变量表行。"""
+    rows = []
+    for line in _read(DEPLOY_DOC_PATH).splitlines():
+        if not line.startswith('|'):
+            continue
+        cells = [c.strip() for c in line.strip('|').split('|')]
+        if len(cells) < 4 or not cells[0].startswith('`'):
+            continue
+        rows.append(dict(zip(('变量', '默认值', '必填', '说明', '改错的后果'), cells)))
+    return rows
+
+
+def test_deploy_exit_codes_exist_in_the_production_code():
+    """部署说明提到的退出码必须真实存在（``EXIT_*`` 常量）。
+
+    第二轮复审 M4：后果文案写错（比如退出码写成 4）没人发现。
+    """
+    from tpops_kafka_collector import main as main_mod
+    real = set(
+        value for name, value in vars(main_mod).items()
+        if name.startswith('EXIT_') and isinstance(value, int)
+    )
+    assert real, '生产代码里没有 EXIT_* 常量了？—— 若改名，把这条守卫一起改'
+    text = _read(DEPLOY_DOC_PATH)
+    quoted_codes = set(int(m) for m in re.findall(r'退出码\s*(\d+)', text))
+    assert quoted_codes, '部署说明里一个退出码都没提 —— 格式变了？'
+    unknown = quoted_codes - real
+    assert not unknown, (
+        '部署说明提到了代码里不存在的退出码：%s（真实退出码：%s）'
+        % ('、'.join(str(c) for c in sorted(unknown)), sorted(real))
+    )
+
+
+def test_deploy_required_sections_are_present():
+    """部署说明的**必备小节**不能被删掉。
+
+    第二轮复审 M5：整节删掉「优雅退出」，守卫全绿。
+    """
+    text = _read(DEPLOY_DOC_PATH)
+    # 只认**章节标题行**（以 # 开头）—— 正文里提一嘴不算有这一节
+    headings = [
+        line.lstrip('#').strip()
+        for line in text.splitlines()
+        if line.startswith('#')
+    ]
+    required_sections = (
+        '环境变量', '启动', '优雅退出', '状态目录', '健康检查', '日志', '排障',
+    )
+    missing = [
+        name for name in required_sections
+        if not any(name in heading for heading in headings)
+    ]
+    assert not missing, (
+        '部署说明缺少必备小节（标题行里找不到）：%s' % '、'.join(missing)
+    )
+
+
+def test_value_rule_column_matches_the_mapping_table():
+    """口径说明的「取值规则」列必须等于**从映射表重新推导**的文本。
+
+    第二轮复审 M2：把映射表里的 value_rule 改了（真相源变了），
+    文档没跟着变，守卫全绿。
+
+    判据不是「文档 == 生成器输出」（那只是自证），而是
+    **「文档 == 用当前映射表重新推导出的文本」** —— 真相源一变，
+    重新推导的结果就变，文档不跟着变就红。
+    """
+    rules = json.load(open(METRIC_RULES_PATH, 'r', encoding='utf-8'))['rules']
+    by_code = dict((r['metric_code'], r) for r in rules)
+    rows = builder.parse_metric_spec_rows(_read(SPEC_PATH))
+    checked = 0
+    for row in rows:
+        code = (row.get('客户指标英文名') or '').strip('`')
+        rule = by_code.get(code)
+        if rule is None or not rule.get('value_rule'):
+            continue
+        expected = builder.describe_value_rule(rule.get('value_rule'))
+        if not expected:
+            continue
+        text = (row.get('取值规则') or '').strip()
+        assert text == expected.strip(), (
+            '指标 %s 的取值规则列与映射表重新推导的结果不一致：\n'
+            '  文档：%s\n  推导：%s' % (code, text, expected)
+        )
+        checked += 1
+    assert checked, '一条都没核到 —— 守卫空转了？'
+
+
+def _rule_type_alias(rule_type):
+    """value_rule.type 的中文别名（文档里用的是人话）。"""
+    return {
+        'series_point': '时序',
+        'sum_column': '求和',
+        'delta_rate': '差分',
+        'counter_diff': '差分',
+    }.get(rule_type, rule_type)

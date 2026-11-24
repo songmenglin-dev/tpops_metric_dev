@@ -117,3 +117,70 @@ tools/build_delivery_docs.py --check           三份「一致」
 - 实施方在 429 中断前完成了生成器与三份文档的改造，**但没写报告、没写守卫**；
   本轮由控制器接手补齐守卫与报告，并对关键结论（A 类归集行为、通道周期、
   空转变量清单）**逐条自己核实**，未采信实施方或审查方的任何未经复核的数字。
+
+---
+
+## 六、第二轮复审的 7 条 Important（守卫层）—— 控制器接手修完
+
+第二轮复审结论：**fail（Critical 0 / Important 7）**，但
+**9 条文档发现已全部闭环**（复审方自己重放生产流水线验的：A 类 11 行
+`Tps`=3 / `QPS`=6 / `Standby_status`=9，98 行「实际产出频率」**全量**核对 0 处不符）。
+剩下的 7 条**全在守卫层** —— 文档是对的，但**守卫守不住它**。
+
+### 守卫为什么守不住（根因）
+
+首轮那 6 条恒绿变异里 5 条仍绿。两处新守卫各有一个洞：
+
+| 洞 | 事实 |
+|---|---|
+| 排障日志守卫 | 只取**最长**中文片段，<6 字的直接跳过 → 「命令中心 …… 重试后成功」（最长 5 字）能过 |
+| 空转变量守卫 | 按「名字出现过」判消费 → `producer.py:213` 的 `ensure_topics()` **没有生产调用方**，却被判成已消费 |
+| A 类守卫 | 纯关键词判断 → 「组件级：**所有组件求和后出一条**」这种语义错误能过 |
+
+**共同根因：判据停在「关键词」层，没有下沉到「真相源 / 语义」层。**
+
+### 修法（新增 6 条守卫 + 修 2 条）
+
+| 守卫 | 判据 | 挡住谁 |
+|---|---|---|
+| `test_a_class_collection_forbids_synthetic_aggregation` | 禁止出现「合成一条 / 求和后 / 合并成一条…」 | M10、语义错误 |
+| `test_troubleshooting_log_quotes_check_every_fragment` | **每一个** ≥4 字的中文片段都必须在源码里存在 | 洞1 |
+| `test_deploy_required_flags_match_the_config_source` | 「必填」列必须与 `config.py` 的 `_require`/`_servers` 判定一致 | M3 |
+| `test_deploy_exit_codes_exist_in_the_production_code` | 提到的退出码必须是代码里真实的 `EXIT_*` | M4 |
+| `test_deploy_required_sections_are_present` | 必备小节**必须以标题行存在**（正文提一嘴不算） | M5 |
+| `test_value_rule_column_matches_the_mapping_table` | 「取值规则」列必须等于**从映射表重新推导**的文本（不是「文档 == 生成器输出」那种自证） | M2 |
+| `test_unconsumed_env_vars_are_disclosed_as_inert`（修） | 消费判据改为**调用图**（键名只出现在**从未被调用**的函数里 → 未消费）+ 显式登记 `KNOWN_INERT_ENV_VARS`（读了但无行为效果的一类，自动判据看不出来） | 洞2 |
+
+### 变异电池（控制器自做，8 条）
+
+| 变异 | 结果 |
+|---|---|
+| 【基线】无变异 | **全绿** ✅ |
+| M2 改真相源 value_rule | 红 ✅ |
+| M3 必填 是→否 | 红 ✅ |
+| M4 退出码写错 | 红 ✅ |
+| M5 删掉「优雅退出」整节（含标题行） | 红 ✅ |
+| M9 删掉 `CMD_LIMIT` 的「未消费」披露 | 红 ✅ |
+| M10 生成器让 A 类写成「合成一条」 | 红 ✅ |
+| 洞1 排障表塞入代码里不存在的日志 | 红 ✅ |
+| 洞2 `KAFKA_TOPIC_PARTITIONS` 的披露被删 | 红 ✅ |
+
+**8/8 全部变红，基线全绿。**
+
+### 顺带记两条「守卫自己也要被验」的实例
+
+1. **py3.7.9 的 AST 里字符串是 `ast.Str` 不是 `ast.Constant`**（统一到 Constant 是 3.8 才做的）
+   —— 我第一版守卫用 `ast.Constant`，在目标解释器上**等于空转**。
+2. **副本污染**：变异电池第一版把仓库根的 `高斯DB-指标明细….xlsx` 与 `.env.example`
+   漏拷了（点文件 + 中文名），导致**每条变异都带三个固定的红** ——
+   差点让我把「污染」当成「守卫抓到」。**先跑基线**是变异电池的必要一步。
+
+### 实测（修复后）
+
+```
+pytest -q tests/unit/test_delivery_docs.py   40 passed
+pytest -q                                     1734 passed
+ruff check tpops_kafka_collector/             All checks passed
+pytest -q tests/test_py37_compat.py           156 passed
+tools/build_delivery_docs.py --check          三份「一致」
+```
