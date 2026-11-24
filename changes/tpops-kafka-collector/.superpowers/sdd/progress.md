@@ -735,6 +735,10 @@ py37 门禁只查**语法与 API 可用性**，查不出**语义在 3.7 上变�
 | T-26 | 「命令中心取数失败」靠 `CommandCenterCollectResult.pages == 0` 判定 —— **隐式契约**，采集器一改返回结构就断。要么显式化（加一个 `failed` 字段 / 异常），要么在采集器 docstring 里写死这条约定 | 收尾后的独立小变更 |
 | T-27 | `TpopsClient` 补一个**公开**的 `auth_ok` 属性 —— 健康探针现在读的是私有标志位（`_token` / `_auth_failed_at`）。探针已优先用公开属性，补上就自动切换 | 收尾后的独立小变更 |
 | T-28 | `tests/unit/test_scheduler.py` **852 行**，是仓库里最长的测试文件（此前最长 704 行）。拆分属纯整理 | 收尾后的独立小变更 |
+| T-29 | `ids.py:15` 与 `models.py:14` 的 docstring 仍指向**仓库根** `data/mapping/alarm_rules.json` —— 映射数据早已搬进包内 `mapping/data/` | 收尾后的独立小变更（wave-4 交付文档一并核对） |
+| T-30 | `tpops_kafka_collector/mapping/README.md:60-62` 仍写「映射表还没搬进包内」 —— 已过期 | **wave 4 交付文档** |
+| T-31 | **B 类快照指标（82/98 条）的幂等键含采集时刻** → 客户侧无法按值去重。这不是缺陷（快照口径本就是「每轮一个新采样点」），但**必须写进交付文档的口径说明**，否则客户会误以为重复 | **wave 4 交付文档** |
+| T-32 | `platform_profile.py` 现 **383 行**，距 400 行上限只剩 17 行 —— 后续任何改动都要先看行数 | 持续约束 |
 
 ### 控制器裁决 —— 任务 3.1 的 10 条偏离（D1~D10）
 
@@ -833,6 +837,49 @@ py37 门禁只查**语法与 API 可用性**，查不出**语义在 3.7 上变�
 **记一条口径**：平台的实例列表接口与节点清单接口**已经存在**
 （`tpops/instances.py::fetch_instances` / `fetch_instance_nodes`），
 本项不需要新建平台层能力，只是把 D 类采集器顺带取到的信息**独立成画像文件**。
+
+### 2026-11-24 修复轮 —— 三组并行，9 条 Important 全部闭环
+
+**分组**（文件归属严格不重叠）：R-A 运行时（`lifecycle.py` `main.py` `scheduler.py` + 新建 `scheduler_tasks.py` `node_targets.py`）
+/ R-B 可观测性（`executors.py` `tpops/client.py` `scheduler_report.py` + 新建 `tpops/call_tracking.py`）
+/ R-C 守卫与结构（`scheduler_delivery.py` `platform_profile.py` `scheduler_types.py` `mapping/rules_sorting.py` + 新建 `tests/unit/test_scheduler_alarm_guards.py`）。
+
+**提交**：`bb3b567`（审查工件 + fail 收据 + 账本）、`2305cea`（修复轮代码）。
+
+**门禁（控制器自跑，非采信实施方数字）**：`1683 passed` / `ruff All checks passed` /
+`py37 154 passed` / 最大文件 **399 行** / **无 >50 行函数** / `print` 计数 **0** / TOTAL 覆盖率 95%。
+
+#### 控制器独立复核（变异注入 —— 不采信实施方报告）
+
+| 守卫 | 注入的变异 | 结果 |
+|---|---|---|
+| B1 告警水位 | M11：告警失败分支里也推进水位 | 全量 1667 例里**只有这 1 例变红**（此前是唯一防线）；另 3 个 legacy 测试失败是 ad-hoc 拷贝的路径产物（回 worktree 跑 28 passed） |
+| A2 退出不挂死 | `os._exit` → `sys.exit` | 守卫红，报错原文「进程在放弃窗口内没有退出 —— 挂死了（atexit 的 join 把进程拖住了）」。真进程 + 真 ThreadPoolExecutor |
+
+#### 关键口径结论（原本悬着的那个问题，自己消解了）
+
+**规格里的「单轮外部调用数 ≤ 42」不用改、不用问客户** ——
+真实计数落地后**实测稳态 13 次/轮**（目录缓存冷启 26 次），**远低于 42** → 预算告警如实工作。
+告警历史暴涨时（5000 条）单通道 204 次、整轮 226 → **会真的触发 WARNING**（这正是守卫的意义）。
+→ **A3 没有演变成对外契约变更**，前四个波次的 receipt 不受影响。
+
+#### 修复轮的三条偏离（控制器已接受，理由成立）
+
+1. **新增 3 个生产文件**（`call_tracking.py` `scheduler_tasks.py` `node_targets.py`）——
+   理由成立：`client.py` 382 行、`scheduler.py` 483 行、`main.py` 401 行，再塞就要破 400 行红线。
+   拆完回到限制内（最大 399 行）。
+2. **`os._exit` 放在 `main.exit_process()` + `__main__` 块**，不在 `run()` 里 ——
+   `run()`/`main()` 会被测试**进程内调用**，放进去会当场杀掉 pytest 进程。
+3. **R-B 写了命令中心的私有属性 `command_center._client`**（装配层接线，行为不变）。
+
+#### 一条口径事实修正（控制器口径 #2）
+
+首轮审查的变异 #4「`import_baselines_from` → `put_baseline`」**不可区分**：
+`watermark.py:166-173` 的 `put_baseline` 存的键与 `import_baselines_from` **完全相同**
+（作用域本就在 `dimension_key` 里）→ **「`put_baseline` 会丢作用域」这句话不成立**。
+正确理由是「统一走整体搬运，避免两套写入路径」；真正可测的守卫是 M4b（落盘时别剥作用域，已有守卫）。
+→ 已登记，见下方 T 清单与 `scheduler.py` 的 docstring（待收尾时改）。
+
 
 ## Wave 4 —— wave-4-delivery-docs（serial）
 
