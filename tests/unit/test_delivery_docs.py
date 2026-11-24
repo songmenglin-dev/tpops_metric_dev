@@ -28,8 +28,13 @@ METRIC_RULES_PATH = os.path.join(
     REPO_ROOT, 'tpops_kafka_collector', 'mapping', 'data', 'metric_rules.json')
 
 #: 口径说明里必须非空的列
+#:
+#: 「刷新周期」已拆成两列：**声明周期**（客户指标库 / 映射表 ``collect_cycle``）
+#: 与**实际产出频率**（所属通道的节奏 —— 与生产调度代码同源）。
+#: 两列都要有，且**不能相等当成一回事**：声明周期只是口径声明，不是产出闸门。
 REQUIRED_SPEC_COLUMNS = ('客户指标英文名', '中文名', '取数通道', '来源',
-                         '取值规则', '刷新周期', '资源粒度', '归集口径')
+                         '取值规则', '声明周期', '实际产出频率',
+                         '资源粒度', '归集口径')
 
 #: 像指标名的串（用于「文档里不能出现不存在的指标」）
 METRIC_CODE_RE = re.compile(r'`((?:gaussdb|GAUSSDB)[^`]*)`')
@@ -593,3 +598,260 @@ def test_guard_detects_hardcoded_password_in_env_example():
     assert broken != text, '合成样本没改成 —— .env.example 的格式变了？'
     problems = check_env_example_secrets(broken)
     assert 'TPOPS_PASSWORD' in problems, '守卫没抓到 .env.example 里的硬编码口令'
+
+
+# --------------------------------------------------------------------------
+# 5. 「文档 == 实现代码」—— wave-4 首轮审查的核心缺口
+# --------------------------------------------------------------------------
+#
+# 上面那些守卫验的是「文档 == 生成脚本(映射表)」。
+# 但 wave-4 首轮审查的 Critical C-1 正是从这条缝里溜过去的：
+# 映射表里没有「A 类怎么归集」这条信息，生成器按自己的理解写，
+# 守卫再拿生成器当真相源 → **文档错了、守卫还是绿的**。
+#
+# 下面这几条守卫的真相源是**生产代码**：
+#   * A 类 / B 类的归集口径 → 与生产采集器的行为一致
+#   * 「实际产出频率」→ 与生产调度代码算出的通道周期一致
+#   * 排障表承诺的日志/退出码 → 生产代码里真的存在
+
+
+def _production_channel_periods():
+    """生产调度代码算出的通道周期（**不经过生成器**）。"""
+    from tpops_kafka_collector.mapping.loader import load_mapping
+    from tpops_kafka_collector.schedule import compute_channel_plans
+    mapping = load_mapping()
+    return dict(
+        (plan.channel, plan.interval_seconds)
+        for plan in compute_channel_plans(mapping)
+    )
+
+
+def test_a_class_collection_semantics_match_the_implementation(rules):
+    """A 类（监控指标接口）是「**逐组件各出一条**」，不是「每个 master 各出一条」。
+
+    wave-4 首轮审查的 **Critical C-1**：生成器只按 ``node_scoped`` 分支，
+    把 B 类的 master 口径套到了 A 类。实测 A 类是每条 series 一条消息
+    （``Standby_status`` 出 9 条 = 9 个 DN，不是 3 个 master）——
+    文档给客户的承诺与实现相反。
+    """
+    rows = builder.parse_metric_spec_rows(_read(SPEC_PATH))
+    a_rows = [r for r in rows if r.get('取数通道') == '监控指标接口']
+    assert a_rows, '口径说明里没有 A 类（监控指标接口）行 —— 守卫空转了？'
+    for row in a_rows:
+        code = (row.get('客户指标英文名') or '').strip('`')
+        text = row.get('归集口径') or ''
+        assert '组件' in text, (
+            'A 类指标的归集口径没提「组件」：%s —— 实现是每条 series 各出一条'
+            % code
+        )
+        assert '每个 master 各出一条' not in text, (
+            'A 类指标被写成「每个 master 各出一条」：%s —— 与实现相反'
+            % code
+        )
+
+
+def test_b_class_node_scoped_says_per_master(rules):
+    """B 类 ``node_scoped=true`` 的必须是「每个 master 各出一条」。
+
+    B 类与 A 类相反：合并 SQL 在每个 master 各跑一次，各 master 各自一条
+    （不合并、不求和）—— ``node_scoped=false`` 的只取第一个 master CN 的一条。
+    """
+    by_code = dict((rule['metric_code'], rule) for rule in rules)
+    rows = builder.parse_metric_spec_rows(_read(SPEC_PATH))
+    checked = 0
+    for row in rows:
+        code = (row.get('客户指标英文名') or '').strip('`')
+        rule = by_code.get(code)
+        if rule is None or not rule.get('node_scoped'):
+            continue
+        if (rule.get('source') or {}).get('source') != 'command_center_sql':
+            continue
+        text = row.get('归集口径') or ''
+        assert '每个 master 各出一条' in text, (
+            'B 类 node_scoped 指标的归集口径没写「每个 master 各出一条」：%s' % code
+        )
+        checked += 1
+    assert checked, '一条 B 类 node_scoped 指标都没核到 —— 守卫空转了？'
+
+
+def test_actual_output_frequency_matches_the_production_schedule():
+    """「实际产出频率」必须等于**生产调度代码**算出的通道周期。
+
+    声明周期（客户指标库的 ``collect_cycle``）**不是**产出闸门 ——
+    实现按通道到期执行，通道周期 = 该通道内最高需求档（最短周期）。
+    文档若把声明周期当成产出频率，就是给客户错误承诺（wave-4 首轮 I-1）。
+    """
+    periods = _production_channel_periods()
+    from tpops_kafka_collector.schedule import SOURCE_TO_CHANNEL
+    rows = builder.parse_metric_spec_rows(_read(SPEC_PATH))
+    checked = 0
+    for row in rows:
+        code = (row.get('客户指标英文名') or '').strip('`')
+        channel = row.get('取数通道')
+        seconds = periods.get(_channel_key(channel))
+        if seconds is None:
+            continue
+        assert _to_seconds(row.get('实际产出频率') or '') == seconds, (
+            '指标 %s 的「实际产出频率」与生产调度代码算出的通道周期（%s 秒）不一致'
+            % (code, seconds)
+        )
+        checked += 1
+    assert checked, '一条都没核到 —— 守卫空转了？'
+
+
+def _channel_key(label):
+    """文档里的「取数通道」标签 → 生产代码的通道名。"""
+    return {
+        '监控指标接口': 'monitor',
+        '命令中心SQL': 'command_center',
+        '诊断优化接口': 'diagnostic',
+        '实例接口': 'instance',
+    }.get(label)
+
+
+def _to_seconds(text):
+    """「1 分钟」/「30 秒」/「1 小时」→ 秒。"""
+    text = (text or '').strip()
+    match = re.match(r'^(\d+)\s*(秒|分钟|小时)$', text)
+    if not match:
+        return None
+    value = int(match.group(1))
+    unit = match.group(2)
+    if unit == '秒':
+        return value
+    if unit == '分钟':
+        return value * 60
+    return value * 3600
+
+
+def test_troubleshooting_table_only_quotes_existing_log_messages():
+    """排障表引用的日志文案**必须在生产代码里真的存在**。
+
+    wave-4 首轮审查 I-4：排障表引用过一条代码里**根本不存在**的日志
+    （「重试后成功」）—— 照着它去日志里搜永远搜不到。
+
+    日志文案带占位符（``%s`` / ``%d`` / 文档里的 ``XXX`` / ``N`` / ``……``），
+    所以不按整句比对，而是取**连续 ≥6 字的中文片段**，要求它出现在
+    生产代码的字符串常量集合里 —— 片段太短（无法唯一定位）就跳过。
+    """
+    text = _read(DEPLOY_DOC_PATH)
+    quoted = re.findall(r'日志(?:报|有)?[「]([^」]{6,})[」]', text)
+    assert quoted, '排障表里一条日志引用都没解析到 —— 表格格式变了？'
+    universe = _production_string_literals()
+    unverifiable = []
+    missing = []
+    for quote in quoted:
+        runs = _cjk_runs(quote)
+        longest = max(runs, key=len) if runs else ''
+        if len(longest) < 6:
+            unverifiable.append(quote)
+            continue
+        if longest not in universe:
+            missing.append('%s（片段：%s）' % (quote, longest))
+    assert not missing, (
+        '排障表引用了生产代码里不存在的日志文案：%s' % '；'.join(missing)
+    )
+
+
+def _cjk_runs(text):
+    """文本里连续的中文片段（≥2 字）。"""
+    return re.findall(r'[\u4e00-\u9fff]{2,}', text or '')
+
+
+def _production_string_literals():
+    """生产包里全部字符串常量的拼接（用来核对日志文案）。"""
+    import ast
+    chunks = []
+    root = os.path.join(REPO_ROOT, 'tpops_kafka_collector')
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d != '__pycache__']
+        for name in filenames:
+            if not name.endswith('.py'):
+                continue
+            path = os.path.join(dirpath, name)
+            with open(path, 'r', encoding='utf-8') as handle:
+                tree = ast.parse(handle.read(), filename=path)
+            for node in ast.walk(tree):
+                # py3.7 的 AST 里字符串是 ``ast.Str``（统一到 ``ast.Constant``
+                # 是 3.8 才做的）—— 两种都得认，否则守卫在目标解释器上等于空转
+                if isinstance(node, ast.Str):
+                    chunks.append(node.s)
+                elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    chunks.append(node.value)
+    return '\n'.join(chunks)
+
+
+def _production_source_text():
+    """生产包全部源码的文本（用来核对日志文案 / 退出码）。"""
+    chunks = []
+    root = os.path.join(REPO_ROOT, 'tpops_kafka_collector')
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d != '__pycache__']
+        for name in filenames:
+            if name.endswith('.py'):
+                with open(os.path.join(dirpath, name), 'r', encoding='utf-8') as h:
+                    chunks.append(h.read())
+    return '\n'.join(chunks)
+
+
+def test_unconsumed_env_vars_are_disclosed_as_inert():
+    """**没被生产代码消费**的配置项，部署说明必须披露「改了也不生效」。
+
+    wave-4 首轮审查 I-5：``KAFKA_TOPIC_PARTITIONS`` 是第三个空转变量
+    （``cmd_limit`` / ``retry_max_attempts`` 之外），文档却写得像它生效，
+    还承诺了代码里根本不存在的「分区数不符」报错。
+
+    客户改一个「看起来能改、实际改了没用」的环境变量，是**运维层面的坑** ——
+    必须如实说明。
+    """
+    expected = config_env_vars()
+    unconsumed = _unconsumed_config_keys(expected)
+    assert unconsumed, '没有空转变量了？—— 若已全部接上，把这条守卫删掉'
+    text = _read(DEPLOY_DOC_PATH)
+    for name in sorted(unconsumed):
+        assert name in text, '配置项 %s 没被生产代码消费，部署说明里却没提' % name
+        line = _line_mentioning(text, name)
+        assert line, '部署说明里找不到 %s 所在的那一行' % name
+        inert_words = ('未消费', '未生效', '没有影响', '尚未被消费', '未被消费')
+        assert any(word in line for word in inert_words), (
+            '配置项 %s 没被生产代码消费，但部署说明没说明「改了也不生效」：%s'
+            % (name, line.strip()[:120])
+        )
+
+
+def _line_mentioning(text, name):
+    """部署说明里提到某个变量名的那一行。"""
+    for line in text.splitlines():
+        if name in line:
+            return line
+    return ''
+
+
+def _unconsumed_config_keys(expected):
+    """config.py 产出的配置项里，**生产代码根本不消费**的那些（返回环境变量名）。
+
+    判据：配置项的**键名**（``alarm_limit``）在生产包源码里（除 config.py 自身）
+    一次都没出现 → 没有任何代码读它 → 改了也不生效。
+
+    文档与 ``.env.example`` 用的是**环境变量名**（``ALARM_LIMIT``），
+    所以返回环境变量名，便于在文档里逐个核对披露。
+    """
+    import ast
+    config_path = os.path.join(REPO_ROOT, 'tpops_kafka_collector', 'config.py')
+    with open(config_path, 'r', encoding='utf-8') as handle:
+        config_source = handle.read()
+    tree = ast.parse(config_source, filename=config_path)
+    pairs = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        for key, value in zip(node.keys, node.values):
+            if not isinstance(key, ast.Str) or not isinstance(value, ast.Call):
+                continue
+            if not value.args:
+                continue
+            env_arg = value.args[1] if len(value.args) > 1 else None
+            if isinstance(env_arg, ast.Str) and env_arg.s.isupper():
+                pairs.append((key.s, env_arg.s))
+    body = _production_source_text().replace(config_source, '')
+    return set(env_name for key, env_name in pairs if key not in body)

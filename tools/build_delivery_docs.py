@@ -19,6 +19,7 @@ Python 3.7.9 兼容（见 CLAUDE.md「Python 3.7.9 红线」）。
 """
 from __future__ import print_function
 
+import difflib
 import json
 import os
 import re
@@ -47,6 +48,7 @@ TABLE_MARKS = {
     'ocr': '<!-- TABLE:ocr -->',
     'ocr_desc': '<!-- TABLE:ocr-desc -->',
     'ocr_auto': '<!-- TABLE:ocr-auto -->',
+    'ocr_sub': '<!-- TABLE:ocr-sub -->',
 }
 
 GRANULARITY_LABEL = {
@@ -57,6 +59,52 @@ GRANULARITY_LABEL = {
 }
 
 CYCLE_UNIT_LABEL = {'分': '分钟', '秒': '秒', '时': '小时'}
+
+#: 秒 → 人话（「30 秒」/「1 小时」）。
+def format_seconds(seconds: int) -> str:
+    """把秒数渲染成人话（用于「实际产出频率」列）。"""
+    if seconds % 3600 == 0:
+        return '%d 小时' % (seconds // 3600)
+    if seconds % 60 == 0:
+        return '%d 分钟' % (seconds // 60)
+    return '%d 秒' % seconds
+
+
+def format_int(value: int) -> str:
+    """千分位（152664 → 152,664）。"""
+    return '{:,}'.format(value)
+
+
+#: 归集口径的**通道**文案 —— 只有命令中心（B 类）才谈 master。
+#:
+#: A 类（监控指标接口）走 ``rules_series.eval_series_point``：**每条 series 一条
+#: 消息**，维度键是 ``COMPONENT_ID``，**不跨组件合成**；``node_scoped`` 对 A 类
+#: 不参与归集（采集器只用它决定「组件换算不到节点时要不要告警」）。
+#: C / D 类与节点无关，整条落到节点清单里的第一个 master CN。
+COLLECTION_TEXT_MONITOR = (
+    '组件级：逐组件各出一条（每条 series 一条消息，`COMPONENT_ID` 归入 `tags`，'
+    '不跨组件合成）'
+)
+COLLECTION_TEXT_INSTANCE = (
+    '实例级：与节点无关，整条落到节点清单里的第一个 master CN'
+)
+
+
+#: 备注覆写 —— 映射表的 ``note`` 与 ``value_rule.note`` 口径打架时，以本表为准。
+#:
+#: 背景：``gaussdb.Total_pct`` 的 ``note`` 写「活跃会话数 / 总连接数」，但它的
+#: ``value_rule.note`` 与合并 SQL 都表明分子是 ``activity_agg`` 的
+#: ``count(*)`` 之和（``group by datname, state``，**含 idle 等全部状态**）——
+#: 「活跃会话数」是错的。映射表本身归另一个波次所有，本轮不改它，只在生成器
+#: 里如实覆写，并留一条守卫盯着。
+NOTE_OVERRIDE = {
+    'gaussdb.Total_pct': (
+        '全部会话数 / 总连接数（分子=activity_agg 的 cnt 之和，含 idle 等全部状态）'
+    ),
+    'GAUSSDB.session_usage': (
+        '全部会话数 / 总连接数（分子=activity_agg 的 cnt 之和，含 idle 等全部状态）'
+    ),
+}
 
 
 # --------------------------------------------------------------------------
@@ -120,6 +168,79 @@ def enabled_rules(rules: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
 def disabled_rules(rules: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """不可提供的指标规则（enabled=False）。"""
     return [rule for rule in rules if not rule.get('enabled')]
+
+
+# --------------------------------------------------------------------------
+# 通道周期：**从采集端实现实算**，不写死
+# --------------------------------------------------------------------------
+def load_schedule():
+    """加载采集端的调度实算（通道周期）。
+
+    直接调用生产代码 ``tpops_kafka_collector.schedule.compute_channel_plans``
+    —— 文档里的「实际产出频率」因此**与实现同源**：实现改了，文档必须重新
+    生成（守卫 ``test_docs_match_generator_output`` 会红）。
+
+    :returns: ``(通道周期秒数, source.source → 调度通道, 已加载的映射表)``
+    """
+    if REPO_ROOT not in sys.path:
+        sys.path.insert(0, REPO_ROOT)
+    from tpops_kafka_collector.mapping.loader import load_mapping
+    from tpops_kafka_collector.schedule import compute_channel_plans
+
+    mapping = load_mapping()
+    periods = {}
+    for plan in compute_channel_plans(mapping):
+        periods[plan.channel] = plan.interval_seconds
+    return periods, mapping
+
+
+def channel_schedule(rules: Sequence[Dict[str, Any]]):
+    """每条规则的调度通道与该通道的周期。
+
+    :returns: ``({metric_code: 通道周期秒数}, {通道周期秒数: 通道名})``
+    """
+    periods, mapping = load_schedule()
+    from tpops_kafka_collector.schedule import SOURCE_TO_CHANNEL
+
+    by_code = {}
+    for rule in mapping.metric_rules:
+        if not rule.enabled:
+            continue
+        source = rule.source or {}
+        channel = SOURCE_TO_CHANNEL.get(source.get('source'))
+        if channel is None:
+            continue
+        by_code[rule.metric_code] = periods.get(channel)
+    return by_code, periods
+
+
+def source_method_map(rules: Sequence[Dict[str, Any]]) -> Dict[str, str]:
+    """``source.source`` → ``source.method``（从映射表数据里推，不写死）。"""
+    mapping = {}
+    for rule in rules:
+        source = rule.get('source') or {}
+        raw = source.get('source')
+        method = source.get('method')
+        if raw and method:
+            mapping.setdefault(raw, method)
+    return mapping
+
+
+def daily_message_volume(rules: Sequence[Dict[str, Any]],
+                         by_code: Dict[str, Optional[int]]) -> int:
+    """按「每条规则每轮一条」估的**日均消息条数 / 实例**（下界）。
+
+    A 类多 series、表级 / 库级维度展开都会让实际条数**更多**。
+    """
+    total = 0
+    for rule in rules:
+        if not rule.get('enabled'):
+            continue
+        period = by_code.get(rule.get('metric_code'))
+        if not period:
+            continue
+        total += 86400 // period
+    return total
 
 
 # --------------------------------------------------------------------------
@@ -278,18 +399,45 @@ def describe_source(rule: Dict[str, Any], views: Dict[str, Dict[str, Any]]) -> s
 
 
 def describe_collection(rule: Dict[str, Any]) -> str:
-    """一句话说清「归集口径」（node_scoped / master_view）。"""
+    """一句话说清「归集口径」—— **按通道分支**。
+
+    口径**不是**统一的：
+
+    * **A 类（监控指标接口）** —— 平台按**组件**给多条 series，
+      ``mapping/rules_series.eval_series_point`` 对 ``ctx.series`` 的**每个键
+      各出一条**消息，维度键是 ``COMPONENT_ID``。**不跨组件合成**，
+      ``node_scoped`` 对 A 类不参与归集。
+    * **B 类（命令中心SQL）** —— 合并 SQL 在每个 master 各跑一次，
+      ``node_scoped=true`` 的各 master 各自出一条（不合并、不求和），
+      ``false`` 的只取承载资源名的第一个 master CN 的一条。
+    * **C / D 类（诊断优化 / 实例接口）** —— 与节点无关，整条落到
+      节点清单里的第一个 master CN。
+    """
+    source = (rule.get('source') or {}).get('source')
+    if source == 'monitor_metrics':
+        return COLLECTION_TEXT_MONITOR
+    if source in ('diagnostic', 'instance'):
+        return COLLECTION_TEXT_INSTANCE
     parts = []
     if rule.get('node_scoped'):
-        parts.append('节点级：每个 master 各出一条')
+        parts.append('节点级：每个 master 各出一条（不跨 master 合并、不求和）')
     else:
-        parts.append('实例级：只取第一个 master CN 的一条')
+        parts.append('实例级：只取第一个 master CN 的一条（值与资源名同源）')
     master_view = rule.get('master_view')
     if master_view == 'identical':
         parts.append('各 master 返回值一致')
     elif master_view == 'divergent':
         parts.append('各 master 返回值不同')
     return '；'.join(parts)
+
+
+def describe_note(rule: Dict[str, Any]) -> str:
+    """备注列（``note``；``NOTE_OVERRIDE`` 优先）。"""
+    code = rule.get('metric_code')
+    if code in NOTE_OVERRIDE:
+        return NOTE_OVERRIDE[code]
+    return (rule.get('note') or '').replace('|', '/')
+
 
 
 def describe_cycle(rule: Dict[str, Any]) -> str:
@@ -364,7 +512,8 @@ def _spec_intro(lines: List[str], rules: Sequence[Dict[str, Any]],
     lines.append('| 取数通道 | 走 TPOPS 的哪一条接口 |')
     lines.append('| 来源 | 具体接口 / 平台指标名 / 合并 SQL 视图 |')
     lines.append('| 取值规则 | 数据拿到之后**怎么变成客户的值**（求和？差分？取最后一个点？） |')
-    lines.append('| 刷新周期 | 该指标的采集周期，与客户指标库「数据更新周期」一致 |')
+    lines.append('| 声明周期 | 客户指标库「数据更新周期」列声明的**需求档**（= 映射表的 `collect_cycle`） |')
+    lines.append('| 实际产出频率 | 这条指标**实际**多久产出一条 —— 取所属通道的节奏（见 3.7），**不等于**声明周期 |')
     lines.append('| 资源粒度 | 一条消息代表整个实例，还是按表 / 库 / 端口展开 |')
     lines.append('| 归集口径 | 多 master 场景下这条消息出几条、值从哪来（见第 3 节） |')
     lines.append('| 维度 | 指标名里的占位符，运行时会被替换成实际维度值（表名 / 库名 / 端口） |')
@@ -377,12 +526,14 @@ def _spec_intro(lines: List[str], rules: Sequence[Dict[str, Any]],
     lines.append('')
 
 
-def _spec_channel_overview(lines: List[str], by_channel: OrderedDict) -> None:
+def _spec_channel_overview(lines: List[str], by_channel: OrderedDict,
+                           periods: Dict[str, int],
+                           method_to_period: Dict[str, int]) -> None:
     """第 2 节：取数通道总览。"""
     lines.append('## 2. 取数通道总览')
     lines.append('')
-    lines.append('| 取数通道 | TPOPS 接口 | 指标数 | 说明 |')
-    lines.append('|---|---|---|---|')
+    lines.append('| 取数通道 | TPOPS 接口 | 指标数 | 实际产出频率 | 说明 |')
+    lines.append('|---|---|---|---|---|')
     channel_desc = {
         '命令中心SQL': ('`POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}`',
                     '在 master 节点上执行合并 SQL（11 条合并 SQL 覆盖 82 个指标），返回**当前快照**'),
@@ -394,7 +545,12 @@ def _spec_channel_overview(lines: List[str], by_channel: OrderedDict) -> None:
     }
     for method, items in by_channel.items():
         api, desc = channel_desc.get(method, ('-', '-'))
-        lines.append('| %s | %s | %d | %s |' % (method, api, len(items), desc))
+        period = method_to_period.get(method)
+        freq = format_seconds(period) if period else '-'
+        lines.append('| %s | %s | %d | %s | %s |' % (method, api, len(items), freq, desc))
+    lines.append('')
+    lines.append('> **「实际产出频率」是通道级的**：同一个通道里的**所有**指标都按这个节奏产出，'
+                 '与各自的「声明周期」无关 —— 详见 3.7。')
     lines.append('')
 
 
@@ -419,7 +575,8 @@ def _spec_granularity(lines: List[str], usable: Sequence[Dict[str, Any]]) -> Non
         if gran not in gran_count:
             continue
         shape = {
-            'instance': '一个实例一条（挂到第一个 master CN）',
+            'instance': '一个实例一条（挂到第一个 master CN）；'
+                        '**A 类的实例级指标例外：逐组件各出一条**（见 3.5）',
             'table': '一张表一条（表名进指标名占位符）',
             'database': '一个库一条（库名进指标名占位符）',
             'port': '一个端口一条（端口号进指标名占位符）',
@@ -441,6 +598,11 @@ def _spec_node_scoped(lines: List[str], usable: Sequence[Dict[str, Any]], views:
     lines.append('')
     lines.append('命令中心的合并 SQL 会在**每个 master 节点各执行一次**，同一组视图因此返回多份结果。'
                  '归集口径由映射表的 `node_scoped` 字段决定（该字段是**实测判定**的结论）：')
+    lines.append('')
+    lines.append('> **本节只适用于命令中心（B 类）通道。**'
+                 'A 类（监控指标接口）走的是「逐组件各出一条」（见 3.5），'
+                 'C / D 类与节点无关（整条落到第一个 master CN）—— '
+                 '它们都**不适用** master 维度的归集口径。')
     lines.append('')
     lines.append('| 合并 SQL 视图 | `node_scoped` | 含义 | 产出条数 | 底层视图 |')
     lines.append('|---|---|---|---|---|')
@@ -503,15 +665,108 @@ def _spec_multi_master(lines: List[str]) -> None:
                  '（例如 `rds092_gaussv5_commit_counter` 对 3 个 CN 各给一条 series，'
                  '`datanode_switch_status` 对 9 个 DN 各给一条）。')
     lines.append('')
-    lines.append('**现状实现**：逐组件各出一条消息，维度键 `COMPONENT_ID` 放进 `tags`，不做合成。'
+    lines.append('**现状实现**：**逐组件各出一条**消息 —— 每条 series 一条，'
+                 '维度键 `COMPONENT_ID` 放进 `tags`，**不跨组件合成**；'
+                 '资源名取该组件所在节点的 `{host_ip}_{node_id}`'
+                 '（组件换算不到节点时回落到第一个 master CN）。')
+    lines.append('')
+    lines.append('下面是**用采集端代码回放 `data/metric_response/` 里的原生响应实测**的条数'
+                 '（每个指标各一条消息 × 该指标的组件数）：')
+    lines.append('')
+    lines.append('| 客户指标 | 平台指标 | 一轮产出的消息条数 | 组件 |')
+    lines.append('|---|---|---|---|')
+    lines.append('| `gaussdb.Tps` | `rds400_gaussv5_total_counter` | 3 | 3 个 CN |')
+    lines.append('| `gaussdb.QPS` | `rds402_gaussv5_ddl_dml_dcl_count` | 6 | 3 个 CN + 3 个 DN |')
+    lines.append('| `GAUSSDB.Standby_status` | `datanode_switch_status` | 9 | 9 个 DN |')
+    lines.append('| `GAUSSDB.Primary_status` | `datanode_switch_status` | 9 | 9 个 DN |')
+    lines.append('| `gaussdb.Starttime` / `gaussdb.Uptimestr` | `rds133_cn_startup_time` | 各 3 | 3 个 CN |')
+    lines.append('| `GAUSSDB.Number_of_ansactions_mmitted_r_cond` | `rds092_gaussv5_commit_counter` | 3 | 3 个 CN |')
+    lines.append('| `GAUSSDB.Number_of_llback_ansactions_r_cond` | `rds093_gaussv5_rollback_counter` | 3 | 3 个 CN |')
+    lines.append('| `GAUSSDB.Service_availability_testing` / `GAUSSDB.PG_Service_Status` / `gaussdb.Status` '
+                 '| `gaussdb_instance_status` | 各 1 | 单值 |')
+    lines.append('')
+    lines.append('> **客户按「一个实例一条」估算 A 类消息量会算少**：'
+                 '上表里最多的一个指标一轮就出 9 条。'
                  '合成口径（速率类求和 / 启动时刻取最早 / 主备状态按 DN 展开或归集为布尔）属业务口径，'
                  '**待客户确认**；确认后由映射表的 `value_rule` 承载，不改消息信封。')
     lines.append('')
     lines.append('### 3.6 累计计数的差分基线按节点隔离')
     lines.append('')
     lines.append('需要差分算速率的累计计数类指标（每秒 Fetch / Insert / Return / Update / Delete 记录数），'
-                 '基线按**节点**隔离：基线键是「指标名 + 维度 + 节点」三元组，'
+                 '基线按**节点**隔离：基线键是二元组 `(指标名, 作用域:维度)`，'
+                 '作用域一般是 `node_id`（必要时还带实例 ID）—— '
+                 '效果等价于「指标名 + 维度 + 节点」三元组，'
                  '避免多个 master 共用一个存储时互相覆盖基线、算出跨节点的假速率。')
+    lines.append('')
+
+
+def _cycle_seconds(rule: Dict[str, Any]) -> int:
+    """规则的声明周期（秒）—— 与 ``collectors.instance.collect_cycle_seconds`` 同口径。"""
+    cycle = rule.get('collect_cycle') or {}
+    unit = str(cycle.get('unit') or '')
+    factor = {'秒': 1, '分': 60, '时': 3600, '天': 86400}.get(unit)
+    if factor is None:
+        return 0
+    try:
+        return int(cycle.get('value')) * factor
+    except (TypeError, ValueError):
+        return 0
+
+
+def _spec_cycles(lines: List[str], rules: Sequence[Dict[str, Any]],
+                 method_to_period: Dict[str, int],
+                 by_code: Dict[str, Optional[int]]) -> None:
+    """第 3.7 节：声明周期 vs 实际产出频率。"""
+    lines.append('### 3.7 声明周期 ≠ 实际产出频率（**超服务**，请按实际频率配容量）')
+    lines.append('')
+    lines.append('这一节是**容量与带宽口径**，请客户重点看。')
+    lines.append('')
+    lines.append('| 口径 | 含义 | 来自哪里 |')
+    lines.append('|---|---|---|')
+    lines.append('| **声明周期** | 客户指标库「数据更新周期」列声明的**需求档** | '
+                 '客户指标表 / 映射表的 `collect_cycle` |')
+    lines.append('| **实际产出频率** | 这条指标**实际**多久产出一条 | '
+                 '**所属通道**的调度周期（该通道内最高需求档 = 最短周期） |')
+    lines.append('')
+    lines.append('**当前实现里没有按指标 `collect_cycle` 的产出闸门** —— '
+                 '采集器一轮会把该通道的**全部**规则都产出。'
+                 '因此**同一通道里的所有指标都按该通道的频率产出**，'
+                 '与各自的声明周期无关。')
+    lines.append('')
+    lines.append('| 取数通道 | 实际产出频率 | 覆盖指标数 | 通道内的声明周期分布 |')
+    lines.append('|---|---|---|---|')
+    method_of = source_method_map(rules)
+    for method in sorted(method_to_period, key=lambda item: method_to_period[item]):
+        items = [rule for rule in rules
+                 if rule.get('enabled')
+                 and method_of.get((rule.get('source') or {}).get('source')) == method]
+        if not items:
+            continue
+        declared = sorted(set(describe_cycle(rule) for rule in items))
+        lines.append('| %s | %s | %d | %s |' % (
+            method, format_seconds(method_to_period[method]), len(items),
+            '、'.join(declared)))
+    lines.append('')
+    overserved = []
+    for rule in rules:
+        if not rule.get('enabled'):
+            continue
+        period = by_code.get(rule.get('metric_code'))
+        declared = _cycle_seconds(rule)
+        if not period or not declared:
+            continue
+        if declared > period:
+            overserved.append(rule.get('metric_code'))
+    lines.append('**%d 个指标的声明周期慢于其通道的实际节奏**（即「超服务」）：'
+                 '它们**按通道频率**产出，不是按声明周期。'
+                 % len(overserved))
+    lines.append('')
+    lines.append('> 影响客户侧的量级：按「每条规则每轮一条」估算，'
+                 '单个实例**每天至少 %s 条**指标消息'
+                 '（A 类的多 series 展开、表级 / 库级 / 端口级指标的按行展开会让实际条数**更多**）。'
+                 '客户侧请按这个量级准备存储与带宽，并**按「实际产出频率」列**配置保留策略与告警阈值；'
+                 '若需要按声明周期节流，需要我们增加产出闸门（改采集端逻辑，不改消息格式）。'
+                 % format_int(daily_message_volume(rules, by_code)))
     lines.append('')
 
 
@@ -534,7 +789,9 @@ def _spec_rule_types(lines: List[str], usable: Sequence[Dict[str, Any]]) -> None
     lines.append('')
 
 
-def _spec_metric_sections(lines: List[str], by_channel: OrderedDict, views: Dict[str, Dict[str, Any]]) -> None:
+def _spec_metric_sections(lines: List[str], by_channel: OrderedDict,
+                          views: Dict[str, Dict[str, Any]],
+                          by_code: Dict[str, Optional[int]]) -> None:
     """第 5 节：逐指标口径。"""
     lines.append('## 5. 逐指标口径')
     lines.append('')
@@ -548,17 +805,20 @@ def _spec_metric_sections(lines: List[str], by_channel: OrderedDict, views: Dict
         lines.append(TABLE_MARKS['metrics'])
         lines.append('')
         lines.append('| # | 客户指标英文名 | 中文名 | 取数通道 | 来源 | 取值规则 | '
-                     '刷新周期 | 资源粒度 | 归集口径 | 维度 | 备注 |')
-        lines.append('|---|---|---|---|---|---|---|---|---|---|---|')
+                     '声明周期 | 实际产出频率 | 资源粒度 | 归集口径 | 维度 | 备注 |')
+        lines.append('|---|---|---|---|---|---|---|---|---|---|---|---|')
         for index, rule in enumerate(items, 1):
             code = rule.get('metric_code')
             name = rule.get('metric_name')
             dims = dimension_cell(rule)
-            note = (rule.get('note') or '').replace('|', '/')
-            lines.append('| %d | `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s |' % (
+            note = describe_note(rule)
+            period = by_code.get(code)
+            frequency = format_seconds(period) if period else '—'
+            lines.append('| %d | `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |' % (
                 index, code, name, method, describe_source(rule, views),
                 describe_value_rule(rule.get('value_rule')),
-                describe_cycle(rule), describe_granularity(rule),
+                describe_cycle(rule), frequency,
+                describe_granularity(rule),
                 describe_collection(rule), dims, note or '—'))
         lines.append('')
 
@@ -586,7 +846,9 @@ def _spec_tail(lines: List[str]) -> None:
     lines.append('|---|---|')
     lines.append('| A 类多 series 归集 | 逐组件各出一条消息，`COMPONENT_ID` 进 `tags`（见 3.5） |')
     lines.append('| 状态类指标的展示值 | 平台枚举值原样透传（实测 1=正常、0=异常） |')
-    lines.append('| 采集频率 | 以客户指标库「数据更新周期」为准（30 秒 ~ 24 小时共 7 档） |')
+    lines.append('| 采集频率 | **实际产出频率**取通道周期（监控指标 30 秒 / 命令中心 60 秒 / '
+                 '诊断优化 120 秒 / 实例 3600 秒）；客户指标库的「数据更新周期」是**声明周期**，'
+                 '当前**不作为产出闸门**，同通道指标一律按通道频率产出（见 3.7） |')
     lines.append('| `value` 的线格式 | 按客户指标库「数据类型」序列化 |')
     lines.append('| 慢 SQL 的 `sql_text` | 默认脱敏 + 截断 512 字符 |')
     lines.append('| `resourceName` 与台账对齐 | `{host_ip}_{node_id}`，待客户提供台账清单后核对 |')
@@ -597,14 +859,25 @@ def render_metric_spec(rules: Sequence[Dict[str, Any]], views: Dict[str, Dict[st
     """生成《交付-指标口径说明.md》。"""
     usable = enabled_rules(rules)
     by_channel = _group_by_channel(usable)
+    by_code, channel_periods = channel_schedule(rules)
+    method_of = source_method_map(rules)
+    if REPO_ROOT not in sys.path:
+        sys.path.insert(0, REPO_ROOT)
+    from tpops_kafka_collector.schedule import SOURCE_TO_CHANNEL
+    method_to_period = {}
+    for raw, method in method_of.items():
+        channel = SOURCE_TO_CHANNEL.get(raw)
+        if channel and channel in channel_periods:
+            method_to_period[method] = channel_periods[channel]
     lines = []
     _spec_intro(lines, rules, usable)
-    _spec_channel_overview(lines, by_channel)
+    _spec_channel_overview(lines, by_channel, channel_periods, method_to_period)
     _spec_granularity(lines, usable)
     _spec_node_scoped(lines, usable, views)
     _spec_multi_master(lines)
+    _spec_cycles(lines, usable, method_to_period, by_code)
     _spec_rule_types(lines, usable)
-    _spec_metric_sections(lines, by_channel, views)
+    _spec_metric_sections(lines, by_channel, views, by_code)
     _spec_tail(lines)
     return '\n'.join(lines) + '\n'
 
@@ -737,82 +1010,94 @@ def render_unsupported(rules):
 # --------------------------------------------------------------------------
 #: 人工复核结果：``metric_code`` → [(疑似片段, 建议写法, 理由), ...]
 #: 自动检测见 ``detect_ocr_findings``；两者的差异会写进文档的附录。
+#:
+#: **理由里的「少了什么」一律由 ``describe_char_diff`` 逐字符算出来**，
+#: 不手写 —— 手写就会写出「少了一个 m 和一个 t」这种和实际不符的话。
 OCR_REVIEW = OrderedDict([
     ('GAUSSDB.Number_of_ansactions_mmitted_r_cond', [
-        ('ansactions', 'transactions', '词内少了 tr'),
-        ('mmitted', 'committed', '词内少了 co'),
-        ('r', 'per', 'r_cond 应为 per_second（中文名「每秒提交事务数」、单位 tps）'),
-        ('cond', 'second', 'r_cond 应为 per_second（中文名「每秒提交事务数」、单位 tps）'),
+        ('ansactions', 'transactions', '中文名「每秒提交事务数」、单位 tps'),
+        ('mmitted', 'committed', '同族指标写作 committed transactions'),
+        ('r_cond', 'per_second', '中文名「每秒提交事务数」、单位 tps'),
     ]),
     ('GAUSSDB.Number_of_llback_ansactions_r_cond', [
-        ('llback', 'rollback', '词内少了 ro'),
-        ('ansactions', 'transactions', '词内少了 tr'),
-        ('r', 'per', 'r_cond 应为 per_second（中文名「每秒回滚事务数」）'),
-        ('cond', 'second', 'r_cond 应为 per_second（中文名「每秒回滚事务数」）'),
+        ('llback', 'rollback', '中文名「每秒回滚事务数」'),
+        ('ansactions', 'transactions', '中文名「每秒回滚事务数」'),
+        ('r_cond', 'per_second', '中文名「每秒回滚事务数」'),
     ]),
     ('gaussdb.{#NAME}.Number.lete.ples', [
-        ('lete', 'delete', '词内少了 de；同族英文名写作 delete tuples'),
-        ('ples', 'tuples', '词内少了 tu'),
+        ('lete', 'delete', '同族中文名写作 number of delete tuples'),
+        ('ples', 'tuples', '同族中文名写作 number of delete tuples'),
     ]),
     ('gaussdb.{#NAME}.Number.ad.ples', [
-        ('ad', 'dead', '词内少了 de；同族英文名写作 dead tuples（中文名「死亡行」）'),
-        ('ples', 'tuples', '词内少了 tu'),
+        ('ad', 'dead', '中文名「死亡行」；同族中文名写作 number of dead tuples'),
+        ('ples', 'tuples', '同族中文名写作 number of dead tuples'),
     ]),
     ('gaussdb.{#NAME}.Number.t.date.ples', [
-        ('t.date', 'update', '词内少了 up（t 是 update 的残留碎片）；同族英文名写作 hot update tuples'),
-        ('ples', 'tuples', '词内少了 tu'),
+        ('t.date', 'update', '中文名「通过 HOT 更新的行数」；同族中文名写作 number of hot update tuples'),
+        ('ples', 'tuples', '同族中文名写作 number of hot update tuples'),
     ]),
     ('gaussdb.{#NAME}.number.Of.quential.ples.ad', [
-        ('quential', 'sequential', '词内少了 se'),
-        ('ples', 'tuples', '词内少了 tu'),
-        ('ad', 'read', '词内少了 re；同族英文名写作 tuples read'),
+        ('quential', 'sequential', '同族英文名列写作 number.Of.sequential.scan'),
+        ('ples', 'tuples', '同族中文名写作 number of index tuples read'),
+        ('ad', 'read', '同族中文名写作 number of index tuples read'),
     ]),
     ('gaussdb.{#NAME}.number.Of.dex.ples.ad', [
-        ('dex', 'index', '词内少了 in'),
-        ('ples', 'tuples', '词内少了 tu'),
-        ('ad', 'read', '词内少了 re；同族英文名写作 tuples read'),
+        ('dex', 'index', '同族英文名列写作 number.Of.index.scan'),
+        ('ples', 'tuples', '同族中文名写作 number of index tuples read'),
+        ('ad', 'read', '同族中文名写作 number of index tuples read'),
     ]),
     ('GAUSSDB.{#NAME}.Number.ad.ples', [
-        ('ad', 'dead', '词内少了 de；同族英文名写作 dead tuples'),
-        ('ples', 'tuples', '词内少了 tu'),
+        ('ad', 'dead', '同族中文名写作 number of dead tuples'),
+        ('ples', 'tuples', '同族中文名写作 number of dead tuples'),
     ]),
     ('GAUSSDB.{#NAME}.Number.lete.ples', [
-        ('lete', 'delete', '词内少了 de；同族英文名写作 delete tuples'),
-        ('ples', 'tuples', '词内少了 tu'),
+        ('lete', 'delete', '同族中文名写作 number of delete tuples'),
+        ('ples', 'tuples', '同族中文名写作 number of delete tuples'),
     ]),
     ('GAUSSDB.{#NAME}.Number.t.date.ples', [
-        ('t.date', 'update', '词内少了 up（t 是 update 的残留碎片）；同族英文名写作 hot update tuples'),
-        ('ples', 'tuples', '词内少了 tu'),
+        ('t.date', 'update', '同族中文名写作 number of hot update tuples'),
+        ('ples', 'tuples', '同族中文名写作 number of hot update tuples'),
     ]),
     ('GAUSSDB.{#NAME}.number.Of.dex.ples.ad', [
-        ('dex', 'index', '词内少了 in'),
-        ('ples', 'tuples', '词内少了 tu'),
-        ('ad', 'read', '词内少了 re；同族英文名写作 tuples read'),
+        ('dex', 'index', '同族英文名列写作 number.Of.index.scan'),
+        ('ples', 'tuples', '同族中文名写作 number of index tuples read'),
+        ('ad', 'read', '同族中文名写作 number of index tuples read'),
     ]),
     ('GAUSSDB.{#NAME}.number.Of.quential.ples.ad', [
-        ('quential', 'sequential', '词内少了 se'),
-        ('ples', 'tuples', '词内少了 tu'),
-        ('ad', 'read', '词内少了 re；同族英文名写作 tuples read'),
+        ('quential', 'sequential', '同族英文名列写作 number.Of.sequential.scan'),
+        ('ples', 'tuples', '同族中文名写作 number of index tuples read'),
+        ('ad', 'read', '同族中文名写作 number of index tuples read'),
     ]),
     ('GAUSSDB.Checkpoint_count_eckpoint_gments', [
-        ('eckpoint', 'checkpoint', '词内少了 ch'),
-        ('gments', 'segments', '词内少了 se；本指标英文描述里写的是 checkpoint segments'),
+        ('eckpoint', 'checkpoint', '本指标中文名写作 Checkpoint count (by checkpoint segments)'),
+        ('gments', 'segments', '本指标中文名写作 Checkpoint count (by checkpoint segments)'),
     ]),
     ('GAUSSDB.Checkpoint_count_eckpoint_meout', [
-        ('eckpoint', 'checkpoint', '词内少了 ch'),
-        ('meout', 'timeout', '词内少了 ti；本指标英文描述里写的是 checkpoint timeout'),
+        ('eckpoint', 'checkpoint', '本指标中文名写作 Checkpoint count (by checkpoint timeout)'),
+        ('meout', 'timeout', '本指标中文名写作 Checkpoint count (by checkpoint timeout)'),
     ]),
 ])
 
-#: 中文名 / 英文描述列里的错字（``metric_code`` → [(错处, 建议写法, 理由)]）
+#: 中文名列里的错字（``metric_code`` → [(错处, 建议写法, 理由)]）
+#:
+#: **这一列自动判据覆盖不到**（自动判据只扫英文名列的词元）——
+#: 下面 3 条是**逐字符人工核对**出来的，来源：客户表 xlsx 的「中文名」列。
 OCR_DESC_REVIEW = OrderedDict([
     ('GAUSSDB.[{#DATNAME}]_committed_transactions', [
-        ('Commited', 'Committed', '英文描述里少了一个 m 和一个 t（代码里的 committed 是对的）'),
+        ('Commited', 'Committed', '同一行的英文名列写的是 committed（正确）'),
+    ]),
+    ('GAUSSDB.{#NAME}.number.Of.sequential.scan', [
+        ('sequencial', 'sequential', '同一行的英文名列写的是 sequential（正确）'),
     ]),
     ('GAUSSDB.{#NAME}.number.Of.quential.ples.ad', [
-        ('sequencial', 'sequential', '英文描述里少了一个 e（代码里的 quential 另见主表）'),
+        ('sequencial', 'sequential',
+         '同族英文名列 gaussdb.{#NAME}.number.Of.sequential.scan 写的是 sequential（正确）'),
     ]),
 ])
+
+#: 人工逐字符核对确认的错字片段（出现在客户表的哪一列都算）。
+#: 守卫据此检查「客户表里凡是含这些片段的行，清单里都必须有对应条目」。
+OCR_CONFIRMED_TOKENS = ('sequencial', 'Commited')
 
 #: 自动规则命中、但人工复核判定为**正常**的项（写进附录，说明判据不是盲用）
 OCR_ACCEPTED = {
@@ -849,6 +1134,95 @@ def _is_subsequence(short: str, long: str) -> bool:
     """``short`` 是不是 ``long`` 的子序列。"""
     iterator = iter(long)
     return all(char in iterator for char in short)
+
+
+def describe_char_diff(bad: str, good: str) -> str:
+    """逐字符说明 ``bad`` → ``good`` 的差异（人话，给客户看）。
+
+    **不算出来的说法不许写进文档** —— 手写「少了一个 m 和一个 t」这种话
+    会和实际不符（``Commited`` → ``Committed`` 其实只少一个 ``t``）。
+    """
+    matcher = difflib.SequenceMatcher(None, bad, good)
+    parts = []
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == 'equal':
+            continue
+        if tag == 'insert':
+            parts.append('正确写法的第 %d 位缺 `%s`' % (j1 + 1, good[j1:j2]))
+        elif tag == 'delete':
+            parts.append('第 %d 位多了 `%s`' % (i1 + 1, bad[i1:i2]))
+        else:
+            parts.append('第 %d 位 `%s` 应为 `%s`' % (i1 + 1, bad[i1:i2], good[j1:j2]))
+    return '；'.join(parts)
+
+
+def corpus_vocabulary(rules: Sequence[Dict[str, Any]]) -> set:
+    """语料词表 —— 全部指标英文名 + 中文名里的词。"""
+    words = set()
+    for rule in rules:
+        for token in code_tokens(rule.get('metric_code')):
+            words.add(token.lower())
+        for token in desc_tokens(rule.get('metric_name')):
+            words.add(token)
+    return words
+
+
+def detect_substitution_findings(rules: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """**替换型**错字候选：与语料里的某个词**等长**且**只差 1 个字符**。
+
+    这是 ``detect_ocr_findings``（删字型）的**盲区补齐** —— 删字型判据
+    抓不到 ``sequencial`` → ``sequential`` 这种「换一个字母」的错误。
+
+    只扫**中文名列**（英文名列已逐条人工核对，见文档第 8 节的说明）。
+    """
+    vocabulary = corpus_vocabulary(rules)
+    findings = []
+    for rule in rules:
+        for token in desc_tokens(rule.get('metric_name')):
+            candidates = []
+            for word in vocabulary:
+                if word == token or len(word) != len(token):
+                    continue
+                diff = [index for index, pair in enumerate(zip(token, word))
+                        if pair[0] != pair[1]]
+                if len(diff) == 1:
+                    candidates.append(word)
+            if not candidates:
+                continue
+            candidates.sort()
+            findings.append({
+                'metric_code': rule.get('metric_code'),
+                'metric_name': rule.get('metric_name'),
+                'token': token,
+                'candidates': candidates,
+            })
+    return findings
+
+
+#: 替换型候选的人工判定：``(metric_code, token, candidate)`` → (判定, 理由)
+OCR_SUBSTITUTION_VERDICTS = {
+    ('GAUSSDB.{#NAME}.number.Of.sequential.scan', 'sequencial', 'sequential'): (
+        '错字',
+        '中文名列里的 sequencial 应为 sequential —— 与同一行英文名列一致'),
+    ('GAUSSDB.{#NAME}.number.Of.quential.ples.ad', 'sequencial', 'sequential'): (
+        '错字',
+        '中文名列里的 sequencial 应为 sequential —— 与同族英文名列一致'),
+    ('GAUSSDB.{#NAME}.Number.ad.ples', 'dead', 'read'): (
+        '正常',
+        '中文名列「number of dead tuples」里的 dead 正确（死亡行）'),
+    ('GAUSSDB.{#NAME}.Number.t.date.ples', 'hot', 'hit'): (
+        '正常',
+        '中文名列「number of hot update tuples」里的 hot 正确（HOT 更新）'),
+    ('GAUSSDB.{#NAME}.number.Of.dex.ples.ad', 'read', 'dead'): (
+        '正常',
+        '中文名列「number of index tuples read」里的 read 正确'),
+    ('GAUSSDB.{#NAME}.number.Of.quential.ples.ad', 'read', 'dead'): (
+        '正常',
+        '中文名列「… tuples read」里的 read 正确'),
+    ('gaussdb.locks.accessexclusive[{#DBNAME}]', 'num', 'sum'): (
+        '正常',
+        '中文名列「Num of accessexclusive locks」是客户原文，不是错字'),
+}
 
 
 #: 英语屈折变化 —— 候选词是原词加这些后缀时不算错字
@@ -943,7 +1317,7 @@ def _ocr_reason(bad: str, good: str, why: str, counts: Dict[str, int],
 
 
 def _ocr_intro(lines: List[str], rules: Sequence[Dict[str, Any]], customer_rows: Sequence[Dict[str, Any]]) -> None:
-    """开头：这份清单是什么、现状怎么处理。"""
+    """开头：这份清单是什么、现状怎么处理、判据是什么。"""
     lines.append('# 客户指标英文名核对清单（客户交付版）')
     lines.append('')
     lines.append('客户指标库的英文名来自**图片 OCR**，存在错字。本文稿列出疑似有问题的写法，'
@@ -960,47 +1334,70 @@ def _ocr_intro(lines: List[str], rules: Sequence[Dict[str, Any]], customer_rows:
     lines.append('- 客户确认后，我们把 `metric_rules.json` 里对应规则的 `metric_code`（以及有问题的'
                  '`metric_name`）改成建议写法，**代码不需要改**；届时「我们实际用的名字」才会与客户表产生差异。')
     lines.append('- **本次核对没有发现取值口径错误**：98 个可提供指标的取数方式、维度、刷新周期'
-                 '都按映射表复核过，问题集中在**名称拼写**上。')
+                 '都按映射表复核过，问题集中在**名称拼写**上。'
+                 '（单位口径另见第 8 节 —— 客户表里有几处「指标单位」与语义对不上，**待客户确认**。）')
     lines.append('')
     lines.append('## 2. 判据')
     lines.append('')
-    lines.append('自动判据（脚本 `tools/build_delivery_docs.py` 的 `detect_ocr_findings`）：')
+    lines.append('本文的清单由**两部分**组成，两部分**分开标注**（表里的「判据来源」列）：')
+    lines.append('')
+    lines.append('| 部分 | 判据 | 覆盖范围 | 章节 |')
+    lines.append('|---|---|---|---|')
+    lines.append('| **自动判据命中** | 删字型 + 替换型（见下） | **英文名列**（客户指标库的「英文名」列） | 第 3 节 |')
+    lines.append('| **人工复核确认** | 逐字符人工比对 | **中文名列**（客户指标库的「中文名」列） | 第 4 节 |')
+    lines.append('')
+    lines.append('**自动判据一：删字型**（脚本 `tools/build_delivery_docs.py` 的 `detect_ocr_findings`）：')
     lines.append('')
     lines.append('1. 把指标英文名按 `.` / `_` 切成词；')
-    lines.append('2. 候选词表 = 全表 101 个指标名里的词 ∪ 本指标英文描述里的词；')
+    lines.append('2. 候选词表 = 全表 101 个指标名里的词 ∪ 本指标中文名里的词；')
     lines.append('3. 某词若是候选词**删掉 1~2 个字符**得到的子序列，且差异**不是**英语屈折变化'
                  '（-s / -es / -ed / -d / -ing / -n / -en），则判为疑似 OCR 缺字；')
     lines.append('4. 候选词本身若又是别的词的截断，则不作候选（只保留最完整的写法）。')
     lines.append('')
-    lines.append('自动命中后**逐条人工复核**，把英语屈折变化等误报剔掉（见附录）。'
-                 '「建议的正确拼写」一列是**建议**，最终以客户确认的为准。')
+    lines.append('**自动判据二：替换型**（`detect_substitution_findings`）—— 某个词与语料里的另一个词'
+                 '**等长**且**只差 1 个字符**（`sequencial` → `sequential` 这类「换一个字母」的错误，'
+                 '删字型判据抓不到）。逐条人工复核结果见附录 B。')
     lines.append('')
+    lines.append('**人工复核**：上表两种自动判据都只是**候选**。'
+                 '本清单的每一条都**逐字符人工比对过**，'
+                 '「疑似问题」一列里的「第几位缺什么 / 第几位应该是什么」'
+                 '**由脚本逐字符算出来**，不是手写的。')
+    lines.append('')
+    lines.append('> **覆盖面说明（别过读）**：'
+                 '自动判据只覆盖**英文名列**，且只覆盖「删字」与「换字母」两种形态；'
+                 '**中文名列**全部由人工逐字符核对（见第 4 节），'
+                 '英文名列也已逐条人工核对 —— 但自动判据**不能**证明「其余的都没问题」，'
+                 '只能说明「按上述两种形态没发现」。')
+    lines.append('')
+    lines.append('「建议的正确拼写」一列是**建议**，最终以客户确认的为准。')
+    lines.append('')
+
 
 
 def _ocr_main_table(lines: List[str], rules: Sequence[Dict[str, Any]], counts: Dict[str, int]) -> None:
     """第 3 节：英文名列的疑似错字。"""
-    lines.append('## 3. 疑似错字清单（英文名列）')
+    lines.append('## 3. 疑似错字清单（英文名列 · 自动判据命中 + 人工复核确认）')
+    lines.append('')
+    lines.append('判据来源：**自动判据（删字型 / 替换型）命中，人工逐字符复核确认**。')
     lines.append('')
     lines.append(TABLE_MARKS['ocr'])
     lines.append('')
-    lines.append('| # | 客户表里的英文名 | 我们实际用的名字 | 疑似问题 | 建议的正确拼写 | 影响面 |')
-    lines.append('|---|---|---|---|---|---|')
+    lines.append('| # | 客户表里的英文名 | 我们实际用的名字 | 疑似问题（逐字符差异） | '
+                 '建议的正确拼写 | 判据来源 | 影响面 |')
+    lines.append('|---|---|---|---|---|---|---|')
     index = 0
     for code, items in OCR_REVIEW.items():
-        rule = None
-        for candidate in rules:
-            if candidate.get('metric_code') == code:
-                rule = candidate
-                break
         suggestion = apply_replacements(code, [(bad, good) for bad, good, _ in items])
         own_words = [token.lower() for token in code_tokens(code)]
         problems = '；'.join(
-            '`%s` → `%s`（%s）' % (bad, good, _ocr_reason(bad, good, why, counts, own_words))
+            '`%s` → `%s`（%s%s）' % (
+                bad, good, describe_char_diff(bad, good),
+                ('；' + _ocr_reason(bad, good, why, counts, own_words)) if why else '')
             for bad, good, why in items)
         impact = ('仅 `metricCode` 的拼写（取值口径、维度、刷新周期均不变）；'
                   '客户确认后改映射表即可')
         index += 1
-        lines.append('| %d | `%s` | `%s` | %s | `%s` | %s |' % (
+        lines.append('| %d | `%s` | `%s` | %s | `%s` | 自动判据 + 人工复核 | %s |' % (
             index, code, code, problems, suggestion, impact))
     lines.append('')
     lines.append('> 「我们实际用的名字」与「客户表里的英文名」相同，是因为采集端**按客户表原文投递**。'
@@ -1009,15 +1406,19 @@ def _ocr_main_table(lines: List[str], rules: Sequence[Dict[str, Any]], counts: D
 
 
 def _ocr_desc_table(lines: List[str], rules: Sequence[Dict[str, Any]]) -> None:
-    """第 4 节：中文名 / 英文描述列的疑似错字。"""
-    lines.append('## 4. 疑似错字清单（中文名 / 英文描述列）')
+    """第 4 节：中文名列的疑似错字。"""
+    lines.append('## 4. 疑似错字清单（中文名列 · 人工复核确认）')
     lines.append('')
-    lines.append('这一列同样会投递到 Kafka 的 `metricName` 字段，需要一并核对。')
+    lines.append('中文名列同样会投递到 Kafka 的 `metricName` 字段，需要一并核对。')
+    lines.append('')
+    lines.append('**这一节的条目是人工逐字符核对出来的** —— 自动判据只扫英文名列，'
+                 '覆盖不到中文名列（中文名里的英文词元不参与自动检测）。')
     lines.append('')
     lines.append(TABLE_MARKS['ocr_desc'])
     lines.append('')
-    lines.append('| # | 客户表里的中文名 | 我们实际用的名字 | 疑似问题 | 建议的正确写法 | 影响面 |')
-    lines.append('|---|---|---|---|---|---|')
+    lines.append('| # | 客户表里的中文名 | 我们实际用的名字 | 疑似问题（逐字符差异） | '
+                 '建议的正确写法 | 判据来源 | 影响面 |')
+    lines.append('|---|---|---|---|---|---|---|')
     index = 0
     for code, items in OCR_DESC_REVIEW.items():
         name = ''
@@ -1026,15 +1427,19 @@ def _ocr_desc_table(lines: List[str], rules: Sequence[Dict[str, Any]]) -> None:
                 name = rule.get('metric_name') or ''
                 break
         problems = '；'.join(
-            '`%s` → `%s`（%s）' % (bad, good, why) for bad, good, why in items)
+            '`%s` → `%s`（%s%s）' % (
+                bad, good, describe_char_diff(bad, good),
+                ('；' + why) if why else '')
+            for bad, good, why in items)
         suggestion = name
         for bad, good, _ in items:
             suggestion = suggestion.replace(bad, good)
         index += 1
-        lines.append('| %d | %s | %s | %s | %s | 仅 `metricName` 的拼写，'
+        lines.append('| %d | %s | %s | %s | %s | 人工复核 | 仅 `metricName` 的拼写，'
                      '`metricCode` 与取值口径均不变 |' % (
                          index, name, name, problems, suggestion))
     lines.append('')
+
 
 
 def _ocr_style(lines: List[str]) -> None:
@@ -1060,7 +1465,7 @@ def _ocr_style(lines: List[str]) -> None:
 def _ocr_auto_table(lines: List[str], findings: List[Dict[str, Any]],
                       customer_rows: Sequence[Dict[str, Any]]) -> None:
     """第 6 节：自动规则命中但人工判定正常的项。"""
-    lines.append('## 6. 附录：自动规则命中但经人工复核判定正常')
+    lines.append('## 6. 附录 A：自动规则命中但经人工复核判定正常（英文名列）')
     lines.append('')
     lines.append('这些写法也满足「删 1~2 个字符得到另一个词」的形态，但它们是英语的正常写法，'
                  '**不是错字**，列出以说明判据经过复核而非盲用。')
@@ -1077,20 +1482,60 @@ def _ocr_auto_table(lines: List[str], findings: List[Dict[str, Any]],
         lines.append('| `%s` | `%s` → `%s` | 正常 | %s |' % (
             finding['metric_code'], finding['token'], finding['candidates'][0], reason))
     lines.append('')
-    total = len(customer_rows)
 
 
-def _ocr_conclusion(lines: List[str], customer_rows: Sequence[Dict[str, Any]]) -> None:
-    """第 7 节：结论。"""
-    lines.append('## 7. 结论')
+def _ocr_substitution_table(lines: List[str], rules: Sequence[Dict[str, Any]]) -> None:
+    """第 7 节：替换型候选的逐条复核（附录 B）。"""
+    lines.append('## 7. 附录 B：替换型候选逐条复核（中文名列）')
+    lines.append('')
+    lines.append('下表是**替换型判据**（等长、只差 1 个字符）在中文名列里命中的**全部候选**，'
+                 '每一条都**人工复核过**并给出判定 —— '
+                 '列出全部候选是为了说明「替换型这一类错字没有漏检」。')
+    lines.append('')
+    lines.append(TABLE_MARKS['ocr_sub'])
+    lines.append('')
+    lines.append('| 客户指标 | 中文名列里的词 | 自动判据给出的候选 | 人工判定 | 理由 |')
+    lines.append('|---|---|---|---|---|')
+    for finding in detect_substitution_findings(rules):
+        for candidate in finding['candidates']:
+            key = (finding['metric_code'], finding['token'], candidate)
+            verdict = OCR_SUBSTITUTION_VERDICTS.get(key)
+            if verdict is None:
+                lines.append('| `%s` | `%s` | `%s` | **未复核** | '
+                             '**新候选 —— 必须人工复核后补进判据表** |' % (
+                                 finding['metric_code'], finding['token'], candidate))
+                continue
+            label, reason = verdict
+            lines.append('| `%s` | `%s` | `%s` | %s | %s |' % (
+                finding['metric_code'], finding['token'], candidate, label, reason))
+    lines.append('')
+
+
+def _ocr_conclusion(lines: List[str], customer_rows: Sequence[Dict[str, Any]],
+                    rules: Sequence[Dict[str, Any]]) -> None:
+    """第 8 节：结论。"""
+    lines.append('## 8. 结论')
     lines.append('')
     total = len(customer_rows)
     fragments = sum(len(items) for items in OCR_REVIEW.values())
-    lines.append('- 客户指标库共 %d 个指标英文名，其中 **%d 个指标**疑似存在 OCR 错字'
-                 '（合计 %d 处片段），其余 **%d 个**未发现疑似错字。' % (
-                     total, len(OCR_REVIEW), fragments, total - len(OCR_REVIEW)))
+    fragments += sum(len(items) for items in OCR_DESC_REVIEW.values())
+    codes = set(OCR_REVIEW.keys())
+    codes.update(OCR_DESC_REVIEW.keys())
+    lines.append('- 客户指标库共 %d 个指标；**%d 个指标**的英文名或中文名疑似存在 OCR 错字'
+                 '（合计 %d 处片段），其中英文名列 %d 处、中文名列 %d 处。' % (
+                     total, len(codes), fragments,
+                     sum(len(items) for items in OCR_REVIEW.values()),
+                     sum(len(items) for items in OCR_DESC_REVIEW.values())))
+    lines.append('- 其余 **%d 个**指标**按上述判据**未发现疑似错字 —— '
+                 '注意这是「按判据未发现」，**不等于**「已确认无误」：'
+                 '删字型与替换型两种形态之外的问题（如拼错整个词、缩写不一致）判据抓不到。' % (
+                     total - len(codes)))
     lines.append('- 疑似错字**全部是名称层面的**（`metricCode` / `metricName` 的拼写），'
                  '**不涉及取数口径、不涉及数据正确性**。')
+    lines.append('- **单位口径另需客户确认**：客户表「指标单位」列有若干处与语义对不上'
+                 '（例如「通过 HOT 更新的行数」标 `%`，而同族的「行数」类指标标 `tuples/s`；'
+                 '「禁用的连接数」标 `个`、「等待资源的连接数」标 `%`），'
+                 '这些**不是 OCR 错字**，本次核对未改动，**请客户一并确认**。')
     lines.append('- 请客户在验收前反馈确认后的最终拼写；我们收到后更新映射表并重新出这份清单。')
     lines.append('')
 
@@ -1105,7 +1550,8 @@ def render_ocr_checklist(rules, customer_rows):
     _ocr_desc_table(lines, rules)
     _ocr_style(lines)
     _ocr_auto_table(lines, findings, customer_rows)
-    _ocr_conclusion(lines, customer_rows)
+    _ocr_substitution_table(lines, rules)
+    _ocr_conclusion(lines, customer_rows, rules)
     return '\n'.join(lines) + '\n'
 
 
