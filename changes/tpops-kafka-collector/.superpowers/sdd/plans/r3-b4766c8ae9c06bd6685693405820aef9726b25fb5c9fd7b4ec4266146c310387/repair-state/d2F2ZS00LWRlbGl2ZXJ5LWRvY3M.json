@@ -3,16 +3,22 @@
   "plan_revision": 3,
   "wave_id": "wave-4-delivery-docs",
   "status": "repairing",
-  "failure_count": 1,
-  "previous_head": "2650399ec421fd323ce1325ad0f992917363690c",
-  "previous_report": ".superpowers/sdd/reviews/wave-4-delivery-docs.md",
+  "failure_count": 2,
+  "previous_head": "9860bac48014dc90ddcc56476f04832bef15dbd7",
+  "previous_report": ".superpowers/sdd/reviews/wave-4-delivery-docs-r2.md",
   "failures": [
     {
       "base": "15a076bde72352fee1f84f59136a48520fb404b9",
       "head": "2650399ec421fd323ce1325ad0f992917363690c",
       "report": ".superpowers/sdd/reviews/wave-4-delivery-docs.md",
       "recorded_at": "2026-11-24T08:50:02.243Z"
+    },
+    {
+      "base": "2650399ec421fd323ce1325ad0f992917363690c",
+      "head": "9860bac48014dc90ddcc56476f04832bef15dbd7",
+      "report": ".superpowers/sdd/reviews/wave-4-delivery-docs-r2.md",
+      "recorded_at": "2026-11-24T09:46:49.719Z"
     }
   ],
-  "updated_at": "2026-11-24T08:50:02.265Z"
+  "updated_at": "2026-11-24T09:46:49.741Z"
 }
