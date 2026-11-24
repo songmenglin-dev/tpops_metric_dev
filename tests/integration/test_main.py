@@ -10,8 +10,15 @@
 
 4. **停机后不再发起新的 HTTP 请求**（执行器兜底）；
 5. **告警消息进 ``outcome.alarms``**，不进 ``outcome.messages``。
+
+修复轮 R-A 追加的守卫：
+
+6. **节点清单取不到** → 该实例不参与采集；全部取不到 → **启动失败**；
+7. 三个「保命」的异常分支（采集异常不带走进程 / 装配失败退 3 /
+   「跑了但全挂」时的就绪探针）。
 """
 import json
+import logging
 import os
 import signal
 import socket
@@ -24,6 +31,7 @@ import pytest
 
 from tpops_kafka_collector import main as entry
 from tpops_kafka_collector.config import load_config
+from tpops_kafka_collector.errors import TransientError
 from tpops_kafka_collector.executors import build_executors
 from tpops_kafka_collector.mapping.loader import load_mapping
 from tpops_kafka_collector.scheduler_types import InstanceTarget, TaskOutcome
@@ -291,51 +299,160 @@ def test_no_new_http_request_after_shutdown(tmp_path):
 # 场景三：在途请求超过 30 秒 → 放弃等待
 # ---------------------------------------------------------------------------
 
-def test_in_flight_request_beyond_deadline_gives_up_and_exits_zero(tmp_path):
-    """在途请求超过截止时间 → 放弃等待，仍以退出码 0 退出，**不挂死**。
+#: 演练驱动：**真的调度器 + 真的线程池**，某个执行器**挂死**（模拟一个
+#: 永远不返回的 HTTP 调用）。
+#:
+#: 退出路径与生产入口一致：``entry.run(runtime)`` → ``entry.exit_process(code)``。
+DRIVER_SOURCE = '''
+"""演练驱动 —— 真调度器 + 真线程池 + 挂死的执行器。"""
+import os
+import sys
+import threading
+import time
 
-    用**可控的阻塞桩 + 可注入的截止时间**（不真等 30 秒）。
-    """
-    shutdown = threading.Event()
-    started = threading.Event()
-    release = threading.Event()
+sys.path.insert(0, os.environ['REPO_ROOT'])
 
-    def _blocking_tick():
-        started.set()
-        release.wait(30)
+from tpops_kafka_collector import main as entry
+from tpops_kafka_collector.schedule import ChannelPlan
+from tpops_kafka_collector.scheduler import Scheduler
+from tpops_kafka_collector.scheduler_types import InstanceTarget, TaskOutcome
+from tpops_kafka_collector.watermark import WatermarkStore
+
+STATE = os.environ['DRILL_STATE']
+MARKER = os.path.join(STATE, 'hang-started')
+WATERMARK = os.path.join(STATE, 'watermark.json')
+
+#: 水位里预置的指标水位（用来断言「水位文件完整可读回」）。
+SEED_END_TIME_MS = 1700000000000
+
+
+class HangingExecutor(object):
+    """挂死的执行器 —— 模拟一个永远不返回的 HTTP 调用。"""
+
+    def __call__(self, instance):
+        with open(MARKER, 'w') as handle:
+            handle.write('started')
+        time.sleep(3600)
+        return TaskOutcome()
+
+
+class Producer(object):
+    """假投递器（一条都没投出去 —— 这一轮卡在采集阶段）。"""
+
+    def produce_metrics(self, records):
         return None
 
-    scheduler = ScriptedScheduler(tick=_blocking_tick)
-    producer = FakeProducer()
-    store = WatermarkStore(os.path.join(str(tmp_path), 'watermark.json'))
-    store.advance_metric('inst-1:monitor', 999)
-    runtime = _runtime(tmp_path, scheduler, producer=producer, watermark=store)
+    def produce_alarms(self, records):
+        return None
 
-    result = {}
+    def close(self):
+        pass
 
-    def _run():
-        result['code'] = entry.run(
-            runtime, shutdown=shutdown, deadline_seconds=0.3,
+
+class Config(object):
+    poll_interval_seconds = 30
+
+
+def main():
+    stop = threading.Event()
+    store = WatermarkStore(WATERMARK)
+    store.advance_metric('inst-1:monitor', SEED_END_TIME_MS)
+    scheduler = Scheduler(
+        plans=(ChannelPlan(channel='monitor', interval_seconds=30,
+                            tier_seconds=30, metric_count=1),),
+        executors={'monitor': HangingExecutor()},
+        producer=Producer(),
+        watermark=store,
+        instances=[InstanceTarget('inst-1', 'gauss-drill')],
+        shutdown_event=stop,
+    )
+    runtime = entry.Runtime(
+        config=Config(), mapping=None, client=None, profile=None,
+        producer=Producer(), watermark=store, scheduler=scheduler,
+        health=None, instances=(), deltas=None, shutdown=stop,
+    )
+    return entry.run(runtime, shutdown=stop)
+
+
+if __name__ == '__main__':
+    entry.exit_process(main())
+'''
+
+
+def test_in_flight_request_beyond_deadline_gives_up_and_exits_zero(tmp_path):
+    """在途请求挂死 → **放弃等待**，进程仍以退出码 0 退出（**不挂死**）。
+
+    用**真的调度器 + 真的线程池**：某个执行器挂住（模拟永远不返回的 HTTP）。
+    进程在**放弃窗口（30 秒）内**退出 —— 靠 subprocess 的超时断言，
+    不靠测试里的假超时蒙混。
+
+    为什么必须真起一个进程：py3.7 的 ``concurrent.futures.thread`` 在
+    ``atexit`` 里 ``join()`` **所有**工作线程 —— 进程内跑的话，
+    pytest 自己的解释器退出也会被同一个挂死的工作线程拖住。
+    """
+    state_dir = tmp_path / 'state'
+    state_dir.mkdir()
+    driver = tmp_path / 'driver.py'
+    driver.write_text(DRIVER_SOURCE, encoding='utf-8')
+
+    env = dict(os.environ)
+    env.update({
+        'PYTHONPATH': REPO_ROOT,
+        'REPO_ROOT': REPO_ROOT,
+        'DRILL_STATE': str(state_dir),
+    })
+    proc = subprocess.Popen(
+        [sys.executable, str(driver)],
+        cwd=str(tmp_path), env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    marker = state_dir / 'hang-started'
+    out = err = b''
+    try:
+        deadline = time.time() + 30
+        while time.time() < deadline and not marker.exists():
+            time.sleep(0.1)
+        assert marker.exists(), '在途请求没有开始（驱动没跑起来）'
+        proc.send_signal(signal.SIGTERM)
+        # 放弃窗口是 30 秒 —— 留 15 秒余量给收尾（落盘 + flush）。
+        out, err = proc.communicate(timeout=45)
+    except subprocess.TimeoutExpired:  # pragma: no cover —— 这就是「挂死」
+        proc.kill()
+        proc.communicate()
+        raise AssertionError(
+            '进程在放弃窗口内没有退出 —— 挂死了（atexit 的 join 把进程拖住了）'
         )
+    finally:
+        if proc.poll() is None:  # pragma: no cover —— 兜底
+            proc.kill()
+            proc.communicate()
 
-    worker = threading.Thread(target=_run)
-    worker.start()
-    assert started.wait(5), '本轮采集没有开始'
-    shutdown.set()
-    worker.join(timeout=10)
-
-    assert not worker.is_alive(), '放弃等待后不该挂死'
-    assert result.get('code') == 0
-    assert producer.closed
-
-    reloaded = WatermarkStore(os.path.join(str(tmp_path), 'watermark.json'))
-    reloaded.load()
-    assert reloaded.metric_watermark('inst-1:monitor') == 999
+    assert proc.returncode == 0, (
+        '退出码不是 0\nstdout=%s\nstderr=%s'
+        % (out.decode(), err.decode())
+    )
+    watermark = state_dir / 'watermark.json'
+    assert watermark.exists(), '退出后没有写出水位文件：%s' % os.listdir(str(state_dir))
+    store = WatermarkStore(str(watermark))
+    store.load()
+    assert store.metric_watermark('inst-1:monitor') == 1700000000000
 
 
 def test_default_shutdown_deadline_is_thirty_seconds():
     """默认的放弃等待上限是 30 秒。"""
     assert entry.SHUTDOWN_DEADLINE_SECONDS == 30
+
+
+def test_exit_process_skips_the_atexit_hooks(tmp_path, monkeypatch):
+    """``exit_process`` 走 ``os._exit``（**跳过 atexit**），退出码照旧。
+
+    atexit 里挂着 py3.7 的 ``concurrent.futures.thread._python_exit`` ——
+    它会 ``join()`` 所有工作线程，有一个在途 HTTP 挂住就会把进程拖死。
+    """
+    calls = []
+    monkeypatch.setattr(entry.os, '_exit', lambda code: calls.append(code))
+    entry.exit_process(0)
+    assert calls == [0], calls
 
 
 # ---------------------------------------------------------------------------
@@ -513,3 +630,189 @@ def test_real_process_receives_sigterm_and_exits_zero(tmp_path):
     store.load()  # 能读回来 = 文件完整
     payload = json.load(open(watermark_file, encoding='utf-8'))
     assert payload['version'] == 1
+
+
+# ---------------------------------------------------------------------------
+# 节点清单取不到（A4）
+# ---------------------------------------------------------------------------
+
+class _NodeListClient(FakeClient):
+    """节点清单接口会对指定实例**抛可重试异常**的假客户端。"""
+
+    def __init__(self, instances=(), nodes=None, failing=()):
+        FakeClient.__init__(self, instances, nodes)
+        self.failing = set(failing)
+        self.node_calls = []
+
+    def get(self, path, params=None):
+        if 'key-view-execute-node' in path:
+            instance_id = path.split('/instances/')[-1].split('/')[0]
+            self.node_calls.append(instance_id)
+            if instance_id in self.failing:
+                raise TransientError('平台抖了：节点清单取不到')
+        return FakeClient.get(self, path, params)
+
+
+def test_instance_without_a_node_list_is_not_collected(tmp_path, caplog):
+    """节点清单取不到 → **该实例不参与采集**（不产出错的 resourceName）。
+
+    节点清单决定 ``resourceName``（``{host_ip}_{node_id}``）——
+    一次网络抖动就让整个进程生命周期的资源名退化成「只有 node_id」，
+    客户按台账查不到资源 → **数据看着有、但对不上台账**。
+    """
+    client = _NodeListClient(
+        [_instance_row('inst-ok', 'gauss-ok'), _instance_row('inst-bad', 'gauss-bad')],
+        {'inst-ok': _node_rows()},
+        failing=('inst-bad',),
+    )
+    with caplog.at_level('ERROR'):
+        runtime = entry.build_runtime(
+            _config(tmp_path), client=client, producer=FakeProducer(),
+            start_health=False, node_retry_sleep=lambda seconds: None,
+        )
+
+    collected = [item.instance_id for item in runtime.instances]
+    assert collected == ['inst-ok'], (
+        '取不到节点清单的实例不该参与采集：%r' % (collected,)
+    )
+    assert [item.instance_id for item in runtime.scheduler.instances] == ['inst-ok']
+
+    # 取不到节点清单的实例要记 **ERROR + 堆栈**，并指明是哪个实例。
+    errors = [record for record in caplog.records if record.levelno >= logging.ERROR]
+    assert any('inst-bad' in record.getMessage() for record in errors), caplog.text
+    assert any(record.exc_info is not None for record in errors), (
+        '节点清单失败的日志必须带堆栈'
+    )
+
+
+def test_node_list_is_retried_three_times(tmp_path, caplog):
+    """节点清单取不到 → **退避重试 3 次**（不是一次失败就永久降级）。"""
+    client = _NodeListClient(
+        [_instance_row('inst-ok', 'gauss-ok'), _instance_row('inst-bad', 'gauss-bad')],
+        {'inst-ok': _node_rows()},
+        failing=('inst-bad',),
+    )
+    with caplog.at_level('WARNING'):
+        entry.build_runtime(
+            _config(tmp_path), client=client, producer=FakeProducer(),
+            start_health=False, node_retry_sleep=lambda seconds: None,
+        )
+    # 平台画像发现时也会取一次节点清单（数 master）—— 所以总次数 ≥ 3；
+    # 真正要钉死的是**退避重试确实发生了两次**。
+    assert client.node_calls.count('inst-bad') >= 3, client.node_calls
+    assert '第 1/3 次重试' in caplog.text, caplog.text
+    assert '第 2/3 次重试' in caplog.text, caplog.text
+
+
+def test_startup_fails_when_no_instance_has_a_node_list(tmp_path, monkeypatch, caplog):
+    """**所有**实例的节点清单都取不到 → **启动失败**（非 0 退出码）。
+
+    那等于平台不可达 —— 与其投出对不上台账的数据，不如启动失败。
+    """
+    client = _NodeListClient(
+        [_instance_row('inst-1', 'gauss-drill')], {}, failing=('inst-1',),
+    )
+    producers = []
+
+    class _NeverProducer(object):
+        def __init__(self, *args, **kwargs):
+            producers.append(self)
+
+        @classmethod
+        def from_config(cls, config, **kwargs):
+            return cls()
+
+        def produce_metrics(self, records):
+            raise AssertionError('启动失败时不该投递 Kafka')
+
+        def produce_alarms(self, records):
+            raise AssertionError('启动失败时不该投递 Kafka')
+
+        def close(self):
+            pass
+
+    class _StubClient(object):
+        @classmethod
+        def from_config(cls, config, **kwargs):
+            return client
+
+    monkeypatch.setattr(entry, 'TpopsClient', _StubClient)
+    monkeypatch.setattr(entry, 'MessageProducer', _NeverProducer)
+
+    with caplog.at_level('ERROR'):
+        code = entry.main(env=_env(tmp_path))
+
+    assert code == entry.EXIT_STARTUP_ERROR, code
+    assert code != 0
+    assert producers == [], '启动失败前不该构造 Kafka 生产者'
+    assert '节点清单' in caplog.text, caplog.text
+
+
+# ---------------------------------------------------------------------------
+# 保命分支（B3）
+# ---------------------------------------------------------------------------
+
+def test_startup_error_returns_exit_code_three_with_a_stack_trace(tmp_path, monkeypatch, caplog):
+    """装配失败 → 退出码 3 + **带堆栈**的日志（不要裸崩）。"""
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError('依赖装不起来')
+
+    monkeypatch.setattr(entry, 'build_runtime', _boom)
+    with caplog.at_level('ERROR'):
+        code = entry.main(env=_env(tmp_path))
+
+    assert code == entry.EXIT_STARTUP_ERROR
+    assert code == 3
+    errors = [record for record in caplog.records if record.levelno >= logging.ERROR]
+    assert any('装配失败' in record.getMessage() for record in errors), caplog.text
+    assert any(record.exc_info is not None for record in errors), (
+        '装配失败的日志必须带堆栈'
+    )
+
+
+def test_tpops_probe_reports_an_authentication_failure():
+    """认证失败 → 就绪探针不就绪，并说清原因。"""
+
+    class _AuthFailedClient(object):
+        _auth_failed_at = 1700000000.0
+
+    state = entry._tpops_state(_AuthFailedClient())
+    assert state is not True, state
+    assert '认证失败' in state, state
+
+
+def test_tpops_probe_reports_not_authenticated_yet():
+    """还没认证过 → 就绪探针不就绪，并说清原因。"""
+
+    class _FreshClient(object):
+        pass
+
+    state = entry._tpops_state(_FreshClient())
+    assert state is not True, state
+    assert '认证' in state, state
+
+
+def test_scheduler_probe_reports_a_stale_last_success():
+    """最近一次成功采集太久以前 → 就绪探针不就绪（跑了但全挂）。"""
+
+    class _StaleScheduler(object):
+        last_tick_ok_at = time.time() - (entry.SCHEDULER_STALE_SECONDS + 10)
+
+    state = entry._scheduler_state(_StaleScheduler())
+    assert state is not True, state
+    assert str(entry.SCHEDULER_STALE_SECONDS) in state, state
+
+
+def test_readiness_returns_503_when_the_last_round_failed(tmp_path):
+    """跑过一轮但**全挂** → ``/readyz`` 返回 503（不只是「还没跑过一轮」）。"""
+    client = FakeClient([_instance_row()], {'inst-1': _node_rows()})
+    runtime = entry.build_runtime(
+        _config(tmp_path), client=client, producer=FakeProducer(), start_health=False,
+    )
+    runtime.scheduler._last_tick_ok_at = time.time() - (entry.SCHEDULER_STALE_SECONDS + 10)
+
+    status, body = runtime.health.endpoints.readiness()
+
+    assert status == 503
+    assert b'"name": "scheduler"' in body or b'"name":"scheduler"' in body

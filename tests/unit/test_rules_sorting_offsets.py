@@ -114,6 +114,32 @@ def test_a_two_digit_offset_is_not_confused_with_a_trailing_date_fragment():
     assert parsed is None, '没有时区的时间戳不该被当成可解析的带时区时间'
 
 
+def test_timestamps_without_a_timezone_are_not_silently_treated_as_utc():
+    """**没有时区**的时间戳文本 → 解析不了（``None``），**不按 UTC 兜底**。
+
+    两个格式都带 ``%z`` → 解析成功一定是 aware 的 datetime，所以
+    「无时区按 UTC」那条分支**永远不会执行**。把它留在代码里会让人以为
+    无时区的文本会按 UTC 参与时间比较 —— 平台数据不带时区时按 UTC 猜，
+    比按文本比更容易取错 Top N 行。
+    """
+    assert parse_timestamp('2026-11-18 16:27:07.557567') is None
+    assert parse_timestamp('2026-11-18 16:27:07') is None
+
+
+def test_parsed_timestamps_are_always_timezone_aware():
+    """解析成功的结果**一定带时区** —— 不会与 naive 的兜底值混比报错。"""
+    texts = (
+        PLATFORM_OFFSET,
+        PLATFORM_OFFSET_COLON,
+        '2026-11-18 09:00:00+00:00',
+        '2026-11-18 09:00:00.123456-05:00',
+    )
+    for text in texts:
+        parsed = parse_timestamp(text)
+        assert parsed is not None, text
+        assert parsed.tzinfo is not None, '解析结果没有时区：%r' % (text,)
+
+
 def test_sort_rows_keeps_missing_values_last_in_ascending_order():
     """空串/None 仍按 PostgreSQL ``ORDER BY`` 的默认口径排在最后（升序）。"""
     rows = [

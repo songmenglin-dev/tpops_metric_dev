@@ -16,6 +16,10 @@
 3. **告警消息进 ``outcome.alarms``**，不进 ``outcome.messages`` ——
    投递层按 ``outcome.alarms`` 走告警 Topic。
 
+**外部调用次数（``external_calls``）一律报真实值** —— 不是写死的常数：
+每个执行器在采集前后取客户端的**真实请求计数**基线与增量，
+差值就是这一组真实发出的外部调用次数（含重试）。
+
 通道与周期：
 
 ============  ==========================================  ==================
@@ -46,17 +50,56 @@ from .schedule import (
     CHANNEL_MONITOR,
 )
 from .scheduler_types import InstanceTarget, TaskOutcome, alarm_stream
-from .tpops.metrics import resolve_window_from_config, utc_now_ms
+from .tpops.call_tracking import CatalogCachingClient, CountingClient
+from .tpops.metrics import GROUP_CATALOG_PATH, resolve_window_from_config, utc_now_ms
 
 LOGGER = logging.getLogger(__name__)
 
 __all__ = ['build_executors']
 
-#: 各通道的外部调用次数（``external_calls``）—— 目录 + 查询 / 一次下发的页数等。
-MONITOR_EXTERNAL_CALLS = 2
-DIAGNOSTIC_EXTERNAL_CALLS = 1
-INSTANCE_EXTERNAL_CALLS = 2
-ALARM_EXTERNAL_CALLS = 4
+
+class _CallMeter:
+    """量「本任务真实发出的外部调用次数」。
+
+    口径（优先级从高到低）：
+
+    1. 客户端自带 **wire 级**计数（``TpopsClient.calls``）→ 记**真正发出的
+       HTTP 请求数**（含认证、401 刷新、重试、节点清单）；
+    2. 客户端没有计数能力（测试里的假客户端）→ 退回到**代理计数**：
+       经由 :class:`CountingClient` 的每次 ``get`` / ``post`` 记 1。
+
+    **按线程归属**：调度器并发跑「通道 × 实例」任务，各任务的调用数
+    必须互不串账，加起来才是这一轮的真实总数。
+    """
+
+    def __init__(self, client: Any, proxy: CountingClient) -> None:
+        counter = getattr(client, 'calls', None)
+        getter = getattr(counter, 'thread_total', None) if counter is not None else None
+        self._getter = getter if callable(getter) else proxy.thread_count
+
+    def mark(self) -> int:
+        """取基线（这段采集**开始之前**的累计值）。"""
+        return int(self._getter())
+
+    def delta(self, mark: int) -> int:
+        """增量 = 当前累计 − 基线 = 这段采集期间真实发出的请求数。"""
+        return max(int(self._getter()) - int(mark), 0)
+
+
+def _install_counting_client(command_center: Any, counted: CountingClient) -> None:
+    """把命令中心手里的客户端换成计数代理。
+
+    命令中心三跳的 HTTP 调用走的是**它自己持有的**客户端
+    （``CommandCenterClient._client``），不是采集器传进来的那个 ——
+    不换掉的话 B 类通道的调用次数数不到。
+
+    这里只换**客户端引用**（装配层的接线），不改动命令中心的任何行为：
+    代理把 ``get`` / ``post`` 原样转发给底层客户端。
+    """
+    current = getattr(command_center, '_client', None)
+    if current is None or current is counted:
+        return
+    command_center._client = counted
 
 
 def build_executors(
@@ -79,17 +122,25 @@ def build_executors(
     """
     stop = shutdown if shutdown is not None else threading.Event()
     now = clock if clock is not None else utc_now_ms
+    # 计数代理：把「真实发出的外部调用次数」量出来（见 :class:`_CallMeter`）。
+    counted = CountingClient(client)
+    # 指标分组目录的 TTL 快照缓存 —— 目录是平台元数据，变化极慢，
+    # 每轮重拉 12 次纯属浪费（12 次/轮 → 12 次/小时）。
+    catalog_client = CatalogCachingClient(counted, GROUP_CATALOG_PATH)
+    meter = _CallMeter(client, counted)
+    if command_center is not None:
+        _install_counting_client(command_center, counted)
     executors = {
-        CHANNEL_MONITOR: _monitor_executor(client, mapping, config, now),
+        CHANNEL_MONITOR: _monitor_executor(catalog_client, mapping, config, now, meter),
         CHANNEL_COMMAND_CENTER: _command_center_executor(
-            client, mapping, command_center, deltas, now,
+            counted, mapping, command_center, deltas, now, meter,
         ),
-        CHANNEL_DIAGNOSTIC: _diagnostic_executor(client, mapping, config, now),
+        CHANNEL_DIAGNOSTIC: _diagnostic_executor(counted, mapping, config, now, meter),
         CHANNEL_INSTANCE: _instance_executor(
-            client, mapping, node_registry, now,
+            counted, mapping, node_registry, now, meter,
         ),
         CHANNEL_ALARM: _alarm_executor(
-            client, mapping, config, watermark, now,
+            counted, mapping, config, watermark, now, meter,
         ),
     }
     return dict(
@@ -110,7 +161,8 @@ def _guard(
                 '已收到停机信号，跳过本组采集（不发任何 HTTP 请求）：实例 %s',
                 instance.instance_id,
             )
-            return TaskOutcome()
+            # 停机跳过 → **一次请求都没发** → 调用数是 0（不是默认的 1）。
+            return TaskOutcome(external_calls=0)
         return executor(instance)
 
     return run
@@ -125,12 +177,14 @@ def _monitor_executor(
     mapping: Any,
     config: Any,
     clock: Callable[[], int],
+    meter: _CallMeter,
 ) -> Callable[[InstanceTarget], TaskOutcome]:
     """A 类：监控指标接口 → 指标消息。"""
 
     def run(target: InstanceTarget) -> TaskOutcome:
         now_ms = int(clock())
         window = resolve_window_from_config(now_ms, config)
+        mark = meter.mark()
         collector = MonitorCollector(
             client, mapping, target.instance_id, target.instance_name,
             target.nodes, config, clock=lambda: now_ms,
@@ -140,7 +194,8 @@ def _monitor_executor(
             messages=messages,
             # 取数成功（异常会向上抛 → 调度器记该组失败 → 不推进水位）。
             end_time_ms=window.end_time,
-            external_calls=MONITOR_EXTERNAL_CALLS,
+            # **真实**外部调用次数（目录 GET + 指标 POST；目录命中缓存则不计）。
+            external_calls=meter.delta(mark),
             fetched=len(messages),
         )
 
@@ -157,6 +212,7 @@ def _command_center_executor(
     command_center: Any,
     deltas: Any,
     clock: Callable[[], int],
+    meter: _CallMeter,
 ) -> Callable[[InstanceTarget], TaskOutcome]:
     """B 类：命令中心合并 SQL → 指标消息。
 
@@ -169,7 +225,9 @@ def _command_center_executor(
     )
 
     def run(target: InstanceTarget) -> TaskOutcome:
+        mark = meter.mark()
         result = collector.collect(target.instance_id, target.instance_name)
+        calls = meter.delta(mark)
         # 取数失败时采集器返回空的 ``messages`` 且 **pages == 0**
         # （执行过至少一页才会 pages >= 1）—— 这时**不推进水位**。
         failed = result.pages <= 0
@@ -181,7 +239,10 @@ def _command_center_executor(
         return TaskOutcome(
             messages=result.messages,
             end_time_ms=None if failed else int(clock()),
-            external_calls=max(result.pages, 1),
+            # **真实**外部调用次数 —— 一条 SQL 是**完整三跳**
+            # （下发 → 轮询 → 取明细，每个 master 一次明细），
+            # 页数不是 HTTP 次数。
+            external_calls=calls,
             fetched=len(result.messages),
             windows=result.pages,
         )
@@ -198,6 +259,7 @@ def _diagnostic_executor(
     mapping: Any,
     config: Any,
     clock: Callable[[], int],
+    meter: _CallMeter,
 ) -> Callable[[InstanceTarget], TaskOutcome]:
     """C 类：诊断优化接口 → 指标消息。"""
 
@@ -207,6 +269,7 @@ def _diagnostic_executor(
     collector = DiagnosticCollector(client, mapping, sanitize, clock=clock)
 
     def run(target: InstanceTarget) -> TaskOutcome:
+        mark = meter.mark()
         messages = collector.collect(
             target.instance_id, target.nodes, target.instance_name,
         )
@@ -214,7 +277,8 @@ def _diagnostic_executor(
             messages=messages,
             # 一条都没产出 → 取不到数据（没有落点或平台没给数）→ 不推进水位。
             end_time_ms=int(clock()) if messages else None,
-            external_calls=DIAGNOSTIC_EXTERNAL_CALLS,
+            # **真实**外部调用次数（慢 SQL 列表 + Top SQL 列表，各一次）。
+            external_calls=meter.delta(mark),
             fetched=len(messages),
         )
 
@@ -230,18 +294,21 @@ def _instance_executor(
     mapping: Any,
     node_registry: Any,
     clock: Callable[[], int],
+    meter: _CallMeter,
 ) -> Callable[[InstanceTarget], TaskOutcome]:
     """D 类：实例元数据接口 → 指标消息。"""
 
     collector = InstanceCollector(client, mapping, node_registry, clock=clock)
 
     def run(target: InstanceTarget) -> TaskOutcome:
+        mark = meter.mark()
         result = collector.collect(target.instance_id)
         return TaskOutcome(
             messages=result.messages,
             # 一条都没产出 → 目标实例取不到或值取不到 → 不推进水位。
             end_time_ms=int(clock()) if result.messages else None,
-            external_calls=INSTANCE_EXTERNAL_CALLS,
+            # **真实**外部调用次数（实例列表 + 节点清单）。
+            external_calls=meter.delta(mark),
             fetched=len(result.messages),
         )
 
@@ -258,12 +325,14 @@ def _alarm_executor(
     config: Any,
     watermark: Any,
     clock: Callable[[], int],
+    meter: _CallMeter,
 ) -> Callable[[InstanceTarget], TaskOutcome]:
     """E 类：告警 → **告警消息**（进 ``outcome.alarms``，不进 ``messages``）。"""
 
     def run(target: InstanceTarget) -> TaskOutcome:
         stream = alarm_stream(target.instance_id)
         cursor = watermark.alarm_watermark(stream) if watermark is not None else None
+        mark = meter.mark()
         result = collect_alarms(
             client, mapping, target.nodes, target.instance_id, cursor,
             int(clock()),
@@ -274,7 +343,9 @@ def _alarm_executor(
             alarms=result.messages,
             # 告警走自己的水位（``alarm_stream``），不推指标水位。
             end_time_ms=None,
-            external_calls=ALARM_EXTERNAL_CALLS,
+            # **真实**外部调用次数 —— 四种形态各自分页（limit ≤ 100），
+            # 形态数 × 各自的页数，不是固定的 4。
+            external_calls=meter.delta(mark),
             fetched=result.convergence_count + result.detail_count,
         )
 

@@ -798,7 +798,8 @@ def test_summary_log_uses_the_agreed_field_names(caplog):
                   'failed=', 'dropped_unsupported=', 'windows=', 'alarms=',
                   'calls=', 'delivery_rate='):
         assert field in caplog.text, '汇总日志少了字段 %s' % field
-    assert '本轮丢弃 3 个不可提供指标' in caplog.text
+    # 措辞归 ``scheduler_report``（R-B 的文件），这里只断言**字段的值**。
+    assert 'dropped_unsupported=3' in caplog.text
 
 
 def test_external_call_budget_overrun_is_logged(caplog):
@@ -850,3 +851,69 @@ def test_executor_returning_garbage_is_a_failure_not_a_crash():
     )
     result = scheduler.tick()
     assert result.tasks_failed == 1
+
+
+# ---------------------------------------------------------------------------
+# 外部调用数：失败任务也要计数
+# ---------------------------------------------------------------------------
+
+class _CountingCalls(object):
+    """最小的全局调用计数器（与 ``CallCounter`` 同形状）。"""
+
+    def __init__(self):
+        self._total = 0
+
+    def record(self):
+        self._total += 1
+
+    def total(self):
+        return self._total
+
+
+def test_failed_tasks_calls_are_counted_in_the_round_summary():
+    """**失败任务**的外部调用数也要出现在轮汇总里（失败也要计数）。
+
+    失败任务的请求**确实发出去了** —— 平台调用与墙钟时间都已经消耗。
+    只统计成功任务的话，轮汇总的调用数会偏小 → 42 次预算告警**漏报**。
+    """
+    counter = _CountingCalls()
+
+    def failing(instance):
+        counter.record()
+        counter.record()
+        raise RuntimeError('这组炸了')
+
+    def ok(instance):
+        counter.record()
+        return TaskOutcome(messages=(), external_calls=1)
+
+    scheduler = make_scheduler(
+        {
+            CHANNEL_MONITOR: ok,
+            CHANNEL_COMMAND_CENTER: failing,
+        },
+        call_counter=counter,
+        plans=make_plans(((CHANNEL_MONITOR, 30), (CHANNEL_COMMAND_CENTER, 30))),
+    )
+
+    result = scheduler.tick()
+
+    assert result.tasks_failed == 1
+    assert result.external_calls == 3, (
+        '失败任务的 2 次调用没进轮汇总 —— 汇总偏小 → 预算告警漏报：%r'
+        % (result.external_calls,)
+    )
+
+
+def test_round_call_count_is_not_smaller_than_the_reported_one():
+    """没有计数器时，轮汇总至少等于各组自报的调用数之和。"""
+    scheduler = make_scheduler(
+        {
+            CHANNEL_MONITOR: lambda instance: TaskOutcome(
+                messages=(), external_calls=7,
+            ),
+        },
+        plans=make_plans(((CHANNEL_MONITOR, 30),)),
+    )
+    result = scheduler.tick()
+    assert result.external_calls == 7, result.external_calls

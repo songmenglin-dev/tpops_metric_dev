@@ -58,7 +58,7 @@ def log_round_summary(
     )
     cumulative = dropped_cumulative + dropped_unsupported
     LOGGER.info(
-        '本轮丢弃 %d 个不可提供指标（累计 %d）',
+        '不可提供指标 %d 条（本轮不产出，累计 %d）',
         dropped_unsupported, cumulative,
     )
     if result.external_calls > EXTERNAL_CALL_BUDGET:

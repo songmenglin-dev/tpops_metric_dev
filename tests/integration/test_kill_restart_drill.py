@@ -270,3 +270,240 @@ def test_sigterm_exits_zero_with_a_complete_watermark_file_and_restart_resumes(t
             second.wait(timeout=10)
         second._log_handle.close()  # type: ignore[attr-defined]
     assert second.returncode == 0, '重启后的进程退出码不是 0'
+
+
+# ---------------------------------------------------------------------------
+# 第三段：**SIGKILL** 版杀进程演练（修复轮 R-A 的 A5）
+# ---------------------------------------------------------------------------
+
+#: SIGKILL 演练的驱动 —— **真调度器 + 真线程池 + 真水位存储 + 真生命周期**。
+#:
+#: 平台与 Kafka 都是假的（不连任何外部服务），但**水位与幂等键是真的**，
+#: 落盘也是真的（``WatermarkStore`` 的原子写）。
+SIGKILL_DRIVER = '''
+"""SIGKILL 演练驱动 —— 真调度器 + 真水位存储 + 真生命周期。"""
+import json
+import os
+import sys
+import threading
+import time
+
+sys.path.insert(0, os.environ['REPO_ROOT'])
+
+from tpops_kafka_collector import main as entry
+from tpops_kafka_collector.schedule import ChannelPlan
+from tpops_kafka_collector.scheduler import Scheduler
+from tpops_kafka_collector.scheduler_types import InstanceTarget, TaskOutcome
+from tpops_kafka_collector.watermark import WatermarkStore
+
+STATE = os.environ['DRILL_STATE']
+WATERMARK = os.path.join(STATE, 'watermark.json')
+DELIVERED = os.path.join(STATE, 'delivered.jsonl')
+ROUNDS = os.path.join(STATE, 'rounds.log')
+KAFKA_DOWN = os.path.join(STATE, 'kafka-down')
+
+#: 固定的采集时刻 —— 幂等键跨轮、跨进程稳定（模拟「平台数据点时间戳」）。
+CLOCK_MS = 1700000000000
+
+
+def message():
+    """一条指标消息（``clock`` 固定 → 幂等键稳定）。"""
+    return {
+        'metricName': 'GAUSSDB.connections',
+        'metricCode': 'GAUSSDB.connections',
+        'resourceName': '10.0.0.1_drill-node-1',
+        'value': 42,
+        'unit': '个',
+        'clock': CLOCK_MS,
+        'tags': {
+            'instance_id': 'drill-instance-1',
+            'instance_name': 'gauss-drill',
+            'node_id': 'drill-node-1',
+            'component_id': 'drill-cn-1',
+            'host_ip': '10.0.0.1',
+        },
+    }
+
+
+class Producer(object):
+    """假 Kafka 生产者 —— 写文件（跨进程可观测）。
+
+    ``kafka-down`` 标记文件存在时**投递失败** → 水位不推进 → 下轮重投。
+    """
+
+    def produce_metrics(self, records):
+        if os.path.exists(KAFKA_DOWN):
+            raise RuntimeError('drill: kafka 不可用')
+        with open(DELIVERED, 'a', encoding='utf-8') as handle:
+            for record in records:
+                handle.write(json.dumps(
+                    {'key': record.key, 'payload': record.payload},
+                    ensure_ascii=False,
+                ) + '\\n')
+
+    def produce_alarms(self, records):
+        pass
+
+    def close(self):
+        pass
+
+
+class Config(object):
+    poll_interval_seconds = 1
+
+
+def watch_saves(stop):
+    """盯水位文件的重写次数（每落一次盘记一行）。"""
+    last = None
+    while not stop.is_set():
+        try:
+            stamp = os.stat(WATERMARK).st_mtime_ns
+        except OSError:
+            stamp = None
+        if stamp is not None and stamp != last:
+            last = stamp
+            with open(ROUNDS, 'a', encoding='utf-8') as handle:
+                handle.write('%d\\n' % stamp)
+        time.sleep(0.05)
+
+
+def main():
+    stop = threading.Event()
+    watcher = threading.Thread(target=watch_saves, args=(stop,), daemon=True)
+    watcher.start()
+    store = WatermarkStore(WATERMARK)
+    store.load()
+    scheduler = Scheduler(
+        plans=(ChannelPlan(channel='monitor', interval_seconds=1,
+                            tier_seconds=1, metric_count=1),),
+        executors={'monitor': lambda instance: TaskOutcome(
+            messages=(message(),), end_time_ms=CLOCK_MS,
+        )},
+        producer=Producer(),
+        watermark=store,
+        instances=[InstanceTarget('drill-instance-1', 'gauss-drill')],
+        shutdown_event=stop,
+    )
+    runtime = entry.Runtime(
+        config=Config(), mapping=None, client=None, profile=None,
+        producer=Producer(), watermark=store, scheduler=scheduler,
+        health=None, instances=(), deltas=None, shutdown=stop,
+    )
+    return entry.run(runtime, shutdown=stop)
+
+
+if __name__ == '__main__':
+    entry.exit_process(main())
+'''
+
+
+def _drill_env(state_dir):
+    """SIGKILL 演练的环境变量。"""
+    env = dict(os.environ)
+    env.update({
+        'PYTHONPATH': REPO_ROOT,
+        'REPO_ROOT': REPO_ROOT,
+        'DRILL_STATE': str(state_dir),
+    })
+    return env
+
+
+def _read_lines(path):
+    """读一个文本文件的全部非空行。"""
+    if not os.path.exists(str(path)):
+        return []
+    with open(str(path), encoding='utf-8') as handle:
+        return [line for line in handle.read().splitlines() if line.strip()]
+
+
+def test_sigkill_drill_does_not_duplicate_and_does_not_lose(tmp_path):
+    """**SIGKILL** 版杀进程演练：不重复、不丢。
+
+    - 阶段一：Kafka「不可用」→ 投递失败 → 连跑几轮 → **SIGKILL**。
+      断言：**水位文件已经落盘**（每轮落盘，**不靠** ``shutdown_runtime``）
+      且完整可读回 —— 没有它，崩溃后整个进程生命周期的去重状态全丢。
+    - 阶段二：Kafka 恢复 → **重启** → 断言：阶段一没投出去的消息
+      **这一轮投出来了**（不丢未投递的数据）。
+    - 阶段三：再**重启**一次 → 断言：已成功投递过的消息**没有再投一遍**
+      （不重复）。
+    """
+    state_dir = tmp_path / 'state'
+    state_dir.mkdir()
+    driver = tmp_path / 'sigkill_driver.py'
+    driver.write_text(SIGKILL_DRIVER, encoding='utf-8')
+    env = _drill_env(state_dir)
+    watermark_path = state_dir / 'watermark.json'
+    delivered_path = state_dir / 'delivered.jsonl'
+    rounds_path = state_dir / 'rounds.log'
+
+    # -- 阶段一：Kafka 不可用，跑几轮后 SIGKILL --------------------------
+    (state_dir / 'kafka-down').write_text('down', encoding='utf-8')
+    process = _start_driver(env, driver, tmp_path / 'run1.log')
+    try:
+        assert _wait_for(lambda: len(_read_lines(rounds_path)) >= 3), (
+            '进程没有跑完三轮 —— 每轮落盘没生效：%r'
+            % (_read_lines(rounds_path),)
+        )
+    finally:
+        _sigkill(process)
+
+    assert watermark_path.exists(), (
+        'SIGKILL 之后没有水位文件 —— 运行期不落盘 → 重启后去重状态全丢：%s'
+        % os.listdir(str(state_dir))
+    )
+    store = WatermarkStore(str(watermark_path))
+    store.load()          # 能读回来 = 文件完整
+    assert not _read_lines(delivered_path), 'Kafka 不可用时不该投出任何消息'
+
+    # -- 阶段二：Kafka 恢复，重启 → 阶段一没投出的消息这一轮投出来 --------
+    (state_dir / 'kafka-down').unlink()
+    process = _start_driver(env, driver, tmp_path / 'run2.log')
+    try:
+        assert _wait_for(lambda: len(_read_lines(delivered_path)) >= 1), (
+            '重启后没投出消息 —— 阶段一没投递的数据丢了'
+        )
+        # 多跑几轮，确认**没有**重复投递。
+        assert _wait_for(lambda: len(_read_lines(rounds_path)) >= 6)
+    finally:
+        _sigkill(process)
+
+    delivered = _read_lines(delivered_path)
+    assert len(delivered) == 1, '同一条消息被投了 %d 次 —— 重复投递：%r' % (
+        len(delivered), delivered,
+    )
+
+    # -- 阶段三：再重启一次 → 已成功投递过的数据不重投 --------------------
+    before = len(_read_lines(delivered_path))
+    process = _start_driver(env, driver, tmp_path / 'run3.log')
+    try:
+        assert _wait_for(lambda: len(_read_lines(rounds_path)) >= 9)
+    finally:
+        _sigkill(process)
+
+    after = len(_read_lines(delivered_path))
+    assert after == before, (
+        '重启后把已经投过的消息又投了一遍 —— 重复投递：%d → %d'
+        % (before, after)
+    )
+
+
+def _start_driver(env, driver, log_path):
+    """起一个真进程（日志落文件，避免管道缓冲把进程堵死）。"""
+    handle = open(str(log_path), 'wb')
+    process = subprocess.Popen(
+        [sys.executable, str(driver)],
+        cwd=REPO_ROOT,
+        env=env,
+        stdout=handle,
+        stderr=handle,
+    )
+    process._log_handle = handle  # type: ignore[attr-defined]
+    return process
+
+
+def _sigkill(process):
+    """**SIGKILL**（不是 SIGTERM）—— 不给任何收尾的机会。"""
+    if process.poll() is None:
+        process.send_signal(signal.SIGKILL)
+    process.wait(timeout=10)
+    process._log_handle.close()  # type: ignore[attr-defined]

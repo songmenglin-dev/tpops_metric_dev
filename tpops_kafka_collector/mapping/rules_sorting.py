@@ -117,7 +117,10 @@ def parse_timestamp(text: str) -> Optional[datetime.datetime]:
     **先归一化两位时区**（``+08`` → ``+08:00``）——
     Python 3.7 的 ``%z`` 不认 ``+HH``，不归一化的话平台真实数据一条都解析不了。
 
-    没有时区的按 UTC 处理（统一成 aware，避免 aware/naive 混比报错）。
+    **只认带时区的文本**：``TIMESTAMP_FORMATS`` 里两个格式都带 ``%z`` →
+    解析成功**一定**是 aware 的 datetime。**没有时区**的时间戳文本解析不了
+    （返回 ``None``，那一列按文本比）—— 这里**不做**「按 UTC 兜底」：
+    平台数据不带时区时按 UTC 猜，比按文本比更容易取错 Top N 行。
     """
     normalized = _normalize_offset(text.strip())
     for fmt in TIMESTAMP_FORMATS:
@@ -125,8 +128,6 @@ def parse_timestamp(text: str) -> Optional[datetime.datetime]:
             parsed = datetime.datetime.strptime(normalized, fmt)
         except ValueError:
             continue
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=datetime.timezone.utc)
         return parsed
     return None
 

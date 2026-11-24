@@ -37,6 +37,7 @@ from ..errors import (
     TpopsError,
     is_retryable,
 )
+from .call_tracking import CallCounter
 from .protocol import require_fields
 
 LOGGER = logging.getLogger(__name__)
@@ -132,6 +133,18 @@ class TpopsClient:
         self._token_expires_at = 0.0
         self._auth_failed_at: Optional[float] = None
         self._auth_failure: Optional[BaseException] = None
+        #: **真实外部调用计数**（线程安全）—— 每次真正发出的请求记 1。
+        self._calls = CallCounter()
+
+    @property
+    def calls(self) -> CallCounter:
+        """真实外部调用计数（全局 + 按线程）。
+
+        ``calls.total()`` / ``calls.thread_total()`` 取当前值；
+        ``calls.mark()`` / ``calls.delta(mark)`` 取基线与增量
+        （**开始前取基线、结束后相减**）。计数**含重试**产生的额外请求。
+        """
+        return self._calls
 
     @classmethod
     def from_config(
@@ -308,6 +321,9 @@ class TpopsClient:
         if token:
             headers[TOKEN_HEADER] = token
         LOGGER.debug('TPOPS 请求：%s %s', method, path)
+        # **真正发出的请求**才计数 —— 计数点必须在「发出去」这一刻，
+        # 不能在调用入口（否则重试 / 401 刷新会被漏掉或重复计）。
+        self._calls.record()
         try:
             response = self._session.request(
                 method,

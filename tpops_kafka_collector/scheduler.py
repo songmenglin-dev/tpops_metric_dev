@@ -30,8 +30,6 @@
 import logging
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .schedule import ChannelPlan, DueTable, ScheduleEntry
@@ -43,6 +41,11 @@ from .scheduler_report import (
     note_round_health,
 )
 from .scheduler_signals import install_signal_handlers, restore_signal_handlers
+from .scheduler_tasks import (
+    DEFAULT_SHUTDOWN_GRACE_SECONDS,
+    Task,
+    TaskCollector,
+)
 from .scheduler_types import (
     DeliveryStats,
     InstanceTarget,
@@ -52,7 +55,6 @@ from .scheduler_types import (
     TickResult,
     alarm_stream,
     metric_stream,
-    reason,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -60,6 +62,7 @@ LOGGER = logging.getLogger(__name__)
 __all__ = [
     'CONSECUTIVE_FAILURE_ROUNDS',
     'DEFAULT_MAX_WORKERS',
+    'DEFAULT_SHUTDOWN_GRACE_SECONDS',
     'EXTERNAL_CALL_BUDGET',
     'Scheduler',
     'SchedulerError',
@@ -69,18 +72,6 @@ __all__ = [
 
 #: 线程池默认上限（「通道 × 实例」任务数的上限）。
 DEFAULT_MAX_WORKERS = 16
-
-
-@dataclass(frozen=True)
-class _Task:
-    """一个待执行的 (通道, 实例) 任务（不可变）。"""
-
-    channel: str
-    instance: InstanceTarget
-
-    @property
-    def key(self) -> Tuple[str, str]:
-        return (self.channel, self.instance.instance_id)
 
 
 class Scheduler:
@@ -100,6 +91,11 @@ class Scheduler:
     :param sleep: 休眠函数（秒）。
     :param max_workers: 线程池上限。
     :param tick_interval_seconds: tick 周期（秒）。
+    :param shutdown_event: 停机信号（置位后不再等挂死的在途任务）。
+    :param shutdown_grace_seconds: 停机后在途任务的放弃等待上限（秒）。
+    :param call_counter: 真实外部调用计数器（``client.calls``）——
+        用来把**失败任务**的调用数也算进轮汇总（失败也要计数：
+        请求确实发出去了）。
     """
 
     def __init__(
@@ -115,6 +111,9 @@ class Scheduler:
         sleep: Optional[Callable[[float], None]] = None,
         max_workers: int = DEFAULT_MAX_WORKERS,
         tick_interval_seconds: float = 30.0,
+        shutdown_event: Any = None,
+        shutdown_grace_seconds: float = DEFAULT_SHUTDOWN_GRACE_SECONDS,
+        call_counter: Any = None,
     ) -> None:
         self._plans = tuple(plans)
         self._executors = dict(executors)
@@ -126,11 +125,22 @@ class Scheduler:
         self._sleep = sleep if sleep is not None else time.sleep
         self._max_workers = max(1, int(max_workers))
         self._tick_interval = float(tick_interval_seconds)
+        self._shutdown_event = shutdown_event
+        self._shutdown_grace = float(shutdown_grace_seconds)
+        self._call_counter = call_counter
         self._tick_index = 0
         self._consecutive_failures = 0
         self._dropped_cumulative = 0
         self._baselines_restored = False
         self._delivery = MessageDelivery(producer, watermark)
+        self._collector = TaskCollector(
+            executors=self._executors,
+            instances=self._instances,
+            max_workers=self._max_workers,
+            clock=self._clock,
+            shutdown_event=self._shutdown_event,
+            shutdown_grace_seconds=self._shutdown_grace,
+        )
         self._validate()
         self._due = DueTable(self._plans, self._clock())
 
@@ -164,12 +174,14 @@ class Scheduler:
         self._restore_baselines()
         due, skipped = self._due.split_due(started)
         tasks = self._build_tasks(due)
+        mark = self._call_mark()
         outcomes, collect_failures = self._collect_all(tasks)
+        round_calls = self._call_delta(mark)
         totals, delivery_failures = self._deliver_all(outcomes)
         self._persist_baselines()
         result = self._build_result(
             due, skipped, totals, collect_failures, delivery_failures,
-            started, outcomes,
+            started, outcomes, round_calls,
         )
         self._note_round_health(result)
         self._log_summary(result)
@@ -203,63 +215,45 @@ class Scheduler:
 
     # -- 到期判定 ---------------------------------------------------------
 
-    def _build_tasks(self, due: Sequence[str]) -> List[_Task]:
+    def _build_tasks(self, due: Sequence[str]) -> List[Task]:
         """到期的通道 × 画像里的实例 —— **两维**展开成任务清单。"""
         tasks = []
         for channel in due:
             for instance in self._instances:
-                tasks.append(_Task(channel=channel, instance=instance))
+                tasks.append(Task(channel=channel, instance=instance))
         return tasks
 
     # -- 并发采集 ---------------------------------------------------------
 
     def _collect_all(
-        self, tasks: Sequence[_Task]
+        self, tasks: Sequence[Task]
     ) -> Tuple[Dict[Tuple[str, str], TaskOutcome], List[TaskFailure]]:
-        """并发跑完本轮所有任务；**单组失败不影响其它组**。"""
-        outcomes = {}  # type: Dict[Tuple[str, str], TaskOutcome]
-        failures = []  # type: List[TaskFailure]
-        if not tasks:
-            return outcomes, failures
-        workers = min(len(tasks), self._max_workers)
-        LOGGER.info(
-            '本轮到期 %d 个通道 × %d 个实例 = %d 个任务，线程池并发 %d 个',
-            len(set(task.channel for task in tasks)),
-            len(self._instances),
-            len(tasks),
-            workers,
-        )
-        with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = [(pool.submit(self._run_task, task), task) for task in tasks]
-            for future, task in futures:
-                try:
-                    outcomes[task.key] = future.result()
-                except Exception as exc:  # noqa: B902 —— 单组失败要隔离
-                    failures.append(TaskFailure(
-                        channel=task.channel,
-                        instance_id=task.instance.instance_id,
-                        error_type=type(exc).__name__,
-                        reason=reason(exc),
-                    ))
-                    LOGGER.exception(
-                        '采集组失败（该组数据留待下轮，其余组不受影响）：'
-                        'channel=%s instance=%s',
-                        task.channel, task.instance.instance_id,
-                    )
-        return outcomes, failures
+        """并发跑完本轮所有任务；**单组失败不影响其它组**。
 
-    def _run_task(self, task: _Task) -> TaskOutcome:
-        """跑一个 (通道, 实例) 任务。"""
-        executor = self._executors.get(task.channel)
-        if executor is None:
-            raise SchedulerError(f'通道 {task.channel} 没有执行器')
-        outcome = executor(task.instance)
-        if not isinstance(outcome, TaskOutcome):
-            raise SchedulerError(
-                f'执行器没有返回 TaskOutcome：channel={task.channel} '
-                f'instance={task.instance.instance_id}'
-            )
-        return outcome
+        线程池**不等待回收**、停机后在途任务**放弃等待** ——
+        在途 HTTP 调用挂死时不能让本轮卡死
+        （规格「放弃等待该请求 …… 不挂死」，实现见
+        :mod:`tpops_kafka_collector.scheduler_tasks`）。
+        """
+        return self._collector.collect(tasks)
+
+    # -- 外部调用计数 -----------------------------------------------------
+
+    def _call_mark(self) -> Optional[int]:
+        """本轮采集前的调用计数基线（没有计数器就是 ``None``）。"""
+        getter = getattr(self._call_counter, 'total', None)
+        if not callable(getter):
+            return None
+        return int(getter())
+
+    def _call_delta(self, mark: Optional[int]) -> int:
+        """本轮采集期间真实发出的请求数（**含失败任务**）。"""
+        if mark is None:
+            return 0
+        getter = getattr(self._call_counter, 'total', None)
+        if not callable(getter):
+            return 0
+        return max(int(getter()) - int(mark), 0)
 
     # -- 投递 -------------------------------------------------------------
 
@@ -325,15 +319,20 @@ class Scheduler:
         delivery_failures: Sequence[TaskFailure],
         started: float,
         outcomes: Mapping[Tuple[str, str], TaskOutcome],
+        round_calls: int = 0,
     ) -> TickResult:
         duration = max(self._clock() - started, 0.0)
         fetched = 0
         windows = 0
-        calls = 0
+        reported = 0
         for outcome in outcomes.values():
             fetched += max(int(outcome.fetched), 0)
             windows += max(int(outcome.windows), 0)
-            calls += max(int(outcome.external_calls), 0)
+            reported += max(int(outcome.external_calls), 0)
+        # **失败任务的调用数也要算进来** —— 请求确实发出去了（平台调用、
+        # 墙钟时间都已经消耗）。只统计成功任务的话，轮汇总的调用数会**偏小**
+        # → 42 次预算告警**漏报**。
+        calls = max(reported, int(round_calls))
         return TickResult(
             tick_index=self._tick_index,
             executed=tuple(due),

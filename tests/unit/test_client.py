@@ -18,6 +18,7 @@ from __future__ import absolute_import
 import collections
 import json
 import logging
+import threading
 
 import pytest
 import requests
@@ -28,6 +29,7 @@ from tpops_kafka_collector.errors import (
     TransientError,
     is_retryable,
 )
+from tpops_kafka_collector.retry import RetryPolicy, retry_call
 from tpops_kafka_collector.tpops.client import (
     AUTH_PATH,
     GAUSSDB_V3,
@@ -678,3 +680,117 @@ def test_token_ttl_falls_back_to_default_when_body_is_not_json():
 
     assert client.token() == 'tok'
     assert client._token_expires_at - client._clock() == pytest.approx(86340.0)
+
+
+# ---------------------------------------------------------------------------
+# 真实外部调用计数（wave-3 修复轮 R-B）
+# ---------------------------------------------------------------------------
+
+def test_call_count_equals_the_number_of_requests_actually_sent():
+    """计数 == 假 Session 真正收到的请求数（含认证那次）。"""
+    session = FakeSession([
+        auth_ok(),
+        FakeResponse(status_code=200, json_body={'total_count': 0}),
+        FakeResponse(status_code=200, json_body={'total_count': 0}),
+        FakeResponse(status_code=200, json_body={'total_count': 0}),
+    ])
+    client = make_client(session)
+
+    client.get(RDS_V3_2 + '/instances')
+    client.get(RDS_V3_2 + '/instances')
+    client.get(RDS_V3_2 + '/instances')
+
+    assert client.calls.total() == len(session.calls)
+    assert client.calls.total() == 4
+
+
+def test_call_count_includes_retried_requests():
+    """**重试也是真实的外部调用** —— 计数必须含重试产生的额外请求。"""
+    session = FakeSession([
+        auth_ok(),
+        FakeResponse(status_code=500, json_body={}),
+        FakeResponse(status_code=200, json_body={'total_count': 0}),
+    ])
+    client = make_client(session)
+    policy = RetryPolicy(max_attempts=2, base_delay=0)
+
+    def _call():
+        return client.get(RDS_V3_2 + '/instances')
+
+    retry_call(_call, policy=policy, sleep=lambda seconds: None)
+
+    # 认证 1 次 + 失败 1 次 + 重试成功 1 次。
+    assert client.calls.total() == 3
+    assert len(session.business_calls()) == 2
+
+
+def test_call_count_does_not_lose_counts_under_concurrency():
+    """并发调用下计数**不丢**（裸 ``+= 1`` 在并发下会丢计数）。"""
+    session = FakeSession([auth_ok()] + [FakeResponse(status_code=200, json_body={})] * 400)
+    client = make_client(session)
+    client.token()  # 先认证，避免各线程各自认证
+
+    def _worker():
+        for _ in range(50):
+            client.get(RDS_V3_2 + '/instances')
+
+    threads = [threading.Thread(target=_worker) for _ in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert client.calls.total() == 401  # 认证 1 次 + 8×50 次业务请求
+    assert len(session.calls) == 401
+
+
+def test_call_delta_measures_the_calls_between_mark_and_now():
+    """增量语义：**开始前取基线、结束后相减** = 这期间真实发出的请求数。"""
+    session = FakeSession([
+        auth_ok(),
+        FakeResponse(status_code=200, json_body={}),
+        FakeResponse(status_code=200, json_body={}),
+    ])
+    client = make_client(session)
+    client.token()
+
+    mark = client.calls.mark()
+    client.get(RDS_V3_2 + '/instances')
+    client.get(RDS_V3_2 + '/instances')
+
+    assert client.calls.delta(mark) == 2
+    assert client.calls.thread_total() == client.calls.total()
+
+
+def test_call_count_is_per_thread():
+    """线程计数按线程归属 —— 并发任务**互不串账**。
+
+    四个线程同时各发 10 次请求：每个线程看到的增量都必须是**自己的** 10 次
+    （用全局计数当线程计数的话，这里会串成 ~40 次）。
+    """
+    session = FakeSession(
+        [auth_ok()] + [FakeResponse(status_code=200, json_body={})] * 64
+    )
+    client = make_client(session)
+    client.token()
+
+    barrier = threading.Barrier(4)
+    deltas = {}
+
+    def _worker(index):
+        barrier.wait()
+        mark = client.calls.mark()
+        for _ in range(10):
+            client.get(RDS_V3_2 + '/instances')
+            # 每发一次就同步一次 —— 保证四个线程**真正交错**，
+            # 否则一个线程可能一口气跑完 10 次（那样就测不出串账）。
+            barrier.wait()
+        deltas[index] = client.calls.delta(mark)
+
+    threads = [threading.Thread(target=_worker, args=(i,)) for i in range(4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert sorted(deltas.values()) == [10, 10, 10, 10], deltas

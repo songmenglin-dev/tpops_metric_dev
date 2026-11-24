@@ -23,6 +23,20 @@
       → 原子写水位
       → flush / 关闭 Kafka producer
       → 退出码 0
+
+三条**运行时**口径：
+
+1. **节奏对齐到 tick 边界** —— 一轮跑完后只睡「剩余时间」
+   （``轮询间隔 - 本轮耗时``），实际采集周期 **= 轮询间隔**，
+   不是「采集耗时 + 间隔」（后者会让 82/98 条命令中心通道的刷新周期
+   比客户声明的档位长约 29%）。本轮超时（耗时 > 间隔）时**不堆积、
+   不追赶**，下一轮从当前时刻重新锚定。
+2. **每轮结束就落盘** —— 水位 / 幂等键 / 差分基线每轮写一次盘
+   （崩溃最多丢一轮），而不是只在进程退出时写。
+3. **退出码 0 且不挂死** —— 收尾（水位落盘 + producer flush）全部完成后
+   由 :mod:`tpops_kafka_collector.main` 显式 ``os._exit(0)``，
+   **跳过 atexit 钩子**（py3.7 的 ``concurrent.futures.thread`` 在 atexit
+   里 ``join()`` 所有工作线程 —— 有一个在途 HTTP 挂住就会把进程拖死）。
 """
 import logging
 import threading
@@ -87,14 +101,73 @@ def run_loop(
     shutdown: threading.Event,
     deadline_seconds: float = SHUTDOWN_DEADLINE_SECONDS,
     monotonic: Optional[Callable[[], float]] = None,
+    wait: Optional[Callable[[float], Any]] = None,
 ) -> None:
-    """主循环：每轮跑一次 tick；收到停机信号后最多再等 ``deadline_seconds``。"""
+    """主循环：每轮跑一次 tick；**对齐到 tick 边界**；收到停机信号后最多再等
+    ``deadline_seconds``。
+
+    :param monotonic: 单调时钟（秒）—— 测试可注入假时钟。
+    :param wait: 等待函数（参数是秒，返回是否被置位）—— 默认用
+        ``shutdown.wait``；测试可注入假等待（不真的睡）。
+    """
     clock = monotonic if monotonic is not None else time.monotonic
+    waiter = wait if wait is not None else shutdown.wait
+    interval = _poll_interval_seconds(runtime)
     while not shutdown.is_set():
-        _run_one_tick(runtime.scheduler, shutdown, deadline_seconds, clock)
+        started = clock()
+        if _run_one_tick(runtime.scheduler, shutdown, deadline_seconds, clock):
+            _persist_watermark(runtime)
         if shutdown.is_set():
             break
-        shutdown.wait(runtime.config.poll_interval_seconds)
+        _wait_for_next_tick(waiter, clock, started, interval)
+
+
+def _poll_interval_seconds(runtime: Any) -> float:
+    """轮询间隔（秒）—— 从配置里取，取不到按 0 处理（不睡）。"""
+    raw = getattr(getattr(runtime, 'config', None), 'poll_interval_seconds', 0)
+    try:
+        return max(float(raw), 0.0)
+    except (TypeError, ValueError):  # pragma: no cover —— 配置坏了不该崩主循环
+        return 0.0
+
+
+def _wait_for_next_tick(
+    waiter: Callable[[float], Any],
+    clock: Callable[[], float],
+    started: float,
+    interval: float,
+) -> None:
+    """睡到**下一个 tick 边界**（本轮耗时算在里面）。
+
+    - 本轮耗时 < 间隔 → 只睡剩下的（实际周期 = 间隔，**不累积漂移**）；
+    - 本轮耗时 > 间隔 → **不睡、不追赶**，下一轮从当前时刻重新锚定
+      （否则会越欠越多，最后变成补偿风暴）。
+    """
+    if interval <= 0:
+        return
+    elapsed = clock() - started
+    remaining = interval - elapsed
+    if remaining <= 0:
+        LOGGER.warning(
+            '本轮耗时 %.3f 秒，超过轮询间隔 %.3f 秒 —— 重新锚定到当前时刻'
+            '（不堆积、不累积漂移）',
+            elapsed, interval,
+        )
+        return
+    waiter(remaining)
+
+
+def _persist_watermark(runtime: Any) -> None:
+    """**每轮结束落盘**水位 / 幂等键 / 差分基线。
+
+    崩溃（SIGKILL / OOM / 宿主机重启 / 容器驱逐）时最多丢一轮 ——
+    只在退出时落盘的话，整个进程生命周期的去重状态会全丢，
+    重启后那段数据被整段重投。
+    """
+    store = getattr(runtime, 'watermark', None)
+    if store is None:
+        return
+    _safe(store.save, '本轮水位落盘失败 —— 崩溃时会丢掉这一轮的去重状态')
 
 
 def _run_one_tick(
@@ -154,7 +227,13 @@ def _wait_for_tick(
 
 
 def shutdown_runtime(runtime: Any) -> None:
-    """退出前的收尾：原子写水位 → flush / 关闭 producer → 停健康端点。"""
+    """退出前的收尾：原子写水位 → flush / 关闭 producer → 停健康端点。
+
+    ``producer.close()`` 会把剩余消息 flush 掉再断开
+    （且 :class:`tpops_kafka_collector.kafka.producer.MessageProducer`
+    本身是**逐批 flush** 的，收尾时没有积压）——
+    所以这一步必须在 ``os._exit`` **之前**做完（``os._exit`` 不跑 atexit）。
+    """
     _safe(runtime.watermark.save, '水位落盘失败 —— 退出前未能写完水位')
     _safe(runtime.producer.close, '关闭 Kafka 生产者失败')
     if runtime.health is not None:
@@ -174,6 +253,7 @@ def run(
     shutdown: Optional[threading.Event] = None,
     deadline_seconds: float = SHUTDOWN_DEADLINE_SECONDS,
     monotonic: Optional[Callable[[], float]] = None,
+    wait: Optional[Callable[[float], Any]] = None,
 ) -> int:
     """跑主循环，收到停机信号后优雅退出；返回**退出码**（正常退出 0）。"""
     stop = shutdown if shutdown is not None else getattr(runtime, 'shutdown', None)
@@ -181,7 +261,10 @@ def run(
         stop = threading.Event()
     previous = install_signal_handlers(stop)
     try:
-        run_loop(runtime, stop, deadline_seconds=deadline_seconds, monotonic=monotonic)
+        run_loop(
+            runtime, stop, deadline_seconds=deadline_seconds,
+            monotonic=monotonic, wait=wait,
+        )
     finally:
         restore_signal_handlers(previous)
         shutdown_runtime(runtime)

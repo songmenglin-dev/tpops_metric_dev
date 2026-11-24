@@ -25,6 +25,11 @@
 ``shutdown(wait=True)``：只要有一个在途 HTTP 调用挂住，进程就永远不返回，
 违反规格「放弃等待该请求 …… 不挂死」。本模块自己跑主循环，每轮放在
 **守护线程**里跑并带截止时间。
+
+**退出走 ``os._exit``** —— 收尾（水位落盘 + producer flush）做完之后由
+:func:`exit_process` 显式结束进程，**跳过 atexit 钩子**
+（py3.7 的 ``concurrent.futures.thread`` 在 atexit 里 ``join()``
+所有工作线程 —— 有一个在途 HTTP 挂住就会把进程拖死）。
 """
 import logging
 import os
@@ -32,7 +37,7 @@ import sys
 import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 from .config import ConfigError, load_config
 from .executors import build_executors
@@ -50,11 +55,16 @@ from .lifecycle import (
     run,
     run_loop,
 )
+from .node_targets import (
+    NODE_FETCH_POLICY,
+    NodeListUnavailable,
+    build_instances,
+)
+from .retry import RetryPolicy
 from .scheduler_types import InstanceTarget
 from .tpops.client import TpopsClient
 from .tpops.command_center import CommandCenterClient
 from .tpops.command_center_nodes import MasterNodeRegistry
-from .tpops.instances import fetch_instance_nodes
 from .watermark import WatermarkStore
 
 LOGGER = logging.getLogger(__name__)
@@ -63,6 +73,8 @@ __all__ = [
     'EXIT_CONFIG_ERROR',
     'EXIT_OK',
     'EXIT_STARTUP_ERROR',
+    'NODE_FETCH_POLICY',
+    'NodeListUnavailable',
     'Runtime',
     'SHUTDOWN_DEADLINE_SECONDS',
     'TrackedScheduler',
@@ -81,7 +93,6 @@ EXIT_STARTUP_ERROR = 3
 
 #: 水位文件名（放在 ``state_dir`` 下）。
 WATERMARK_FILENAME = 'watermark.json'
-
 
 @dataclass(frozen=True)
 class Runtime:
@@ -120,6 +131,8 @@ def build_runtime(
     health_server: Any = None,
     shutdown: Optional[threading.Event] = None,
     start_health: bool = False,
+    node_retry_policy: Optional[RetryPolicy] = None,
+    node_retry_sleep: Optional[Callable[[float], None]] = None,
 ) -> Runtime:
     """装配全部依赖。
 
@@ -129,21 +142,20 @@ def build_runtime(
     stop = shutdown if shutdown is not None else threading.Event()
     bundle = mapping if mapping is not None else load_mapping()
     store = _watermark_store(config, watermark)
-    tpops = client if client is not None else TpopsClient.from_config(config)
-    registry = node_registry if node_registry is not None else MasterNodeRegistry(tpops)
-    center = command_center if command_center is not None else CommandCenterClient.from_config(
-        config, tpops,
+    tpops, registry, center = _build_clients(
+        config, client, node_registry, command_center,
     )
     platform = profile if profile is not None else _load_profile(config, tpops, registry)
+    instances = build_instances(tpops, platform, node_retry_policy, node_retry_sleep)
     sink = producer if producer is not None else MessageProducer.from_config(config)
     deltas = CounterDeltaStore()
-    instances = _build_instances(tpops, platform)
     executors = build_executors(
         client=tpops, mapping=bundle, config=config, command_center=center,
         node_registry=registry, deltas=deltas, watermark=store, shutdown=stop,
     )
     scheduler = _build_scheduler(
-        config, bundle, executors, sink, store, instances, deltas,
+        config, bundle, executors, sink, store, instances, deltas, stop,
+        getattr(tpops, 'calls', None),
     )
     health = _build_health(config, tpops, scheduler, health_server, start_health)
     LOGGER.info(
@@ -157,6 +169,18 @@ def build_runtime(
     )
 
 
+def _build_clients(
+    config: Any, client: Any, node_registry: Any, command_center: Any
+) -> Tuple[Any, Any, Any]:
+    """平台侧三件套：TPOPS 客户端 / master 节点登记器 / 统一命令中心。"""
+    tpops = client if client is not None else TpopsClient.from_config(config)
+    registry = node_registry if node_registry is not None else MasterNodeRegistry(tpops)
+    center = command_center
+    if center is None:
+        center = CommandCenterClient.from_config(config, tpops)
+    return tpops, registry, center
+
+
 def _build_scheduler(
     config: Any,
     bundle: Any,
@@ -165,6 +189,8 @@ def _build_scheduler(
     store: Any,
     instances: Any,
     deltas: Any,
+    shutdown: Any = None,
+    call_counter: Any = None,
 ) -> TrackedScheduler:
     """调度器 —— **差分基线存储与采集器共用同一个对象**。
 
@@ -179,6 +205,8 @@ def _build_scheduler(
         delta_store=deltas,
         dropped_unsupported=count_unsupported_metrics(bundle),
         tick_interval_seconds=config.poll_interval_seconds,
+        shutdown_event=shutdown,
+        call_counter=call_counter,
     )
 
 
@@ -217,30 +245,6 @@ def _load_profile(config: Any, client: Any, registry: Any) -> PlatformProfile:
         os.path.join(state_dir, PROFILE_FILENAME), client,
         node_registry=registry, reconcile=True,
     )
-
-
-def _build_instances(client: Any, profile: Any) -> Tuple[InstanceTarget, ...]:
-    """画像里的每个实例 → 一个采集目标（带节点清单）。"""
-    targets = []
-    for item in profile.instances:
-        targets.append(InstanceTarget(
-            instance_id=item.instance_id,
-            instance_name=item.instance_name,
-            nodes=_fetch_nodes(client, item.instance_id),
-        ))
-    return tuple(targets)
-
-
-def _fetch_nodes(client: Any, instance_id: str) -> Tuple[Any, ...]:
-    """取实例的节点清单；取不到只记 ERROR（不毁掉整轮采集）。"""
-    try:
-        return tuple(fetch_instance_nodes(client, instance_id))
-    except Exception as exc:  # noqa: B902 —— 节点清单缺失只影响资源名
-        LOGGER.error(
-            '取节点清单失败（实例 %s）：%s —— resourceName 会退化成只有 node_id',
-            instance_id, exc,
-        )
-        return ()
 
 
 # ---------------------------------------------------------------------------
@@ -307,5 +311,27 @@ def main(env: Any = None) -> int:
     return run(runtime)
 
 
+def exit_process(code: int) -> None:
+    """**跳过 atexit 钩子**退出进程（退出码照旧）。
+
+    为什么必须这样：py3.7 的 ``concurrent/futures/thread.py`` 注册了
+    ``atexit.register(_python_exit)``，解释器退出时它会给每个工作队列塞
+    ``None`` 并 ``t.join()`` **所有**工作线程 —— 只要有一个在途 HTTP 调用
+    挂住，进程就会一直等它结束（「放弃等待、不挂死」变成一句空话，
+    实测能被拖住整个 ``TPOPS_REQUEST_TIMEOUT``）。
+
+    ``os._exit`` 直接结束进程、**不跑 atexit** → 退出码仍是 0，
+    而水位落盘与 producer 的 flush 已经在
+    :func:`tpops_kafka_collector.lifecycle.shutdown_runtime` 里做完
+    （所以本函数**必须**在收尾之后调用）。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.flush()
+        except Exception:  # noqa: B902 —— 刷不出去也不能影响退出码
+            pass
+    os._exit(int(code))
+
+
 if __name__ == '__main__':
-    sys.exit(main())
+    exit_process(main())

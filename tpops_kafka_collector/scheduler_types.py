@@ -118,7 +118,8 @@ class TickResult:
     :param tick_index: 轮次序号。
     :param executed: 本轮执行的通道名。
     :param skipped: 本轮未到期（没执行）的通道名。
-    :param mapped: 转换后待投递的**消息总数**（指标 + 告警）。
+    :param mapped: 转换后**实际尝试投递**的消息数（指标 + 告警）——
+        **已滤掉幂等重复**（批内重复键与已投递过的键都不计入）。
     :param produced: 成功投递的消息数。
     :param failed: 投递失败的消息数。
     :param fetched: 从各通道取回的原始行数。

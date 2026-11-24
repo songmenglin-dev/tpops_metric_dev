@@ -155,7 +155,7 @@ def test_master_count_counts_unique_node_ids(tmp_path):
 # -- 固化 ------------------------------------------------------------------
 
 def test_existing_profile_file_is_not_rediscovered(tmp_path):
-    """固化文件已存在 → **不重新发现**（平台列表接口一次都没被调用）。"""
+    """固化文件已存在 → **不重新发现**（不核对时平台列表接口一次都没被调用）。"""
     path = _profile_path(tmp_path)
     profile = PlatformProfile(
         instances=(), discovered_at='2026-11-23T04:00:00Z',
@@ -167,6 +167,28 @@ def test_existing_profile_file_is_not_rediscovered(tmp_path):
 
     assert client.calls == [], client.calls
     assert loaded.discovered_at == '2026-11-23T04:00:00Z'
+
+
+def test_reconcile_calls_the_platform_list_but_does_not_rewrite_the_file(tmp_path):
+    """``reconcile=True`` → 平台列表**被调了**（核对），但画像文件**没被改**。
+
+    生产装配（``main.py::_load_profile``）传的就是 ``reconcile=True`` ——
+    每次启动都会调一次 ``GET /rds/v3.2/instances`` 做核对。
+    **核对只记日志、不改画像**：新增的实例不会自动进画像（自动加就等于
+    每轮重新发现 → 水位与差分基线全部错位）。
+    """
+    path = _profile_path(tmp_path)
+    PlatformProfile.save(path, PlatformProfile(
+        instances=(_entry('inst-1'),), discovered_at='2026-11-23T04:00:00Z',
+    ))
+    before = open(path, encoding='utf-8').read()
+
+    client = FakeClient([_instance('inst-1'), _instance('inst-new', 'gauss-new')])
+    loaded = PlatformProfile.load_or_discover(path, client, reconcile=True)
+
+    assert client.calls, 'reconcile=True 却没调平台列表 —— 核对没做'
+    assert [item.instance_id for item in loaded.instances] == ['inst-1']
+    assert open(path, encoding='utf-8').read() == before, '核对把画像文件改写了'
 
 
 def test_profile_file_contains_no_credentials(tmp_path):

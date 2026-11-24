@@ -96,6 +96,7 @@ class MessageDelivery:
         try:
             self._producer.produce_metrics(records)
         except Exception as exc:  # noqa: B902 —— 投递失败要隔离
+            # **不变量**：指标水位**只能在投递成功之后**推进（与告警侧同一条）。
             LOGGER.exception(
                 '指标投递失败 —— 整批不推进水位，下轮重投：channel=%s instance=%s',
                 channel, instance_id,
@@ -132,6 +133,11 @@ class MessageDelivery:
         try:
             self._producer.produce_alarms(records)
         except Exception as exc:  # noqa: B902 —— 投递失败要隔离
+            # **不变量**：告警水位**只能在投递成功之后**推进。
+            # 在这里推进水位 → 下一轮的游标过滤会把**从未投出**的告警判成
+            # 「不新」→ 告警整条**静默丢失**（日志里只剩这一条 exception，
+            # 没有任何计数能暴露它）。守卫见
+            # ``tests/unit/test_scheduler_alarm_guards.py``。
             LOGGER.exception(
                 '告警投递失败 —— 整批不推进水位，下轮重投：channel=%s instance=%s',
                 channel, instance_id,

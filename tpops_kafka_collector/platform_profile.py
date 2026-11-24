@@ -34,7 +34,7 @@ import os
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, Mapping, Optional, Tuple
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .errors import TpopsError
 from .tpops.instances import fetch_instances
@@ -190,12 +190,13 @@ class PlatformProfile:
     ) -> 'PlatformProfile':
         """读固化画像；没有就发现一次并固化。
 
-        **固化文件存在 → 不重新发现**（平台列表接口一次都不调用）：
+        **固化文件存在 → 不重新发现、不改写**（画像以文件为准）：
         平台列表的顺序会变、客户也会加实例，每轮重新发现等于**静默增删
         采集目标** —— 水位与差分基线全部错位，且不报错。
 
-        :param reconcile: 是否在读固化画像后**顺手核对**一次平台现状
-            （只记日志，**不改画像文件**）。
+        :param reconcile: 是否在读固化画像后**额外调一次**平台列表做核对
+            （生产装配传 ``True``；**只记日志，不改画像文件**）。
+            不传（``False``）时**平台列表接口一次都不调用**。
         """
         if os.path.exists(path):
             profile = cls.load(path)
@@ -252,47 +253,22 @@ class PlatformProfile:
         by_id = dict((item.instance_id, item) for item in platform)
         recorded = set(item.instance_id for item in profile.instances)
         missing = []
-        added = []
         engine_changed = []
         master_changed = []
         for item in profile.instances:
-            meta = by_id.get(item.instance_id)
-            if meta is None:
+            is_missing, engine_diff, master_diff = _compare_instance(
+                item, by_id.get(item.instance_id), node_registry,
+            )
+            if is_missing:
                 missing.append(item.instance_id)
-                LOGGER.error(
-                    '平台画像里的实例 %s（%s）在平台实例列表里已不存在 —— '
-                    '需人工确认（被删除或重建？），本轮不采集它',
-                    item.instance_id, item.instance_name or '-',
-                )
                 continue
-            current_engine = str(meta.engine_name or '')
-            if current_engine != item.engine_name:
+            if engine_diff:
                 engine_changed.append(item.instance_id)
-                LOGGER.warning(
-                    '实例 %s 的引擎名与画像不一致（画像 %s → 平台 %s）—— '
-                    '平台升级后指标码可能已变，映射表可能需要重新生成',
-                    item.instance_id, item.engine_name or '-', current_engine or '-',
-                )
-            if node_registry is not None:
-                current_master = _master_count(node_registry, item.instance_id)
-                if current_master != item.master_count:
-                    master_changed.append(item.instance_id)
-                    LOGGER.warning(
-                        '实例 %s 的 master 节点数与画像不一致（画像 %d → 当前 %d）—— '
-                        '拓扑变了（扩缩容），多 master 归集口径要复核',
-                        item.instance_id, item.master_count, current_master,
-                    )
-        for meta in platform:
-            if meta.instance_id not in recorded:
-                added.append(meta.instance_id)
-                LOGGER.warning(
-                    '平台新增了实例 %s（%s）—— 平台画像里没有记录，需人工更新'
-                    '（删除画像文件可重新发现）',
-                    meta.instance_id, meta.name or '-',
-                )
+            if master_diff:
+                master_changed.append(item.instance_id)
         return ProfileReconciliation(
             missing_on_platform=tuple(missing),
-            added_on_platform=tuple(added),
+            added_on_platform=tuple(_scan_added(platform, recorded)),
             engine_changed=tuple(engine_changed),
             master_count_changed=tuple(master_changed),
         )
@@ -301,6 +277,77 @@ class PlatformProfile:
 # ---------------------------------------------------------------------------
 # 辅助
 # ---------------------------------------------------------------------------
+
+def _compare_instance(
+    item: ProfileInstance,
+    meta: Any,
+    node_registry: Any,
+) -> Tuple[bool, bool, bool]:
+    """比对画像里的一个实例与平台现状 —— **只记日志，不改画像**。
+
+    :param item: 画像里的实例。
+    :param meta: 平台上的同实例元数据（``None`` 表示平台列表里没有它）。
+    :param node_registry: master 节点清单（``None`` 表示**不比** master 数）。
+    :returns: ``(平台上已缺失, 引擎名变了, master 数变了)`` 三个布尔。
+    """
+    if meta is None:
+        LOGGER.error(
+            '平台画像里的实例 %s（%s）在平台实例列表里已不存在 —— '
+            '需人工确认（被删除或重建？），本轮不采集它',
+            item.instance_id, item.instance_name or '-',
+        )
+        return True, False, False
+    return False, _compare_engine(item, meta), _compare_master_count(
+        item, node_registry,
+    )
+
+
+def _compare_engine(item: ProfileInstance, meta: Any) -> bool:
+    """比对引擎名 —— 变了返回 True（平台升级 → 指标码可能变）。"""
+    current_engine = str(meta.engine_name or '')
+    if current_engine == item.engine_name:
+        return False
+    LOGGER.warning(
+        '实例 %s 的引擎名与画像不一致（画像 %s → 平台 %s）—— '
+        '平台升级后指标码可能已变，映射表可能需要重新生成',
+        item.instance_id, item.engine_name or '-', current_engine or '-',
+    )
+    return True
+
+
+def _compare_master_count(item: ProfileInstance, node_registry: Any) -> bool:
+    """比对 master 节点数 —— 变了返回 True（**没有节点清单就不比**）。"""
+    if node_registry is None:
+        return False
+    current_master = _master_count(node_registry, item.instance_id)
+    if current_master == item.master_count:
+        return False
+    LOGGER.warning(
+        '实例 %s 的 master 节点数与画像不一致（画像 %d → 当前 %d）—— '
+        '拓扑变了（扩缩容），多 master 归集口径要复核',
+        item.instance_id, item.master_count, current_master,
+    )
+    return True
+
+
+def _scan_added(platform: Sequence[Any], recorded: Set[str]) -> List[str]:
+    """平台上有、但画像里没记录的实例 —— **只告警，不自动加**。
+
+    新增实例要人工确认（改画像文件后下一轮启动生效）—— 自动加就等于
+    每轮重新发现，水位与差分基线会全部错位。
+    """
+    added = []
+    for meta in platform:
+        if meta.instance_id in recorded:
+            continue
+        added.append(meta.instance_id)
+        LOGGER.warning(
+            '平台新增了实例 %s（%s）—— 平台画像里没有记录，需人工更新'
+            '（删除画像文件可重新发现）',
+            meta.instance_id, meta.name or '-',
+        )
+    return added
+
 
 def _master_count(node_registry: Any, instance_id: str) -> int:
     """该实例的 master 节点数 —— **按唯一 node_id 计数**，不数条目。

@@ -19,9 +19,12 @@ import logging
 import pytest
 
 from tpops_kafka_collector.config import Config
+from tpops_kafka_collector.tpops.call_tracking import CatalogCachingClient
 from tpops_kafka_collector.tpops.metrics import (
+    GROUP_CATALOG_PATH,
     IS_LATEST_POINT_ONLY,
     METRIC_GROUPS,
+    MetricsError,
     MetricWindowError,
     QueryWindow,
     build_query_body,
@@ -395,3 +398,68 @@ def test_parse_metric_points_reads_the_nested_platform_structure():
 def test_parse_metric_points_returns_empty_tuple_for_empty_response():
     assert parse_metric_points({'metric_infos': []}) == ()
     assert parse_metric_points({}) == ()
+
+
+# ---------------------------------------------------------------------------
+# 目录快照缓存（wave-3 修复轮 R-B）
+# ---------------------------------------------------------------------------
+
+def test_catalog_cache_serves_the_second_call_without_a_request():
+    """目录是**平台元数据** —— 同一轮里 12 个分组码只拉一次快照。"""
+    client = _FakeClient()
+    cached = CatalogCachingClient(client, GROUP_CATALOG_PATH, ttl_seconds=3600)
+
+    fetch_metric_catalog(cached, 'inst-1')
+    first_calls = len(client.calls)
+    fetch_metric_catalog(cached, 'inst-1')
+
+    assert first_calls == len(EXPECTED_GROUPS)
+    assert len(client.calls) == first_calls, '命中缓存后不该再发请求'
+
+
+def test_catalog_cache_expires_after_the_ttl():
+    """TTL 到期 → 重新拉（陈旧只影响告警时效，不影响数据）。"""
+    clock = {'now': 1000.0}
+    client = _FakeClient()
+    cached = CatalogCachingClient(
+        client, GROUP_CATALOG_PATH, ttl_seconds=60, clock=lambda: clock['now'],
+    )
+
+    fetch_metric_catalog(cached, 'inst-1')
+    calls_after_first = len(client.calls)
+    clock['now'] += 61
+    fetch_metric_catalog(cached, 'inst-1')
+
+    assert len(client.calls) == calls_after_first * 2
+
+
+def test_catalog_cache_does_not_cache_failures():
+    """拉取失败**不入缓存** —— 不能留半截数据。"""
+    class _Boom(object):
+        def __init__(self):
+            self.calls = 0
+
+        def get(self, path, params=None):
+            self.calls += 1
+            raise MetricsError('平台抽风')
+
+    client = _Boom()
+    cached = CatalogCachingClient(client, GROUP_CATALOG_PATH, ttl_seconds=3600)
+
+    with pytest.raises(MetricsError):
+        fetch_metric_catalog(cached, 'inst-1')
+    with pytest.raises(MetricsError):
+        fetch_metric_catalog(cached, 'inst-1')
+
+    assert client.calls == 2, '失败不能被缓存住'
+
+
+def test_catalog_cache_does_not_affect_other_paths():
+    """缓存只作用于目录路径 —— 别的接口照常发请求。"""
+    client = _FakeClient()
+    cached = CatalogCachingClient(client, GROUP_CATALOG_PATH, ttl_seconds=3600)
+
+    cached.get('/rds/v3/monitor/metrics', params={'a': 1})
+    cached.get('/rds/v3/monitor/metrics', params={'a': 1})
+
+    assert len(client.calls) == 2
