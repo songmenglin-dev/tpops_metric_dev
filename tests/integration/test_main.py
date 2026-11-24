@@ -804,9 +804,53 @@ def test_scheduler_probe_reports_a_stale_last_success():
     assert str(entry.SCHEDULER_STALE_SECONDS) in state, state
 
 
+def test_scheduler_probe_reports_ready_after_a_successful_tick():
+    """刚成功跑完一轮 → scheduler 探针**就绪**（成功路径）。"""
+
+    class _FreshScheduler(object):
+        last_tick_ok_at = time.time()
+
+    state = entry._scheduler_state(_FreshScheduler())
+    assert state is True, state
+
+
+def test_scheduler_probe_reports_never_successful_yet():
+    """一轮都没跑过 → scheduler 探针不就绪，并说清原因。"""
+
+    class _NeverTickedScheduler(object):
+        last_tick_ok_at = None
+
+    state = entry._scheduler_state(_NeverTickedScheduler())
+    assert state is not True, state
+    assert '还没有成功完成过一轮' in state, state
+
+
+def test_tpops_probe_reports_ready_when_authenticated():
+    """认证正常 → tpops 探针**就绪**（成功路径）。"""
+
+    class _AuthedClient(object):
+        auth_ok = True
+
+    state = entry._tpops_state(_AuthedClient())
+    assert state is True, state
+
+
+def _readiness_dependencies(body):
+    """把就绪响应体解析成 ``{探针名: 该探针的条目}``。"""
+    payload = json.loads(body.decode('utf-8'))
+    return dict((item['name'], item) for item in payload['dependencies'])
+
+
 def test_readiness_returns_503_when_the_last_round_failed(tmp_path):
-    """跑过一轮但**全挂** → ``/readyz`` 返回 503（不只是「还没跑过一轮」）。"""
+    """跑过一轮但**全挂** → ``/readyz`` 返回 503 —— 且 503 **只能**来自 scheduler 探针。
+
+    **TPOPS 探针必须已认证**：否则 503 来自 tpops 探针（客户端从没认证过），
+    跟本用例要守的 scheduler 闸门无关 —— 那样的断言恒绿。
+    断言也必须落到**具体探针的状态文本**，不能只查「响应体里有 scheduler 这个名字」
+    （每个探针的名字都在响应体里，那条断言什么也证明不了）。
+    """
     client = FakeClient([_instance_row()], {'inst-1': _node_rows()})
+    client.auth_ok = True
     runtime = entry.build_runtime(
         _config(tmp_path), client=client, producer=FakeProducer(), start_health=False,
     )
@@ -815,4 +859,32 @@ def test_readiness_returns_503_when_the_last_round_failed(tmp_path):
     status, body = runtime.health.endpoints.readiness()
 
     assert status == 503
-    assert b'"name": "scheduler"' in body or b'"name":"scheduler"' in body
+    deps = _readiness_dependencies(body)
+    assert deps['tpops']['ready'] is True, (
+        f'TPOPS 探针不就绪 —— 503 的归因就不唯一了：{deps!r}'
+    )
+    assert deps['scheduler']['ready'] is False, deps
+    assert str(entry.SCHEDULER_STALE_SECONDS) in deps['scheduler']['reason'], deps
+
+
+def test_readiness_returns_200_when_both_probes_are_ready(tmp_path):
+    """tpops 与 scheduler **都**就绪 → ``/readyz`` 返回 200（正向对照）。
+
+    正反合起来才锁住归因：只有 503 的用例时，把 scheduler 探针改成恒真
+    也能靠 tpops 探针凑出 503 —— 那条守卫守不住 scheduler 这一侧。
+    """
+    client = FakeClient([_instance_row()], {'inst-1': _node_rows()})
+    client.auth_ok = True
+    runtime = entry.build_runtime(
+        _config(tmp_path), client=client, producer=FakeProducer(), start_health=False,
+    )
+    runtime.scheduler._last_tick_ok_at = time.time()
+
+    status, body = runtime.health.endpoints.readiness()
+
+    assert status == 200
+    payload = json.loads(body.decode('utf-8'))
+    assert payload['status'] == 'ok', payload
+    deps = _readiness_dependencies(body)
+    assert deps['tpops']['ready'] is True, deps
+    assert deps['scheduler']['ready'] is True, deps

@@ -27,6 +27,7 @@ from tpops_kafka_collector.schedule import (
     CHANNEL_MONITOR,
 )
 from tpops_kafka_collector.scheduler_types import InstanceTarget
+from tpops_kafka_collector.tpops.alarms import ALARM_RECORDS_PATH, DEFAULT_LIMIT
 from tpops_kafka_collector.tpops.call_tracking import CallCounter
 from tpops_kafka_collector.tpops.command_center import CommandCenterClient
 from tpops_kafka_collector.mapping.sqlgen import load_spec
@@ -36,6 +37,8 @@ from tpops_kafka_collector.tpops.metrics import GROUP_CATALOG_PATH, METRICS_PATH
 INSTANCE_ID = 'inst-1'
 #: 固定时刻（确定性）。
 NOW_MS = 1794500000000
+#: 告警记录的每页容量 —— 与生产一致（平台硬限 100）。
+ALARM_PAGE_LIMIT = DEFAULT_LIMIT
 
 
 # ---------------------------------------------------------------------------
@@ -128,6 +131,30 @@ def _alarm_record(index):
 
 def _config():
     return Config(tpops_user='tester', tpops_password='secret')
+
+
+def _alarm_request_shapes(client):
+    """实际请求过的告警形态（``is_active`` × ``is_convergence`` 组合）。
+
+    从**请求体**里取 —— 形态数是平台接口的结构（两种布尔 → 四种组合），
+    但「拉了几种」要看实际发出去什么，不该由测试写死。
+    """
+    combos = set()
+    for _method, path, payload in client.requests:
+        if path != ALARM_RECORDS_PATH:
+            continue
+        combos.add((
+            bool(payload.get('is_active')),
+            bool(payload.get('is_convergence')),
+        ))
+    return combos
+
+
+def _alarm_page_count(record_count, limit):
+    """某种形态下要翻几页（**算出来**，不写死）。"""
+    if record_count <= 0:
+        return 1
+    return -(-record_count // limit)
 
 
 def _target():
@@ -241,15 +268,37 @@ def test_alarm_external_calls_equal_real_request_count():
 
 
 def test_alarm_external_calls_scale_with_page_count():
-    """E 类：告警记录超过一页 → 调用数**跟着页数涨**（不是固定的 4）。"""
-    client = CountingFakeClient(alarm_records=[_alarm_record(i) for i in range(150)])
+    """E 类：告警记录超过一页 → 调用数**跟着页数涨**（不是固定的 4）。
+
+    期望值由「**形态数 × 每形态的页数**」**算出来** —— 两个数都从
+    「实际发生了什么」里取（形态数看请求体里的 ``is_active`` /
+    ``is_convergence`` 组合，页数看条数与每页容量），不写死调用次数。
+    """
+    records = [_alarm_record(i) for i in range(150)]
+    client = CountingFakeClient(alarm_records=records)
     executors = _executors(client)
 
     outcome = executors[CHANNEL_ALARM](_target())
 
-    # 四种形态 × 各自的页数（150 条 / 每页 100 → 2 页）。
-    assert outcome.external_calls == 8
+    shapes = _alarm_request_shapes(client)
+    assert len(shapes) == 4, (
+        f'活动/历史 × 收敛/明细 四种形态都要拉 —— 实际拉了 {shapes!r}'
+    )
+    expected = len(shapes) * _alarm_page_count(len(records), ALARM_PAGE_LIMIT)
+    assert outcome.external_calls == expected, (
+        f'告警调用数没跟着页数涨：期望 {expected}，实际 {outcome.external_calls}'
+    )
     assert outcome.external_calls == client.calls.total()
+
+    # 与「一页装得下」的形态对拍：条数翻倍 → 告警接口的请求数**跟着涨**。
+    single = CountingFakeClient(alarm_records=records[:ALARM_PAGE_LIMIT])
+    single_outcome = _executors(single)[CHANNEL_ALARM](_target())
+    assert client.count_of(ALARM_RECORDS_PATH) > single.count_of(ALARM_RECORDS_PATH), (
+        '条数翻倍，告警接口的请求数却没涨 —— 页数没生效'
+    )
+    assert single_outcome.external_calls == len(_alarm_request_shapes(single)) * (
+        _alarm_page_count(ALARM_PAGE_LIMIT, ALARM_PAGE_LIMIT)
+    )
 
 
 def test_shutdown_skipped_task_reports_zero_calls():

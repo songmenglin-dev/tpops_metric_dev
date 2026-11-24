@@ -126,7 +126,19 @@ def build_alarm_definition(
 
 
 class MappingTable:
-    """三份规则文件的只读视图。"""
+    """三份规则文件的只读视图。
+
+    .. warning::
+       **离线工具专用，生产路径禁止使用。**
+
+       :meth:`load` 的默认 ``data_dir`` 指向**仓库根** ``data/mapping``
+       （要读 ``archive/`` 与 ``sql_merge_probe_result.json`` —— 这两个文件
+       不在包内 ``mapping/data/``）。用它就等于又读上了仓库根，
+       采集端不再是**独立可部署**的产物。
+
+       生产查表走 :mod:`tpops_kafka_collector.mapping.loader`（读包内数据）。
+       ``tests/unit/test_package_boundary.py`` 有守卫盯着生产代码不碰它。
+    """
 
     def __init__(
         self,

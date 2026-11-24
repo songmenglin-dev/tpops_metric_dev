@@ -10,13 +10,19 @@
 2. **每轮结束就落盘** —— 崩溃（SIGKILL / OOM / 宿主机重启 / 容器驱逐）
    最多丢一轮，而不是丢掉**整个进程生命周期**的去重状态。
 3. **一轮采集抛异常不带走进程** —— 主循环的最后一道防线，下轮重试。
+4. **一轮全挂不算成功** —— ``/readyz`` 的 scheduler 探针**只**认
+   ``TrackedScheduler`` 记下的「最近一次成功完成」时刻。这道闸**只有一处实现**
+   （``lifecycle.TrackedScheduler.tick``），拆掉它 → 每轮都刷新时刻 →
+   就绪探针恒报 200 → 采集端一条数据都投不出去时运维仍看到「就绪」。
 
 本文件**不碰网络、不碰 Kafka**：平台与投递器都是假的，时钟也是假的。
 """
 import os
 import threading
 
-from tpops_kafka_collector.lifecycle import run_loop
+import pytest
+
+from tpops_kafka_collector.lifecycle import TrackedScheduler, run_loop
 from tpops_kafka_collector.schedule import ChannelPlan
 from tpops_kafka_collector.scheduler import Scheduler
 from tpops_kafka_collector.scheduler_types import InstanceTarget, TaskOutcome
@@ -287,3 +293,96 @@ def test_a_failing_round_does_not_stop_the_loop(caplog):
 
     assert ticks == [1, 2, 3], '一轮失败就把主循环带走了：%r' % (ticks,)
     assert '本轮调度异常' in caplog.text, caplog.text
+
+
+# ---------------------------------------------------------------------------
+# 硬约束 4：一轮全挂**不算成功**（就绪探针的唯一闸门）
+# ---------------------------------------------------------------------------
+
+def _tracked_scheduler(tmp_path, executor, wall_clock):
+    """一个**真的** :class:`TrackedScheduler`（只把平台与时钟换成假的）。"""
+    clock = FakeClock()
+    scheduler = TrackedScheduler(
+        plans=_channel_plan(),
+        executors={CHANNEL: executor},
+        producer=NullProducer(),
+        watermark=_store(tmp_path),
+        instances=[InstanceTarget('inst-a')],
+        clock=clock,
+        wall_clock=wall_clock,
+    )
+    return scheduler, clock
+
+
+def _failing_executor(instance):
+    """采集失败的执行器 —— 一轮下来 ``tasks_failed > 0``。"""
+    raise RuntimeError('平台不可达')
+
+
+def _succeeding_executor(instance):
+    """采集成功的执行器 —— 一轮下来 ``tasks_failed == 0``。"""
+    return TaskOutcome(messages=(), end_time_ms=1000)
+
+
+def test_a_fully_failed_tick_does_not_count_as_a_success(tmp_path):
+    """一轮**全挂** → ``last_tick_ok_at`` **保持** ``None``。
+
+    这道闸是「就绪」的唯一依据（``main._scheduler_state`` 只读这个值）：
+    拆掉它 → 每轮都刷新 → 就绪探针恒报 200 → 采集端一条数据都投不出去时
+    运维仍然看到「就绪」，监控不告警、值班不介入。
+    """
+    scheduler, _clock = _tracked_scheduler(
+        tmp_path, _failing_executor, lambda: 1700000000.0,
+    )
+
+    result = scheduler.tick()
+
+    assert result.tasks_failed > 0, f'这轮本该失败：{result!r}'
+    assert scheduler.last_tick_ok_at is None, (
+        '一轮全挂却记了「最近一次成功完成」—— 就绪探针会报 200'
+    )
+
+
+def test_a_successful_tick_records_the_wall_clock(tmp_path):
+    """一轮**全成** → ``last_tick_ok_at`` **被更新**（值 ≈ 墙钟）。"""
+    wall = [1700000000.0]
+    scheduler, _clock = _tracked_scheduler(
+        tmp_path, _succeeding_executor, lambda: wall[0],
+    )
+
+    result = scheduler.tick()
+
+    assert result.tasks_failed == 0, result
+    assert scheduler.last_tick_ok_at == pytest.approx(wall[0]), (
+        f'成功完成一轮却没有记录时刻：{scheduler.last_tick_ok_at!r}'
+    )
+
+
+def test_a_failed_round_after_a_success_does_not_refresh_the_timestamp(tmp_path):
+    """成功过、之后又全挂 → 时间戳**不刷新**（旧值留着，由就绪探针按「过旧」判不就绪）。
+
+    这条把「闸门是**逐轮**判定」钉死：实现若改成「上一轮成功就一直算成功」，
+    或者改成「无论成败都刷新」，这条都会红。
+    """
+    wall = [1700000000.0]
+    failing = {'now': False}
+
+    def executor(instance):
+        if failing['now']:
+            raise RuntimeError('平台不可达')
+        return TaskOutcome(messages=(), end_time_ms=1000)
+
+    scheduler, clock = _tracked_scheduler(tmp_path, executor, lambda: wall[0])
+
+    scheduler.tick()
+    first = scheduler.last_tick_ok_at
+    assert first == pytest.approx(wall[0]), first
+
+    failing['now'] = True
+    wall[0] += 600.0
+    clock.advance(TIER_SECONDS)
+    scheduler.tick()
+
+    assert scheduler.last_tick_ok_at == first, (
+        '全挂的一轮刷新了「最近一次成功完成」时刻 —— 挂掉的采集会被当成成功'
+    )
