@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from conftest import DATA_DIR
+from conftest import DATA_DIR, MAPPING_DIR
 from tpops_kafka_collector.mapping import MappingTable
 
 # 两份 ITSCADA 对接方案里的字段表（原文抄录，作为断言基准）。
@@ -20,7 +20,7 @@ DOC_ALARM_FIELDS = [
 
 @pytest.fixture(scope='module')
 def table():
-    return MappingTable.load()
+    return MappingTable.load(MAPPING_DIR)
 
 
 def test_metric_rules_cover_all_101_customer_metrics(table):

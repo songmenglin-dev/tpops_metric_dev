@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from conftest import DATA_DIR
+from conftest import DATA_DIR, MAPPING_DIR
 from tpops_kafka_collector.ids import (
     ALARM_IDEMPOTENCY_FIELDS,
     METRIC_IDEMPOTENCY_FIELDS,
@@ -27,7 +27,7 @@ from tpops_kafka_collector.mapping.rules import build_resource_name, substitute_
 
 @pytest.fixture(scope='module')
 def table():
-    return MappingTable.load()
+    return MappingTable.load(MAPPING_DIR)
 
 
 # 节点清单样本（key-view-execute-node 的形状）：3 个 CN master + 各 DN

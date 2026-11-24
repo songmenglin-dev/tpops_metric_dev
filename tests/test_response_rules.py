@@ -16,6 +16,8 @@ from typing import Any, Mapping
 
 import pytest
 
+from conftest import MAPPING_DIR
+
 from conftest import DATA_DIR, REPO_ROOT
 
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
@@ -342,7 +344,7 @@ def test_mapping_table_load_validates_source_columns():
     from tpops_kafka_collector.mapping import MappingTable
 
     # 真实留档 → 校验通过
-    MappingTable.load()
+    MappingTable.load(MAPPING_DIR)
 
     # 留档里少一列 → 加载即失败
     payload = _load(MERGED_PROBE_PATH)
@@ -360,7 +362,7 @@ def test_mapping_table_load_validates_source_columns():
         with io.open(path, 'w', encoding='utf-8') as fp:
             json.dump(payload, fp, ensure_ascii=False)
         with pytest.raises(MappingError) as excinfo:
-            MappingTable.load(probe_path=path)
+            MappingTable.load(MAPPING_DIR, probe_path=path)
     assert 'numbackends' in str(excinfo.value)
 
 

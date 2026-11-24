@@ -134,30 +134,84 @@ def _points_at_repo_root_data(value):
     return text == 'data' or text.startswith('data/')
 
 
+def _mentions_repo_root(node):
+    """表达式里是否引用了仓库根（``REPO_ROOT`` 名字 / 等于 REPO_ROOT 的字符串）。"""
+    for sub in ast.walk(node):
+        if isinstance(sub, ast.Name) and sub.id == 'REPO_ROOT':
+            return True
+        if _is_string_node(sub) and _string_value(sub) == REPO_ROOT:
+            return True
+    return False
+
+
+def _mentions_this_file(node):
+    """表达式里是否引用了**本文件**（``__file__``）—— 即包内路径。
+
+    ``os.path.join(os.path.dirname(__file__), 'data')`` 指向**包内**
+    ``mapping/data/`` —— 那是**正确**用法，不能算「读仓库根」。
+    """
+    for sub in ast.walk(node):
+        if isinstance(sub, ast.Name) and sub.id == '__file__':
+            return True
+    return False
+
+
+def _is_data_segment(value):
+    """该字符串是否**恰好**是 ``data`` 这一段（或以 ``data/`` 开头）。"""
+    if not isinstance(value, str):
+        return False
+    text = value.replace('\\', '/')
+    return text == 'data' or text.startswith('data/')
+
+
 def _segmented_repo_root_data_references(tree):
-    """``os.path.join('data', ...)`` 这类**分段拼接**的仓库根 ``data/`` 引用。
+    """分段拼接的仓库根 ``data/`` 引用。
 
     路径**字面量**扫描抓不到分段拼接：``os.path.join('data', 'mapping', 'x.json')``
     的字面量分别是 ``'data'`` / ``'mapping'`` / ``'x.json'``，没有一段含 ``data/``。
+
+    **四种写法**都要抓得到：
+
+    1. ``os.path.join('data', 'mapping', 'x.json')``      —— 首段是 ``data``；
+    2. ``os.path.join(REPO_ROOT, 'data', 'mapping')``      —— 仓库根 + ``data`` 段
+       （首段**不是**字符串，是 ``REPO_ROOT`` 名字 —— 只看 ``args[0]`` 会漏）；
+    3. ``Path(REPO_ROOT) / 'data' / 'mapping'``           —— ``/`` 运算符链，
+       **根本不是 Call**；
+    4. ``os.path.join(REPO_ROOT, 'data')`` 等变体。
+
+    第 2、3 种曾经就是生产包里的写法（``mapping/table.py`` 的 ``DATA_DIR``）。
     """
     hits = []
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Call):
+        if isinstance(node, ast.Call):
+            dotted = _dotted_name(node.func)
+            is_join = dotted in JOIN_FUNCTIONS
+            is_path = dotted == 'Path' or dotted.endswith('.Path')
+            if not (is_join or is_path):
+                continue
+            label = dotted
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+            label = 'Path(...) / ...'
+        else:
             continue
-        dotted = _dotted_name(node.func)
-        is_join = dotted in JOIN_FUNCTIONS
-        is_path = dotted == 'Path' or dotted.endswith('.Path')
-        if not (is_join or is_path):
+
+        segments = []
+        for sub in ast.walk(node):
+            if _is_string_node(sub):
+                segments.append(_string_value(sub))
+        if not segments:
             continue
-        if not node.args:
+
+        mentions_root = _mentions_repo_root(node)
+        mentions_file = _mentions_this_file(node)
+        if not any(_is_data_segment(s) for s in segments):
             continue
-        first = node.args[0]
-        if not _is_string_node(first):
-            continue
-        value = _string_value(first)
-        if not _points_at_repo_root_data(value):
-            continue
-        hits.append(f'{dotted}({value!r}, ...)')
+        # 命中条件：引用了仓库根，或首段就是 data（相对路径 → 仓库根 data/）
+        # —— 但**基于 ``__file__`` 的包内路径**（``mapping/data/``）是正确用法，
+        #    不能误报。
+        first_is_data = _is_data_segment(segments[0])
+        if mentions_root or (first_is_data and not mentions_file):
+            hits.append('%s(%s)' % (label, ', '.join(repr(s) for s in segments)))
     return hits
 
 
@@ -338,11 +392,16 @@ def test_the_repository_root_data_detector_actually_detects(tmp_path):
 
     同时守住「不误报」：**包内**的 ``.../mapping/data`` 不算仓库根 ``data/``。
 
-    违规的**两种写法**都要抓得到：
+    违规的**四种写法**都要抓得到：
 
     1. 路径字面量 —— ``'data/mapping/metric_rules.json'``；
     2. **分段拼接** —— ``os.path.join('data', 'mapping', 'x.json')``
-       （字面量里根本没有 ``data/`` —— 只扫字面量的检测器会漏）。
+       （字面量里根本没有 ``data/`` —— 只扫字面量的检测器会漏）；
+    3. **仓库根 + data 段** —— ``os.path.join(REPO_ROOT, 'data', 'mapping')``
+       （首段不是字符串，只看 ``args[0]`` 的检测器会漏 —— **这曾经就是
+       生产包里的写法**）；
+    4. **运算符链** —— ``Path(REPO_ROOT) / 'data' / 'mapping'``
+       （根本不是 Call，只扫 Call 的检测器会漏）。
     """
     offender = tmp_path / 'offender.py'
     offender.write_text("PATH = 'data/mapping/metric_rules.json'\n", encoding='utf-8')
@@ -359,6 +418,28 @@ def test_the_repository_root_data_detector_actually_detects(tmp_path):
         '检测器抓不到分段拼接的仓库根 data/ 路径 —— 那条守卫是恒绿的'
     )
 
+    rooted = tmp_path / 'rooted.py'
+    rooted.write_text(
+        "import os\n"
+        "REPO_ROOT = '/repo'\n"
+        "PATH = os.path.join(REPO_ROOT, 'data', 'mapping')\n",
+        encoding='utf-8',
+    )
+    assert _repo_root_data_references(str(rooted)), (
+        '检测器抓不到「仓库根 + data 段」的写法 —— 那条守卫是恒绿的'
+    )
+
+    chained = tmp_path / 'chained.py'
+    chained.write_text(
+        "from pathlib import Path\n"
+        "REPO_ROOT = Path('/repo')\n"
+        "PATH = REPO_ROOT / 'data' / 'mapping'\n",
+        encoding='utf-8',
+    )
+    assert _repo_root_data_references(str(chained)), (
+        '检测器抓不到「运算符链」的写法 —— 那条守卫是恒绿的'
+    )
+
     innocent = tmp_path / 'innocent.py'
     innocent.write_text(
         "PATH = 'tpops_kafka_collector/mapping/data'\n", encoding='utf-8')
@@ -370,6 +451,17 @@ def test_the_repository_root_data_detector_actually_detects(tmp_path):
         encoding='utf-8',
     )
     assert _repo_root_data_references(str(innocent_join)) == [], '误报了包内路径'
+
+    # 基于 ``__file__`` 的**包内**数据目录是正确用法 —— 不能误报
+    package_local = tmp_path / 'package_local.py'
+    package_local.write_text(
+        "import os\n"
+        "PACKAGE_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')\n",
+        encoding='utf-8',
+    )
+    assert _repo_root_data_references(str(package_local)) == [], (
+        '误报了包内的 __file__ 数据目录'
+    )
 
 
 def test_reference_copy_of_mapping_layer_is_deleted():

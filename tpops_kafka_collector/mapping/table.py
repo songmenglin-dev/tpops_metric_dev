@@ -12,8 +12,16 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 from ..errors import MappingError
 from .columns import merged_archive_view_columns, validate_source_columns
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DATA_DIR = os.path.join(REPO_ROOT, 'data', 'mapping')
+#: **不再有仓库根默认路径。**
+#: ``MappingTable`` 是**离线工具**用的查表类：它要读 ``archive/`` 与
+#: ``sql_merge_probe_result.json`` —— 这两个文件只在**仓库根** ``data/mapping/``
+#: 里，不在包内 ``mapping/data/``。
+#: 所以 ``load()`` 的 ``data_dir`` 改成**必填**：谁要用就自己指哪条路径
+#: （离线脚本指仓库根，测试指 ``conftest.DATA_DIR``）。
+#: 生产查表走 :mod:`tpops_kafka_collector.mapping.loader`（包内数据）。
+#:
+#: 守卫：``tests/unit/test_package_boundary.py`` 盯着生产代码既不读仓库根
+#: ``data/``、也不构造 ``MappingTable``。
 FIELD_MAP_FILE = 'itscada_field_map.json'
 METRIC_RULES_FILE = 'metric_rules.json'
 ALARM_RULES_FILE = 'alarm_rules.json'
@@ -156,11 +164,18 @@ class MappingTable:
     @classmethod
     def load(
         cls,
-        data_dir: str = DATA_DIR,
+        data_dir: str,
         validate_columns: bool = True,
         probe_path: Optional[str] = None,
     ) -> 'MappingTable':
         """加载映射表。
+
+        :param data_dir: 映射表目录 —— **必填，无默认**。
+            本类是**离线工具**专用：它要读 ``archive/`` 与
+            ``sql_merge_probe_result.json``，这两个文件只在**仓库根**
+            ``data/mapping/`` 里（不在包内 ``mapping/data/``）。
+            离线脚本指仓库根，测试指 ``conftest.DATA_DIR`` 的 mapping 子目录。
+            **生产路径禁止使用本类**（走 ``mapping/loader.py``）。
 
         :param validate_columns: 启动期校验来源列（开发方案 §5.6.4）——
             每条规则要取的列必须真实存在于**实测留档**的实际返回列里。

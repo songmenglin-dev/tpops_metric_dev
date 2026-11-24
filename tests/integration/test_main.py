@@ -543,14 +543,24 @@ def test_health_probes_are_wired_and_lightweight(tmp_path):
 
 
 def test_readiness_returns_503_before_first_tick(tmp_path):
-    """没跑过一轮时 ``/readyz`` 返回 503。"""
+    """没跑过一轮时 ``/readyz`` 返回 503 —— 且 503 **只能**来自 scheduler 探针。
+
+    同上一条用例：**TPOPS 探针必须已认证**，否则 503 来自 tpops 探针，
+    跟本用例要守的「还没跑过一轮」无关 —— 那样的断言恒绿。
+    """
     client = FakeClient([_instance_row()], {'inst-1': _node_rows()})
+    client.auth_ok = True
     runtime = entry.build_runtime(
         _config(tmp_path), client=client, producer=FakeProducer(), start_health=False,
     )
     status, body = runtime.health.endpoints.readiness()
     assert status == 503
-    assert b'"name": "scheduler"' in body or b'"name":"scheduler"' in body
+    deps = _readiness_dependencies(body)
+    assert deps['tpops']['ready'] is True, (
+        f'TPOPS 探针不就绪 —— 503 的归因就不唯一了：{deps!r}'
+    )
+    assert deps['scheduler']['ready'] is False, deps
+    assert '还没有成功完成过一轮' in deps['scheduler']['reason'], deps
 
 
 def test_liveness_always_returns_200(tmp_path):

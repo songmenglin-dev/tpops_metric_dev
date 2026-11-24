@@ -8,7 +8,7 @@ import sys
 
 import pytest
 
-from conftest import DATA_DIR, REPO_ROOT
+from conftest import DATA_DIR, MAPPING_DIR, REPO_ROOT
 from tpops_kafka_collector.mapping import MappingError, MappingTable, RuleContext, evaluate
 
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
@@ -31,7 +31,7 @@ CATEGORIES = ['monitor_metrics', 'command_center_sql', 'diagnostic', 'instance']
 
 @pytest.fixture(scope='module')
 def table():
-    return MappingTable.load()
+    return MappingTable.load(MAPPING_DIR)
 
 
 # 分类映射表已归档（2026-11-13），这里仍校验它们与客户方案字段表一致
@@ -144,7 +144,7 @@ def test_alarm_tpops_fields_exist_in_captured_alarm_data():
 
 def test_series_point_clock_is_the_timestamp_of_the_picked_point():
     """A 类：clock 必须取与 value 同一下标的时间戳，不能用最后一个时间戳。"""
-    table = MappingTable.load()
+    table = MappingTable.load(MAPPING_DIR)
     rule = table.metric_rule('gaussdb.Tps')
     timestamps = (1000, 2000, 3000)
     ctx = RuleContext(
@@ -157,7 +157,7 @@ def test_series_point_clock_is_the_timestamp_of_the_picked_point():
 
 
 def test_series_point_clock_falls_back_to_collect_time_without_timestamps():
-    table = MappingTable.load()
+    table = MappingTable.load(MAPPING_DIR)
     rule = table.metric_rule('gaussdb.Tps')
     ctx = RuleContext(series={'cn_5002': [1.0]}, now_ms=9999)
     results = evaluate(rule, ctx)
