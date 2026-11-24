@@ -1,0 +1,18 @@
+{
+  "plan_hash": "sha256:b4766c8ae9c06bd6685693405820aef9726b25fb5c9fd7b4ec4266146c310387",
+  "plan_revision": 3,
+  "wave_id": "wave-4-delivery-docs",
+  "status": "repairing",
+  "failure_count": 1,
+  "previous_head": "2650399ec421fd323ce1325ad0f992917363690c",
+  "previous_report": ".superpowers/sdd/reviews/wave-4-delivery-docs.md",
+  "failures": [
+    {
+      "base": "15a076bde72352fee1f84f59136a48520fb404b9",
+      "head": "2650399ec421fd323ce1325ad0f992917363690c",
+      "report": ".superpowers/sdd/reviews/wave-4-delivery-docs.md",
+      "recorded_at": "2026-11-24T08:50:02.243Z"
+    }
+  ],
+  "updated_at": "2026-11-24T08:50:02.265Z"
+}
