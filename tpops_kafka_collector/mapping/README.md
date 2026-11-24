@@ -1,7 +1,7 @@
 # ITSCADA 映射规则
 
 把 TPOPS 取到的数据变成 ITSCADA 约定的 Kafka JSON。**规则是数据不是代码** ——
-客户改字段口径，改 `data/mapping/` 下的 JSON，不用改 Python。
+客户改字段口径，改 `tpops_kafka_collector/mapping/data/` 下的 JSON，不用改 Python。
 
 ## 依据
 
@@ -15,21 +15,18 @@
 ## 文件布局
 
 ```
-data/mapping/                 # 规则数据（表驱动）
-├── metric_mapping_monitor_metrics.json    # A 类 监控指标接口的字段映射
-├── metric_mapping_command_center_sql.json  # B 类 命令中心 SQL 的字段映射
-├── metric_mapping_diagnostic.json          # C 类 诊断优化接口的字段映射
-├── metric_mapping_instance.json            # D 类 实例接口的字段映射
-├── alarm_mapping.json                      # 告警的字段映射
-├── itscada_field_map.json    # 客户消息的字段清单（哪些字段、必填与否）
-├── metric_rules.json         # 业务规则：101 条指标规则（98 可提供 + 3 标记丢弃）
-├── response_rules.json       # 取数定位：响应体的哪一段哪一列（98 条 + 18 种形状）
-├── kafka_field_mapping.json  # 字段映射：值 → Kafka 字段（98 条指标 + 4 种告警形态）
-├── alarm_rules.json          # 告警规则：等级/状态映射 + 257 条告警定义
-├── open_items.json           # 待客户确认的 7 项
-└── archive/                  # 旧的分类字段映射表（已归档，见该目录 README）
-
-tpops_kafka_collector/mapping/   # 规则执行代码
+tpops_kafka_collector/mapping/   # 生产代码：规则数据 + 执行代码（随包发布）
+├── data/                     # 规则数据（表驱动）—— **生产环境的唯一真相源**
+│   ├── metric_rules.json     # 业务规则：101 条指标规则（98 可提供 + 3 标记丢弃）
+│   ├── response_rules.json   # 取数定位：响应体的哪一段哪一列（98 条 + 18 种形状）
+│   ├── kafka_field_mapping.json  # 字段映射：值 → Kafka 字段（98 条指标 + 4 种告警形态）
+│   ├── alarm_rules.json      # 告警规则：等级/状态映射 + 257 条告警定义
+│   ├── itscada_field_map.json  # 客户消息的字段清单（哪些字段、必填与否）
+│   ├── merged_sql.json       # 11 个合并 SQL 视图的定义 + 刷新档位 + 分页段
+│   ├── sql_merge.sql         # 合并 SQL 的归档留档（与生成器逐字符比对）
+│   ├── customer_metric_mapping.json  # 101 客户指标 → 可提供性判定（独立基准）
+│   ├── observed_columns.json # 实测留档的实际返回列（列名校验用，生成物）
+│   └── open_items.json       # 待客户确认的 8 项
 ├── __init__.py               # 对外接口
 ├── table.py                  # 加载与查表（MappingTable / MetricRule / AlarmDefinition）
 ├── rules.py                  # 取值规则引擎的对外接口 + 文档（13 种 value_rule.type）
@@ -47,7 +44,13 @@ tpops_kafka_collector/mapping/   # 规则执行代码
 │                             #   含合并 SQL 的合并形态 decode_merged / merge_pages）
 ├── columns.py                # 列名校验（规则要取的列必须存在于实测留档的实际返回列）
 ├── ids.py                    # 标识与幂等键
-└── message.py                # 按 ITSCADA 字段规范组装消息
+├── message.py                # 按 ITSCADA 字段规范组装消息
+├── masking.py                # 慢 SQL 文本脱敏与截断
+├── nodes.py                  # 节点身份解析（resourceName：节点 IP + 节点 ID；选 master CN）
+└── sqlgen.py                 # 合并 SQL 的运行时渲染（按 offset 翻页）
+
+data/mapping/                 # 仓库根的**同内容副本**（离线工具与文档生成用）
+└── archive/                  # 旧的分类字段映射表（已归档，见该目录 README）
 
 tools/build_metric_value_rules.py   # 开发方案 §4.3 → data/metric_value_rules.json（生成物，不入库）
 tools/build_itscada_mapping.py      # 中间件 + xlsx → data/mapping/*.json
@@ -57,8 +60,11 @@ tools/build_field_mapping_doc.py     # 分类映射文件 → docs/映射表-ITS
 tests/                               # 映射层单元测试（pytest）
 ```
 
-> **映射数据（`data/mapping/*.json`）目前仍在仓库根**，还没搬进包内 ——
-> 那是 wave 2a 任务 2.1 的事。包内只有执行代码。
+> **映射数据已经搬进包内**（设计决策 9）：生产环境的**唯一真相源**是
+> `tpops_kafka_collector/mapping/data/*.json` —— 采集端**不读仓库根目录**，
+> 只按 `__file__` 解析包内路径（常驻进程可能从任意工作目录启动）。
+> 仓库根的 `data/mapping/*.json` 是**同内容副本**，留给离线工具与文档生成用；
+> 两份副本的一致性由测试守（`tests/unit/test_mapping_data_sync.py`）。
 > `tools/` 与 `data/` 是离线工具与留档，**不是生产依赖**。
 
 `metric_rules.json` 与 `alarm_rules.json` 是**生成物**，不要手改：
@@ -69,20 +75,23 @@ python tools/build_itscada_mapping.py      # 上述中间件 + xlsx → data/map
 ```
 
 改口径的正确做法：改开发方案 §4.3 的表（人类可读的那份）→ 重新跑两个脚本 →
-提交 `data/mapping/*.json`（`data/metric_value_rules.json` 是生成物，不入库；
-缺失时 `build_itscada_mapping.py` 会自动重建）。
+提交 `data/mapping/*.json` **与包内副本**
+`tpops_kafka_collector/mapping/data/*.json`（`data/metric_value_rules.json`
+是生成物，不入库；缺失时 `build_itscada_mapping.py` 会自动重建）。
 `tests/test_generated_rules.py` 会检查生成物与生成器一致。
 
 用法：
 
 ```python
-import sys
 # 包已从仓库根导入，不需要再改 sys.path
-from tpops_kafka_collector.mapping import MappingTable
+from tpops_kafka_collector.mapping.loader import load_mapping
 
-table = MappingTable.load()          # 默认读 data/mapping/
-rule = table.metric_rule('GAUSSDB.[{#DATNAME}]_cache_hit_ratio')
+bundle = load_mapping()          # 默认读包内 mapping/data/（生产路径）
+rule = bundle.metric_rule('GAUSSDB.[{#DATNAME}]_cache_hit_ratio')
 ```
+
+> 离线脚本用 `MappingTable.load(data_dir)` —— `data_dir` **必填、无默认**
+> （它要读只在仓库根有的 `archive/` 与合并 SQL 探针留档）。**生产路径禁止用它**。
 
 ## 分类字段映射文件（已归档）
 
@@ -369,7 +378,7 @@ python tools/build_response_rules.py --check  # 只校验是否最新
 
 ## 告警规则
 
-`data/mapping/alarm_rules.json` 三部分：
+`tpops_kafka_collector/mapping/data/alarm_rules.json` 三部分：
 
 1. **枚举映射** —— 平台 `severity` → ITSCADA `priority`（critical→1 / major→2 /
    minor→3 / notice→4）；平台 `status` → ITSCADA `status`（activated→1 / recovered→0）。
@@ -384,7 +393,7 @@ python tools/build_response_rules.py --check  # 只校验是否最新
 
 **resourceName 只能表示一个节点**（客户口径），所以模板固定为
 `{host_ip}_{node_id}`（如 `172.16.103.126_3881c04403394ee1b36a2bf873e69007no14`），
-指标与告警同规则。模板在 `data/mapping/itscada_field_map.json` 的 `resource_name` 段。
+指标与告警同规则。模板在 `tpops_kafka_collector/mapping/data/itscada_field_map.json` 的 `resource_name` 段。
 
 表名/库名/端口这类业务维度**不进资源名**，改由 `metricName`/`metricCode` 的占位符
 与 `tags.dimension_values` 承载 —— 客户按台账查的是节点，粒度在指标名里。

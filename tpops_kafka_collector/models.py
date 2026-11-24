@@ -10,9 +10,9 @@
   对外用 ``dimension_map`` 属性取 dict 视图。
 
 **幂等键不在这里另写一份实现** —— 它由 ``tpops_kafka_collector.ids`` 计算，
-本模块的 DTO 只做转发。键的**声明**（字段清单）在
-``data/mapping/alarm_rules.json`` 的 ``idempotency`` 段，
-由 ``tools/build_itscada_mapping.py`` 从 ``ids.py`` 的常量生成 ——
+本模块的 DTO 只做转发。键的**声明**（字段清单）在**包内**
+``tpops_kafka_collector/mapping/data/alarm_rules.json`` 的 ``idempotency`` 段，
+由仓库根的 ``tools/build_itscada_mapping.py`` 从 ``ids.py`` 的常量生成 ——
 声明与实现同源，改一处必须改另一处。
 """
 from dataclasses import dataclass

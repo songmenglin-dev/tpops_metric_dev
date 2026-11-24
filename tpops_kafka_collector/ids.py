@@ -12,8 +12,9 @@
   加它救不了「恢复事件被去重丢弃」的问题。
 - 指标键 = ``instance_id + metric_name + 排序后的 dimensions + timestamp``。
 
-键的**声明**（字段清单）在 ``data/mapping/alarm_rules.json`` 的 ``idempotency``
-段里，由 ``tools/build_itscada_mapping.py`` 从本模块的常量生成 ——
+键的**声明**（字段清单）在**包内**
+``tpops_kafka_collector/mapping/data/alarm_rules.json`` 的 ``idempotency``
+段里，由仓库根的 ``tools/build_itscada_mapping.py`` 从本模块的常量生成 ——
 声明与实现是同一份契约的两个副本，改一处必须改另一处。
 
 本模块同时提供**已投递键的有界集合** :class:`IdempotencyKeyLRU` ——
