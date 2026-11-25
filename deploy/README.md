@@ -1,25 +1,27 @@
 # deploy/ —— 部署资产
 
-采集端**上生产机器**用的三个脚本。它们会被 `tools/build_deploy_bundle.py` 打进
-离线部署包（`dist/tpops-collector-<版本>.tar.gz`），拷到目标机后直接用。
+采集端**上生产机器**用的五个脚本。它们会被 `tools/build_release.py` 打进
+离线部署包（`release/<版本>/tpops_metric_collector_<版本>.tar.gz`），拷到目标机后直接用。
 
 | 文件 | 在哪跑 | 干什么 |
 |---|---|---|
 | `check_env.sh` | 目标机，**装之前** | **环境预检（只读）**：架构、Python 版本区间、venv/ensurepip/pip 能力、安装目录、磁盘、端口 |
+| `check_deps.sh` | 目标机，**装之前** | **离线依赖预检**：wheel 齐不齐、架构无关、逐条核对依赖清单，并**真装一遍到临时目录再删** |
 | `install.sh` | 目标机 | **零联网**安装，分两阶段：阶段一装环境需要的包、阶段二部署采集端包 |
 | `verify_env.sh` | 目标机，**装之后** | 部署后自检：依赖、生产包、必填配置、状态目录（可选连通性） |
 | `run.sh` | 目标机 | 统一启动入口（systemd 调它；读 `.install-mode` 决定用哪个解释器） |
 
-## 部署流程（三步）
+## 部署流程（四步）
 
 ```
 1. 检查环境     bash check_env.sh              # 只读；有 [FAIL] 就先别往下走
-2. 装包 + 部署  sudo bash install.sh           # 阶段一装依赖，阶段二部署采集端包
-3. 配置 + 验收  vi .env && bash verify_env.sh  # 自检通过后 bash run.sh 启动
+2. 查离线依赖   bash check_deps.sh             # 这份依赖包在这台机器上装不装得上
+3. 装包 + 部署  sudo bash install.sh           # 阶段一装依赖，阶段二部署采集端包
+4. 配置 + 验收  vi .env && bash verify_env.sh  # 自检通过后 bash run.sh 启动
 ```
 
-`check_env.sh` 与 `verify_env.sh` 是**两件事**：前者回答「这台机器能不能装」，
-后者回答「装好了没有、能不能跑」。
+三个「检查」各管一段：`check_env.sh` 答「这台机器能不能装」，
+`check_deps.sh` 答「这份依赖包装不装得上」，`verify_env.sh` 答「装好了没有、能不能跑」。
 
 ## 为什么不需要 conda
 

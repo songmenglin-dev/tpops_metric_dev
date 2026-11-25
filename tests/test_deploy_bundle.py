@@ -260,8 +260,10 @@ def test_cli_builds_bundle_from_wheels_dir(tmp_path, capsys):
         '--no-tarball',
     ])
     assert code == 0
-    bundle_dir = os.path.join(str(tmp_path / 'dist'),
-                              'tpops-collector-' + bdb.read_version(REPO_ROOT))
+    from deploy_bundle.bundle import SOFTWARE_NAME
+    bundle_dir = os.path.join(
+        str(tmp_path / 'dist'),
+        f'{SOFTWARE_NAME}_{bdb.read_version(REPO_ROOT)}')
     assert os.path.isfile(os.path.join(bundle_dir, 'MANIFEST.txt'))
     assert '部署包' in capsys.readouterr().out
 
@@ -576,7 +578,7 @@ def release_dir(tmp_path_factory):
     _fake_wheels(str(root / 'src_wheels'))
     return release_cli.build_release(
         release_root=str(root / 'release'), dist_root=str(root / 'dist'),
-        version='9.9.9', with_source=True,
+        version='9.9.9', with_source=True, with_pdf=False,
         source_repo_root=_fake_source_repo(root / 'fake_repo'))
 
 
@@ -589,17 +591,18 @@ def test_release_dir_is_version_named(release_dir):
 def test_release_contains_deploy_bundle_with_doc_scripts_and_package(release_dir):
     """部署包里要有三样：最终部署文档说明、脚本、采集端软件包。"""
     import tarfile
-    tar_path = os.path.join(release_dir, 'tpops-collector-9.9.9.tar.gz')
+    tar_path = os.path.join(release_dir, 'tpops_metric_collector_9.9.9.tar.gz')
     assert os.path.isfile(tar_path)
     with tarfile.open(tar_path) as tar:
         names = tar.getnames()
-    assert 'tpops-collector-9.9.9/部署运行说明.md' in names, '缺最终部署文档说明'
+    assert 'tpops_metric_collector_9.9.9/部署运行说明.md' in names, '缺最终部署文档说明'
     for script in ('check_env.sh', 'install.sh', 'verify_env.sh', 'run.sh'):
-        assert 'tpops-collector-9.9.9/' + script in names, '缺脚本 ' + script
-    assert 'tpops-collector-9.9.9/tpops_kafka_collector/main.py' in names, '缺软件包'
-    assert 'tpops-collector-9.9.9/tpops_kafka_collector/mapping/data/metric_rules.json' in names
-    assert 'tpops-collector-9.9.9/wheels/requests-2.31.0-py3-none-any.whl' in names
-    assert 'tpops-collector-9.9.9/.env.example' in names
+        assert 'tpops_metric_collector_9.9.9/' + script in names, '缺脚本 ' + script
+    assert 'tpops_metric_collector_9.9.9/tpops_kafka_collector/main.py' in names, '缺软件包'
+    assert ('tpops_metric_collector_9.9.9/tpops_kafka_collector/mapping/data/'
+            'metric_rules.json') in names
+    assert 'tpops_metric_collector_9.9.9/wheels/requests-2.31.0-py3-none-any.whl' in names
+    assert 'tpops_metric_collector_9.9.9/.env.example' in names
 
 
 def test_release_ships_checksums_and_notes(release_dir):
@@ -607,10 +610,10 @@ def test_release_ships_checksums_and_notes(release_dir):
     notes = os.path.join(release_dir, 'RELEASE-NOTES.md')
     assert os.path.isfile(notes)
     content = _read(notes)
-    assert 'tpops-collector-9.9.9.tar.gz' in content
-    assert 'tpops-metric-dev-9.9.9-source.tar.gz' in content
+    assert 'tpops_metric_collector_9.9.9.tar.gz' in content
+    assert 'tpops_metric_dev_9.9.9-source.tar.gz' in content
 
-    for name in ('tpops-collector-9.9.9.tar.gz', 'tpops-metric-dev-9.9.9-source.tar.gz'):
+    for name in ('tpops_metric_collector_9.9.9.tar.gz', 'tpops_metric_dev_9.9.9-source.tar.gz'):
         checksum = _read(os.path.join(release_dir, name + '.sha256')).split()
         assert checksum[0] == sha256(os.path.join(release_dir, name))
         assert checksum[1] == name
@@ -619,13 +622,13 @@ def test_release_ships_checksums_and_notes(release_dir):
 def test_source_package_skips_regenerable_artifacts(release_dir):
     """源码包不含可重建的中间产物。"""
     import tarfile
-    tar_path = os.path.join(release_dir, 'tpops-metric-dev-9.9.9-source.tar.gz')
+    tar_path = os.path.join(release_dir, 'tpops_metric_dev_9.9.9-source.tar.gz')
     with tarfile.open(tar_path) as tar:
         names = tar.getnames()
     joined = '\n'.join(names)
-    assert 'tpops-metric-dev-9.9.9/CLAUDE.md' in joined
-    assert 'tpops-metric-dev-9.9.9/deploy/install.sh' in joined
-    assert 'tpops-metric-dev-9.9.9/data/keep_me.json' in joined
+    assert 'tpops_metric_dev_9.9.9/CLAUDE.md' in joined
+    assert 'tpops_metric_dev_9.9.9/deploy/install.sh' in joined
+    assert 'tpops_metric_dev_9.9.9/data/keep_me.json' in joined
     assert 'data/customer_metric_query_plan.json' not in joined, '可重建产物不该收'
 
 
@@ -644,3 +647,58 @@ def test_real_repo_source_files_exclude_generated():
     assert 'CLAUDE.md' in files
     assert 'deploy/install.sh' in files
     assert not any(f.startswith('release/') for f in files), '源码包不该收 release/ 自己'
+
+
+def test_release_package_contains_dependency_precheck_script(release_dir):
+    """部署包里要有「离线依赖预检」脚本 —— 装之前先验依赖包装不装得上。"""
+    import tarfile
+    tar_path = os.path.join(release_dir, 'tpops_metric_collector_9.9.9.tar.gz')
+    with tarfile.open(tar_path) as tar:
+        names = tar.getnames()
+    assert 'tpops_metric_collector_9.9.9/check_deps.sh' in names
+    assert 'tpops_metric_collector_9.9.9/wheels/requirements.lock.txt' in names
+
+
+def test_release_package_contains_pdf_guide(tmp_path):
+    """部署包里要有 **PDF 版的软件部署指南**（现场运维多半不看 Markdown）。"""
+    import tarfile
+    from deploy_bundle.pdf import pandoc_available
+    if not pandoc_available():
+        pytest.skip('这台机器没有 pandoc —— 渲染不了 PDF')
+    _fake_wheels(str(tmp_path / 'src_wheels'))
+    release_dir = release_cli.build_release(
+        release_root=str(tmp_path / 'release'), dist_root=str(tmp_path / 'dist'),
+        version='9.9.9', with_source=False, with_pdf=True)
+    tar_path = os.path.join(release_dir, 'tpops_metric_collector_9.9.9.tar.gz')
+    pdf_name = 'tpops_metric_collector_9.9.9/软件部署指南.pdf'
+    with tarfile.open(tar_path) as tar:
+        names = tar.getnames()
+        assert pdf_name in names, '缺 PDF 部署指南'
+        member = tar.getmember(pdf_name)
+    assert member.size > 10000, 'PDF 太小，八成没渲染出来'
+
+
+def test_widen_last_column_only_touches_table_separators():
+    """列宽加权只许动表格分隔行 —— 不能改到正文。"""
+    from deploy_bundle.pdf import widen_last_column
+    original = (
+        '正文里有个 | 竖线 | 不是表格\n'
+        '\n'
+        '|---|---|---|\n'
+        '\n'
+        '| a | b | c |\n')
+    widened = widen_last_column(original)
+    lines = widened.splitlines()
+    assert lines[0] == '正文里有个 | 竖线 | 不是表格'
+    assert lines[2].startswith('|---')
+    assert lines[2].endswith('|')
+    # 最后一列被加权了
+    assert len(lines[2].split('|')[-2]) > 3
+
+
+def test_check_deps_script_finds_wheel_with_underscore_name():
+    """依赖名用连字符、wheel 文件名用下划线（kafka-python / kafka_python）——
+    匹配时两种写法都要试，否则会误报「离线装不上」。"""
+    content = _read(os.path.join(DEPLOY_DIR, 'check_deps.sh'))
+    assert '${name//-/_}' in content
+    assert '${name//_/-}' in content

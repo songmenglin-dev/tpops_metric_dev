@@ -9,8 +9,15 @@ import shutil
 import tarfile
 
 from .files import copy_tree, copy_wheels, sha256, write_manifest
+from .pdf import build_pdf
 from .wheels import (BOOTSTRAP_PACKAGES, DeployBundleError, assert_arch_independent,
                      resolve_wheels, write_lock_file)
+
+#: 软件发行包的名字（release/<版本>/ 下的 tar.gz 与包内目录都用它）
+SOFTWARE_NAME = 'tpops_metric_collector'
+
+#: 工程源码包的名字
+SOURCE_NAME = 'tpops_metric_dev'
 
 #: 部署包根目录里要带上的东西（install.sh / verify_env.sh / run.sh 单独拷）
 PAYLOAD_ITEMS = (
@@ -25,7 +32,10 @@ PAYLOAD_ITEMS = (
 )
 
 #: 仓库里要带进部署包的脚本
-DEPLOY_SCRIPTS = ('install.sh', 'check_env.sh', 'verify_env.sh', 'run.sh')
+DEPLOY_SCRIPTS = ('install.sh', 'check_env.sh', 'check_deps.sh', 'verify_env.sh', 'run.sh')
+
+#: 部署指南 PDF 在包里的文件名
+GUIDE_PDF_NAME = '软件部署指南.pdf'
 
 #: .env.example 里要去掉开发环境痕迹的键 —— 交付给客户时不能带开发账号
 SANITIZED_ENV_KEYS = ('TPOPS_USER', 'TPOPS_BASE_URL')
@@ -69,7 +79,7 @@ def sanitize_env_example(src_path, dest_path):
     return dest_path
 
 
-def _prepare_payload(repo_root, bundle_dir):
+def _prepare_payload(repo_root, bundle_dir, with_pdf=True):
     """把「非 wheel」的部分放进部署包：生产包、依赖清单、脚本、样例、文档。"""
     # 1) 生产包
     src_package = os.path.join(repo_root, 'tpops_kafka_collector')
@@ -101,11 +111,19 @@ def _prepare_payload(repo_root, bundle_dir):
         sanitize_env_example(env_src, os.path.join(bundle_dir, '.env.example'))
         print('[ok] .env.example（已去开发环境痕迹）')
 
-    # 5) 部署文档
+    # 5) 部署文档：Markdown 版 + PDF 版（软件部署指南）
     doc_src = os.path.join(repo_root, 'docs', '交付-部署运行说明.md')
     if os.path.isfile(doc_src):
         shutil.copy2(doc_src, os.path.join(bundle_dir, '部署运行说明.md'))
-        print('[ok] 部署运行说明')
+        print('[ok] 部署运行说明（Markdown）')
+        if with_pdf:
+            try:
+                build_pdf(doc_src, os.path.join(bundle_dir, GUIDE_PDF_NAME))
+                print('[ok] 软件部署指南（PDF）')
+            except (OSError, RuntimeError) as exc:
+                raise DeployBundleError(f'渲染 PDF 部署指南失败：{exc}')
+        else:
+            print('[warn] 跳过 PDF 部署指南（--no-pdf）')
 
     return req_src
 
@@ -146,17 +164,17 @@ def _prepare_wheels(repo_root, bundle_dir, wheels_source, allow_download, req_sr
 
 
 def build_bundle(repo_root, dist_root, wheels_source=None, allow_download=True,
-                 version=None):
+                 version=None, with_pdf=True):
     """构建部署包，返回部署包目录路径。"""
     version = version or read_version(repo_root)
-    bundle_name = f'tpops-collector-{version}'
+    bundle_name = f'{SOFTWARE_NAME}_{version}'
     bundle_dir = os.path.join(dist_root, bundle_name)
 
     if os.path.isdir(bundle_dir):
         shutil.rmtree(bundle_dir)
     os.makedirs(bundle_dir)
 
-    req_src = _prepare_payload(repo_root, bundle_dir)
+    req_src = _prepare_payload(repo_root, bundle_dir, with_pdf=with_pdf)
     _prepare_wheels(repo_root, bundle_dir, wheels_source, allow_download, req_src)
 
     write_manifest(bundle_dir, version)
