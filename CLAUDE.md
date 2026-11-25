@@ -83,7 +83,7 @@ tpops_kafka_collector/mapping/   # 映射层执行代码（**生产代码**）
 
 ```
 tests/     # 映射层单元测试（pytest）；TPOPS 与 Kafka 一律 mock
-deploy/    # 部署资产（进部署包）：install.sh / verify_env.sh / run.sh
+deploy/    # 部署资产（进部署包）：collector.sh（一个脚本，位置参数选功能）
 tools/     # 现有离线取数脚本 + 参考实现，保留
            #   build_deploy_bundle.py —— 构建离线部署包（纯 Python wheel，架构通用）
 data/      # 离线样本与调研产物
@@ -193,22 +193,25 @@ openpyxl>=3.0,<3.12    # 仅离线工具与测试用
 部署包由 `tools/build_deploy_bundle.py` 构建（见 `docs/交付-部署运行说明.md`）：
 
 ```
-tools/build_deploy_bundle.py   # 有网机器上构建 → dist/tpops-collector-<版本>.tar.gz
+tools/build_deploy_bundle.py   # 有网机器上构建 → dist/tpops_metric_collector_<版本>/
 tools/build_release.py         # 构建并归档到 release/<版本>/（部署包 + 工程源码包）
 tools/deploy_bundle/           # 构建器的实现（files / wheels / bundle 三个模块）
-deploy/check_env.sh            # 目标机：装之前的**环境预检**（只读）
-deploy/install.sh               # 目标机：零联网安装（阶段一装包、阶段二部署包）
-deploy/verify_env.sh            # 目标机：装之后的自检（不打印口令、不创建任何东西）
-deploy/run.sh                   # 统一启动入口（systemd 调它）
+deploy/collector.sh             # 目标机：**一个脚本**，位置参数选功能 ——
+                                #   check-env  装之前的环境预检（只读）
+                                #   check-deps 离线依赖预检
+                                #   install    零联网安装（阶段一装包、阶段二部署包）
+                                #   verify     装之后的自检（不打印口令、不创建任何东西）
+                                #   run        启动采集端（systemd 调它）
 ```
 
-目标机上的部署顺序是**三步**：**检查环境**（`check_env.sh`，只读）→
-**安装环境需要的包 + 部署采集端包**（`install.sh`，两个阶段）→
-**配置与验收**（`verify_env.sh` + `run.sh`）。
+目标机上的部署顺序是**四步**，全用同一个脚本 `collector.sh`：
+**检查环境**（`check-env`，只读）→ **查离线依赖**（`check-deps`）→
+**安装环境需要的包 + 部署采集端包**（`install`，内部两个阶段）→
+**配置与验收**（`verify` + `run`）。
 
 产出的部署包含外置的 `.tar.gz.sha256`（**与压缩包分开传**，防篡改）；
 安装脚本把安装模式写进 `.install-mode`、解释器写进 `.python-bin`，
-`run.sh` 据此选解释器 —— 不靠「目录在不在」猜。
+`collector.sh run` 据此选解释器 —— 不靠「目录在不在」猜。
 
 ## TPOPS 接口要点（均已实测，勿凭直觉改）
 

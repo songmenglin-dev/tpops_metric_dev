@@ -12,6 +12,7 @@
 """
 
 import os
+import shutil
 import subprocess
 import sys
 
@@ -116,7 +117,7 @@ def test_runtime_requirements_keep_python37_compatible_pins():
 def test_bundle_contains_runtime_payload(bundle):
     """部署包必须自带：生产包、依赖清单、wheel、三个脚本、环境变量样例。"""
     for name in ('tpops_kafka_collector', 'requirements-runtime.txt', 'wheels',
-                 'install.sh', 'verify_env.sh', 'run.sh', '.env.example', 'MANIFEST.txt'):
+                 'collector.sh', '.env.example', 'MANIFEST.txt'):
         assert os.path.exists(os.path.join(bundle, name)), '缺少 ' + name
 
 
@@ -298,135 +299,114 @@ def test_copy_tree_skips_bytecode(tmp_path):
 
 
 # --------------------------------------------------------------------------
-# 部署脚本 —— 静态断言
 # --------------------------------------------------------------------------
-def test_install_script_is_strict_and_offline():
-    """安装脚本：set -euo pipefail + 只用本地 wheel + 不碰系统包管理器。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'install.sh'))
-    assert 'set -euo pipefail' in content
+# 部署脚本（collector.sh）—— 静态断言
+# --------------------------------------------------------------------------
+SCRIPT = os.path.join(DEPLOY_DIR, 'collector.sh')
+
+
+def _script():
+    return _read(SCRIPT)
+
+
+def test_only_one_deploy_script_exists():
+    """部署资产只有**一个**脚本 —— 功能用位置参数选，不是一堆散脚本。"""
+    scripts = sorted(n for n in os.listdir(DEPLOY_DIR) if n.endswith('.sh'))
+    assert scripts == ['collector.sh'], '部署脚本应当合并成一个：' + str(scripts)
+
+
+def test_script_dispatches_by_positional_argument():
+    """位置参数选功能：check-env / check-deps / install / verify / run。"""
+    content = _script()
+    for command in ('check-env', 'check-deps', 'install', 'verify', 'run'):
+        assert f'{command}(' in content or f'{command})' in content \
+            or f'{command} ' in content, '缺子命令：' + command
+    assert 'main "$@"' in content
+
+
+def test_script_is_strict_and_offline():
+    """安装路径必须零联网：只用本地 wheel、禁用 pip 版本自检。"""
+    content = _script()
     assert '--no-index' in content, '必须禁用 PyPI，否则离线机器会卡在联网超时'
     assert '--find-links' in content, '必须指向本地 wheel 目录'
     assert '--disable-pip-version-check' in content, 'pip 自检会发起联网请求'
     for forbidden in ('pip3 install', 'apt-get', 'yum ', 'dnf '):
-        assert forbidden not in content, '安装脚本不应调用系统包管理器：' + forbidden
+        assert forbidden not in content, '不应调用系统包管理器：' + forbidden
 
 
-def test_install_script_creates_venv_and_does_not_touch_system_python():
-    """安装必须落在安装目录内，不污染系统的 site-packages。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'install.sh'))
+def test_script_does_not_touch_system_python():
+    """安装只落在安装目录内，不污染系统的 site-packages。"""
+    content = _script()
     assert '-m venv' in content
     for forbidden in ('/usr/lib/python', '/usr/lib64/python', '/usr/local/lib/python'):
-        assert forbidden not in content, '安装脚本不应写入系统 Python 目录：' + forbidden
+        assert forbidden not in content, '不应写入系统 Python 目录：' + forbidden
 
 
-def test_install_script_bootstraps_pip_offline():
+def test_script_bootstraps_pip_offline():
     """目标机没有 pip 时要能**离线**补上 —— 直接解压 wheel，不联网。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'install.sh'))
+    content = _script()
     assert 'bootstrap/pip-' in content, '应有从 bootstrap 目录取 pip wheel 的逻辑'
     assert 'extractall' in content, '应把 pip wheel 解压进 site-packages'
 
 
-def test_install_script_does_not_execute_downloaded_get_pip():
+def test_script_does_not_execute_downloaded_get_pip():
     """get-pip.py 自己要联网找 pip 包 —— 不能作为离线安装路径，更不能 root 执行。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'install.sh'))
+    content = _script()
     code_lines = [ln for ln in content.splitlines()
                   if ln.strip() and not ln.strip().startswith('#')]
     for line in code_lines:
         assert 'get-pip.py' not in line, 'get-pip.py 不是离线路径，且会带来 root 执行风险：' + line
 
 
-def test_verify_script_never_prints_secret_values():
-    """自检脚本只看环境变量**是否存在**，绝不打印取值（口令不能进日志）。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'verify_env.sh'))
+def test_script_never_prints_secret_values():
+    """只看环境变量**是否存在**，绝不打印取值（口令不能进日志）。"""
+    content = _script()
     assert '$TPOPS_PASSWORD' not in content
     assert '${TPOPS_PASSWORD' not in content
     assert '${!var:-}' in content
 
 
-def test_verify_script_does_not_create_the_state_dir():
-    """自检**不能创建**状态目录 —— 以 root 建出来的目录，服务用户写不进去，
-    水位会静默丢失。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'verify_env.sh'))
-    assert 'mkdir -p "$STATE_DIR"' not in content
-    assert 'mkdir' not in content, '自检脚本不应创建任何东西'
-
-
-def test_verify_script_reads_env_file_without_executing_it():
+def test_script_reads_env_file_without_executing_it():
     """.env 要**解析**而不是 source —— source 等于让 root 执行客户可编辑的文件。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'verify_env.sh'))
+    content = _script()
     assert 'load_env_file' in content
     assert 'set -a' not in content, '不应 source .env'
 
 
-def test_run_script_prefers_the_install_mode_marker():
-    """run.sh 要以 .install-mode 为准 —— 装了一半的 venv 会盖掉装好的 vendor。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'run.sh'))
+def test_run_prefers_the_install_mode_marker():
+    """run 要以 .install-mode 为准 —— 装了一半的 venv 会盖掉装好的 vendor。"""
+    content = _script()
     assert '.install-mode' in content
     assert 'venv/bin/python' in content
     assert 'vendor' in content
     assert 'PYTHONPATH' in content
 
 
-@pytest.mark.parametrize('name', ['install.sh', 'check_env.sh', 'verify_env.sh', 'run.sh'])
-def test_shell_scripts_pass_syntax_check(name):
-    """四个脚本都要通过 bash -n。"""
-    path = os.path.join(DEPLOY_DIR, name)
-    result = subprocess.run(['bash', '-n', path], stdout=subprocess.PIPE,
+def test_script_passes_syntax_check():
+    """脚本要通过 bash -n。"""
+    result = subprocess.run(['bash', '-n', SCRIPT], stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     assert result.returncode == 0, result.stdout.decode('utf-8', 'replace')
 
 
-@pytest.mark.parametrize('name', ['install.sh', 'check_env.sh', 'verify_env.sh', 'run.sh'])
-def test_shell_scripts_use_bash_and_are_executable(name):
-    path = os.path.join(DEPLOY_DIR, name)
-    content = _read(path)
+def test_script_uses_bash_and_is_executable():
+    content = _script()
     assert content.startswith('#!/usr/bin/env bash')
-    assert os.access(path, os.X_OK), name + ' 需要可执行位'
+    assert os.access(SCRIPT, os.X_OK), 'collector.sh 需要可执行位'
 
 
 # --------------------------------------------------------------------------
-# 环境预检（check_env.sh）
+# 环境预检（collector.sh check-env）—— 行为性
 # --------------------------------------------------------------------------
-def test_check_script_is_read_only():
-    """预检**只读** —— 不建目录、不装包、不改权限。
-
-    以 root 跑完预检再让服务以普通用户跑，很容易留下
-    「root 建的目录、服务用户写不进去」的坑（水位静默丢失）。
-
-    判据看的是**命令位置**：提示语里出现「先 mkdir -p」不算，
-    真去执行 mkdir 才算。
-    """
-    import re
-    content = _read(os.path.join(DEPLOY_DIR, 'check_env.sh'))
-    code = [ln for ln in content.splitlines()
-            if ln.strip() and not ln.strip().startswith('#')]
-    for line in code:
-        assert not re.match(r'\s*(mkdir|cp|chmod|chown|rm|mv|tee)\b', line), \
-            '预检脚本不应改动系统：' + line.strip()
-        assert 'pip install' not in line, '预检脚本不应装包：' + line.strip()
-
-
-def test_check_script_covers_the_key_questions():
-    """预检要回答：架构、Python 版本区间、venv/ensurepip/pip 能力、目录、磁盘、端口。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'check_env.sh'))
-    for probe in ('import venv', 'import ensurepip', '-m pip --version',
-                  'uname -m', 'df -P', 'HEALTH_PORT', '3.12'):
-        assert probe in content, '预检缺少检查项：' + probe
-
-
-def test_bundle_contains_the_check_script(bundle):
-    """部署包必须带上预检脚本 —— 它是部署流程的第一步。"""
-    assert os.path.isfile(os.path.join(bundle, 'check_env.sh'))
-
-
-def test_check_script_passes_on_this_machine(tmp_path):
-    """在这台机器上真跑一遍预检：应当通过，且**不留下任何文件**。"""
+def test_check_env_creates_nothing(tmp_path):
+    """预检**只读** —— 以 root 跑完再让服务以普通用户跑，很容易留下
+    「root 建的目录、服务用户写不进去」的坑（水位静默丢失）。"""
     stub_dir = _stub_python(tmp_path)
     env = dict(os.environ)
     env['PATH'] = stub_dir + os.pathsep + env.get('PATH', '')
     prefix = tmp_path / 'opt'
     result = subprocess.run(
-        ['bash', os.path.join(DEPLOY_DIR, 'check_env.sh'), str(prefix)],
+        ['bash', SCRIPT, 'check-env', str(prefix)],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     output = result.stdout.decode('utf-8', 'replace')
     assert result.returncode == 0, output
@@ -434,7 +414,15 @@ def test_check_script_passes_on_this_machine(tmp_path):
     assert not prefix.exists(), '预检不该创建安装目录'
 
 
-def test_check_script_fails_when_no_usable_python(tmp_path):
+def test_check_env_covers_the_key_questions():
+    """预检要回答：架构、Python 版本区间、venv/ensurepip/pip 能力、目录、磁盘、端口。"""
+    content = _script()
+    for probe in ('import venv', 'import ensurepip', '-m pip --version',
+                  'uname -m', 'df -P', 'HEALTH_PORT', '3.12'):
+        assert probe in content, '预检缺少检查项：' + probe
+
+
+def test_check_env_fails_when_no_usable_python(tmp_path):
     """没有可用 Python 时预检必须**失败**（退出码非 0），别让人白装一遍。"""
     stub_dir = tmp_path / 'stub_bin'
     stub_dir.mkdir()
@@ -458,7 +446,7 @@ def test_check_script_fails_when_no_usable_python(tmp_path):
     # 只保留假解释器 + 基本工具（真实解释器都会被判为「太新」而忽略）
     env['PATH'] = str(stub_dir) + os.pathsep + '/usr/bin:/bin'
     result = subprocess.run(
-        ['bash', os.path.join(DEPLOY_DIR, 'check_env.sh'), str(tmp_path / 'opt')],
+        ['bash', SCRIPT, 'check-env', str(tmp_path / 'opt')],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     output = result.stdout.decode('utf-8', 'replace')
     assert result.returncode == 1, output
@@ -466,10 +454,102 @@ def test_check_script_fails_when_no_usable_python(tmp_path):
 
 
 # --------------------------------------------------------------------------
-# 部署脚本 —— 行为性冒烟（用假 python3 真跑一遍 install.sh）
+# 离线依赖预检（collector.sh check-deps）—— 行为性
+# --------------------------------------------------------------------------
+def test_check_deps_finds_wheel_with_underscore_name(tmp_path):
+    """依赖名用连字符、wheel 文件名用下划线（kafka-python / kafka_python）——
+    匹配时两种写法都要试，否则会误报「离线装不上」。"""
+    content = _script()
+    assert '${name//-/_}' in content
+    assert '${name//_/-}' in content
+
+
+def _make_real_wheel(directory, name='demo', version='1.0'):
+    """造一个**合法**的纯 Python wheel（能真的被 pip 装上）。
+
+    预检的最后一步是「真装一遍到临时目录」，空文件 wheel 装不上，
+    正例必须用真 wheel 才测得出东西。
+    """
+    import zipfile
+    os.makedirs(directory, exist_ok=True)
+    wheel_path = os.path.join(directory, f'{name}-{version}-py3-none-any.whl')
+    dist_info = f'{name}-{version}.dist-info'
+    with zipfile.ZipFile(wheel_path, 'w') as zf:
+        zf.writestr(f'{name}/__init__.py', 'VALUE = 1\n')
+        zf.writestr(f'{dist_info}/METADATA',
+                    f'Metadata-Version: 2.1\nName: {name}\nVersion: {version}\n')
+        zf.writestr(f'{dist_info}/WHEEL',
+                    'Wheel-Version: 1.0\nGenerator: test\n'
+                    'Root-Is-Purelib: true\nTag: py3-none-any\n')
+        zf.writestr(f'{dist_info}/RECORD', '')
+    return wheel_path
+
+
+def _make_pkg_dir(tmp_path, wheels=None):
+    """造一个「部署包目录」：collector.sh + requirements-runtime.txt + wheels/。"""
+    pkg = tmp_path / 'pkg'
+    pkg.mkdir()
+    shutil.copy2(SCRIPT, str(pkg / 'collector.sh'))
+    wheels_dir = pkg / 'wheels'
+    wheels_dir.mkdir()
+    for wheel in (wheels or []):
+        shutil.copy2(wheel, str(wheels_dir / os.path.basename(wheel)))
+    # 引导 wheel（目标机没 pip 时用）—— 预检会检查它在不在
+    bootstrap = wheels_dir / 'bootstrap'
+    bootstrap.mkdir()
+    bootstrap.joinpath('pip-23.3.2-py3-none-any.whl').write_bytes(b'')
+    return pkg
+
+
+def _usable_python_dir():
+    """当前解释器所在目录（版本得在 3.7~3.11 才算可用）。"""
+    result = subprocess.run(
+        [sys.executable, '-c', 'import sys; print(sys.version_info[0], sys.version_info[1])'],
+        capture_output=True)
+    if result.returncode != 0:
+        return None
+    major, minor = (int(x) for x in result.stdout.decode().split())
+    if not ((3, 7) <= (major, minor) < (4, 0)) or (major, minor) >= (3, 12):
+        return None
+    return os.path.dirname(os.path.abspath(sys.executable))
+
+
+def test_check_deps_passes_with_a_real_wheel(tmp_path):
+    """依赖齐全时预检通过 —— 包括最后那步「真装一遍到临时目录」。"""
+    python_dir = _usable_python_dir()
+    if not python_dir:
+        pytest.skip('当前解释器不在 3.7~3.11 区间 —— 跳过')
+    wheel = _make_real_wheel(str(tmp_path / 'wheels_src'))
+    pkg = _make_pkg_dir(tmp_path, wheels=[wheel])
+    pkg.joinpath('requirements-runtime.txt').write_text('demo==1.0\n', encoding='utf-8')
+    env = dict(os.environ)
+    env['PATH'] = python_dir + os.pathsep + env.get('PATH', '')
+    result = subprocess.run(
+        ['bash', str(pkg / 'collector.sh'), 'check-deps', str(pkg)],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    output = result.stdout.decode('utf-8', 'replace')
+    assert result.returncode == 0, output
+    assert '依赖预检通过' in output
+    assert '离线安装演练通过' in output
+
+
+def test_check_deps_reports_missing_wheel(tmp_path):
+    """缺 wheel 时预检必须报错（退出码非 0）—— 别装到一半才发现。"""
+    pkg = _make_pkg_dir(tmp_path)
+    pkg.joinpath('requirements-runtime.txt').write_text('demo==1.0\n', encoding='utf-8')
+    result = subprocess.run(
+        ['bash', str(pkg / 'collector.sh'), 'check-deps', str(pkg)],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output = result.stdout.decode('utf-8', 'replace')
+    assert result.returncode == 1, output
+    assert '预检未通过' in output
+
+
+# --------------------------------------------------------------------------
+# 部署脚本 —— 行为性冒烟（用假 python3 真跑一遍 collector.sh install）
 # --------------------------------------------------------------------------
 
-#: 假的 python3：只实现 install.sh 用到的调用。版本报 3.7.0 ——
+#: 假的 python3：只实现脚本用到的调用。版本报 3.7.0 ——
 #: 故意低于机器上任何真实解释器，保证它被选为第一个候选。
 _STUB_PYTHON = r'''#!/bin/sh
 cmd=""
@@ -503,15 +583,15 @@ def _stub_python(tmp_path):
     return str(stub_dir)
 
 
-def _run_install(bundle, prefix, stub_dir, extra_args=None):
+def _run_install(bundle, prefix, stub_dir):
     env = dict(os.environ)
     env['PATH'] = stub_dir + os.pathsep + env.get('PATH', '')
-    args = ['bash', os.path.join(bundle, 'install.sh')] + (extra_args or [])
-    args.append(str(prefix))
-    return subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    return subprocess.run(
+        ['bash', os.path.join(bundle, 'collector.sh'), 'install', str(prefix)],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
 
 
-def test_install_script_honors_the_positional_prefix(tmp_path, bundle):
+def test_install_honors_the_positional_prefix(tmp_path, bundle):
     """**位置参数必须真的生效** —— 曾被静默忽略，装到 /opt 而不是用户指定的地方。"""
     prefix = tmp_path / 'custom' / 'tpops'
     result = _run_install(bundle, prefix, _stub_python(tmp_path))
@@ -521,8 +601,8 @@ def test_install_script_honors_the_positional_prefix(tmp_path, bundle):
     assert (prefix / 'requirements-runtime.txt').is_file()
 
 
-def test_install_script_writes_the_mode_marker(tmp_path, bundle):
-    """安装模式要显式落盘 —— run.sh 靠它选解释器，不靠目录猜。"""
+def test_install_writes_the_mode_marker(tmp_path, bundle):
+    """安装模式要显式落盘 —— run 靠它选解释器，不靠目录猜。"""
     prefix = tmp_path / 'opt'
     result = _run_install(bundle, prefix, _stub_python(tmp_path))
     assert result.returncode == 0, result.stdout.decode('utf-8', 'replace')
@@ -532,7 +612,7 @@ def test_install_script_writes_the_mode_marker(tmp_path, bundle):
     assert (prefix / '.python-bin').is_file()
 
 
-def test_install_script_is_idempotent(tmp_path, bundle):
+def test_install_is_idempotent(tmp_path, bundle):
     """重复安装不能报错（运维常常重跑一遍）。"""
     stub_dir = _stub_python(tmp_path)
     prefix = tmp_path / 'opt'
@@ -542,15 +622,14 @@ def test_install_script_is_idempotent(tmp_path, bundle):
     assert second.returncode == 0, second.stdout.decode('utf-8', 'replace')
 
 
-def test_install_script_accepts_prefix_equal_to_bundle_dir(tmp_path, bundle):
-    """把部署包直接解压到安装目录再跑 install.sh —— 不能因为「cp 自己」而失败。"""
+def test_install_accepts_prefix_equal_to_bundle_dir(tmp_path, bundle):
+    """把部署包直接解压到安装目录再装 —— 不能因为「cp 自己」而失败。"""
     stub_dir = _stub_python(tmp_path)
     result = _run_install(bundle, bundle, stub_dir)
     assert result.returncode == 0, result.stdout.decode('utf-8', 'replace')
     assert os.path.isfile(os.path.join(bundle, '.install-mode'))
 
 
-# --------------------------------------------------------------------------
 # release/ —— 按版本号归档
 # --------------------------------------------------------------------------
 def _fake_source_repo(root):
@@ -596,8 +675,7 @@ def test_release_contains_deploy_bundle_with_doc_scripts_and_package(release_dir
     with tarfile.open(tar_path) as tar:
         names = tar.getnames()
     assert 'tpops_metric_collector_9.9.9/部署运行说明.md' in names, '缺最终部署文档说明'
-    for script in ('check_env.sh', 'install.sh', 'verify_env.sh', 'run.sh'):
-        assert 'tpops_metric_collector_9.9.9/' + script in names, '缺脚本 ' + script
+    assert 'tpops_metric_collector_9.9.9/collector.sh' in names, '缺部署脚本'
     assert 'tpops_metric_collector_9.9.9/tpops_kafka_collector/main.py' in names, '缺软件包'
     assert ('tpops_metric_collector_9.9.9/tpops_kafka_collector/mapping/data/'
             'metric_rules.json') in names
@@ -645,7 +723,7 @@ def test_real_repo_source_files_exclude_generated():
     for generated in release_cli.SOURCE_EXCLUDE_GENERATED:
         assert generated not in files, '可重建产物不该进源码包：' + generated
     assert 'CLAUDE.md' in files
-    assert 'deploy/install.sh' in files
+    assert 'deploy/collector.sh' in files
     assert not any(f.startswith('release/') for f in files), '源码包不该收 release/ 自己'
 
 
@@ -655,7 +733,7 @@ def test_release_package_contains_dependency_precheck_script(release_dir):
     tar_path = os.path.join(release_dir, 'tpops_metric_collector_9.9.9.tar.gz')
     with tarfile.open(tar_path) as tar:
         names = tar.getnames()
-    assert 'tpops_metric_collector_9.9.9/check_deps.sh' in names
+    assert 'tpops_metric_collector_9.9.9/collector.sh' in names
     assert 'tpops_metric_collector_9.9.9/wheels/requirements.lock.txt' in names
 
 
@@ -699,6 +777,6 @@ def test_widen_last_column_only_touches_table_separators():
 def test_check_deps_script_finds_wheel_with_underscore_name():
     """依赖名用连字符、wheel 文件名用下划线（kafka-python / kafka_python）——
     匹配时两种写法都要试，否则会误报「离线装不上」。"""
-    content = _read(os.path.join(DEPLOY_DIR, 'check_deps.sh'))
+    content = _script()
     assert '${name//-/_}' in content
     assert '${name//_/-}' in content

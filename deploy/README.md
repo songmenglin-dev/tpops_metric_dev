@@ -1,27 +1,38 @@
 # deploy/ —— 部署资产
 
-采集端**上生产机器**用的五个脚本。它们会被 `tools/build_release.py` 打进
-离线部署包（`release/<版本>/tpops_metric_collector_<版本>.tar.gz`），拷到目标机后直接用。
+采集端**上生产机器**用的**一个脚本**：`collector.sh`。它会被
+`tools/build_release.py` 打进离线部署包
+（`release/<版本>/tpops_metric_collector_<版本>.tar.gz`），拷到目标机后直接用。
 
-| 文件 | 在哪跑 | 干什么 |
+## 用法：一个脚本，位置参数选功能
+
+```bash
+bash collector.sh <命令> [参数...]
+```
+
+| 命令 | 在哪跑 | 干什么 |
 |---|---|---|
-| `check_env.sh` | 目标机，**装之前** | **环境预检（只读）**：架构、Python 版本区间、venv/ensurepip/pip 能力、安装目录、磁盘、端口 |
-| `check_deps.sh` | 目标机，**装之前** | **离线依赖预检**：wheel 齐不齐、架构无关、逐条核对依赖清单，并**真装一遍到临时目录再删** |
-| `install.sh` | 目标机 | **零联网**安装，分两阶段：阶段一装环境需要的包、阶段二部署采集端包 |
-| `verify_env.sh` | 目标机，**装之后** | 部署后自检：依赖、生产包、必填配置、状态目录（可选连通性） |
-| `run.sh` | 目标机 | 统一启动入口（systemd 调它；读 `.install-mode` 决定用哪个解释器） |
+| `check-env` [目录] [--network] | 装之前 | **环境预检（只读）**：架构、Python 版本区间、venv/ensurepip/pip 能力、安装目录、磁盘、端口 |
+| `check-deps` [目录] | 装之前 | **离线依赖预检**：wheel 齐不齐、架构无关、逐条核对依赖清单，并**真装一遍到临时目录再删** |
+| `install` [目录] | 装的时候 | **零联网**安装，分两阶段：阶段一装环境需要的包、阶段二部署采集端包 |
+| `verify` [--network] | 装之后 | 部署后自检：依赖、生产包、必填配置、状态目录（可选连通性） |
+| `run` [参数...] | 运行时 | 启动采集端（systemd 调它；读 `.install-mode` 决定用哪个解释器） |
+| `help` | — | 帮助 |
+
+环境变量：`INSTALL_PREFIX` / `INSTALL_MODE` / `STATE_DIR` / `HEALTH_PORT`。
 
 ## 部署流程（四步）
 
 ```
-1. 检查环境     bash check_env.sh              # 只读；有 [FAIL] 就先别往下走
-2. 查离线依赖   bash check_deps.sh             # 这份依赖包在这台机器上装不装得上
-3. 装包 + 部署  sudo bash install.sh           # 阶段一装依赖，阶段二部署采集端包
-4. 配置 + 验收  vi .env && bash verify_env.sh  # 自检通过后 bash run.sh 启动
+1. 检查环境     bash collector.sh check-env     # 只读；有 [FAIL] 就先别往下走
+2. 查离线依赖   bash collector.sh check-deps    # 这份依赖包在这台机器上装不装得上
+3. 装包 + 部署  sudo bash collector.sh install  # 阶段一装依赖，阶段二部署采集端包
+4. 配置 + 验收  vi .env && bash collector.sh verify
+                                            # 自检通过后 bash collector.sh run 启动
 ```
 
-三个「检查」各管一段：`check_env.sh` 答「这台机器能不能装」，
-`check_deps.sh` 答「这份依赖包装不装得上」，`verify_env.sh` 答「装好了没有、能不能跑」。
+三个「检查」各管一段：`check-env` 答「这台机器能不能装」，
+`check-deps` 答「这份依赖包装不装得上」，`verify` 答「装好了没有、能不能跑」。
 
 ## 为什么不需要 conda
 
@@ -38,7 +49,7 @@
 
 - **Python 3.12+ 不行。** `kafka-python 2.0.2` 依赖的 `six.moves` 机制在 3.12
   被移除的 `find_module` API 打断，`import kafka` 直接报
-  `No module named 'kafka.vendor.six.moves'`。所以 `install.sh` 取**版本最低**的
+  `No module named 'kafka.vendor.six.moves'`。所以 `collector.sh install` 取**版本最低**的
   可用解释器（最接近验收环境 3.7.9），并在选中 ≥ 3.12 时**明确报错退出**。
 - **`get-pip.py` 不是离线路径。** 它自己要联网去 PyPI 找 pip 包，加 `--no-index`
   反而装不上；而且它是一份未经校验、却被 root 执行的脚本。真正的离线路径是
@@ -54,8 +65,8 @@ python tools/build_deploy_bundle.py
 # 端到端演练
 mkdir -p /tmp/rehearse && tar xzf dist/tpops-collector-*.tar.gz -C /tmp/rehearse
 cd /tmp/rehearse/tpops-collector-*
-INSTALL_PREFIX=/tmp/rehearse/opt bash install.sh
-INSTALL_PREFIX=/tmp/rehearse/opt bash verify_env.sh
+INSTALL_PREFIX=/tmp/rehearse/opt bash collector.sh install
+INSTALL_PREFIX=/tmp/rehearse/opt bash collector.sh verify
 ```
 
 改这些脚本后，务必重跑演练并更新 `tests/test_deploy_bundle.py` 里的守卫。

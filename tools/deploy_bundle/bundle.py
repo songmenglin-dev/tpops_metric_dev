@@ -32,7 +32,7 @@ PAYLOAD_ITEMS = (
 )
 
 #: 仓库里要带进部署包的脚本
-DEPLOY_SCRIPTS = ('install.sh', 'check_env.sh', 'check_deps.sh', 'verify_env.sh', 'run.sh')
+DEPLOY_SCRIPTS = ('collector.sh',)
 
 #: 部署指南 PDF 在包里的文件名
 GUIDE_PDF_NAME = '软件部署指南.pdf'

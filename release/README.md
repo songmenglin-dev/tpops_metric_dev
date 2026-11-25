@@ -17,12 +17,12 @@ release/
 
 | 包 | 内容 | 用途 |
 |---|---|---|
-| **部署包**<br>`tpops_metric_collector_<版本>.tar.gz` | 最终部署文档说明（`部署运行说明.md` + **`软件部署指南.pdf`**）+ 部署脚本（`check_env.sh` / `check_deps.sh` / `install.sh` / `verify_env.sh` / `run.sh`）+ 采集端生产包 `tpops_kafka_collector/`（含 `mapping/data/*.json`）+ 离线 wheel | 传到客户机 → 解压 → `check_env.sh` → `install.sh` → `verify_env.sh` → `run.sh` |
+| **部署包**<br>`tpops_metric_collector_<版本>.tar.gz` | 最终部署文档说明（`部署运行说明.md` + **`软件部署指南.pdf`**）+ 部署脚本（**`collector.sh` 一个脚本**，位置参数选功能：check-env / check-deps / install / verify / run）+ 采集端生产包 `tpops_kafka_collector/`（含 `mapping/data/*.json`）+ 离线 wheel | 传到客户机 → 解压 → `collector.sh check-env` → `check-deps` → `install` → `verify` → `run` |
 | **源码包**<br>`tpops_metric_dev_<版本>-source.tar.gz` | 整个工程（按 git 跟踪的文件） | 给客户留档或审阅代码 |
 
 部署包**零联网**安装，x86_64 与 aarch64（麒麟两种架构）共用同一份。
 里面含**离线依赖包**（`wheels/`，含引导用的 pip wheel），装之前可用
-`check_deps.sh` 验一遍「这份依赖在这台机器上装不装得上」。
+`collector.sh check-deps` 验一遍「这份依赖在这台机器上装不装得上」。
 
 ## 怎么重建
 

@@ -169,7 +169,8 @@ def _artifact_rows(release_dir: str, artifacts: List[str]) -> List[str]:
     descriptions = {
         'tpops_metric_collector_': '**软件发行包** —— 装到客户机器上跑：'
                            '**软件部署指南.pdf**（+ 同内容的 部署运行说明.md）+ '
-                           '五个部署脚本（check_env / check_deps / install / verify_env / run）+ '
+                           '部署脚本 `collector.sh`（一个脚本，位置参数选功能：'
+                           'check-env / check-deps / install / verify / run）+ '
                            '**离线依赖包 wheels/** + '
                            '采集端软件包 `tpops_kafka_collector/`（含映射数据）',
         'tpops_metric_dev_': '**工程源码包** —— 整个项目（按 git 跟踪的文件），'
@@ -203,18 +204,18 @@ def _usage_section(version: str) -> List[str]:
         f'cd {SOFTWARE_NAME}_{version}',
         '',
         '# 2) 检查环境（只读，不装任何东西）',
-        'bash check_env.sh',
+        'bash collector.sh check-env',
         '',
         '# 3) 离线依赖预检（这份依赖包在这台机器上装不装得上）',
-        'bash check_deps.sh',
+        'bash collector.sh check-deps',
         '',
         '# 4) 安装环境需要的包 + 部署采集端包（离线）',
-        'sudo bash install.sh',
+        'sudo bash collector.sh install',
         '',
         '# 5) 配环境变量 → 部署后自检 → 启动',
         'sudo vi /opt/tpops-collector/.env',
-        'sudo bash /opt/tpops-collector/verify_env.sh',
-        'bash /opt/tpops-collector/run.sh',
+        'sudo bash /opt/tpops-collector/collector.sh verify',
+        'bash /opt/tpops-collector/collector.sh run',
         '```',
         '',
         '完整说明见部署包内的《部署运行说明.md》。',
