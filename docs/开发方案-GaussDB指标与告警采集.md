@@ -373,7 +373,7 @@ select * from ({sql_text}) limit {limit}
 `GET /rds/v3.2/instances?limit=100&offset=0` → `total_count` + `instances[]`
 （`id`/`name`/`mode`/`created_at`/`instance_status`/`engine_name`/`engine_version`/`agent_info`）。
 
-实测环境有 2 个实例：`gauss-6374`（Combined，**分布式版**，3 个 CN 均为 master）、`gauss-75a2`（Ha，集中式版，1 个 master DN），均为 `V2.0-10.0.0`。**本项目的目标实例是 `gauss-6374`**（命令中心、监控指标、诊断优化、逐指标实测留档全部用它）。
+实测环境有 2 个实例：`gauss-6374`（Combined，**分布式版**，3 个 CN 均为 master）、`gauss-75a2`（Ha，集中式版，1 个 master DN），均为 `V2.0-10.0.0`。**采集端按平台返回的全部实例循环采集**（交付时客户的实例名/ID 与探测环境不同，不写死任何一个）——命令中心、监控指标、诊断优化、告警对每个实例各走一遍；开发期做逐指标实测留档时固定用 `gauss-6374`，那只是**探测口径**，不是采集范围。
 
 #### 2.2.7 告警接口（E 类）
 
