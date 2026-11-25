@@ -48,6 +48,24 @@
       "topic": "A 类多 series 的归集口径",
       "default": "暂按逐组件各出一条消息（现状实现），维度键 COMPONENT_ID 归入 tags",
       "detail": "A 类 11 个客户指标都是实例级一条消息，但平台按组件给出多条 series（rds092/rds093/rds400 各 3 条 CN、rds402 6 条 CN+DN、rds133 3 条 CN、gaussdb_instance_status 1 条 value、datanode_switch_status 9 条 DN）。合成方式属业务口径：速率类可求和，启动时刻可取最早，主备状态可按 DN 展开或归集为布尔。确认后由 metric_rules.json 的 value_rule 承载，不改消息信封。"
+    },
+    {
+      "id": "metric-code-case",
+      "topic": "11 组英文名仅大小写不同、中文名不同",
+      "default": "两套都投递（metricCode 只差前缀大小写，值完全一样）",
+      "detail": "客户指标库 101 个指标里，英文名忽略大小写后有 11 组相同但中文名不同（全部是表级指标：小写 gaussdb. 前缀=中文名+表信息+2 分钟，大写 GAUSSDB. 前缀=英文名+事务信息+5 分钟）。客户侧若按大小写不敏感匹配，这 11 个指标会合并覆盖。要客户确认：是两条独立指标（需给出区分办法），还是同一条的重复登记（留哪一套）。清单见 docs/问题单.md TPOPS-003。"
+    },
+    {
+      "id": "rate-unit-semantics",
+      "topic": "速率型指标发累计量，单位与值对不上",
+      "default": "按源列原值发（累计计数），单位仍按客户表原样带",
+      "detail": "客户表里单位标成 tps/tuples/s/scans/s 的 10 个指标（GAUSSDB.[{#DATNAME}]_committed_transactions、_rolled_back_transactions 与 GAUSSDB.{#NAME}.number.Of.update.tuples 等 8 个表级指标），平台源列是累计计数，现发的是累计值；同族 4 个 *_records_per_second 用差分（counter_delta）口径是对的。改法：把 10 条规则的 value_rule 从 raw 改成 counter_delta；但差分窗口=采集周期（5 分钟），是否再除以秒数换算成「每秒」需客户确认。清单见 docs/问题单.md TPOPS-002。"
+    },
+    {
+      "id": "unit-semantics",
+      "topic": "几处单位与来源字段语义对不上",
+      "default": "按客户表原样带单位",
+      "detail": "gaussdb.Temp_files 单位 b（源列 temp_files 是文件个数）、gaussdb.Conflicts 单位 ms（源列 conflicts 是冲突次数）、gaussdb.Blk_read_time 单位 个（源列 blk_read_time 是毫秒）、GAUSSDB.{#NAME}.Number.t.date.ples 单位 %（源列 n_tup_hot_upd 是行数）。是客户表抄错还是另有含义？确认后只改映射表。清单见 docs/问题单.md TPOPS-004。"
     }
   ]
 }
