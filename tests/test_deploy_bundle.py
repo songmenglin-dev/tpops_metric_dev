@@ -382,6 +382,19 @@ def test_run_prefers_the_install_mode_marker():
     assert 'PYTHONPATH' in content
 
 
+def test_script_works_when_invoked_with_sh():
+    """`sh collector.sh ...` 也能跑 —— 现场手误用 sh 调用是常事。
+
+    sh 在麒麟 / RHEL 上通常是 dash，不支持进程替换，会报
+    "syntax error near unexpected token `<'"。脚本顶部的 guard 会改用 bash 重跑。
+    """
+    result = subprocess.run(['sh', SCRIPT, 'help'], stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    output = result.stdout.decode('utf-8', 'replace')
+    assert result.returncode == 0, output
+    assert 'check-env' in output
+
+
 def test_script_passes_syntax_check():
     """脚本要通过 bash -n。"""
     result = subprocess.run(['bash', '-n', SCRIPT], stdout=subprocess.PIPE,

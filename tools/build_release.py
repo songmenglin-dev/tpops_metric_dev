@@ -276,8 +276,22 @@ def build_release(release_root: str = RELEASE_ROOT,
     # 2) 部署相关的文档与脚本平铺一份 —— 现场不用解压就能看指南、跑预检
     for name in ('软件部署指南.pdf', '部署运行说明.md', 'collector.sh'):
         src = os.path.join(bundle_dir, name)
-        if os.path.isfile(src):
-            shutil.copy2(src, os.path.join(release_dir, name))
+        if not os.path.isfile(src):
+            continue
+        dst = os.path.join(release_dir, name)
+        try:
+            shutil.copy2(src, dst)
+        except OSError as exc:
+            # 单个文件被占用（Windows 侧开着 PDF 阅读器之类）不该中断整个发布
+            print(f'[warn] 部署件 {name} 没能写入：{exc} —— '
+                  f'关掉占用它的程序后重跑本脚本即可补上', file=sys.stderr)
+            continue
+        # 写进去了吗？—— Windows 挂载盘上文件被占用时，copy 可能**不报错**
+        # 却没真正写进去（内容仍是旧的）。比一下哈希，别把旧的当新的交出去。
+        if sha256(src) != sha256(dst):
+            print(f'[warn] 部署件 {name} 写入未生效（内容与源文件不一致，'
+                  f'多半是文件被占用）—— 关掉占用它的程序后重跑本脚本', file=sys.stderr)
+        else:
             print(f'[ok] 部署件：{name}')
 
     # 3) 工程源码包（默认不产出）
