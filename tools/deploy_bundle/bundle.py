@@ -25,7 +25,7 @@ PAYLOAD_ITEMS = (
 )
 
 #: 仓库里要带进部署包的脚本
-DEPLOY_SCRIPTS = ('install.sh', 'verify_env.sh', 'run.sh')
+DEPLOY_SCRIPTS = ('install.sh', 'check_env.sh', 'verify_env.sh', 'run.sh')
 
 #: .env.example 里要去掉开发环境痕迹的键 —— 交付给客户时不能带开发账号
 SANITIZED_ENV_KEYS = ('TPOPS_USER', 'TPOPS_BASE_URL')
@@ -92,7 +92,7 @@ def _prepare_payload(repo_root, bundle_dir):
             raise DeployBundleError(f'找不到 {src}')
         shutil.copy2(src, os.path.join(bundle_dir, name))
         os.chmod(os.path.join(bundle_dir, name), 0o755)
-    print('[ok] 部署脚本（install / verify / run）')
+    print('[ok] 部署脚本（check / install / verify / run）')
 
     # 4) 环境变量样例 —— 注意它在仓库根，不在生产包内，必须显式带；
     #    且要去掉开发环境的账号与平台地址

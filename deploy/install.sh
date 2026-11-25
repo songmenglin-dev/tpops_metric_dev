@@ -128,23 +128,25 @@ if [ "${#CANDIDATES[@]}" -eq 0 ]; then
 fi
 
 # --------------------------------------------------------------------------
-# 2. 拷贝产物到安装目录
+# 阶段一：安装**环境需要的包**
+#
+#   先把「装包要用的材料」（wheel、依赖清单）放进安装目录，
+#   再建隔离环境并把运行时依赖装进去。全程离线。
+#
+#   注：生产包 tpops_kafka_collector/ 属于**阶段二**，这一阶段不碰它。
 # --------------------------------------------------------------------------
+log "===== 阶段一：安装环境需要的包 ====="
+
 if [ "$HERE" != "$PREFIX" ]; then
-  log "拷贝产物到 $PREFIX ..."
+  log "准备安装材料到 $PREFIX ..."
   mkdir -p "$PREFIX"
-  for item in tpops_kafka_collector wheels requirements-runtime.txt install.sh run.sh \
-              verify_env.sh .env.example MANIFEST.txt; do
+  for item in wheels requirements-runtime.txt; do
     if [ -e "$HERE/$item" ]; then
       cp -a "$HERE/$item" "$PREFIX/"
     fi
   done
-  for f in "$HERE"/*.md; do
-    if [ -e "$f" ]; then cp -a "$f" "$PREFIX/"; fi
-  done
 fi
 
-[ -d "$PREFIX/tpops_kafka_collector" ] || die "安装目录里没有 tpops_kafka_collector/ —— 部署包不完整"
 [ -d "$PREFIX/wheels" ]              || die "安装目录里没有 wheels/ —— 部署包不完整（离线安装需要 wheel）"
 [ -f "$PREFIX/requirements-runtime.txt" ] || die "缺少 requirements-runtime.txt"
 
@@ -155,7 +157,7 @@ REQS="$PREFIX/requirements-runtime.txt"
 PIP_ARGS=(--no-index --find-links "$WHEELS" --disable-pip-version-check)
 
 # --------------------------------------------------------------------------
-# 3. 装依赖（离线）
+# 装依赖（离线）
 # --------------------------------------------------------------------------
 bootstrap_pip() {
   # 目标机建 venv 时可能没有 pip（麒麟的 python3 常被裁掉 ensurepip）。
@@ -253,20 +255,46 @@ case "$MODE" in
 esac
 
 PY_VER="$(probe_version "$CHOSEN_PY")"
-log "安装完成：$CHOSEN_MODE 模式，解释器 $CHOSEN_PY（$PY_VER）"
+log "环境包安装完成：$CHOSEN_MODE 模式，解释器 $CHOSEN_PY（$PY_VER）"
 if [ "$PY_VER" != "3.7.9" ]; then
   warn "当前不是 3.7.9（唯一验收过的版本）。代码按 3.7 语法红线编写，向后兼容通常没问题，"
   warn "但首次上线请先跑 verify_env.sh 确认。"
 fi
+
+# --------------------------------------------------------------------------
+# 阶段二：部署采集端包
+#
+#   把生产包 tpops_kafka_collector/ 与配套脚本、清单、样例放进安装目录。
+#   这一阶段不联网、不装包 —— 环境已经在阶段一备好了。
+# --------------------------------------------------------------------------
+log ""
+log "===== 阶段二：部署采集端包 ====="
+
+if [ "$HERE" != "$PREFIX" ]; then
+  for item in tpops_kafka_collector install.sh run.sh verify_env.sh check_env.sh \
+              .env.example MANIFEST.txt; do
+    if [ -e "$HERE/$item" ]; then
+      cp -a "$HERE/$item" "$PREFIX/"
+    fi
+  done
+  for f in "$HERE"/*.md; do
+    if [ -e "$f" ]; then cp -a "$f" "$PREFIX/"; fi
+  done
+fi
+
+[ -d "$PREFIX/tpops_kafka_collector" ] || die "安装目录里没有 tpops_kafka_collector/ —— 部署包不完整"
 
 # 记录安装模式与解释器 —— run.sh 靠 .install-mode 决定用哪个解释器，
 # 不靠「目录是否存在」猜（半装的 venv 会把好的 vendor 安装盖掉）。
 printf '%s\n' "$CHOSEN_MODE" > "$PREFIX/.install-mode"
 printf '%s\n' "$CHOSEN_PY" > "$PREFIX/.python-bin"
 
-chmod +x "$PREFIX/install.sh" "$PREFIX/run.sh" "$PREFIX/verify_env.sh" 2>/dev/null || true
+chmod +x "$PREFIX/install.sh" "$PREFIX/run.sh" "$PREFIX/verify_env.sh" \
+         "$PREFIX/check_env.sh" 2>/dev/null || true
 
-log "跑环境自检："
-log "  bash $PREFIX/verify_env.sh"
-log "启动采集端："
-log "  bash $PREFIX/run.sh"
+log "采集端包部署完成：$PREFIX"
+log ""
+log "接下来："
+log "  1) 配环境变量：vi $PREFIX/.env   （30 项清单见《部署运行说明》§3）"
+log "  2) 部署后自检：bash $PREFIX/verify_env.sh"
+log "  3) 启动采集端：bash $PREFIX/run.sh"

@@ -195,10 +195,15 @@ openpyxl>=3.0,<3.12    # 仅离线工具与测试用
 ```
 tools/build_deploy_bundle.py   # 有网机器上构建 → dist/tpops-collector-<版本>.tar.gz
 tools/deploy_bundle/           # 构建器的实现（files / wheels / bundle 三个模块）
-deploy/install.sh               # 目标机：零联网安装（venv / vendor 两种模式）
-deploy/verify_env.sh            # 目标机：环境自检（不打印口令、不创建任何东西）
+deploy/check_env.sh            # 目标机：装之前的**环境预检**（只读）
+deploy/install.sh               # 目标机：零联网安装（阶段一装包、阶段二部署包）
+deploy/verify_env.sh            # 目标机：装之后的自检（不打印口令、不创建任何东西）
 deploy/run.sh                   # 统一启动入口（systemd 调它）
 ```
+
+目标机上的部署顺序是**三步**：**检查环境**（`check_env.sh`，只读）→
+**安装环境需要的包 + 部署采集端包**（`install.sh`，两个阶段）→
+**配置与验收**（`verify_env.sh` + `run.sh`）。
 
 产出的部署包含外置的 `.tar.gz.sha256`（**与压缩包分开传**，防篡改）；
 安装脚本把安装模式写进 `.install-mode`、解释器写进 `.python-bin`，

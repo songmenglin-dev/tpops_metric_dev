@@ -364,21 +364,102 @@ def test_run_script_prefers_the_install_mode_marker():
     assert 'PYTHONPATH' in content
 
 
-@pytest.mark.parametrize('name', ['install.sh', 'verify_env.sh', 'run.sh'])
+@pytest.mark.parametrize('name', ['install.sh', 'check_env.sh', 'verify_env.sh', 'run.sh'])
 def test_shell_scripts_pass_syntax_check(name):
-    """三个脚本都要通过 bash -n。"""
+    """四个脚本都要通过 bash -n。"""
     path = os.path.join(DEPLOY_DIR, name)
     result = subprocess.run(['bash', '-n', path], stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     assert result.returncode == 0, result.stdout.decode('utf-8', 'replace')
 
 
-@pytest.mark.parametrize('name', ['install.sh', 'verify_env.sh', 'run.sh'])
+@pytest.mark.parametrize('name', ['install.sh', 'check_env.sh', 'verify_env.sh', 'run.sh'])
 def test_shell_scripts_use_bash_and_are_executable(name):
     path = os.path.join(DEPLOY_DIR, name)
     content = _read(path)
     assert content.startswith('#!/usr/bin/env bash')
     assert os.access(path, os.X_OK), name + ' 需要可执行位'
+
+
+# --------------------------------------------------------------------------
+# 环境预检（check_env.sh）
+# --------------------------------------------------------------------------
+def test_check_script_is_read_only():
+    """预检**只读** —— 不建目录、不装包、不改权限。
+
+    以 root 跑完预检再让服务以普通用户跑，很容易留下
+    「root 建的目录、服务用户写不进去」的坑（水位静默丢失）。
+
+    判据看的是**命令位置**：提示语里出现「先 mkdir -p」不算，
+    真去执行 mkdir 才算。
+    """
+    import re
+    content = _read(os.path.join(DEPLOY_DIR, 'check_env.sh'))
+    code = [ln for ln in content.splitlines()
+            if ln.strip() and not ln.strip().startswith('#')]
+    for line in code:
+        assert not re.match(r'\s*(mkdir|cp|chmod|chown|rm|mv|tee)\b', line), \
+            '预检脚本不应改动系统：' + line.strip()
+        assert 'pip install' not in line, '预检脚本不应装包：' + line.strip()
+
+
+def test_check_script_covers_the_key_questions():
+    """预检要回答：架构、Python 版本区间、venv/ensurepip/pip 能力、目录、磁盘、端口。"""
+    content = _read(os.path.join(DEPLOY_DIR, 'check_env.sh'))
+    for probe in ('import venv', 'import ensurepip', '-m pip --version',
+                  'uname -m', 'df -P', 'HEALTH_PORT', '3.12'):
+        assert probe in content, '预检缺少检查项：' + probe
+
+
+def test_bundle_contains_the_check_script(bundle):
+    """部署包必须带上预检脚本 —— 它是部署流程的第一步。"""
+    assert os.path.isfile(os.path.join(bundle, 'check_env.sh'))
+
+
+def test_check_script_passes_on_this_machine(tmp_path):
+    """在这台机器上真跑一遍预检：应当通过，且**不留下任何文件**。"""
+    stub_dir = _stub_python(tmp_path)
+    env = dict(os.environ)
+    env['PATH'] = stub_dir + os.pathsep + env.get('PATH', '')
+    prefix = tmp_path / 'opt'
+    result = subprocess.run(
+        ['bash', os.path.join(DEPLOY_DIR, 'check_env.sh'), str(prefix)],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    output = result.stdout.decode('utf-8', 'replace')
+    assert result.returncode == 0, output
+    assert '预检通过' in output
+    assert not prefix.exists(), '预检不该创建安装目录'
+
+
+def test_check_script_fails_when_no_usable_python(tmp_path):
+    """没有可用 Python 时预检必须**失败**（退出码非 0），别让人白装一遍。"""
+    stub_dir = tmp_path / 'stub_bin'
+    stub_dir.mkdir()
+    # 假解释器报 3.13（太新）→ 预检应判 FAIL
+    stub = stub_dir / 'python3'
+    stub.write_text(
+        '#!/bin/sh\n'
+        'cmd=""; prev=""\n'
+        'for a in "$@"; do\n'
+        '  if [ "$prev" = "-c" ]; then cmd="$a"; fi\n'
+        '  prev="$a"\n'
+        'done\n'
+        'case "$cmd" in\n'
+        '  *SystemExit*) exit 1 ;;\n'
+        '  *version_info*) echo "3.13.0"; exit 0 ;;\n'
+        'esac\n'
+        'exit 0\n', encoding='utf-8')
+    stub.chmod(0o755)
+
+    env = dict(os.environ)
+    # 只保留假解释器 + 基本工具（真实解释器都会被判为「太新」而忽略）
+    env['PATH'] = str(stub_dir) + os.pathsep + '/usr/bin:/bin'
+    result = subprocess.run(
+        ['bash', os.path.join(DEPLOY_DIR, 'check_env.sh'), str(tmp_path / 'opt')],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    output = result.stdout.decode('utf-8', 'replace')
+    assert result.returncode == 1, output
+    assert '预检未通过' in output
 
 
 # --------------------------------------------------------------------------
