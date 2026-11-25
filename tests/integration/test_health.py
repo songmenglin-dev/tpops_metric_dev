@@ -327,3 +327,30 @@ def test_endpoints_can_be_used_without_a_server():
 
     assert status == 200
     assert _json_body(body)['status'] == 'ok'
+
+
+def test_port_in_use_error_tells_how_to_find_the_leftover_process():
+    """端口被占用时，报错要直接告诉运维**怎么找到那个占着的进程**。
+
+    现场最常见的两种原因：优雅退出还没走完（最多 30 秒）就重启、
+    或者 Ctrl-Z 挂起（SIGTSTP）的进程还活着。运维不该靠猜。
+    """
+    import socket
+
+    from tpops_kafka_collector.health import HealthServerError
+
+    sock = socket.socket()
+    sock.bind(('127.0.0.1', 0))
+    sock.listen(1)
+    port = sock.getsockname()[1]
+    try:
+        server = HealthServer(host='127.0.0.1', port=port,
+                              monitor=None, secrets=())
+        with pytest.raises(HealthServerError) as excinfo:
+            server.start()
+        message = str(excinfo.value)
+        assert 'Address already in use' in message
+        assert 'ss -tlunp' in message, '要告诉运维怎么找出占端口的 pid'
+        assert 'kill' in message
+    finally:
+        sock.close()

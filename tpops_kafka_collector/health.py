@@ -27,6 +27,7 @@
     server = HealthServer.from_config(config, monitor=monitor)
     server.start()
 """
+import errno
 import json
 import logging
 import threading
@@ -355,8 +356,16 @@ class HealthServer:
         try:
             server = ThreadingHTTPServer((self._host, self._port), _HealthRequestHandler)
         except OSError as exc:
+            hint = ''
+            if getattr(exc, 'errno', None) == errno.EADDRINUSE:
+                # 端口被占用最常见的两种原因，都跟「上一个实例没退干净」有关
+                hint = ('（端口已被占用 —— 多半是上一次启动的进程还在：'
+                        '① 优雅退出最多要等 30 秒，退出前就重启会撞上；'
+                        '② Ctrl-Z 挂起（SIGTSTP）的进程也还占着端口。'
+                        f'用 ss -tlunp | grep {self._port} 找到 pid，确认后 kill 掉再启动）'
+                        )
             raise HealthServerError(
-                f'健康端点监听 {self._host}:{self._port} 失败：{exc}'
+                f'健康端点监听 {self._host}:{self._port} 失败：{exc}{hint}'
             ) from exc
         server.endpoints = self._endpoints  # type: ignore[attr-defined]
         self._server = server

@@ -1,12 +1,12 @@
 # TPOPS 采集端 —— 发布说明（版本 26.1.0）
 
-生成时间：2026-11-25 15:10:45
+生成时间：2026-11-25 16:28:20
 
 ## 交付物
 
 | 文件 | 是什么 | 校验 |
 |---|---|---|
-| `tpops_metric_collector_26.1.0.tar.gz` | **软件发行包** —— 装到客户机器上跑：**软件部署指南.pdf**（+ 同内容的 部署运行说明.md）+ 部署脚本 `collector.sh`（一个脚本，位置参数选功能：check-env / check-deps / install / verify / run）+ **离线依赖包 wheels/** + 采集端软件包 `tpops_kafka_collector/`（含映射数据） | `c5f38e317adab016df586fcd7c1b60d47814d7dc40bc3e9c7393076a4d565e7e` |
+| `tpops_metric_collector_26.1.0.tar.gz` | **软件发行包** —— 装到客户机器上跑：**软件部署指南.pdf**（+ 同内容的 部署运行说明.md）+ 部署脚本 `collector.sh`（一个脚本，位置参数选功能：check-env / check-deps / install / verify / run）+ **离线依赖包 wheels/** + 采集端软件包 `tpops_kafka_collector/`（含映射数据） | `81dde8225e626a7c05e04c7061fa39d6c9353c3207ed50e08b928dbdf3e6d660` |
 
 ## 客户侧怎么用
 
