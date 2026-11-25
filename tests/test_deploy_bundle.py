@@ -654,11 +654,12 @@ def _fake_source_repo(root):
 def release_dir(tmp_path_factory):
     """构建一次发布目录，供本组测试共用（每次重打包太慢）。"""
     root = tmp_path_factory.mktemp('release')
-    _fake_wheels(str(root / 'src_wheels'))
+    wheels = _fake_wheels(str(root / 'src_wheels'))
     return release_cli.build_release(
         release_root=str(root / 'release'), dist_root=str(root / 'dist'),
         version='9.9.9', with_source=True, with_pdf=False,
-        source_repo_root=_fake_source_repo(root / 'fake_repo'))
+        source_repo_root=_fake_source_repo(root / 'fake_repo'),
+        wheels_source=wheels)   # 用假 wheel，测试不依赖网络
 
 
 def test_release_dir_is_version_named(release_dir):
@@ -743,10 +744,10 @@ def test_release_package_contains_pdf_guide(tmp_path):
     from deploy_bundle.pdf import pandoc_available
     if not pandoc_available():
         pytest.skip('这台机器没有 pandoc —— 渲染不了 PDF')
-    _fake_wheels(str(tmp_path / 'src_wheels'))
+    wheels = _fake_wheels(str(tmp_path / 'src_wheels'))
     release_dir = release_cli.build_release(
         release_root=str(tmp_path / 'release'), dist_root=str(tmp_path / 'dist'),
-        version='9.9.9', with_source=False, with_pdf=True)
+        version='9.9.9', with_source=False, with_pdf=True, wheels_source=wheels)
     tar_path = os.path.join(release_dir, 'tpops_metric_collector_9.9.9.tar.gz')
     pdf_name = 'tpops_metric_collector_9.9.9/软件部署指南.pdf'
     with tarfile.open(tar_path) as tar:

@@ -233,11 +233,15 @@ def build_release(release_root: str = RELEASE_ROOT,
                   version: Optional[str] = None,
                   with_source: bool = True,
                   source_repo_root: Optional[str] = None,
-                  with_pdf: bool = True) -> str:
+                  with_pdf: bool = True,
+                  wheels_source: Optional[str] = None) -> str:
     """构建发布物并归档到 ``release/<版本>/``，返回该目录。
 
     ``source_repo_root`` —— 源码包要打包的工程根目录（默认本仓库）；
     给测试用小目录，免得每次都打整个仓库。
+
+    ``wheels_source`` —— 离线依赖包的来源目录；给了就不联网下载
+    （测试用，避免依赖网络）。
     """
     version = version or read_version(REPO_ROOT)
     release_dir = os.path.join(release_root, version)
@@ -246,7 +250,7 @@ def build_release(release_root: str = RELEASE_ROOT,
 
     # 1) 部署包（文档 + 脚本 + 生产包）
     bundle_dir = build_bundle(repo_root=REPO_ROOT, dist_root=dist_root, version=version,
-                              with_pdf=with_pdf)
+                              with_pdf=with_pdf, wheels_source=wheels_source)
     tar_path, _ = make_tarball(bundle_dir)
     deploy_name = os.path.basename(tar_path)
     shutil.copy2(tar_path, os.path.join(release_dir, deploy_name))
