@@ -396,18 +396,44 @@ def test_run_loads_the_env_file(tmp_path):
     fake_python.write_text(
         '#!/bin/sh\n'
         'echo "TPOPS_USER=$TPOPS_USER"\n'
+        'echo "TPOPS_PASSWORD=$TPOPS_PASSWORD"\n'
         'echo "KAFKA_BOOTSTRAP_SERVERS=$KAFKA_BOOTSTRAP_SERVERS"\n', encoding='utf-8')
     fake_python.chmod(0o755)
     (install / '.install-mode').write_text('venv\n', encoding='utf-8')
     (install / '.env').write_text(
-        'TPOPS_USER=from-env-file\nKAFKA_BOOTSTRAP_SERVERS=broker:9092\n', encoding='utf-8')
+        'TPOPS_USER=from-env-file\nTPOPS_PASSWORD=pw\n'
+        'KAFKA_BOOTSTRAP_SERVERS=broker:9092\n', encoding='utf-8')
     shutil.copy2(SCRIPT, str(install / 'collector.sh'))
 
     result = subprocess.run(['bash', str(install / 'collector.sh'), 'run'],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = result.stdout.decode('utf-8', 'replace')
     assert 'TPOPS_USER=from-env-file' in output, output
+    assert 'TPOPS_PASSWORD=pw' in output, output
     assert 'KAFKA_BOOTSTRAP_SERVERS=broker:9092' in output, output
+
+
+def test_run_explains_missing_env_instead_of_leaving_it_to_the_collector(tmp_path):
+    """缺 .env 又没有进程环境时，run 要给出**能照做的**提示，而不是让采集端
+    抛一句裸的「缺少必填环境变量：TPOPS_USER」。"""
+    install = tmp_path / 'opt'
+    (install / 'venv' / 'bin').mkdir(parents=True)
+    fake_python = install / 'venv' / 'bin' / 'python'
+    fake_python.write_text('#!/bin/sh\necho started\n', encoding='utf-8')
+    fake_python.chmod(0o755)
+    (install / '.install-mode').write_text('venv\n', encoding='utf-8')
+    shutil.copy2(SCRIPT, str(install / 'collector.sh'))
+
+    env = dict(os.environ)
+    for name in ('TPOPS_USER', 'TPOPS_PASSWORD', 'KAFKA_BOOTSTRAP_SERVERS'):
+        env.pop(name, None)
+    result = subprocess.run(['bash', str(install / 'collector.sh'), 'run'],
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    output = result.stdout.decode('utf-8', 'replace')
+    assert result.returncode == 2, output
+    assert '缺少必填环境变量' in output
+    assert '.env' in output, '要告诉运维 .env 在哪、怎么补'
+    assert 'started' not in output, '缺配置时不该把采集端拉起来'
 
 
 def test_process_env_wins_over_the_env_file(tmp_path):
@@ -418,11 +444,15 @@ def test_process_env_wins_over_the_env_file(tmp_path):
     fake_python.write_text('#!/bin/sh\necho "TPOPS_USER=$TPOPS_USER"\n', encoding='utf-8')
     fake_python.chmod(0o755)
     (install / '.install-mode').write_text('venv\n', encoding='utf-8')
-    (install / '.env').write_text('TPOPS_USER=from-env-file\n', encoding='utf-8')
+    (install / '.env').write_text(
+        'TPOPS_USER=from-env-file\nTPOPS_PASSWORD=pw\n'
+        'KAFKA_BOOTSTRAP_SERVERS=broker:9092\n', encoding='utf-8')
     shutil.copy2(SCRIPT, str(install / 'collector.sh'))
 
     env = dict(os.environ)
     env['TPOPS_USER'] = 'from-process-env'
+    env.pop('TPOPS_PASSWORD', None)
+    env.pop('KAFKA_BOOTSTRAP_SERVERS', None)
     result = subprocess.run(['bash', str(install / 'collector.sh'), 'run'],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     output = result.stdout.decode('utf-8', 'replace')

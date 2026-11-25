@@ -848,6 +848,22 @@ cmd_run() {
   ENV_FILE_LOADED=""
   load_env_file "$HERE/.env"
 
+  # 启动前先查一遍必填项 —— 别让采集端抛一句裸的「缺少必填环境变量」
+  local missing=() var
+  for var in TPOPS_USER TPOPS_PASSWORD KAFKA_BOOTSTRAP_SERVERS; do
+    [ -n "${!var:-}" ] || missing+=("$var")
+  done
+  if [ "${#missing[@]}" -gt 0 ]; then
+    echo "[run][ERROR] 缺少必填环境变量：${missing[*]}" >&2
+    if [ -z "$ENV_FILE_LOADED" ]; then
+      echo "[run] 安装目录下没有 .env（找的是 $HERE/.env）—— 请创建它并填上必填项，" >&2
+      echo "[run] 或者用 systemd 时在 unit 里配 EnvironmentFile=。" >&2
+    else
+      echo "[run] 已从 $ENV_FILE_LOADED 读取，但里面缺这些键 —— 请检查该文件。" >&2
+    fi
+    exit 2
+  fi
+
   local mode=""
   if [ -f "$HERE/.install-mode" ]; then
     mode="$(cat "$HERE/.install-mode")"
