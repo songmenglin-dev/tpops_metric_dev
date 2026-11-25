@@ -167,9 +167,11 @@ def _write_release_notes(version: str, release_dir: str, artifacts: List[str]) -
 def _artifact_rows(release_dir: str, artifacts: List[str]) -> List[str]:
     """交付物表格的每一行（文件名 / 说明 / sha256）。"""
     descriptions = {
-        'tpops_metric_collector_': '**部署包** —— 装到客户机器上跑：最终部署文档说明 + '
-                           '部署脚本（check_env / install / verify_env / run）+ '
-                           '采集端生产包 `tpops_kafka_collector/`（含映射数据）',
+        'tpops_metric_collector_': '**软件发行包** —— 装到客户机器上跑：'
+                           '**软件部署指南.pdf**（+ 同内容的 部署运行说明.md）+ '
+                           '五个部署脚本（check_env / check_deps / install / verify_env / run）+ '
+                           '**离线依赖包 wheels/** + '
+                           '采集端软件包 `tpops_kafka_collector/`（含映射数据）',
         'tpops_metric_dev_': '**工程源码包** —— 整个项目（按 git 跟踪的文件），'
                              '给客户留档或审阅代码',
     }
@@ -203,10 +205,13 @@ def _usage_section(version: str) -> List[str]:
         '# 2) 检查环境（只读，不装任何东西）',
         'bash check_env.sh',
         '',
-        '# 3) 安装环境需要的包 + 部署采集端包（离线）',
+        '# 3) 离线依赖预检（这份依赖包在这台机器上装不装得上）',
+        'bash check_deps.sh',
+        '',
+        '# 4) 安装环境需要的包 + 部署采集端包（离线）',
         'sudo bash install.sh',
         '',
-        '# 4) 配环境变量 → 部署后自检 → 启动',
+        '# 5) 配环境变量 → 部署后自检 → 启动',
         'sudo vi /opt/tpops-collector/.env',
         'sudo bash /opt/tpops-collector/verify_env.sh',
         'bash /opt/tpops-collector/run.sh',
