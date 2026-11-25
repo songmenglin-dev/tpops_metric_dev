@@ -194,6 +194,7 @@ openpyxl>=3.0,<3.12    # 仅离线工具与测试用
 
 ```
 tools/build_deploy_bundle.py   # 有网机器上构建 → dist/tpops-collector-<版本>.tar.gz
+tools/build_release.py         # 构建并归档到 release/<版本>/（部署包 + 工程源码包）
 tools/deploy_bundle/           # 构建器的实现（files / wheels / bundle 三个模块）
 deploy/check_env.sh            # 目标机：装之前的**环境预检**（只读）
 deploy/install.sh               # 目标机：零联网安装（阶段一装包、阶段二部署包）

@@ -50,3 +50,7 @@ data/metric_value_rules.json
 
 # --- 离线部署包构建产物 ---
 dist/
+
+# --- release/ 里的压缩包（可重建，见 tools/build_release.py）---
+# 保留 README.md / RELEASE-NOTES.md / *.sha256 校验文件
+release/**/*.tar.gz

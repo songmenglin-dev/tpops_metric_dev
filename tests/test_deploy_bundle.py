@@ -21,6 +21,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
 
 import build_deploy_bundle as cli  # noqa: E402
+import build_release as release_cli  # noqa: E402
 import deploy_bundle as bdb  # noqa: E402
 from deploy_bundle import wheels as wheels_mod  # noqa: E402
 from deploy_bundle.files import copy_tree, sha256  # noqa: E402
@@ -545,3 +546,101 @@ def test_install_script_accepts_prefix_equal_to_bundle_dir(tmp_path, bundle):
     result = _run_install(bundle, bundle, stub_dir)
     assert result.returncode == 0, result.stdout.decode('utf-8', 'replace')
     assert os.path.isfile(os.path.join(bundle, '.install-mode'))
+
+
+# --------------------------------------------------------------------------
+# release/ —— 按版本号归档
+# --------------------------------------------------------------------------
+def _fake_source_repo(root):
+    """造一个小「工程」当源码包的输入 —— 别在测试里打整个真仓库。"""
+    os.makedirs(os.path.join(str(root), 'deploy'), exist_ok=True)
+    os.makedirs(os.path.join(str(root), 'data'), exist_ok=True)
+    with open(os.path.join(str(root), 'CLAUDE.md'), 'w', encoding='utf-8') as handle:
+        handle.write('# fake\n')
+    with open(os.path.join(str(root), 'deploy', 'install.sh'), 'w', encoding='utf-8') as handle:
+        handle.write('#!/usr/bin/env bash\n')
+    with open(os.path.join(str(root), 'data', 'customer_metric_query_plan.json'), 'w',
+              encoding='utf-8') as handle:
+        handle.write('{}\n')
+    with open(os.path.join(str(root), 'data', 'keep_me.json'), 'w', encoding='utf-8') as handle:
+        handle.write('{}\n')
+    with open(os.path.join(str(root), 'big.chm'), 'w', encoding='utf-8') as handle:
+        handle.write('x')
+    return str(root)
+
+
+@pytest.fixture(scope='module')
+def release_dir(tmp_path_factory):
+    """构建一次发布目录，供本组测试共用（每次重打包太慢）。"""
+    root = tmp_path_factory.mktemp('release')
+    _fake_wheels(str(root / 'src_wheels'))
+    return release_cli.build_release(
+        release_root=str(root / 'release'), dist_root=str(root / 'dist'),
+        version='9.9.9', with_source=True,
+        source_repo_root=_fake_source_repo(root / 'fake_repo'))
+
+
+def test_release_dir_is_version_named(release_dir):
+    """发布物按**版本号**归档：release/<版本>/。"""
+    assert os.path.basename(release_dir) == '9.9.9'
+    assert os.path.isdir(release_dir)
+
+
+def test_release_contains_deploy_bundle_with_doc_scripts_and_package(release_dir):
+    """部署包里要有三样：最终部署文档说明、脚本、采集端软件包。"""
+    import tarfile
+    tar_path = os.path.join(release_dir, 'tpops-collector-9.9.9.tar.gz')
+    assert os.path.isfile(tar_path)
+    with tarfile.open(tar_path) as tar:
+        names = tar.getnames()
+    assert 'tpops-collector-9.9.9/部署运行说明.md' in names, '缺最终部署文档说明'
+    for script in ('check_env.sh', 'install.sh', 'verify_env.sh', 'run.sh'):
+        assert 'tpops-collector-9.9.9/' + script in names, '缺脚本 ' + script
+    assert 'tpops-collector-9.9.9/tpops_kafka_collector/main.py' in names, '缺软件包'
+    assert 'tpops-collector-9.9.9/tpops_kafka_collector/mapping/data/metric_rules.json' in names
+    assert 'tpops-collector-9.9.9/wheels/requests-2.31.0-py3-none-any.whl' in names
+    assert 'tpops-collector-9.9.9/.env.example' in names
+
+
+def test_release_ships_checksums_and_notes(release_dir):
+    """每个压缩包都要有 sha256 校验文件，另有 RELEASE-NOTES.md。"""
+    notes = os.path.join(release_dir, 'RELEASE-NOTES.md')
+    assert os.path.isfile(notes)
+    content = _read(notes)
+    assert 'tpops-collector-9.9.9.tar.gz' in content
+    assert 'tpops-metric-dev-9.9.9-source.tar.gz' in content
+
+    for name in ('tpops-collector-9.9.9.tar.gz', 'tpops-metric-dev-9.9.9-source.tar.gz'):
+        checksum = _read(os.path.join(release_dir, name + '.sha256')).split()
+        assert checksum[0] == sha256(os.path.join(release_dir, name))
+        assert checksum[1] == name
+
+
+def test_source_package_skips_regenerable_artifacts(release_dir):
+    """源码包不含可重建的中间产物。"""
+    import tarfile
+    tar_path = os.path.join(release_dir, 'tpops-metric-dev-9.9.9-source.tar.gz')
+    with tarfile.open(tar_path) as tar:
+        names = tar.getnames()
+    joined = '\n'.join(names)
+    assert 'tpops-metric-dev-9.9.9/CLAUDE.md' in joined
+    assert 'tpops-metric-dev-9.9.9/deploy/install.sh' in joined
+    assert 'tpops-metric-dev-9.9.9/data/keep_me.json' in joined
+    assert 'data/customer_metric_query_plan.json' not in joined, '可重建产物不该收'
+
+
+def test_source_package_excludes_release_itself():
+    """源码包不能把 release/ 自己再收进去（会越滚越大）。"""
+    excluded = release_cli.SOURCE_EXCLUDE
+    assert 'release/' in excluded
+    assert 'dist/' in excluded
+
+
+def test_real_repo_source_files_exclude_generated():
+    """真仓库上算出来的源码文件清单里，不该有那两个可重建产物。"""
+    files = release_cli.source_file_list(REPO_ROOT)
+    for generated in release_cli.SOURCE_EXCLUDE_GENERATED:
+        assert generated not in files, '可重建产物不该进源码包：' + generated
+    assert 'CLAUDE.md' in files
+    assert 'deploy/install.sh' in files
+    assert not any(f.startswith('release/') for f in files), '源码包不该收 release/ 自己'

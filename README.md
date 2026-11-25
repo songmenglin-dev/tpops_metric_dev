@@ -11,8 +11,9 @@
 |---|---|---|
 | [`data/`](data/) | 实测留档与映射规则数据（**表驱动，规则不写死在代码里**） | [`data/README.md`](data/README.md) |
 | [`tpops_kafka_collector/`](tpops_kafka_collector/) | **采集端**（常驻进程）：唯一的生产代码包 | [`tpops_kafka_collector/main.py`](tpops_kafka_collector/main.py) |
-| [`deploy/`](deploy/) | 部署资产：离线安装 / 环境自检 / 启动脚本（进部署包） | [`deploy/install.sh`](deploy/install.sh) |
-| [`tools/`](tools/) | 离线脚本：抓取、生成映射表、渲染文档、**构建部署包** | [`tools/README.md`](tools/README.md) |
+| [`deploy/`](deploy/) | 部署资产：环境预检 / 离线安装 / 自检 / 启动脚本（进部署包） | [`deploy/install.sh`](deploy/install.sh) |
+| [`release/`](release/) | **按版本号归档的交付物**（部署包 + 工程源码包） | [`release/README.md`](release/README.md) |
+| [`tools/`](tools/) | 离线脚本：抓取、生成映射表、渲染文档、**构建部署包/发布物** | [`tools/README.md`](tools/README.md) |
 | [`tests/`](tests/) | pytest 单元测试（TPOPS 与 Kafka 一律 mock） | [`tests/README.md`](tests/README.md) |
 | [`docs/`](docs/) | 开发方案、字段对照表、客户对接方案、API 参考 | [`docs/README.md`](docs/README.md) |
 
@@ -45,13 +46,21 @@ conda run -n tpops python -m pytest -q
 ## 构建离线部署包
 
 ```bash
-conda run -n tpops python tools/build_deploy_bundle.py
-# → dist/tpops-collector-<版本>.tar.gz
+conda run -n tpops python tools/build_release.py
+# → release/<版本>/
+#     tpops-collector-<版本>.tar.gz            部署包（装到客户机）
+#     tpops-metric-dev-<版本>-source.tar.gz    工程源码包
+#     RELEASE-NOTES.md + *.sha256
 ```
 
-产物含生产包、离线 wheel、三个部署脚本与环境变量样例；目标机解压后
-`bash install.sh` 即可**零联网**安装（麒麟 V10 SP2+ 自带 Python 3.7.9，
-x86_64 与 aarch64 共用同一份包 —— 全部依赖都是纯 Python wheel）。
+产物含生产包、离线 wheel、四个部署脚本（`check_env` / `install` /
+`verify_env` / `run`）与最终部署文档说明；目标机解压后
+`check_env.sh` → `install.sh` → `verify_env.sh` 即可**零联网**安装
+（麒麟 V10 SP2+ 自带 Python 3.7.9，x86_64 与 aarch64 共用同一份包 ——
+全部依赖都是纯 Python wheel）。
+
+细节见 [`release/README.md`](release/README.md) 与
+[`docs/交付-部署运行说明.md`](docs/交付-部署运行说明.md)。
 
 ## 数据流
 
