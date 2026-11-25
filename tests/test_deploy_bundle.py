@@ -657,7 +657,7 @@ def release_dir(tmp_path_factory):
     wheels = _fake_wheels(str(root / 'src_wheels'))
     return release_cli.build_release(
         release_root=str(root / 'release'), dist_root=str(root / 'dist'),
-        version='9.9.9', with_source=True, with_pdf=False,
+        version='9.9.9', with_pdf=False,
         source_repo_root=_fake_source_repo(root / 'fake_repo'),
         wheels_source=wheels)   # 用假 wheel，测试不依赖网络
 
@@ -684,23 +684,56 @@ def test_release_contains_deploy_bundle_with_doc_scripts_and_package(release_dir
     assert 'tpops_metric_collector_9.9.9/.env.example' in names
 
 
+def test_release_dir_holds_the_release_package_and_deployment_assets(release_dir):
+    """release/<版本>/ = **软件发行包 + 部署相关的所有东西**，**不含源码包**。"""
+    names = set(os.listdir(release_dir))
+    assert 'tpops_metric_collector_9.9.9.tar.gz' in names, '缺软件发行包'
+    assert 'tpops_metric_collector_9.9.9.tar.gz.sha256' in names, '缺校验文件'
+    assert 'RELEASE-NOTES.md' in names
+    # 部署件平铺一份 —— 现场不用解压就能看指南、跑预检
+    # （PDF 由 test_release_package_contains_pdf_guide 单独断言：那个构建才渲 PDF）
+    assert '部署运行说明.md' in names, '缺部署说明'
+    assert 'collector.sh' in names, '缺部署脚本'
+    # 源码包不该在交付目录里
+    assert not any('source' in n for n in names), '源码包不该出现在 release/ 里'
+
+
 def test_release_ships_checksums_and_notes(release_dir):
-    """每个压缩包都要有 sha256 校验文件，另有 RELEASE-NOTES.md。"""
+    """发行包要有 sha256 校验文件，另有 RELEASE-NOTES.md。"""
     notes = os.path.join(release_dir, 'RELEASE-NOTES.md')
     assert os.path.isfile(notes)
     content = _read(notes)
     assert 'tpops_metric_collector_9.9.9.tar.gz' in content
-    assert 'tpops_metric_dev_9.9.9-source.tar.gz' in content
 
-    for name in ('tpops_metric_collector_9.9.9.tar.gz', 'tpops_metric_dev_9.9.9-source.tar.gz'):
-        checksum = _read(os.path.join(release_dir, name + '.sha256')).split()
-        assert checksum[0] == sha256(os.path.join(release_dir, name))
-        assert checksum[1] == name
+    name = 'tpops_metric_collector_9.9.9.tar.gz'
+    checksum = _read(os.path.join(release_dir, name + '.sha256')).split()
+    assert checksum[0] == sha256(os.path.join(release_dir, name))
+    assert checksum[1] == name
 
 
-def test_source_package_skips_regenerable_artifacts(release_dir):
-    """源码包不含可重建的中间产物。"""
+def test_source_package_is_opt_in(tmp_path):
+    """工程源码包默认**不产出** —— 要源码得显式开。"""
+    from deploy_bundle.bundle import SOFTWARE_NAME, SOURCE_NAME
+    wheels = _fake_wheels(str(tmp_path / 'src_wheels'))
+    release_dir = release_cli.build_release(
+        release_root=str(tmp_path / 'release'), dist_root=str(tmp_path / 'dist'),
+        version='9.9.9', with_source=True, with_pdf=False,
+        source_repo_root=_fake_source_repo(tmp_path / 'fake_repo'),
+        wheels_source=wheels)
+    names = os.listdir(release_dir)
+    assert f'{SOURCE_NAME}_9.9.9-source.tar.gz' in names
+    assert f'{SOFTWARE_NAME}_9.9.9.tar.gz' in names
+
+
+def test_source_package_skips_regenerable_artifacts(tmp_path):
+    """源码包（若产出）不含可重建的中间产物。"""
     import tarfile
+    wheels = _fake_wheels(str(tmp_path / 'src_wheels'))
+    release_dir = release_cli.build_release(
+        release_root=str(tmp_path / 'release'), dist_root=str(tmp_path / 'dist'),
+        version='9.9.9', with_source=True, with_pdf=False,
+        source_repo_root=_fake_source_repo(tmp_path / 'fake_repo'),
+        wheels_source=wheels)
     tar_path = os.path.join(release_dir, 'tpops_metric_dev_9.9.9-source.tar.gz')
     with tarfile.open(tar_path) as tar:
         names = tar.getnames()

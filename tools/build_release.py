@@ -174,7 +174,7 @@ def _artifact_rows(release_dir: str, artifacts: List[str]) -> List[str]:
                            '**离线依赖包 wheels/** + '
                            '采集端软件包 `tpops_kafka_collector/`（含映射数据）',
         'tpops_metric_dev_': '**工程源码包** —— 整个项目（按 git 跟踪的文件），'
-                             '给客户留档或审阅代码',
+                             '给客户留档或审阅代码（默认不产出）',
     }
     rows = []
     for name in artifacts:
@@ -183,6 +183,12 @@ def _artifact_rows(release_dir: str, artifacts: List[str]) -> List[str]:
             if name.startswith(prefix):
                 desc = text
                 break
+        if name.endswith('.pdf'):
+            desc = '**软件部署指南**（PDF）—— 同一份内容的 PDF 版'
+        elif name.endswith('.md'):
+            desc = '部署运行说明（Markdown 版）'
+        elif name.endswith('.sh'):
+            desc = '部署与运维脚本（一个脚本，位置参数选功能）'
         checksum = ''
         checksum_path = os.path.join(release_dir, name + '.sha256')
         if os.path.isfile(checksum_path):
@@ -231,11 +237,19 @@ def _read(path: str) -> str:
 def build_release(release_root: str = RELEASE_ROOT,
                   dist_root: str = DIST_ROOT,
                   version: Optional[str] = None,
-                  with_source: bool = True,
+                  with_source: bool = False,
                   source_repo_root: Optional[str] = None,
                   with_pdf: bool = True,
                   wheels_source: Optional[str] = None) -> str:
     """构建发布物并归档到 ``release/<版本>/``，返回该目录。
+
+    ``release/<版本>/`` 里放的是**交付物**：
+
+    * **软件发行包** ``tpops_metric_collector_<版本>.tar.gz``（+ .sha256）
+    * **部署相关的所有东西**平铺一份：部署指南 PDF、部署说明 Markdown、部署脚本
+
+    工程源码包**默认不产出**（``with_source=False``）—— 客户交付的是能跑的
+    软件发行包，不是源码；要源码时显式传 ``with_source=True``。
 
     ``source_repo_root`` —— 源码包要打包的工程根目录（默认本仓库）；
     给测试用小目录，免得每次都打整个仓库。
@@ -259,7 +273,14 @@ def build_release(release_root: str = RELEASE_ROOT,
 
     artifacts = [deploy_name]
 
-    # 2) 工程源码包
+    # 2) 部署相关的文档与脚本平铺一份 —— 现场不用解压就能看指南、跑预检
+    for name in ('软件部署指南.pdf', '部署运行说明.md', 'collector.sh'):
+        src = os.path.join(bundle_dir, name)
+        if os.path.isfile(src):
+            shutil.copy2(src, os.path.join(release_dir, name))
+            print(f'[ok] 部署件：{name}')
+
+    # 3) 工程源码包（默认不产出）
     if with_source:
         source_name = f'{SOURCE_NAME}_{version}-source.tar.gz'
         source_path = os.path.join(release_dir, source_name)
@@ -268,7 +289,7 @@ def build_release(release_root: str = RELEASE_ROOT,
         artifacts.append(source_name)
         print(f'[ok] 源码包：{source_name}')
 
-    # 3) 发布说明
+    # 4) 发布说明
     _write_release_notes(version, release_dir, artifacts)
     print('[ok] RELEASE-NOTES.md')
 
@@ -285,13 +306,14 @@ def main(argv=None):
     parser.add_argument('--release-dir', default=RELEASE_ROOT, help='发布根目录（默认 release/）')
     parser.add_argument('--dist', default=DIST_ROOT, help='构建工作目录（默认 dist/）')
     parser.add_argument('--version', default=None, help='覆盖版本号')
-    parser.add_argument('--no-source', action='store_true', help='不打包工程源码')
+    parser.add_argument('--with-source', action='store_true',
+                        help='额外打包工程源码（默认不产出 —— 交付的是软件发行包）')
     parser.add_argument('--no-pdf', action='store_true', help='不渲染 PDF 部署指南')
     args = parser.parse_args(argv)
 
     try:
         build_release(release_root=args.release_dir, dist_root=args.dist,
-                      version=args.version, with_source=not args.no_source,
+                      version=args.version, with_source=args.with_source,
                       with_pdf=not args.no_pdf)
     except DeployBundleError as exc:
         print(f'[ERROR] {exc}', file=sys.stderr)
