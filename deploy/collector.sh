@@ -145,6 +145,44 @@ EOF
   fi
 }
 
+# --------------------------------------------------------------------------
+# 公共：读取 .env（解析 KEY=VALUE，**不执行**文件里的任何内容）
+#
+#   采集端只从**进程环境**读配置（config.py 不做 dotenv 解析）。手工启动时
+#   环境变量不在进程里，采集端就会报「缺少必填环境变量：TPOPS_USER」。
+#   所以 verify 与 run 之前都把 .env 读进进程环境 —— 手工启动与 systemd 的
+#   EnvironmentFile= 行为就对齐了。
+#
+#   刻意**不 source**：.env 是客户可编辑的文件，source 等于让 root 执行
+#   它的内容；而 systemd 解析 EnvironmentFile 时并不执行任何命令。
+#   行为要对齐，就只能解析不能执行。
+# --------------------------------------------------------------------------
+ENV_FILE_LOADED=""
+
+load_env_file() {
+  local file="$1" line key value
+  [ -f "$file" ] || return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      ''|'#'*) continue ;;
+      export\ *) line="${line#export }" ;;
+      *=*) ;;
+      *) continue ;;
+    esac
+    key="${line%%=*}"
+    value="${line#*=}"
+    key="$(printf '%s' "$key" | tr -d '[:space:]')"
+    value="${value%\"}"; value="${value#\"}"
+    value="${value%\'}"; value="${value#\'}"
+    [ -n "$key" ] || continue
+    # 只在当前进程里还没设置时填充（进程环境优先，与 systemd 一致）
+    if [ -z "${!key:-}" ]; then
+      export "$key=$value"
+    fi
+  done < "$file"
+  ENV_FILE_LOADED="$file"
+}
+
 usage() {
   cat <<'EOF'
 TPOPS 采集端 —— 部署与运维脚本
@@ -653,36 +691,6 @@ cmd_verify() {
   cd "$HERE" || return 1
 
   # 读 .env（只看键是否存在，不执行文件里的任何内容，也不打印取值）
-  #
-  #   用 systemd 的 EnvironmentFile= 时环境变量已经在进程环境里了；
-  #   手工跑自检时没有，所以从 .env 里读一份。
-  #   这里刻意**不 source** —— .env 是客户可编辑的文件，
-  #   source 等于让 root 执行它的内容，而 systemd 解析 EnvironmentFile 时
-  #   并不会执行任何命令。行为要对齐，就只能解析不能执行。
-  load_env_file() {
-    local file="$1" line key value
-    [ -f "$file" ] || return 0
-    while IFS= read -r line || [ -n "$line" ]; do
-      case "$line" in
-        ''|'#'*) continue ;;
-        export\ *) line="${line#export }" ;;
-        *=*) ;;
-        *) continue ;;
-      esac
-      key="${line%%=*}"
-      value="${line#*=}"
-      key="$(printf '%s' "$key" | tr -d '[:space:]')"
-      value="${value%\"}"; value="${value#\"}"
-      value="${value%\'}"; value="${value#\'}"
-      [ -n "$key" ] || continue
-      # 只在当前进程里还没设置时填充（进程环境优先）
-      if [ -z "${!key:-}" ]; then
-        export "$key=$value"
-      fi
-    done < "$file"
-    ENV_FILE_LOADED="$file"
-  }
-
   ENV_FILE_LOADED=""
   load_env_file "$HERE/.env"
 
@@ -759,7 +767,9 @@ cmd_verify() {
 
   echo "== 6. 必填配置（只看是否存在，不打印取值） =="
   if [ -n "$ENV_FILE_LOADED" ]; then
-    ok "已从 $ENV_FILE_LOADED 读取配置（只读键，不执行文件内容）"
+    ok "已从 $ENV_FILE_LOADED 读取配置（只读键，不执行文件内容）—— 启动时用的是同一份"
+  else
+    warn "没找到 .env —— 启动时环境变量必须由进程环境提供（systemd 的 EnvironmentFile=）"
   fi
   local var
   for var in TPOPS_USER TPOPS_PASSWORD KAFKA_BOOTSTRAP_SERVERS; do
@@ -815,6 +825,7 @@ cmd_verify() {
   echo
   if [ "$FAILED" = "0" ]; then
     echo "自检通过 —— 可以启动：bash $HERE/collector.sh run"
+    [ -n "$ENV_FILE_LOADED" ] && echo "（启动时会自动加载同一份 .env）"
     return 0
   fi
   echo "自检未通过 —— 见上面 [FAIL] 项"
@@ -830,6 +841,13 @@ cmd_verify() {
 cmd_run() {
   LOG_TAG="run"
   cd "$HERE" || exit 3
+
+  # 采集端只从进程环境读配置 —— 手工启动时把 .env 读进来，
+  # 否则会报「缺少必填环境变量」。systemd 走 EnvironmentFile= 时 .env 可能
+  # 不存在，那时环境变量已经在进程环境里了（load_env_file 找不到文件就跳过）。
+  ENV_FILE_LOADED=""
+  load_env_file "$HERE/.env"
+
   local mode=""
   if [ -f "$HERE/.install-mode" ]; then
     mode="$(cat "$HERE/.install-mode")"

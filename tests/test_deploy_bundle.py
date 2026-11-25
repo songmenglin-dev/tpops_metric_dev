@@ -382,6 +382,53 @@ def test_run_prefers_the_install_mode_marker():
     assert 'PYTHONPATH' in content
 
 
+def test_run_loads_the_env_file(tmp_path):
+    """`collector.sh run` 必须把 .env 读进进程环境。
+
+    采集端只从进程环境读配置（config.py 不做 dotenv 解析）。若 run 不读 .env，
+    就会出现「verify 说配置齐了、run 却报『缺少必填环境变量：TPOPS_USER』」
+    这种自相矛盾 —— 现场就是这么踩的。
+    """
+    install = tmp_path / 'opt'
+    (install / 'venv' / 'bin').mkdir(parents=True)
+    # 假解释器：把 TPOPS_USER 打出来，验证它确实进了进程环境
+    fake_python = install / 'venv' / 'bin' / 'python'
+    fake_python.write_text(
+        '#!/bin/sh\n'
+        'echo "TPOPS_USER=$TPOPS_USER"\n'
+        'echo "KAFKA_BOOTSTRAP_SERVERS=$KAFKA_BOOTSTRAP_SERVERS"\n', encoding='utf-8')
+    fake_python.chmod(0o755)
+    (install / '.install-mode').write_text('venv\n', encoding='utf-8')
+    (install / '.env').write_text(
+        'TPOPS_USER=from-env-file\nKAFKA_BOOTSTRAP_SERVERS=broker:9092\n', encoding='utf-8')
+    shutil.copy2(SCRIPT, str(install / 'collector.sh'))
+
+    result = subprocess.run(['bash', str(install / 'collector.sh'), 'run'],
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output = result.stdout.decode('utf-8', 'replace')
+    assert 'TPOPS_USER=from-env-file' in output, output
+    assert 'KAFKA_BOOTSTRAP_SERVERS=broker:9092' in output, output
+
+
+def test_process_env_wins_over_the_env_file(tmp_path):
+    """进程环境里已有的值优先于 .env（与 systemd EnvironmentFile= 一致）。"""
+    install = tmp_path / 'opt'
+    (install / 'venv' / 'bin').mkdir(parents=True)
+    fake_python = install / 'venv' / 'bin' / 'python'
+    fake_python.write_text('#!/bin/sh\necho "TPOPS_USER=$TPOPS_USER"\n', encoding='utf-8')
+    fake_python.chmod(0o755)
+    (install / '.install-mode').write_text('venv\n', encoding='utf-8')
+    (install / '.env').write_text('TPOPS_USER=from-env-file\n', encoding='utf-8')
+    shutil.copy2(SCRIPT, str(install / 'collector.sh'))
+
+    env = dict(os.environ)
+    env['TPOPS_USER'] = 'from-process-env'
+    result = subprocess.run(['bash', str(install / 'collector.sh'), 'run'],
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    output = result.stdout.decode('utf-8', 'replace')
+    assert 'TPOPS_USER=from-process-env' in output, output
+
+
 def test_script_works_when_invoked_with_sh():
     """`sh collector.sh ...` 也能跑 —— 现场手误用 sh 调用是常事。
 
