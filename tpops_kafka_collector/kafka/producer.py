@@ -83,7 +83,7 @@ DEFAULT_MAX_IN_FLIGHT = 1
 
 def build_producer_config(
     bootstrap_servers: Sequence[str],
-    compression: str = 'lz4',
+    compression: str = 'gzip',
     client_id: str = DEFAULT_CLIENT_ID,
     retries: int = DEFAULT_RETRIES,
     linger_ms: int = DEFAULT_LINGER_MS,
@@ -152,7 +152,7 @@ class MessageProducer:
         bootstrap_servers: Sequence[str],
         topic_metrics: str,
         topic_alarms: str,
-        compression: str = 'lz4',
+        compression: str = 'gzip',
         partitions: int = 4,
         producer: Optional[Any] = None,
         send_timeout: float = DEFAULT_SEND_TIMEOUT,
@@ -165,7 +165,7 @@ class MessageProducer:
 
         :param bootstrap_servers: broker 地址列表；:param topic_metrics: 指标 Topic；
         :param topic_alarms: 告警 Topic；:param compression: 压缩算法
-            （``none``/``gzip``/``snappy``/``lz4``/``zstd``）；:param partitions:
+            （``none``/``gzip`` —— 只有这两种零额外依赖）；:param partitions:
             建 Topic 时的分区数；:param producer: 注入的底层生产者（测试用），
             不给则真实创建；:param send_timeout: 单条消息等待 broker 确认的
             超时（秒）；:param replication_factor: 建 Topic 时的副本数。

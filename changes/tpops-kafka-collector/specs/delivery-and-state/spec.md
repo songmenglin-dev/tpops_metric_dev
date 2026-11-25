@@ -127,7 +127,7 @@ SHALL NOT 混投。
 
 采集端 SHALL 以 `instance_id` 作为指标消息的分区键、`alarm_id` 作为告警消息的分区键，
 分区数由 `KAFKA_TOPIC_PARTITIONS`（默认 4）控制，
-压缩算法由 `KAFKA_COMPRESSION`（默认 `lz4`）控制。
+压缩算法由 `KAFKA_COMPRESSION`（默认 `gzip`）控制 —— 只允许 `none` / `gzip`。lz4 / snappy / zstd 需要额外安装带 C 扩展的 Python 包，两种架构的 wheel 不同，且目标机通常没有安装。
 
 #### Scenario: 同实例有序
 

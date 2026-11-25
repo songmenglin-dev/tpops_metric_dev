@@ -25,7 +25,14 @@ _FALSE_VALUES = frozenset({"false", "0", "no", "off"})
 
 _LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 _LOG_FORMATS = ("text", "json")
-_KAFKA_COMPRESSIONS = ("none", "gzip", "snappy", "lz4", "zstd")
+#: 允许的压缩算法 —— **只有 none 与 gzip**。
+#:
+#: kafka-python 2.0.2 的 gzip 走标准库 zlib，零额外依赖；
+#: lz4 / snappy / zstd 都需要额外装对应的 Python 包（且带 C 扩展，
+#: x86_64 与 aarch64 的 wheel 不同 —— 会破坏「一份部署包通吃两种架构」）。
+#: 目标机上没这些包时，kafka-python 会在创建 producer 时抛
+#: "AssertionError: Libraries for lz4 compression codec not found"。
+_KAFKA_COMPRESSIONS = ("none", "gzip")
 
 #: 平台 `limit` 参数上限（命令中心 SQL 与告警分页共用同一上限体系）
 PLATFORM_LIMIT_MAX = 1000
@@ -58,7 +65,7 @@ class Config:
     kafka_topic_metrics: str = 'gaussdb.metrics'
     kafka_topic_alarms: str = 'gaussdb.alarms'
     kafka_topic_partitions: int = 4
-    kafka_compression: str = 'lz4'
+    kafka_compression: str = 'gzip'
 
     # --- 调度与指标窗口 ---
     poll_interval_seconds: int = 30
@@ -262,7 +269,7 @@ def _kafka_fields(env: Mapping[str, str]) -> Dict[str, Any]:
         'kafka_topic_metrics': _text(env, 'KAFKA_TOPIC_METRICS', 'gaussdb.metrics'),
         'kafka_topic_alarms': _text(env, 'KAFKA_TOPIC_ALARMS', 'gaussdb.alarms'),
         'kafka_topic_partitions': _int(env, 'KAFKA_TOPIC_PARTITIONS', 4, minimum=1),
-        'kafka_compression': _enum(env, 'KAFKA_COMPRESSION', 'lz4', _KAFKA_COMPRESSIONS),
+        'kafka_compression': _enum(env, 'KAFKA_COMPRESSION', 'gzip', _KAFKA_COMPRESSIONS),
     }
 
 

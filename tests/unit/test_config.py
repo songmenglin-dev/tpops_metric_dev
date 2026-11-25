@@ -45,7 +45,7 @@ def test_load_config_returns_all_defaults_for_optional_items():
     assert cfg.kafka_topic_metrics == 'gaussdb.metrics'
     assert cfg.kafka_topic_alarms == 'gaussdb.alarms'
     assert cfg.kafka_topic_partitions == 4
-    assert cfg.kafka_compression == 'lz4'
+    assert cfg.kafka_compression == 'gzip'
     assert cfg.poll_interval_seconds == 30
     assert cfg.metric_window_hours == 2
     assert cfg.metric_end_lag_minutes == 5
@@ -313,6 +313,16 @@ def test_invalid_log_format_is_rejected():
         load_config(_env(LOG_FORMAT='xml'))
 
     assert 'LOG_FORMAT' in str(excinfo.value)
+
+
+def test_kafka_compression_rejects_codecs_needing_extra_packages():
+    """lz4 / snappy / zstd 需要额外装带 C 扩展的 Python 包 ——
+    目标机通常没有，装了也架构不通用。配置层直接拒掉，别等到启动时
+    kafka-python 抛 "Libraries for lz4 compression codec not found"。"""
+    for codec in ('lz4', 'snappy', 'zstd'):
+        with pytest.raises(Exception) as excinfo:
+            load_config(_env(KAFKA_COMPRESSION=codec))
+        assert 'KAFKA_COMPRESSION' in str(excinfo.value)
 
 
 def test_invalid_kafka_compression_is_rejected():
