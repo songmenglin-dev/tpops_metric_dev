@@ -1,0 +1,23 @@
+# 采集端**运行时**依赖 —— 进部署包、装在目标机上
+#
+# 只有这 3 个包是生产代码真正 import 的（其余全是标准库）：
+#   requests     —— TPOPS HTTP 客户端
+#   kafka-python —— Kafka 生产者
+#   urllib3      —— 生产代码直接 import 它（屏蔽自签证书告警），
+#                   此前只靠 requests 隐式带入，现显式声明
+#
+# 版本红线（不要擅自升级）：
+#   kafka-python 2.1+ 已不支持 Python 3.7
+#   requests    2.32 起要求 Python ≥ 3.8（2.32.5 要 ≥ 3.9）
+#
+# 三个包**全部是纯 Python wheel（*-none-any.whl）** —— 无 C 扩展，
+# 因此同一份 wheel 可同时跑在 x86_64 与 aarch64（麒麟两种架构）上。
+#
+# 安装（开发机）：
+#   python -m pip install -r requirements-runtime.txt
+# 安装（目标机，离线）：
+#   python -m pip install --no-index --find-links wheels/ -r requirements-runtime.txt
+
+requests>=2.25,<2.32
+kafka-python==2.0.2
+urllib3>=1.21.1,<3

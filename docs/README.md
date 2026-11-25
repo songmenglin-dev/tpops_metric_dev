@@ -21,8 +21,12 @@
 | [`交付-客户指标英文名核对清单.md`](交付-客户指标英文名核对清单.md) | 客户指标库英文名的 **OCR 疑似错字核对清单**（14 个指标 / 36 处），每条给建议拼写与影响面（是否影响取值） |
 | [`交付-部署运行说明.md`](交付-部署运行说明.md) | **部署运行说明**：前置条件 → 部署步骤 → **30 个环境变量表**（默认值/必填/改错的后果）→ 启动与优雅退出 → 运行期文件（含平台画像固化文件）→ 健康检查 → 日志 → 排障 |
 
-四份交付文档由 `tools/build_delivery_docs.py` 从包内映射表**表驱动生成**（幂等，带 `--check` 模式），
-`tests/unit/test_delivery_docs.py` 守卫它们与真相源一致（29 例，含防恒绿自检）。
+其中**三份**（指标口径说明 / 不可提供指标清单 / OCR 核对清单）由 `tools/build_delivery_docs.py`
+从包内映射表**表驱动生成**（幂等，带 `--check` 模式）；
+**部署运行说明是手写的**（内容不来自映射表），`tests/unit/test_delivery_docs.py`
+守卫它与真相源一致（必备小节、环境变量表必须与 `config.py` 一致，含防恒绿自检）。
+
+部署包由 `tools/build_deploy_bundle.py` 构建（见 `deploy/README.md`）。
 | `06_GaussDB V2.0-26.861.1 产品文档(for 轻量化部署形态) 01.chm` | GaussDB 产品文档原始包（312 MB，未入库，`.gitignore` 排除 `*.chm`）。`api/` 下的 Markdown 由它转换而来 |
 | `广东电网ITSCADA系统监控接入操作指引（数据库）V0.4.docx` | 客户监控平台接入指引。注意：该指引覆盖达梦/Oracle/MySQL/SQLServer/ClickHouse/TiDB 等，**走主机 Agent 采集，不涉及 GaussDB 与 Kafka**；对本项目仅作背景参考 |
 

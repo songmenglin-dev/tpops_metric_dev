@@ -10,10 +10,11 @@
 | 路径 | 内容 | 入口 |
 |---|---|---|
 | [`data/`](data/) | 实测留档与映射规则数据（**表驱动，规则不写死在代码里**） | [`data/README.md`](data/README.md) |
-| [`tools/`](tools/) | 离线脚本：抓取、生成映射表、渲染文档、演示 | [`tools/README.md`](tools/README.md) |
+| [`tpops_kafka_collector/`](tpops_kafka_collector/) | **采集端**（常驻进程）：唯一的生产代码包 | [`tpops_kafka_collector/main.py`](tpops_kafka_collector/main.py) |
+| [`deploy/`](deploy/) | 部署资产：离线安装 / 环境自检 / 启动脚本（进部署包） | [`deploy/install.sh`](deploy/install.sh) |
+| [`tools/`](tools/) | 离线脚本：抓取、生成映射表、渲染文档、**构建部署包** | [`tools/README.md`](tools/README.md) |
 | [`tests/`](tests/) | pytest 单元测试（TPOPS 与 Kafka 一律 mock） | [`tests/README.md`](tests/README.md) |
 | [`docs/`](docs/) | 开发方案、字段对照表、客户对接方案、API 参考 | [`docs/README.md`](docs/README.md) |
-| `tpops_kafka_collector/` | **待建**：采集端（常驻进程）。当前仓库还没有这个包 | — |
 
 ## 根目录的文件
 
@@ -21,7 +22,8 @@
 |---|---|---|
 | `CLAUDE.md` | **项目总说明**：目标、架构、目录结构、TPOPS 接口红线、Python 3.7.9 红线、编码约定、待定事项 | 不能 |
 | `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` | **客户指标库原件**（101 个指标，含「指标库」「指标库-指标获取方法」两个 sheet）。可提供性判定与映射表的源头 | 不能 |
-| `requirements.txt` | 依赖锁定（目标运行时 Python 3.7.9，版本不能擅自升级） | 不能 |
+| `requirements-runtime.txt` | **运行时**依赖锁定（进部署包；目标运行时 Python 3.7.9，版本不能擅自升级） | 不能 |
+| `requirements-dev.txt` | 开发/测试依赖（**不进部署包**），含上面那份 | 不能 |
 | `pytest.ini` | pytest 配置：`testpaths = tests`、`--strict-markers` | 不能 |
 | `ruff.toml` | Ruff 配置，`target-version = "py37"` —— 3.8+ 语法会被判为 invalid-syntax | 不能 |
 | `.env.example` | 环境变量样例（`TPOPS_*` / `KAFKA_*` / 调度参数）。**真实凭据只在 `.env`，已 gitignore** | 不能 |
@@ -32,11 +34,24 @@
 ```bash
 conda create -n tpops python=3.7.9 -c conda-forge --override-channels -y
 conda install -n tpops -c conda-forge --override-channels -y pip
-conda run -n tpops python -m pip install -r requirements.txt
+conda run -n tpops python -m pip install -r requirements-dev.txt
 conda run -n tpops python -m pytest -q
 ```
 
 > Anaconda 默认源需要接受商业 TOS，**不要用**；一律加 `-c conda-forge --override-channels`。
+> conda 只是**开发环境**的便利 —— 生产部署**不需要 conda**，见
+> [`docs/交付-部署运行说明.md`](docs/交付-部署运行说明.md)。
+
+## 构建离线部署包
+
+```bash
+conda run -n tpops python tools/build_deploy_bundle.py
+# → dist/tpops-collector-<版本>.tar.gz
+```
+
+产物含生产包、离线 wheel、三个部署脚本与环境变量样例；目标机解压后
+`bash install.sh` 即可**零联网**安装（麒麟 V10 SP2+ 自带 Python 3.7.9，
+x86_64 与 aarch64 共用同一份包 —— 全部依赖都是纯 Python wheel）。
 
 ## 数据流
 

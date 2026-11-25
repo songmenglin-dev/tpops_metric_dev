@@ -33,10 +33,11 @@ Scheduler(窗口 + 水位)
 
 ## 目录结构
 
-`tpops_kafka_collector/` 是**待建**的采集端 —— 本仓库当前只有调研产物、映射规则与离线脚本：
+`tpops_kafka_collector/` 是**采集端的生产代码包** —— 本仓库同时还有调研产物、映射规则、
+离线工具与部署资产：
 
 ```
-tpops_kafka_collector/              # 待建：采集端（编码阶段落地）
+tpops_kafka_collector/              # 采集端（唯一的生产代码包）
 ├── main.py          # 入口：装配依赖、启动调度循环、信号处理
 ├── config.py        # 配置加载（环境变量 + 可选配置文件）
 ├── scheduler.py     # 轮询循环、水位推进、重试退避、优雅退出
@@ -82,7 +83,9 @@ tpops_kafka_collector/mapping/   # 映射层执行代码（**生产代码**）
 
 ```
 tests/     # 映射层单元测试（pytest）；TPOPS 与 Kafka 一律 mock
+deploy/    # 部署资产（进部署包）：install.sh / verify_env.sh / run.sh
 tools/     # 现有离线取数脚本 + 参考实现，保留
+           #   build_deploy_bundle.py —— 构建离线部署包（纯 Python wheel，架构通用）
 data/      # 离线样本与调研产物
 │  ├── alarm/               # 告警侧数据（抓取产物 + 告警定义目录 + 181 条规则配置），详见该目录 README
 │  ├── command_center/      # 内置命令清单（142 条）+ 通用 SQL 命令详情
@@ -115,7 +118,7 @@ docs/      # 文档
 ```bash
 conda create -n tpops python=3.7.9 -c conda-forge --override-channels -y
 conda install -n tpops -c conda-forge --override-channels -y pip
-conda run -n tpops python -m pip install -r requirements.txt
+conda run -n tpops python -m pip install -r requirements-dev.txt
 conda activate tpops          # 或每次用 conda run -n tpops <命令>
 conda run -n tpops python -m pytest -q
 ```
@@ -164,11 +167,42 @@ python -m tpops_kafka_collector.main
 ```
 kafka-python==2.0.2    # 纯 Python；2.1+ 不再支持 3.7
 requests>=2.25,<2.32   # 2.32 起要求 Python ≥3.8（2.32.5 要 ≥3.9）
+urllib3>=1.21.1,<3     # 生产代码直接 import 它（此前只靠 requests 隐式带入）
 pytest>=7,<8
 pytest-cov<5
+openpyxl>=3.0,<3.12    # 仅离线工具与测试用
 ```
 
+分两个文件：**`requirements-runtime.txt`**（运行时，进部署包）与
+**`requirements-dev.txt`**（开发/测试，不进部署包）。
+
 如改用 `confluent-kafka`，注意其 wheel 对 3.7 的支持范围，且需 librdkafka 运行时。
+
+## 部署形态（目标机）
+
+**生产部署不需要 conda** —— 采集端的运行时依赖只有 `requests` / `kafka-python` /
+`urllib3` 三个**纯 Python** 包（无 C 扩展）：
+
+- 目标机只要有 **Python 3.7 ~ 3.11**（麒麟 V10 SP2+ 自带 3.7.9）即可，
+  **不装 conda、不编译、不联网**；
+- 全部依赖都是 `*-none-any.whl` → **x86_64 与 aarch64 共用同一份部署包**；
+- Python **3.12+ 不行**：`kafka-python 2.0.2` 依赖的 `six.moves` 机制在 3.12
+  被移除的 `find_module` API 打断，`import kafka` 直接报
+  `No module named 'kafka.vendor.six.moves'`。
+
+部署包由 `tools/build_deploy_bundle.py` 构建（见 `docs/交付-部署运行说明.md`）：
+
+```
+tools/build_deploy_bundle.py   # 有网机器上构建 → dist/tpops-collector-<版本>.tar.gz
+tools/deploy_bundle/           # 构建器的实现（files / wheels / bundle 三个模块）
+deploy/install.sh               # 目标机：零联网安装（venv / vendor 两种模式）
+deploy/verify_env.sh            # 目标机：环境自检（不打印口令、不创建任何东西）
+deploy/run.sh                   # 统一启动入口（systemd 调它）
+```
+
+产出的部署包含外置的 `.tar.gz.sha256`（**与压缩包分开传**，防篡改）；
+安装脚本把安装模式写进 `.install-mode`、解释器写进 `.python-bin`，
+`run.sh` 据此选解释器 —— 不靠「目录在不在」猜。
 
 ## TPOPS 接口要点（均已实测，勿凭直觉改）
 

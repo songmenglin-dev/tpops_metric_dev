@@ -47,3 +47,6 @@ data/manifest.json
 # data/metric_value_rules.json          <- tools/build_metric_value_rules.py
 data/customer_metric_query_plan.json
 data/metric_value_rules.json
+
+# --- 离线部署包构建产物 ---
+dist/
