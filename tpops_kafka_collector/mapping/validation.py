@@ -254,8 +254,8 @@ def check_excluded_metrics_absent(
     if not leaked:
         return []
     return [
-        '被排除清单剔除的指标码仍出现在生效映射表里：%s'
-        '（排除应在构建期生效，运行期没有丢弃分支）' % leaked
+        f'被排除清单剔除的指标码仍出现在生效映射表里：{leaked}'
+        '（排除应在构建期生效，运行期没有丢弃分支）'
     ]
 
 
@@ -272,7 +272,7 @@ def check_metric_code_uniqueness(rules: Sequence[MetricRule]) -> List[str]:
     if not duplicated:
         return []
     return [
-        '生效规则的 metric_code 有重复（每个指标码只能有一条规则）：%s' % duplicated
+        f'生效规则的 metric_code 有重复（每个指标码只能有一条规则）：{duplicated}'
     ]
 
 

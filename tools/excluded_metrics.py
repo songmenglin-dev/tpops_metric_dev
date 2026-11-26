@@ -35,14 +35,14 @@ def load_excluded(path=None):
     """
     target = path or EXCLUDED_PATH
     if not os.path.isfile(target):
-        raise IOError('找不到排除清单：%s' % target)
+        raise OSError(f'找不到排除清单：{target}')
     with io.open(target, encoding='utf-8') as handle:
         payload = json.load(handle)
     entries = {}
     for entry in payload.get('excluded') or ():
         code = entry.get('metric_code')
         if not code:
-            raise ValueError('排除清单里有条目没有 metric_code：%r' % entry)
+            raise ValueError(f'排除清单里有条目没有 metric_code：{entry!r}')
         entries[code] = entry
     return entries
 

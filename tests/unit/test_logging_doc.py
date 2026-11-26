@@ -11,8 +11,6 @@ import io
 import os
 import re
 
-import pytest
-
 from conftest import REPO_ROOT
 
 from tpops_kafka_collector.logging_formats import TOTAL_LOG_BASE  # noqa: E402
@@ -37,7 +35,7 @@ LOG_ENV_VARS = (
 
 
 def _doc():
-    assert os.path.isfile(DOC_PATH), '缺少日志框架规范文档：%s' % DOC_PATH
+    assert os.path.isfile(DOC_PATH), f'缺少日志框架规范文档：{DOC_PATH}'
     with io.open(DOC_PATH, encoding='utf-8') as handle:
         return handle.read()
 
@@ -52,7 +50,7 @@ def test_the_document_lists_every_summary_field():
     """文档里 11 个字段名一个都不能少（逐个断言，别用模糊匹配）。"""
     text = _doc()
     missing = [name for name in SUMMARY_FIELDS if name not in text]
-    assert not missing, '日志框架规范缺这些字段：%s' % missing
+    assert not missing, f'日志框架规范缺这些字段：{missing}'
 
 
 def test_the_document_shows_the_summary_field_table():
@@ -60,24 +58,24 @@ def test_the_document_shows_the_summary_field_table():
     text = _doc()
     for name in SUMMARY_FIELDS:
         assert re.search(r'\|\s*`?%s`?\s*\|' % re.escape(name), text), \
-            '日志框架规范里 %s 没有字段表行' % name
+            f'日志框架规范里 {name} 没有字段表行'
 
 
 def test_the_document_lists_every_log_base_name():
     """6 个基名（总日志 + 5 通道）都要出现在文档里。"""
     text = _doc()
     bases = [TOTAL_LOG_BASE] + [
-        '%s-%s' % (TOTAL_LOG_BASE, channel) for channel in CHANNEL_NAMES
+        f'{TOTAL_LOG_BASE}-{channel}' for channel in CHANNEL_NAMES
     ]
     missing = [name for name in bases if name not in text]
-    assert not missing, '日志框架规范缺这些日志基名：%s' % missing
+    assert not missing, f'日志框架规范缺这些日志基名：{missing}'
 
 
 def test_the_document_lists_every_log_env_var():
     """日志相关的环境变量名要与配置层一致。"""
     text = _doc()
     missing = [name for name in LOG_ENV_VARS if name not in text]
-    assert not missing, '日志框架规范缺这些环境变量：%s' % missing
+    assert not missing, f'日志框架规范缺这些环境变量：{missing}'
 
 
 def test_the_document_explains_the_background_run_commands():
@@ -86,7 +84,7 @@ def test_the_document_explains_the_background_run_commands():
     for needle in ('collector.sh run', 'run --foreground',
                    'collector.sh status', 'collector.sh stop',
                    'collector.pid'):
-        assert needle in text, '日志框架规范没写 %s' % needle
+        assert needle in text, f'日志框架规范没写 {needle}'
 
 
 def test_the_document_states_the_retention_and_size_limits():
@@ -104,4 +102,4 @@ def test_the_document_warns_about_the_sensitive_data_red_line():
     """敏感信息红线必须在文档里（口令 / mini-token / SQL 文本）。"""
     text = _doc()
     for needle in ('口令', 'mini-token', 'SQL'):
-        assert needle in text, '日志框架规范没提 %s 这条红线' % needle
+        assert needle in text, f'日志框架规范没提 {needle} 这条红线'
