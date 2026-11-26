@@ -794,3 +794,49 @@ def test_call_count_is_per_thread():
         thread.join()
 
     assert sorted(deltas.values()) == [10, 10, 10, 10], deltas
+
+
+def test_concurrent_token_calls_authenticate_only_once():
+    """token 过期时多个线程同时要 token → **只发一次认证请求**。
+
+    客户端实例被调度器的线程池（通道 × 实例，最多 16 个线程）共用。
+    没有认证锁的话，每个线程都会各发一次认证请求 —— 认证成功时只是浪费，
+    认证**失败**时平台按请求数累计 ``login_failed_attempts``，账号会被锁得
+    比预期快得多（红线：认证失败不盲目重试，防锁号）。
+
+    假 Session 只预置**一个**认证响应 —— 第二个认证请求会直接断言失败，
+    所以这条测试真的能抓住竞态。
+    """
+    # 预置两个认证响应：第一个给下面的初始调用，第二个给并发阶段 ——
+    # 并发阶段只该发出**一次**认证请求，多出来的会撞上「没有预置响应」。
+    session = FakeSession([auth_ok(), auth_ok()])
+    client = make_client(session)
+
+    client.token()
+    client._token_expires_at = client._clock() - 1  # 让 token 过期
+    before = len(session.auth_calls())
+
+    count = 8
+    barrier = threading.Barrier(count)
+    tokens = []
+    errors = []
+
+    def worker():
+        try:
+            barrier.wait(timeout=5)
+            tokens.append(client.token())
+        except Exception as exc:  # noqa: B902 —— 测试里收集失败原因
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker) for _ in range(count)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=10)
+
+    assert not errors, '并发取 token 报错了：%r' % (errors,)
+    issued = len(session.auth_calls()) - before
+    assert issued == 1, (
+        '并发取 token 发了 %d 次认证请求（应只 1 次）' % issued
+    )
+    assert set(tokens) == {'token-1'}, tokens

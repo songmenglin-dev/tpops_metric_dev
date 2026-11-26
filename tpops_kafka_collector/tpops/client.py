@@ -23,6 +23,7 @@
 
 凭据只从参数/环境变量进来，**不进日志、不进异常消息、不进 ``repr``**。
 """
+import threading
 import time
 from typing import Any, Callable, Dict, Mapping, Optional
 
@@ -133,6 +134,8 @@ class TpopsClient:
         self._token_expires_at = 0.0
         self._auth_failed_at: Optional[float] = None
         self._auth_failure: Optional[BaseException] = None
+        #: **认证锁** —— 保证同一时刻只有一个线程在认证（见 :meth:`token`）。
+        self._auth_lock = threading.Lock()
         #: **真实外部调用计数**（线程安全）—— 每次真正发出的请求记 1。
         self._calls = CallCounter()
 
@@ -176,6 +179,13 @@ class TpopsClient:
     def token(self, refresh: bool = False) -> str:
         """取 mini-token；没有或过期时**认证一次**。
 
+        **并发安全**：客户端实例被调度器的线程池（通道 × 实例，最多 16 个线程）
+        共用。token 过期那一刻可能有多个线程同时进来 —— 没有锁的话它们会
+        **各发一次认证请求**；一旦认证失败，平台按**请求数**累计
+        ``login_failed_attempts``，账号会被锁得比预期快得多（红线：认证失败
+        不盲目重试，防锁号）。所以认证用**双检锁**串起来：同一时刻只有一个
+        线程在认证，其余线程拿它认证出来的 token。
+
         :param refresh: 强制重新认证（401 之后的强制刷新用）。
         :raises AuthError: 认证接口非 2xx —— **不可重试**（防锁号）。
         :raises ProtocolError: 认证成功但响应头没有 ``X-Mini-Token``。
@@ -183,7 +193,12 @@ class TpopsClient:
         if not refresh and self._token is not None:
             if self._clock() < self._token_expires_at:
                 return self._token
-        self._authenticate()
+        with self._auth_lock:
+            # 双检：进锁前 token 可能已经被别的线程刷新好了。
+            if not refresh and self._token is not None:
+                if self._clock() < self._token_expires_at:
+                    return self._token
+            self._authenticate()
         return self._token  # type: ignore[return-value]
 
     def _authenticate(self) -> None:

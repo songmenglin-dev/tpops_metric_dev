@@ -84,3 +84,26 @@ RED→GREEN 实测证据、逐条拍板实现者提出的问题），但**独立
   `reviews/wave-3.md`、`reviews/wave-4.md`
 - 主规格：已合并进仓库 `specs/`（3 个能力）
 - 实现分支：`tpops_metric_dev`（worktree）
+
+---
+
+## 附录：归档后的交付包复审（OpenCodeReview 委派审查）
+
+归档（`closing`）之后又对**最终交付程序包**做了一次独立审查：
+`ocr delegate preview --from dc7fca9 --to c9770b4` 取范围 → `ocr delegate rule` 取清单
+→ 按清单逐项审查 68 个生产 Python 文件 + 部署资产（报告：
+`changes/tpops-mapping-and-logging/ocr-review-report.md`）。
+
+**发现 1 个 Medium（已修）**：`tpops/client.py` 的**认证状态无锁** —— 客户端实例被调度器的
+线程池（通道 × 实例，最多 16 线程）共用，token 过期那一刻多个线程会**各发一次认证请求**；
+认证失败时平台按请求数累计 `login_failed_attempts`，**账号会被锁得比预期快得多**
+（直接违反「认证失败不盲目重试，防锁号」红线）。已加 `threading.Lock` + 双检锁，
+并补守卫测试（RED→GREEN 实测：无锁 8 次认证 / 有锁 1 次）。
+
+**Critical 0、Medium 0（修完）、Low 0**。已核查未发现问题的项包括：凭据/token 不进日志、
+吞异常（5 处全部合法）、可变默认参数、`assert` 当运行时校验、`eval`/`exec`、
+`subprocess(shell=True)`、**SQL 注入**（SQL 全部来自仓库静态规格文件，动态部分只有 int）、
+浮点相等、`== None`、资源泄漏、字典缺键、线程安全（投递与水位在调度线程里串行）、
+**投递失败推进水位**（指标/告警都是成功才推进）。
+
+**门禁**：修复后全量 pytest 1945 passed（+1 条新守卫测试 → 1946）。
