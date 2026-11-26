@@ -24,7 +24,9 @@ fi
 #   check-deps  [部署包目录]              离线依赖预检（真装一遍到临时目录再删）
 #   install     [安装目录]                离线安装：阶段一装包、阶段二部署包
 #   verify      [--network]               部署后自检
-#   run         [采集端参数...]           启动采集端
+#   run         [--foreground] [参数...]   启动采集端（默认后台；--foreground 前台）
+#   status                                采集端是否在跑（PID / 运行时长 / 日志目录）
+#   stop                                  停止后台运行的采集端
 #   help                                  本帮助
 #
 #   环境变量：
@@ -32,13 +34,16 @@ fi
 #     INSTALL_MODE    auto | venv | vendor（默认 auto）
 #     STATE_DIR       状态目录（水位文件所在）
 #     HEALTH_PORT     健康端点端口
+#     LOG_DIR         日志目录（不设则 run 用 <安装目录>/logs；不启动采集端时默认只写 stderr）
 #
 #   典型顺序（客户机上）：
 #     bash collector.sh check-env          # 这台机器能不能装
 #     bash collector.sh check-deps         # 这份依赖包装不装得上
 #     sudo bash collector.sh install       # 装包 + 部署包
 #     bash collector.sh verify             # 装好了没有
-#     bash collector.sh run                # 启动
+#     bash collector.sh run                # 后台启动（返回即起好了）
+#     bash collector.sh status             # 看状态
+#     bash collector.sh stop               # 停止
 #
 #   纪律：
 #     - check-env / check-deps / verify **不改动系统**（只往临时目录写，结束即删）
@@ -838,77 +843,16 @@ cmd_verify() {
 #   两种安装模式都能用（按 .install-mode 判断，不靠「目录在不在」猜：
 #   装了一半的 venv 会盖掉装好了的 vendor）。
 # ==========================================================================
-cmd_run() {
-  LOG_TAG="run"
-  cd "$HERE" || exit 3
-
-  # 采集端只从进程环境读配置 —— 手工启动时把 .env 读进来，
-  # 否则会报「缺少必填环境变量」。systemd 走 EnvironmentFile= 时 .env 可能
-  # 不存在，那时环境变量已经在进程环境里了（load_env_file 找不到文件就跳过）。
-  ENV_FILE_LOADED=""
-  load_env_file "$HERE/.env"
-
-  # 启动前先查一遍必填项 —— 别让采集端抛一句裸的「缺少必填环境变量」
-  local missing=() var
-  for var in TPOPS_USER TPOPS_PASSWORD KAFKA_BOOTSTRAP_SERVERS; do
-    [ -n "${!var:-}" ] || missing+=("$var")
-  done
-  if [ "${#missing[@]}" -gt 0 ]; then
-    echo "[run][ERROR] 缺少必填环境变量：${missing[*]}" >&2
-    if [ -z "$ENV_FILE_LOADED" ]; then
-      echo "[run] 安装目录下没有 .env（找的是 $HERE/.env）—— 请创建它并填上必填项，" >&2
-      echo "[run] 或者用 systemd 时在 unit 里配 EnvironmentFile=。" >&2
-    else
-      echo "[run] 已从 $ENV_FILE_LOADED 读取，但里面缺这些键 —— 请检查该文件。" >&2
-    fi
-    exit 2
-  fi
-
-  local mode=""
-  if [ -f "$HERE/.install-mode" ]; then
-    mode="$(cat "$HERE/.install-mode")"
-  fi
-
-  case "$mode" in
-    venv)
-      [ -x "$HERE/venv/bin/python" ] || {
-        echo "[run][ERROR] 安装模式是 venv，但 $HERE/venv/bin/python 不存在 —— 装坏了，重跑 collector.sh install" >&2
-        exit 3
-      }
-      exec "$HERE/venv/bin/python" -m tpops_kafka_collector.main "$@"
-      ;;
-    vendor)
-      local py=""
-      if [ -f "$HERE/.python-bin" ]; then py="$(cat "$HERE/.python-bin")"; fi
-      [ -x "$py" ] || py="$(command -v python3 || true)"
-      [ -x "$py" ] || {
-        echo "[run][ERROR] 找不到可用的 Python 解释器（vendor 模式）" >&2
-        exit 3
-      }
-      export PYTHONPATH="$HERE/vendor${PYTHONPATH:+:$PYTHONPATH}"
-      exec "$py" -m tpops_kafka_collector.main "$@"
-      ;;
-  esac
-
-  # --- 兼容旧包：没有 .install-mode 时按目录判断 ---
-  if [ -x "$HERE/venv/bin/python" ]; then
-    exec "$HERE/venv/bin/python" -m tpops_kafka_collector.main "$@"
-  fi
-  if [ -d "$HERE/vendor" ]; then
-    local py=""
-    if [ -f "$HERE/.python-bin" ]; then py="$(cat "$HERE/.python-bin")"; fi
-    [ -x "$py" ] || py="$(command -v python3 || true)"
-    [ -x "$py" ] || {
-      echo "[run][ERROR] 找不到可用的 Python 解释器（vendor 模式）" >&2
-      exit 3
-    }
-    export PYTHONPATH="$HERE/vendor${PYTHONPATH:+:$PYTHONPATH}"
-    exec "$py" -m tpops_kafka_collector.main "$@"
-  fi
-
-  echo "[run][ERROR] 既没有 venv/ 也没有 vendor/ —— 安装没成功，请重跑 collector.sh install" >&2
+# ---------------------------------------------------------------------------
+# 运行时管理（run / status / stop）—— 单独成文件，避免本脚本越滚越长。
+# ---------------------------------------------------------------------------
+RUNTIME_SH="$HERE/collector_runtime.sh"
+if [ ! -f "$RUNTIME_SH" ]; then
+  echo "[ERROR] 缺少 $RUNTIME_SH —— 部署包不完整，请重跑 collector.sh install" >&2
   exit 3
-}
+fi
+# shellcheck source=deploy/collector_runtime.sh
+. "$RUNTIME_SH"
 
 # ==========================================================================
 # 分发
@@ -922,6 +866,8 @@ main() {
     install)    cmd_install "$@" ;;
     verify)     cmd_verify "$@" ;;
     run)        cmd_run "$@" ;;
+    status)     cmd_status "$@" ;;
+    stop)       cmd_stop "$@" ;;
     help|-h|--help) usage ;;
     *) warn "未知命令：$cmd"; usage; return 2 ;;
   esac
