@@ -1225,3 +1225,59 @@ def _rule_type_alias(rule_type):
         'delta_rate': '差分',
         'counter_diff': '差分',
     }.get(rule_type, rule_type)
+
+
+# ---------------------------------------------------------------------------
+# 部署运行说明：与 collector.sh 的实际行为对齐（wave-3 任务 3.2）
+# ---------------------------------------------------------------------------
+DEPLOY_README_PATH = os.path.join(REPO_ROOT, 'deploy', 'README.md')
+
+
+def test_deploy_doc_uses_the_foreground_run_for_systemd():
+    """run 默认后台化 —— systemd 必须用 --foreground，否则托管不了。"""
+    text = _read(DEPLOY_DOC_PATH)
+    assert 'collector.sh run --foreground' in text, \
+        '部署说明里的 systemd ExecStart 必须用 run --foreground'
+    assert 'ExecStart=/opt/tpops-collector/collector.sh run\n' not in text, \
+        'ExecStart 不该再是不带 --foreground 的 run'
+
+
+def test_deploy_doc_lists_the_runtime_subcommands():
+    """run / status / stop 三个子命令都要在部署说明里。"""
+    text = _read(DEPLOY_DOC_PATH)
+    for needle in ('collector.sh run', 'collector.sh status',
+                   'collector.sh stop'):
+        assert needle in text, '部署说明缺子命令 %s' % needle
+
+
+def test_deploy_doc_lists_every_log_env_var():
+    """日志相关的环境变量名要与配置层一致。"""
+    from tpops_kafka_collector import config
+
+    text = _read(DEPLOY_DOC_PATH)
+    for name in ('LOG_DIR', 'LOG_FORMAT', 'LOG_PATTERN',
+                 'LOG_MAX_BYTES', 'LOG_RETENTION_DAYS', 'LOG_LEVEL'):
+        assert name in text, '部署说明缺环境变量 %s' % name
+    assert str(config.DEFAULT_LOG_RETENTION_DAYS) in text
+    assert str(config.DEFAULT_LOG_MAX_BYTES) in text
+
+
+def test_deploy_doc_explains_the_log_directory_and_rotation():
+    """日志目录、日期文件名、按天切分与保留天数都要写清。"""
+    text = _read(DEPLOY_DOC_PATH)
+    for needle in ('collector-<日期>.log', 'collector-<通道名>-<日期>.log',
+                   'LOG_MAX_BYTES', 'LOG_RETENTION_DAYS'):
+        assert needle in text, '部署说明的日志章节缺 %s' % needle
+
+
+def test_deploy_readme_lists_the_runtime_subcommands():
+    """deploy/README.md 的子命令表要同步。"""
+    text = _read(DEPLOY_README_PATH)
+    for needle in ('`run`', '`status`', '`stop`', '--foreground'):
+        assert needle in text, 'deploy/README.md 缺 %s' % needle
+
+
+def test_deploy_readme_mentions_the_loguru_runtime_dependency():
+    """运行时依赖是四个纯 Python 包（含 loguru）。"""
+    text = _read(DEPLOY_README_PATH)
+    assert 'loguru' in text, 'deploy/README.md 没提 loguru'

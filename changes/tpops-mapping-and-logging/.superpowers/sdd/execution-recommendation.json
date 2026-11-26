@@ -69,10 +69,10 @@
       "depends_on": []
     }
   ],
-  "artifacts_hash": "sha256:7cc1e176f66c39a9ea059f98ea65d100a606d8caae35565b932fc67a41ce126e",
+  "artifacts_hash": "sha256:fb0c32b8765d5bda4bce6691acf0c2359082ebf34364be363d40b7a8114b9b80",
   "contract_hash": "sha256:f7b75d5a6042029294770105c57bad5938f3e61c8025444c2d42217d9ad1b3c0",
   "workflow": "full",
-  "execution_plan_revision_at_recommendation": null,
-  "created_at": "2026-11-26T03:15:51.267Z",
-  "hash": "sha256:03681ea6940291eca5f450bd4fa62268edc92019560ddd7f8c566ad081c6295c"
+  "execution_plan_revision_at_recommendation": 1,
+  "created_at": "2026-11-26T06:16:45.291Z",
+  "hash": "sha256:a3c58635f837d6e05d6ca54ead09faaff5ffbfc7de51168032e66ed467a51540"
 }

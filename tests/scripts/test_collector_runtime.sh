@@ -29,7 +29,7 @@ assert_eq() { # 期望 实际 说明
 # --- 造一个假的安装目录 ---------------------------------------------------
 INSTALL="$TMP_ROOT/install"
 mkdir -p "$INSTALL/venv/bin"
-cp "$REPO_ROOT/deploy/collector.sh" "$REPO_ROOT/deploy/collector_runtime.sh" "$INSTALL/"
+cp "$REPO_ROOT/deploy/collector.sh" "$INSTALL/"
 echo "venv" > "$INSTALL/.install-mode"
 cat > "$INSTALL/venv/bin/python" <<'PYEOF'
 #!/usr/bin/env bash

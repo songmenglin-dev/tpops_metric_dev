@@ -407,8 +407,11 @@ def test_run_loads_the_env_file(tmp_path):
         'KAFKA_BOOTSTRAP_SERVERS=broker:9092\n', encoding='utf-8')
     shutil.copy2(SCRIPT, str(install / 'collector.sh'))
 
-    result = subprocess.run(['bash', str(install / 'collector.sh'), 'run'],
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # 用 --foreground：run 默认后台启动（输出进 run/console.out、进程脱离终端），
+    # 这里要断言的是「.env 里的值进了进程环境」，前台模式才看得到采集端的输出
+    result = subprocess.run(
+        ['bash', str(install / 'collector.sh'), 'run', '--foreground'],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = result.stdout.decode('utf-8', 'replace')
     assert 'TPOPS_USER=from-env-file' in output, output
     assert 'TPOPS_PASSWORD=pw' in output, output
@@ -455,8 +458,10 @@ def test_process_env_wins_over_the_env_file(tmp_path):
     env['TPOPS_USER'] = 'from-process-env'
     env.pop('TPOPS_PASSWORD', None)
     env.pop('KAFKA_BOOTSTRAP_SERVERS', None)
-    result = subprocess.run(['bash', str(install / 'collector.sh'), 'run'],
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    # 同上：--foreground 才看得到采集端的输出（run 默认后台化）
+    result = subprocess.run(
+        ['bash', str(install / 'collector.sh'), 'run', '--foreground'],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     output = result.stdout.decode('utf-8', 'replace')
     assert 'TPOPS_USER=from-process-env' in output, output
 
