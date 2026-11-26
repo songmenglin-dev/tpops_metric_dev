@@ -2,7 +2,7 @@
 # Derived data. Always rebuildable from artifacts. Lost/corrupt → fall back to content-level detection.
 
 # === Core state ===
-state: executing
+state: closing
 workflow: full
 revision: 2
 
@@ -15,15 +15,15 @@ execution_mode: sdd
 execution_plan_hash: sha256:37684a4e9110ce67308e753ef063f3166c0b194f0e4086adbbd418fc2ddc1a1b
 execution_plan_revision: 2
 batches_completed: 4
-test_result: null
+test_result: pass
 spec_merged: true
 spec_publication_receipt: eyJ2ZXJzaW9uIjoxLCJzb3VyY2VfaGFzaCI6InNoYTI1NjowZTg3NjE5MzU5OGU4OTljOGY2NTM2NTE0NDA2NzRhMjk2NGE1MGNiYzhmODMzNjM5OTVlMGUyZmIyYzRlMWMzIiwiYmFzZWxpbmVfYmVmb3JlX2hhc2giOiJzaGEyNTY6MmU5MmU3MTAzNzYwMmU2MjE1YWNhYmI1YTU0ODIxYzM2OThmNjg2MjhhMDY2NDZhM2E4MjVkZGE2N2EyZTY3YiIsImJhc2VsaW5lX2FmdGVyX2hhc2giOiJzaGEyNTY6NzlkMzVjNmJhNjk3NTQzMDkxYTFlNmM0NTUzM2Y0Y2I5ZjE2MThjNjdmNTFlMWQ4NzJlMGRmOWY0YjczNTk4NiIsImNhcGFiaWxpdGllcyI6WyJkZWxpdmVyeS1hbmQtc3RhdGUiLCJtYXBwaW5nLWFuZC1ydWxlcyIsInJ1bnRpbWUtYW5kLWNvbmZpZyJdfQ
 
 # === Metadata ===
 change_name: tpops-mapping-and-logging
-last_transition: 2026-11-26T06:17:38.534Z
-last_transition_from: approved-for-build
-last_transition_to: executing
+last_transition: 2026-11-26T08:52:00.708Z
+last_transition_from: executing
+last_transition_to: closing
 
 # === Decision points ===
 dp_0_decisions: 变更名=tpops-mapping-and-logging；意图=在既有 tpops_kafka_collector 采集端上做三件事：(1) 指标更新——删除客户指标库中 11 组表级重复指标的英文变体（保留「表信息」分类中文名版本）与 3 条无法提供指标，101→87 条；(2) 日志优化——每类采集器每轮打印本轮总结（获取量/已推送量/耗时等），collector.sh run 改后台运行、日志落盘，拆「总日志（简洁汇总各采集器采集推送情况）」+「各采集器自己的采集推送日志」，并产出日志框架规范与格式供用户审核；(3) 字段映射——告警不涉及指标名时 metricName 与 metricCode 统一为一个固定名（拟 gaussdb.alarm / 「数据库告警」，待客户确认）；表级指标用 schema_name.table_name 替换表名占位符，避免不同 schema 同名表幂等碰撞。范围=三条工作流并行，均在本 change 内；不含客户 Kafka 地址/Topic 联调（P5，仍在变更外）、不含 8 项 open_items 待客户确认项的结论。约束=Python 3.7.9 语法红线；依赖锁 kafka-python==2.0.2 requests>=2.25,<3.2；采集端单文件<400 行、函数<50 行；凭据只走环境变量、禁硬编码/写日志/入库；DTO 用 frozen dataclass 不可变；错误显式包装带上下文、logging 不用 print、不静默吞异常；TPOPS 接口红线（两套命名空间、mini-token 认证失败不重试防锁号、verify_tls=False、指标窗口≥1h、end_time 回退 5 分钟、is_latest_point_only=false、12 分组码硬编码、告警 limit≤100 分页且历史仅 30 天需显式告警、命令中心 statistics.running==0 判结束、result 二次 json.loads、只在 master 执行、GaussDB 方言无 FILTER）；映射层表驱动不写死；日志不得落凭据/mini-token/业务 SQL 文本。artifact_language=zh。workflow_path=full（用户显式选择，与推荐一致）。沟通=我起草用户审；口径变更/对外契约变更/删减范围集中提问不逐条打断。
@@ -42,7 +42,7 @@ dp_5_result: null
 dp_5_timestamp: null
 dp_5_decisions: null
 dp_5_confirmed: null
-dp_6_result: null
-dp_6_timestamp: null
-dp_7_result: null
-dp_7_timestamp: null
+dp_6_result: conditional: 收尾验证四维 —— Completeness PASS（19 条需求 R1~R19 全部映射到 4 个波次且有测试；4/4 波次 receipt=pass；19 个任务全部勾选）；Correctness PASS（全量 pytest 1945 passed；覆盖率 TOTAL 95%、映射层 98~100%；py37 兼容门禁 179 passed；ruff 生产包 0 违规、全仓基线 683→719 且新违规类别=0；部署脚本 shell 测试 18 项全绿）；Coherence PASS（数量口径 101/87/14/11/3/254/6/11 字段在 proposal/specs/design/tasks/交付文档五处一致；3 份 delta spec 已合并进主 specs/ +452 行）；Scope PASS（只新增 loguru==0.8.0 这一个纯 Python 零传递依赖；未改客户 xlsx；未动交付面之外）。本次审查发现并修掉 4 个问题：wave-1 的 event_metric 静默回落硬编码默认值(Important)、我自己写错的「254 条 alarm_name 各不相同」断言(规格自纠)、wave-3 的两文件拆分违反「deploy/ 只能有一个 .sh」守卫(返工)、ruff 新类别 UP024+F401+生产包 2 条 UP031(已清)。遗留 WARN 4 项(均为已登记、不影响交付)：仓库历史 lint 债 683 条另案、deploy/collector.sh 1194 行(单脚本守卫与 400 行约束共同决定)、stderr sink 与总日志同内容导致开发态看不到通道明细、8 项 open_items 待客户确认(含本次告警统一指标名初值)。审查方式披露：独立 reviewer 子代理因 API 配额 429 连续失败 4 次，四份审查报告均由控制器执行，独立性弱于独立代理
+dp_6_timestamp: 2026-11-26T08:51:49Z
+dp_7_result: confirmed: 归档就绪 —— 4/4 波次 receipt=pass(wave-1 两轮审查：第 1 轮 fail→修复→复审 pass；wave-2/3/4 各 1 轮 pass)；19 个任务全部实现并勾选；4 个提交(32d74ce 实现 + bb4ccd7 审查修复 + 526e873 日志框架 + 1339357 部署文档 + 87c6c55 ruff 收口 + d1542f5 规格发布)；生产包 tpops_kafka_collector/ 68 文件 13846 行；交付五件套(87 指标口径说明 + 3 不可提供清单 + 英文名核对清单 + 部署运行说明 + 新增日志框架规范)，由 tools/build_delivery_docs.py 表驱动生成并有守卫测试；3 份 delta spec 已归位主规格并写 publication receipt；变更目录含 proposal/3 份 delta spec/design/tasks/execution-contract/release-summary 与 5 份审查报告。对外契约变化 3 项需客户确认(指标清单 101→87、表级指标名含库表前缀、告警统一指标名)已写入交付文档。归档后遗留：3 条对外契约待客户确认 + 8 项 open_items + 历史 lint 债 683 条另案
+dp_7_timestamp: 2026-11-26T08:51:49Z
