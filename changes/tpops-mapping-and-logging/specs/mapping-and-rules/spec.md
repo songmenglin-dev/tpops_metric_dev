@@ -88,6 +88,14 @@ SHALL NOT 依赖 `metricCode` 区分。
 - **WHEN** 一条告警的定义 `linked_customer_metric` 非空
 - **THEN** 其 `metricCode` / `metricName` 仍为该客户指标的值，不被统一值覆盖
 
+#### Scenario: 告警种类的唯一性
+
+- **WHEN** 平台目录里有 254 条事件类告警
+- **THEN** 它们的 `alarmId` **互不相同**；`alarmName` 逐条对得上平台目录
+  （平台目录**不保证** `alarmName` 唯一 —— 有 13 行填的是等级词、另有同名不同 ID 的组，
+  实测只有 241 个不同名）；告警种类 SHALL 由 `alarmId` / `alarmName` / `alarmContent`
+  承载，SHALL NOT 依赖 `metricCode` 区分
+
 #### Scenario: 统一值可配置
 
 - **WHEN** 映射数据里改写统一固定值

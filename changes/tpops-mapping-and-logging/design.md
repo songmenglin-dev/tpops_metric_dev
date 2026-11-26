@@ -473,7 +473,7 @@
 |---|---|---|
 | 删掉 11 条重复指标后，客户 ITSCADA 台账仍留着旧的 254/101 项，映射对不上 | 交付说明与 `docs/交付-客户指标英文名核对清单.md` 增列「已移除项 + 理由」；`open_items.json` 登记 | 交付文档重生成后含 87 条口径 + 14 条移除说明；`pytest` 中「生效口径 = 87」断言 |
 | 表级 `metricCode` 变成「每表一个」，客户台账需要按表录入 | 交付说明写明表级指标的命名形式与示例；`metricName` 仍是 `({#NAME})…` 形式 | `docs/交付-指标口径说明.md` 中表级条目示例含 `public.t1` |
-| 告警统一成一个指标后，客户侧看不到告警种类 | `alarmId` / `alarmName` / `alarmContent` 仍逐条携带；统一值登记进 `open_items.json` 等客户确认 | 告警消息样例测试：254 条事件类告警的 `metricCode` 相同、`alarmName` 各不相同 |
+| 告警统一成一个指标后，客户侧看不到告警种类 | `alarmId` / `alarmName` / `alarmContent` 仍逐条携带；统一值登记进 `open_items.json` 等客户确认 | 告警消息样例测试：254 条事件类告警的 `metricCode` 相同、**`alarmId` 互不相同**、`alarmName` 逐条对得上平台目录（平台目录本身**不保证** `alarm_name` 唯一 —— 13 行填的是等级词、另有同名不同 ID 的组，实测 241 个不同名） |
 | 日志量大导致磁盘写满 | 按天切分 + 单日 50 MB 上限（loguru rotation 回调）+ 保留 3 天自动删除；通道明细只在 DEBUG 级 | 切分单测：写满后旧文件被改名、新文件续写；清理单测：过期文件被删、近 3 天保留 |
 | 新增 loguru 依赖破坏「纯 Python 三件套」与离线部署 | loguru 0.8.0 是 `py3-none-any`、Linux+py3.7 零传递依赖 → x86_64/aarch64 仍共用一份部署包 | 部署包构建测试断言 loguru wheel 在清单内且为纯 Python；目标机 `check-deps` 通过 |
 | 全面改 loguru API 触及 ~30 个模块，易漏 | 改造按「只改 logger 获取方式、调用点不动」推进；`ruff` + 全量 pytest 兜底；未改造的模块仍走 stdlib → 由 `InterceptHandler` 兜住，不会丢日志 | 全量 pytest 全绿；新增测试断言生产包内不再出现 `logging.getLogger` |

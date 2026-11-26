@@ -74,9 +74,11 @@
   同时**放宽启动期校验**：`metric_code` 唯一性**只对指标规则要求**，对告警定义不要求
   （告警定义靠 `alarm_id` 唯一定位）。
   **新增 `tests/unit/test_alarm_metric_unification.py`**：断言 254 条事件类告警的
-  `metric_code` 相同、`alarm_name` 各不相同；3 条挂靠客户指标的告警的
+  `metric_code` 相同、**`alarm_id` 254 个互不相同**、`alarm_name` 逐条对得上平台目录
+  （平台目录本身**不保证** `alarm_name` 唯一：13 行填的是等级词、另有同名不同 ID 的组，
+  实测只有 241 个不同名）；3 条挂靠客户指标的告警的
   `metric_code` 仍等于该客户指标；告警定义不触发唯一性校验失败。
-  完成后：254 条事件类告警 `metricCode` 相同、`alarmName` 各不相同；
+  完成后：254 条事件类告警 `metricCode` 相同、`alarmId` 互不相同、`alarmName` 逐条对得上平台目录；
   证明：`pytest tests/unit/test_alarm_metric_unification.py -q`。
 
 - [ ] **1.8 交付文档重生成**：跑 `tools/build_delivery_docs.py` 重生成

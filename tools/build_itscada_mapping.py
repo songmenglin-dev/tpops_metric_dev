@@ -283,21 +283,38 @@ def _load_event_metric():
 
     优先取 ``alarm_rules.json`` 里已有的 ``event_metric`` 段 —— 那是**运行期
     真相源**，运维改了它，重跑生成器不会被覆盖回去。
-    文件里没有（或坏了）时用 :data:`DEFAULT_EVENT_METRIC`。
+
+    **两种「没有」要分开**：
+
+    - 文件**不存在**（首次生成）→ 用 :data:`DEFAULT_EVENT_METRIC` 播种；
+    - 文件**存在**但 ``event_metric`` 段缺失或坏了 → **直接报错**。
+      静默回落默认值会把运维已经改过的口径悄悄改回去（客户若已把自己的
+      告警指标名写进数据文件，误删数据文件后重跑生成器就会回退），
+      而现场**看不到任何提示**。宁可停下来让人确认。
+
+    :raises RuntimeError: 文件存在但 ``event_metric`` 段不可用。
     """
-    if os.path.isfile(ALARM_RULES_OUT):
-        try:
-            payload = _read_json(ALARM_RULES_OUT)
-        except ValueError:
-            payload = {}
-        existing = payload.get('event_metric')
-        if isinstance(existing, dict) and existing.get('metric_code') \
-                and existing.get('metric_name'):
-            return {
-                'metric_code': existing['metric_code'],
-                'metric_name': existing['metric_name'],
-            }
-    return dict(DEFAULT_EVENT_METRIC)
+    if not os.path.isfile(ALARM_RULES_OUT):
+        return dict(DEFAULT_EVENT_METRIC)
+    try:
+        payload = _read_json(ALARM_RULES_OUT)
+    except ValueError as error:
+        raise RuntimeError(
+            '%s 存在但不是合法 JSON —— 拒绝用默认值覆盖它：%s'
+            % (ALARM_RULES_OUT, error)
+        )
+    existing = payload.get('event_metric')
+    if not (isinstance(existing, dict) and existing.get('metric_code')
+            and existing.get('metric_name')):
+        raise RuntimeError(
+            '%s 里没有可用的 event_metric 段（需要 metric_code 与 metric_name）'
+            ' —— 拒绝用默认值覆盖它。请先确认这个段是否被误删。'
+            % ALARM_RULES_OUT
+        )
+    return {
+        'metric_code': existing['metric_code'],
+        'metric_name': existing['metric_name'],
+    }
 
 
 def _read_json(path):

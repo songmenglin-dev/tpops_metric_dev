@@ -179,3 +179,54 @@ def test_the_runtime_fallback_uses_the_mapped_unified_value(event_metric):
         'new-alarm-1', '新告警', event_metric)
     assert definition.metric_code == event_metric['metric_code']
     assert definition.metric_name == event_metric['metric_name']
+
+
+def _generator(tmp_path, monkeypatch):
+    """把生成器的输出路径指向临时目录（不碰真实映射数据）。"""
+    import build_itscada_mapping as gen  # noqa: WPS433（测试内延迟导入）
+
+    target = tmp_path / 'alarm_rules.json'
+    monkeypatch.setattr(gen, 'ALARM_RULES_OUT', str(target))
+    return gen, target
+
+
+def test_generator_seeds_the_default_when_the_file_is_absent(tmp_path, monkeypatch):
+    """首次生成（文件不存在）→ 用默认值播种，不报错。"""
+    gen, target = _generator(tmp_path, monkeypatch)
+    assert not target.exists()
+    assert gen._load_event_metric() == gen.DEFAULT_EVENT_METRIC
+
+
+def test_generator_keeps_the_value_from_the_data_file(tmp_path, monkeypatch):
+    """数据文件里改过 → 生成器原样读回，不被默认值覆盖。"""
+    gen, target = _generator(tmp_path, monkeypatch)
+    target.write_text(
+        json.dumps({'event_metric': {'metric_code': 'my.alarm',
+                                     'metric_name': '我的告警'}}),
+        encoding='utf-8',
+    )
+    assert gen._load_event_metric() == {'metric_code': 'my.alarm',
+                                        'metric_name': '我的告警'}
+
+
+def test_generator_refuses_to_silently_fall_back_when_the_segment_is_gone(
+        tmp_path, monkeypatch):
+    """文件存在但 event_metric 段没了 → **报错**，不静默回落默认值。
+
+    静默回落会把运维改过的口径悄悄改回去，现场看不到任何提示。
+    """
+    gen, target = _generator(tmp_path, monkeypatch)
+    target.write_text(json.dumps({'definitions': {}}), encoding='utf-8')
+    with pytest.raises(RuntimeError) as caught:
+        gen._load_event_metric()
+    assert 'event_metric' in str(caught.value)
+
+
+def test_generator_refuses_to_silently_fall_back_on_a_broken_file(
+        tmp_path, monkeypatch):
+    """文件存在但不是合法 JSON → **报错**，不静默回落默认值。"""
+    gen, target = _generator(tmp_path, monkeypatch)
+    target.write_text('{ 这不是 JSON', encoding='utf-8')
+    with pytest.raises(RuntimeError) as caught:
+        gen._load_event_metric()
+    assert 'JSON' in str(caught.value)
