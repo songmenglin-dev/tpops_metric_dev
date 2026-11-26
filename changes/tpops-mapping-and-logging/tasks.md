@@ -20,7 +20,7 @@
 
 ### 批次 1 · 映射口径
 
-- [ ] **1.1 建排除清单数据文件**：新增 `包内/excluded_metrics.json`，
+- [x] **1.1 建排除清单数据文件**：新增 `包内/excluded_metrics.json`，
   写入 14 条（11 条 `reason=duplicate`，各带 `kept` 指明保留项；3 条 `reason=unsupported`，
   各带 `detail` 理由）；`reason`/`metric_code`/`metric_name`/`detail` 必填，`kept` 仅重复项必填。
   同时新增 `仓库根/excluded_metrics.json` 同源副本。
@@ -29,13 +29,13 @@
   完成后：清单内容与客户指标库的 11 组重复 + 3 条无法提供**逐一对应**；
   证明：`pytest tests/unit/test_excluded_metrics.py -q`。
 
-- [ ] **1.2 生成器按清单剔除**：改 `tools/build_itscada_mapping.py`，
+- [x] **1.2 生成器按清单剔除**：改 `tools/build_itscada_mapping.py`，
   生成 `包内/metric_rules.json` 与 `包内/customer_metric_mapping.json` 时
   跳过排除清单里的指标码。**在 `tests/unit/test_excluded_metrics.py` 里补断言**：
   重生成后规则数 = 87、`enabled=false` 的规则数 = 0、`metric_code` 无重复。
   完成后：生效口径 = 87 条；证明：`pytest tests/unit/test_excluded_metrics.py -q`。
 
-- [ ] **1.3 映射层加载与校验排除清单**：改 `tpops_kafka_collector/mapping/loader.py`
+- [x] **1.3 映射层加载与校验排除清单**：改 `tpops_kafka_collector/mapping/loader.py`
   （加载排除清单）与 `tpops_kafka_collector/mapping/validation.py`
   （启动期校验），校验三项：排除清单的指标码**一个都不在**生效映射表中、
   生效规则 `metric_code` 唯一、生效规则数 = 87。
@@ -44,7 +44,7 @@
   完成后：不满足即启动失败并打印差异；
   证明：`pytest tests/unit/test_metric_catalog.py -q`。
 
-- [ ] **1.4 支持点号组合的维度绑定**：改 `tpops_kafka_collector/mapping/rules_context.py`
+- [x] **1.4 支持点号组合的维度绑定**：改 `tpops_kafka_collector/mapping/rules_context.py`
   的 `row_dimensions` 与 `grouped_items`——`dimension_bindings` 的值支持
   「点号连接的多个列名」（按 `.` 连接各列的值），`group_by` 支持多列分组。
   **新增 `tests/unit/test_dimension_binding.py`**：覆盖组合绑定（`schemaname.relname`
@@ -52,7 +52,7 @@
   完成后：`{"NAME": "schemaname.relname"}` 绑出 `public.t1`；
   证明：`pytest tests/unit/test_dimension_binding.py -q`。
 
-- [ ] **1.5 生成器与规则改绑 schema+relname**：改 `tools/build_itscada_mapping.py` 的
+- [x] **1.5 生成器与规则改绑 schema+relname**：改 `tools/build_itscada_mapping.py` 的
   `DIMENSION_COLUMN_BY_SQL`（`'stat_user_tables': {'NAME': 'relname'}` →
   `'schemaname.relname'`）**并**改其 `group_by` 派生逻辑（点号串要拆成多列，
   否则 `group_by` 会变成一个叫 `schemaname.relname` 的单列）；
@@ -62,12 +62,12 @@
   完成后：表级规则的 `NAME` 绑定为 `schemaname.relname`、按两列分组；
   证明：`pytest tests/unit/test_metric_catalog.py -q`。
 
-- [ ] **1.6 表级幂等不碰撞**：**在 `tests/unit/test_dimension_binding.py` 里补用例**，
+- [x] **1.6 表级幂等不碰撞**：**在 `tests/unit/test_dimension_binding.py` 里补用例**，
   断言 `public.t1` 与 `other.t1` 的同一表级指标得到**不同**的 `metricName` /
   `metricCode` / 幂等键，而同一张表重复采集得到**相同**的幂等键。
   完成后：两条消息都会被投递；证明：`pytest tests/unit/test_dimension_binding.py -q`。
 
-- [ ] **1.7 告警统一指标名**：在 `包内/alarm_rules.json` 增加
+- [x] **1.7 告警统一指标名**：在 `包内/alarm_rules.json` 增加
   `event_metric`（`metric_code` / `metric_name` 固定值），改
   `tools/build_itscada_mapping.py` 让**未挂客户指标**的事件类告警统一取该值，
   挂靠了客户指标的告警保持不变；并在 `包内/open_items.json` 登记该统一值待客户确认。
@@ -81,7 +81,7 @@
   完成后：254 条事件类告警 `metricCode` 相同、`alarmId` 互不相同、`alarmName` 逐条对得上平台目录；
   证明：`pytest tests/unit/test_alarm_metric_unification.py -q`。
 
-- [ ] **1.8 交付文档重生成**：跑 `tools/build_delivery_docs.py` 重生成
+- [x] **1.8 交付文档重生成**：跑 `tools/build_delivery_docs.py` 重生成
   `docs/交付-指标口径说明.md`（87 条）、`docs/交付-不可提供指标清单.md`
   （3 条，标注「已从生效口径移除」+ 理由）、`docs/交付-客户指标英文名核对清单.md`；
   同步更新 `docs/映射表-ITSCADA字段对照.md` 与 `tpops_kafka_collector/mapping/README.md`。
@@ -91,14 +91,14 @@
 
 ### 批次 2 · 日志框架
 
-- [ ] **2.1 loguru 依赖落地**：在 `requirements-runtime.txt` 加 `loguru==0.8.0`（锁版本）；
+- [x] **2.1 loguru 依赖落地**：在 `requirements-runtime.txt` 加 `loguru==0.8.0`（锁版本）；
   改 `tools/build_deploy_bundle.py` 的离线 wheel 清单，把 loguru 纳入部署包；
   确认它是 `py3-none-any` 且在 Linux + py3.7 下无传递依赖。
   **新增 `tests/unit/test_loguru_dependency.py`**：断言部署包清单含 loguru、
   其 wheel 为纯 Python（`*-none-any`）、`requirements-runtime.txt` 锁了版本。
   完成后：目标机只装 4 个纯 Python 包即可跑；证明：`pytest tests/unit/test_loguru_dependency.py -q`。
 
-- [ ] **2.2 `logging_setup.py` 重写为 loguru sink 装配**：改
+- [x] **2.2 `logging_setup.py` 重写为 loguru sink 装配**：改
   `tpops_kafka_collector/logging_setup.py`，装配：
   - 总日志 sink（生命周期 + 整体汇总 + 每通道简洁汇总 + WARNING 以上）；
   - 5 个通道 sink，`filter=` 读 `record["extra"]["channel"]`；
@@ -120,7 +120,7 @@
   证明：`pytest tests/unit/test_logging_files.py -q` 与既有
   `pytest tests/unit/test_logging_setup.py -q`。
 
-- [ ] **2.3 全面改用 loguru API**：把生产包内各模块的
+- [x] **2.3 全面改用 loguru API**：把生产包内各模块的
   `LOGGER = logging.getLogger(__name__)` 改为 `from loguru import logger`
   （**调用点 `LOGGER.info(...)` 本身不动**）；
   5 个采集器模块各加一行 `LOGGER = logger.bind(channel="<通道名>")`
@@ -131,7 +131,7 @@
   且 5 个采集器模块的记录带上正确的 `extra["channel"]`。
   完成后：全项目日志走 loguru；证明：`pytest tests/unit/test_loguru_migration.py -q`。
 
-- [ ] **2.4 配置项与快速失败**：改 `tpops_kafka_collector/config.py`，加 `LOG_DIR` /
+- [x] **2.4 配置项与快速失败**：改 `tpops_kafka_collector/config.py`，加 `LOG_DIR` /
   `LOG_FORMAT` / `LOG_MAX_BYTES`（默认 50 MB）/ `LOG_RETENTION_DAYS`（默认 3）；
   取值非法 → 启动失败退出码 2；日志目录不可写 → 启动失败并说明路径；
   `LOG_DIR` 未设置 → 只写 stderr（不落盘）；同步 `.env.example`。
@@ -140,7 +140,7 @@
   完成后：非法取值与不可写目录都在启动期失败；
   证明：`pytest tests/unit/test_config.py -q`。
 
-- [ ] **2.5 通道级每轮统计**：新增不可变 DTO `ChannelRoundStats`
+- [x] **2.5 通道级每轮统计**：新增不可变 DTO `ChannelRoundStats`
   （`tpops_kafka_collector/scheduler_types.py`）与聚合逻辑
   **新文件 `tpops_kafka_collector/channel_stats.py`**（按通道聚合
   `fetched` / `mapped` / `produced` / `failed` / `windows` / `calls` / `elapsed` / `instances`）；
@@ -151,7 +151,7 @@
   完成后：通道统计与整体统计自洽；
   证明：`pytest tests/unit/test_channel_round_stats.py -q`。
 
-- [ ] **2.6 通道级汇总行输出**：改 `tpops_kafka_collector/scheduler_report.py`，
+- [x] **2.6 通道级汇总行输出**：改 `tpops_kafka_collector/scheduler_report.py`，
   每轮为**到期且完成**的通道各输出一条汇总行（用 `logger.bind(channel=…)` 打出，
   进通道日志），同时在总日志输出一条同字段的核心计数；
   字段固定为 `channel/tick/instances/fetched/mapped/produced/failed/windows/calls/elapsed/delivery_rate`。
@@ -160,7 +160,7 @@
   完成后：未到期通道不出行；json 模式下字段可直接被日志平台取；
   证明：`pytest tests/unit/test_channel_round_stats.py -q`。
 
-- [ ] **2.7 敏感信息不进落盘日志**：跑一轮采集后扫描日志文件，确认无口令 /
+- [x] **2.7 敏感信息不进落盘日志**：跑一轮采集后扫描日志文件，确认无口令 /
   mini-token / `sql_text` 全文；必要时收紧采集器里的日志语句。
   **新增 `tests/integration/test_logs_have_no_secrets.py`**：跑一轮后
   grep `<LOG_DIR>` 下全部文件，断言不含配置的凭据值与 token 片段。
@@ -169,7 +169,7 @@
 
 ### 批次 3 · 部署与文档
 
-- [ ] **3.1 `collector.sh` 后台化**：把 `run` / `status` / `stop` 三段拆到新文件
+- [x] **3.1 `collector.sh` 后台化**：把 `run` / `status` / `stop` 三段拆到新文件
   `deploy/collector_runtime.sh`（`collector.sh` 位置参数分发，对外仍是一个脚本）；
   `run` 走 `setsid nohup` 后台启动、写 `<安装目录>/run/collector.pid`、
   启动后确认存活（**没起来则返回非零并打印日志尾部**：`<LOG_DIR>/collector.log`
@@ -182,7 +182,7 @@
   完成后：脚本单文件 < 400 行、重复启动返回非零；
   证明：`bash tests/scripts/test_collector_runtime.sh`。
 
-- [ ] **3.2 systemd 与部署说明同步**：更新 `docs/交付-部署运行说明.md` 的 unit 片段为
+- [x] **3.2 systemd 与部署说明同步**：更新 `docs/交付-部署运行说明.md` 的 unit 片段为
   `ExecStart=/opt/tpops-collector/collector.sh run --foreground`，补 `LOG_DIR` 等新环境变量表、
   日志目录说明与磁盘占用上限（6 基名 × 3 天 × 50 MB）、`<安装目录>` 的定义；
   更新 `deploy/README.md` 的子命令表。
@@ -191,7 +191,7 @@
   完成后：文档里的命令与脚本实际行为一致；
   证明：`pytest tests/unit/test_delivery_docs.py -q`。
 
-- [ ] **3.3 日志框架规范成文**：把决策 1~6（布局与日期文件名、sink 分层、loguru 原生格式、
+- [x] **3.3 日志框架规范成文**：把决策 1~6（布局与日期文件名、sink 分层、loguru 原生格式、
   按天切分与 3 天保留、汇总字段口径、后台运行）写成 `docs/日志框架规范.md`，
   与 `design.md` 的决策段一致；并同步更新 `CLAUDE.md` 的编码约定
   （「用 `logging`」→ 「用 `loguru`」）与「运行时依赖三个纯 Python 包」的表述。
@@ -201,7 +201,7 @@
   完成后：文档覆盖目录布局、字段表、示例行；
   证明：`pytest tests/unit/test_logging_doc.py -q`。
 
-- [ ] **3.4 全量回归与门禁**：跑
+- [x] **3.4 全量回归与门禁**：跑
 
   ```bash
   conda run -n tpops python -m pytest -q
