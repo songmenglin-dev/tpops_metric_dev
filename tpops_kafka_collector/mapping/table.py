@@ -133,6 +133,35 @@ def build_alarm_definition(
     )
 
 
+def build_event_alarm_definition(
+    alarm_id: Any,
+    alarm_name: Any,
+    event_metric: Mapping[str, Any],
+) -> AlarmDefinition:
+    """事件类告警（**不挂靠客户指标**）的兜底定义。
+
+    统一指标名**表驱动** —— ``event_metric`` 来自 ``alarm_rules.json`` 的
+    ``event_metric`` 段（``{"metric_code": ..., "metric_name": ...}``），
+    代码里不写死任何客户口径。
+
+    平台新增告警（``alarm_rules.json`` 里还没有定义）时用它兜底：告警种类
+    由 ``alarmId`` / ``alarmName`` / ``alarmContent`` 承载，不靠 ``metricCode``
+    区分 —— 所以统一指标名不会丢信息。
+    """
+    return AlarmDefinition(
+        alarm_id=str(alarm_id),
+        alarm_name=str(alarm_name or ''),
+        alarm_kind='',
+        default_level='',
+        default_priority=None,
+        threshold='',
+        metric_code=str((event_metric or {}).get('metric_code') or ''),
+        metric_name=str((event_metric or {}).get('metric_name') or ''),
+        value_source='alarm_items_sum',
+        linked_customer_metric=None,
+    )
+
+
 class MappingTable:
     """三份规则文件的只读视图。
 

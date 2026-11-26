@@ -32,6 +32,7 @@ PACKAGE_DATA_DIR = os.path.join(
 #: 包内副本文件名 → 仓库根的声明源（相对 REPO_ROOT）。
 COPIED_FILES = {
     'metric_rules.json': os.path.join('data', 'mapping', 'metric_rules.json'),
+    'excluded_metrics.json': os.path.join('data', 'mapping', 'excluded_metrics.json'),
     'alarm_rules.json': os.path.join('data', 'mapping', 'alarm_rules.json'),
     'itscada_field_map.json': os.path.join(
         'data', 'mapping', 'itscada_field_map.json'),

@@ -1,0 +1,112 @@
+{
+  "version": "1.0",
+  "note": "排除清单：从生效口径里剔除的客户指标。排除发生在构建期（映射表生成器），运行期没有「遍历到再丢弃」的分支 —— 被排除的指标码根本不会出现在生效映射表里。",
+  "sources": [
+    "高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx / 指标库",
+    "docs/问题单.md TPOPS-003（11 组英文名重复）、TPOPS-001（3 条无法提供）"
+  ],
+  "counts": {
+    "total": 14,
+    "duplicate": 11,
+    "unsupported": 3,
+    "client_total": 101,
+    "effective_total": 87
+  },
+  "excluded": [
+    {
+      "metric_code": "GAUSSDB.{#NAME}.Number.lete.ples",
+      "metric_name": "({#NAME}) number of delete tuples",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.Number.lete.ples 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.Number.lete.ples"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.Number.ad.ples",
+      "metric_name": "({#NAME}) number of dead tuples",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.Number.ad.ples 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.Number.ad.ples"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.Number.t.date.ples",
+      "metric_name": "({#NAME}) number of hot update tuples",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.Number.t.date.ples 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.Number.t.date.ples"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.index.scan",
+      "metric_name": "({#NAME})number of index scan",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.number.Of.index.scan 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.number.Of.index.scan"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
+      "metric_name": "({#NAME})number of sequencial tuples read",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.number.Of.quential.ples.ad 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.number.Of.quential.ples.ad"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
+      "metric_name": "({#NAME})number of index tuples read",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.number.Of.dex.ples.ad 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.number.Of.dex.ples.ad"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
+      "metric_name": "({#NAME})number of insert tuples",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.number.Of.insert.tuples 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.number.Of.insert.tuples"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.live.tuples",
+      "metric_name": "({#NAME})number of live tuples",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.number.Of.live.tuples 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.number.Of.live.tuples"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.update.tuples",
+      "metric_name": "({#NAME})number of update tuples",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.number.Of.update.tuples 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.number.Of.update.tuples"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
+      "metric_name": "({#NAME})number of sequencial scan",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.number.Of.sequential.scan 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.number.Of.sequential.scan"
+    },
+    {
+      "metric_code": "GAUSSDB.{#NAME}.garbage.Ratio",
+      "metric_name": "({#NAME})Garbage ratio",
+      "reason": "duplicate",
+      "detail": "与 gaussdb.{#NAME}.garbage.Ratio 是同一条表级指标（客户指标库「事务信息」分类里英文名的一条）；保留「表信息」分类里中文名正常的一条。",
+      "kept": "gaussdb.{#NAME}.garbage.Ratio"
+    },
+    {
+      "metric_code": "gaussdb.Fastpath_function_call",
+      "metric_name": "快路径函数调用的连接数",
+      "reason": "unsupported",
+      "detail": "PG 侧无 fastpath 计数器；pg_settings 仅有 gsi_fastpath_level 开关"
+    },
+    {
+      "metric_code": "gaussdb.Disabled_conn",
+      "metric_name": "禁用的连接数",
+      "reason": "unsupported",
+      "detail": "PG 无「禁用连接」概念；pg_settings 仅有 reserved_connections 等预留连接"
+    },
+    {
+      "metric_code": "gaussdb.sendAgentName",
+      "metric_name": "发送设备名给Agent",
+      "reason": "unsupported",
+      "detail": "Agent 侧行为，不是数据库可查询的监控指标"
+    }
+  ]
+}

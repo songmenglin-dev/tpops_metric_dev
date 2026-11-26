@@ -635,13 +635,26 @@ def _build_metric_mappings(field_map, metric_rules, response_rules, instances, n
             'needs_confirmation': bool(rule_payload.get('needs_confirmation')),
         }
         if rule.dimension_bindings:
-            # 占位符 ← 结果行里的哪一列（维度展开的关键）
+            # 占位符 ← 结果行里的哪一列（维度展开的关键）。
+            # 绑定值可以是**点号连接的多个列名**（``schemaname.relname``）——
+            # 那是两列用 ``.`` 连起来（表级指标的 schema_name.table_name）。
             record['placeholder_bindings'] = dict(
-                (placeholder, 'tpops_response_source.result[*].%s' % column)
+                (placeholder, _placeholder_expression(column))
                 for placeholder, column in rule.dimension_bindings.items()
             )
         mappings.append(record)
     return mappings
+
+
+def _placeholder_expression(spec):
+    """维度绑定 → 结果行里的取值表达式。
+
+    单列 → ``tpops_response_source.result[*].<列>``；
+    多列（点号串）→ 两列用 `` · ``（字符串连接）连起来。
+    """
+    parts = ['tpops_response_source.result[*].%s' % column
+             for column in spec.split('.')]
+    return ' · '.join(parts)
 
 
 # -- 告警映射 -------------------------------------------------------------

@@ -18,6 +18,8 @@ import os
 import re
 import sys
 
+import excluded_metrics
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLAN_PATH = os.path.join(BASE_DIR, 'docs', '开发方案-GaussDB指标与告警采集.md')
 OUT_PATH = os.path.join(BASE_DIR, 'data', 'metric_value_rules.json')
@@ -158,6 +160,7 @@ def _parse_d_class(text):
 
 def _build_metrics(text):
     metrics = {}
+    excluded = excluded_metrics.excluded_codes()
     for row in _parse_a_class(text):
         metrics[row['customer_metric']] = {
             'channel': 'A',
@@ -211,6 +214,10 @@ def _build_metrics(text):
             'dimensions': [],
             'plan_note': row['plan_refresh_cycle'],
         }
+    # 排除发生在构建期：被排除清单剔除的指标不进生效口径
+    # （开发方案 §4.3 仍是 101 条的原始记录，生效口径以排除清单为准）。
+    for code in excluded:
+        metrics.pop(code, None)
     return metrics
 
 
@@ -267,10 +274,30 @@ def main():
         json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=False)
         handle.write('\n')
     print('wrote %s: %s' % (OUT_PATH, payload['counts']))
-    if payload['counts']['total'] != 98:
-        print('ERROR: 期望 98 条可提供指标，实际 %d' % payload['counts']['total'], file=sys.stderr)
+    expected = _expected_effective_count()
+    if expected is not None and payload['counts']['total'] != expected:
+        print('ERROR: 期望 %d 条生效指标，实际 %d' % (expected, payload['counts']['total']),
+              file=sys.stderr)
         return 1
     return 0
+
+
+def _expected_effective_count():
+    """生效口径的条数 —— 以可提供性判定（``customer_metric_mapping.json``）为准。
+
+    条数**不写死**：生效口径 = 客户指标库里「可提供」的条数，
+    排除清单在可提供性判定那一步就已经生效了。
+    判定文件不在（还没跑那个生成器）时返回 ``None`` —— 跳过这道交叉校验。
+    """
+    path = os.path.join(BASE_DIR, 'data', 'customer_metric_mapping.json')
+    if not os.path.exists(path):
+        return None
+    with io.open(path, encoding='utf-8') as handle:
+        payload = json.load(handle)
+    return len([
+        item for item in payload.get('items') or ()
+        if item.get('status') == '可提供'
+    ])
 
 
 if __name__ == '__main__':

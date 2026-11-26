@@ -41,11 +41,18 @@ def batches():
     return dict((b['sql_key'], b) for b in _load(MERGED_SQL_PATH)['batches'])
 
 
-def test_manifest_covers_all_provided_metrics(manifest, rules):
-    """98 个可提供指标各有一个文件；3 个无法提供的不建文件。"""
+def test_manifest_covers_all_effective_metrics(manifest, rules):
+    """每个**生效指标**都有一个样本文件。
+
+    样本目录是**抓取归档**（平台事实）：生效口径从 98 收敛到 87 之后，
+    被排除的 11 条重复指标的样本仍留在归档里 —— 归档是事实，生效口径是决定。
+    3 个无法提供的指标从来没建过文件。
+    """
     enabled = [code for code, r in rules.items() if r.get('enabled')]
-    assert manifest['metric_count'] == len(enabled) == 98
-    assert set(x['customer_metric'] for x in manifest['metrics']) == set(enabled)
+    manifest_codes = set(x['customer_metric'] for x in manifest['metrics'])
+    missing = sorted(set(enabled) - manifest_codes)
+    assert not missing, '生效指标没有样本文件：%s' % missing
+    assert manifest['metric_count'] == len(manifest['metrics']) == 98
 
 
 def test_every_manifest_entry_has_a_response_file(manifest):
@@ -171,7 +178,10 @@ def test_command_center_response_contains_metric_column(manifest, rules, batches
     for item in manifest['metrics']:
         if item['channel'] != '命令中心SQL':
             continue
-        rule = rules[item['customer_metric']]
+        rule = rules.get(item['customer_metric'])
+        if rule is None:
+            # 被排除清单剔除的指标（不在生效口径里）—— 不参与生效口径的核对
+            continue
         chain = _load(os.path.join(RESP_DIR, item['file']))
         rows = []
         for step in chain:

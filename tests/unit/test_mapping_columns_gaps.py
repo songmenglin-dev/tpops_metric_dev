@@ -475,6 +475,6 @@ def test_mapping_table_load_reports_broken_json(mapping_sandbox):
 
 def test_mapping_table_load_reads_the_real_tables(mapping_sandbox):
     table = MappingTable.load(mapping_sandbox, validate_columns=False)
-    assert len(table.metric_rules) == 101
+    assert len(table.metric_rules) == 87
     assert table.metric_rule('gaussdb.Tps') is not None
     assert table.metrics_of_sql_key('activity_agg')

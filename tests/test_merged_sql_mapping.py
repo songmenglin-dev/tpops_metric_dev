@@ -276,7 +276,7 @@ def test_merged_views_paged_flags_come_from_merged_sql_paging(merged_views):
 
 
 def test_existing_shapes_and_rules_are_untouched():
-    """既有 11 个 cmd_rows_* 形状与 98 条规则一个字都不能变。"""
+    """既有 11 个 cmd_rows_* 形状与 87 条规则一个字都不能变。"""
     payload = _load(RULES_PATH)
     cmd_shapes = [
         (name, shape) for name, shape in payload['shapes'].items()
@@ -286,7 +286,7 @@ def test_existing_shapes_and_rules_are_untouched():
     for name, shape in cmd_shapes:
         assert shape['kind'] == 'rows_from_result', name
         assert shape['payload_path'] == ['result'], name
-    assert len(payload['rules']) == 98
+    assert len(payload['rules']) == 87
 
 
 # -- 既有 per-view 形态保持可解 -------------------------------------------
@@ -337,7 +337,7 @@ def test_package_per_view_path_replays_every_command_center_sample():
             continue
         assert len(ctx.rows) == expected, rule['metric_code']
         checked += 1
-    assert checked >= 80, checked
+    assert checked == 71, checked   # 71 条 B 类指标逐条回放
 
 
 # --- 重试判定（§5.7 重试表）------------------------------------------

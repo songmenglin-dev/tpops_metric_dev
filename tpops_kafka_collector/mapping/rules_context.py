@@ -100,12 +100,44 @@ def matches_filter(row: Mapping[str, Any], filters: Mapping[str, Any]) -> bool:
     return True
 
 
+def binding_columns(spec: str) -> List[str]:
+    """维度绑定的值 → 实际列名列表。
+
+    值可以是**单个列名**（``relname``），也可以是**点号连接的多个列名**
+    （``schemaname.relname``）—— 表级指标的 ``{#NAME}`` 要绑成
+    ``schema_name.table_name``，两个列的值用 ``.`` 连起来。
+    """
+    return spec.split('.') if '.' in spec else [spec]
+
+
 def row_dimensions(metric_rule: Any, row: Mapping[str, Any]) -> Dict[str, Any]:
-    """按 ``dimension_bindings``（占位符 → 列名）取这一行的维度值。"""
+    """按 ``dimension_bindings``（占位符 → 列名）取这一行的维度值。
+
+    绑定值是**点号连接的多个列名**时，各列的值用 ``.`` 连起来
+    （``schemaname=public`` + ``relname=t1`` → ``public.t1``）。
+    取不到任何一个列的值 → 抛 ``RuleError``（不静默留 ``{#NAME}``）。
+    """
     dims = {}
-    for placeholder, column in (metric_rule.dimension_bindings or {}).items():
-        dims[placeholder] = row.get(column)
+    for placeholder, spec in (metric_rule.dimension_bindings or {}).items():
+        dims[placeholder] = _binding_value(placeholder, spec, row)
     return dims
+
+
+def _binding_value(placeholder: str, spec: str, row: Mapping[str, Any]) -> Any:
+    """一行里取一个维度绑定的值（单列原样返回，多列用 ``.`` 连接）。"""
+    columns = binding_columns(spec)
+    if len(columns) == 1:
+        return row.get(columns[0])
+    values = []
+    for column in columns:
+        value = row.get(column)
+        if value is None:
+            raise RuleError(
+                f'维度绑定 {placeholder}→{spec} 取不到列 {column} 的值'
+                f'（行里有 {sorted(row.keys())}）'
+            )
+        values.append(str(value))
+    return '.'.join(values)
 
 
 def dimension_key(dimensions: Mapping[str, Any]) -> str:
@@ -127,6 +159,10 @@ def grouped_items(
     （一边说按 ``relname`` 分组、一边把 ``schemaname`` 当维度），抛 ``RuleError``
     而不是静默取其中一个。分组键的值就是维度值。
 
+    **多列分组**：绑定值是点号串（``schemaname.relname``）时，分组键必须同时
+    含这两列 —— 只按 ``relname`` 分组会让不同 schema 的同名表落进同一个键，
+    维度值不唯一、两条消息在幂等层撞键。
+
     分组键重复（同名的两张表落在同一个键里）会记 WARNING：维度值不唯一，
     两条消息在幂等层会撞键 —— 显式报出来，不静默。
     """
@@ -134,7 +170,10 @@ def grouped_items(
     bindings = metric_rule.dimension_bindings or {}
     if not group_by:
         return [(row_dimensions(metric_rule, row), row) for row in rows]
-    missing = sorted(set(bindings.values()) - set(group_by))
+    bound_columns = set()  # type: set
+    for spec in bindings.values():
+        bound_columns.update(binding_columns(spec))
+    missing = sorted(bound_columns - set(group_by))
     if missing:
         raise RuleError(
             f'group_by {list(group_by)} 与维度绑定 {dict(bindings)} 不一致：分组键缺少列 {missing}'
@@ -152,11 +191,33 @@ def grouped_items(
             )
         for row in group_rows:
             dims = dict(
-                (placeholder, key[group_by.index(column)])
-                for placeholder, column in bindings.items()
+                (placeholder, _value_from_key(placeholder, spec, key, group_by))
+                for placeholder, spec in bindings.items()
             )
             items.append((dims, row))
     return items
+
+
+def _value_from_key(
+    placeholder: str,
+    spec: str,
+    key: Tuple[Any, ...],
+    group_by: Tuple[str, ...],
+) -> Any:
+    """从分组键里取一个维度绑定的值（多列用 ``.`` 连接）。"""
+    columns = binding_columns(spec)
+    if len(columns) == 1:
+        return key[group_by.index(columns[0])]
+    values = []
+    for column in columns:
+        value = key[group_by.index(column)]
+        if value is None:
+            raise RuleError(
+                f'维度绑定 {placeholder}→{spec} 的分组键 {dict(zip(group_by, key))} '
+                f'里没有列 {column} 的值'
+            )
+        values.append(str(value))
+    return '.'.join(values)
 
 
 def point_timestamp(ctx: RuleContext, index: Optional[int]) -> int:

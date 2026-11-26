@@ -13,7 +13,8 @@
 
 脚本**幂等**：同样的输入必然产出同样的文件（重跑 ``git diff`` 为空）。
 所有取值口径来自 ``tpops_kafka_collector/mapping/data/metric_rules.json``
-（101 条：98 可提供 + 3 不可提供），这是唯一的真相源。
+（生效口径 87 条 = 客户指标库 101 条 − 排除清单 14 条；排除清单见
+``mapping/data/excluded_metrics.json``），这是唯一的真相源。
 
 Python 3.7.9 兼容（见 CLAUDE.md「Python 3.7.9 红线」）。
 """
@@ -25,7 +26,7 @@ import os
 import re
 import sys
 from collections import OrderedDict
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAPPING_DATA = os.path.join(REPO_ROOT, 'tpops_kafka_collector', 'mapping', 'data')
@@ -36,6 +37,7 @@ XLSX_PATH = os.path.join(
 
 METRIC_RULES_PATH = os.path.join(MAPPING_DATA, 'metric_rules.json')
 MERGED_SQL_PATH = os.path.join(MAPPING_DATA, 'merged_sql.json')
+EXCLUDED_PATH = os.path.join(MAPPING_DATA, 'excluded_metrics.json')
 
 SPEC_DOC = os.path.join(DOCS_DIR, '交付-指标口径说明.md')
 UNSUPPORTED_DOC = os.path.join(DOCS_DIR, '交付-不可提供指标清单.md')
@@ -117,8 +119,69 @@ def load_json(path: str) -> Any:
 
 
 def load_metric_rules() -> Dict[str, Any]:
-    """读映射表（101 条指标规则）。"""
+    """读映射表（生效口径的指标规则）。"""
     return load_json(METRIC_RULES_PATH)
+
+
+def load_excluded_metrics() -> Dict[str, Any]:
+    """读排除清单（被排除的客户指标、理由与口径条数）。"""
+    return load_json(EXCLUDED_PATH)
+
+
+def customer_scope_rules(
+    rules: Sequence[Dict[str, Any]],
+    customer_rows: Sequence[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """客户指标库的**全部**指标（生效口径 + 被排除的那些）。
+
+    OCR 核对清单的对象是**客户指标库**（101 个指标）—— 被排除的 14 条也在
+    客户表里，英文名同样可能有 OCR 错字。所以检测器跑在「全量」上，
+    而不是只跑生效口径。
+    """
+    scope = list(rules)
+    known = set(rule['metric_code'] for rule in rules)
+    by_code = dict((row['metric_code'], row) for row in customer_rows)
+    for entry in load_excluded_metrics().get('excluded') or ():
+        code = entry.get('metric_code')
+        if not code or code in known:
+            continue
+        row = by_code.get(code) or {}
+        scope.append({
+            'metric_code': code,
+            'metric_name': entry.get('metric_name') or row.get('metric_name') or '',
+        })
+    return scope
+
+
+def unsupported_items(
+    excluded: Sequence[Dict[str, Any]],
+    customer_rows: Sequence[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """排除清单里「无法提供」的条目 → 与指标规则同形的条目。
+
+    排除清单只有「指标码 / 中文名 / 理由」三样；清单表还要展示分类、
+    数据类型、采集周期 —— 那些从**客户指标库 xlsx**（客户原件，只读）取，
+    不在数据文件里重复一份。
+    """
+    by_code = dict((row['metric_code'], row) for row in customer_rows)
+    items = []  # type: List[Dict[str, Any]]
+    for entry in excluded:
+        if entry.get('reason') != 'unsupported':
+            continue
+        code = entry.get('metric_code') or ''
+        row = by_code.get(code) or {}
+        detail = entry.get('detail') or ''
+        items.append({
+            'metric_code': code,
+            'metric_name': entry.get('metric_name') or row.get('metric_name') or '',
+            'category': row.get('category') or '',
+            'value_type': row.get('value_type') or '',
+            'unit': row.get('unit') or '',
+            'collect_cycle': row.get('collect_cycle') or {},
+            'unsupported_reason': detail,
+            'note': detail,
+        })
+    return items
 
 
 def load_merged_sql() -> Dict[str, Dict[str, Any]]:
@@ -147,14 +210,28 @@ def load_customer_table() -> List[Dict[str, Any]]:
     mapping = column_map(rows[0])
     name_col = require(mapping, '英文名')
     cn_col = require(mapping, '中文名')
+    cat_col = mapping.get('指标分类')
+    type_col = mapping.get('数据类型')
+    unit_col = mapping.get('指标单位')
+    cycle_col = mapping.get('数据更新周期')
+    cycle_unit_col = mapping.get('采集更新周期单位')
     result = []
     for row in rows[1:]:
         code = row[name_col]
         if not code:
             continue
+        cycle = row[cycle_col] if cycle_col is not None else None
         result.append({
             'metric_code': str(code).strip(),
             'metric_name': str(row[cn_col] or '').strip(),
+            'category': str(row[cat_col] or '').strip() if cat_col is not None else '',
+            'value_type': str(row[type_col] or '').strip() if type_col is not None else '',
+            'unit': str(row[unit_col] or '').strip() if unit_col is not None else '',
+            'collect_cycle': {
+                'value': int(cycle) if isinstance(cycle, (int, float)) else cycle,
+                'unit': (str(row[cycle_unit_col] or '').strip()
+                         if cycle_unit_col is not None else ''),
+            },
         })
     workbook.close()
     return result
@@ -487,21 +564,31 @@ def _group_by_channel(usable):
 
 
 def _spec_intro(lines: List[str], rules: Sequence[Dict[str, Any]],
-                usable: Sequence[Dict[str, Any]]) -> None:
+                usable: Sequence[Dict[str, Any]],
+                counts: Mapping[str, Any] = None) -> None:
     """文档开头：这份文档是什么、各列怎么读。"""
     lines.append('# GaussDB 指标口径说明（客户交付版）')
     lines.append('')
     lines.append('> 本文档回答客户最关心的问题：**这 %d 个指标，各自是从哪拿的、怎么算的、什么口径。**'
                  % len(usable))
     lines.append('>')
-    lines.append('> - 数据来源：`tpops_kafka_collector/mapping/data/metric_rules.json`（101 条指标规则，其中 98 条可提供）')
+    lines.append('> - 数据来源：`tpops_kafka_collector/mapping/data/metric_rules.json`'
+                 '（%d 条指标规则，全部可提供）' % len(rules))
     lines.append('> - 客户指标基准：`高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx`「指标库」sheet')
     lines.append('> - 生成方式：`python tools/build_delivery_docs.py`（表驱动，重跑输出不变）')
     lines.append('> - 配套文档：《交付-不可提供指标清单.md》《交付-客户指标英文名核对清单.md》')
     lines.append('')
+    counts = counts or {}
+    client_total = counts.get('client_total') or len(rules)
+    excluded_total = counts.get('total') or (client_total - len(usable))
+    duplicate_total = counts.get('duplicate') or 0
+    unsupported_total = counts.get('unsupported') or 0
     lines.append('客户指标库共 %d 个指标：**%d 个可提供**（本文档逐条说明口径），'
-                 '**%d 个不可提供**（见《交付-不可提供指标清单.md》，采集时丢弃并计数）。' % (
-                     len(rules), len(usable), len(rules) - len(usable)))
+                 '**%d 个不在生效口径内**（%d 条重复的英文变体 + %d 个无法提供 —— '
+                 '已在**构建期**从生效口径移除，运行期不产出消息；'
+                 '见《交付-不可提供指标清单.md》与 `excluded_metrics.json`）。' % (
+                     client_total, len(usable), excluded_total,
+                     duplicate_total, unsupported_total))
     lines.append('')
     lines.append('## 1. 怎么读这份表')
     lines.append('')
@@ -536,7 +623,8 @@ def _spec_channel_overview(lines: List[str], by_channel: OrderedDict,
     lines.append('|---|---|---|---|---|')
     channel_desc = {
         '命令中心SQL': ('`POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}`',
-                    '在 master 节点上执行合并 SQL（11 条合并 SQL 覆盖 82 个指标），返回**当前快照**'),
+                    '在 master 节点上执行合并 SQL（11 条合并 SQL 覆盖 %d 个指标），返回**当前快照**'
+                    % len(by_channel.get('命令中心SQL') or ())),
         '监控指标接口': ('`POST /rds/v3/monitor/metrics`',
                     '按时间窗口取**时序**数据，平台侧已是速率口径的指标直接取点'),
         '诊断优化接口': ('`POST /rds/gaussdb/v3/instances/{instance_id}/slow-sql-list`'
@@ -855,7 +943,8 @@ def _spec_tail(lines: List[str]) -> None:
     lines.append('')
 
 
-def render_metric_spec(rules: Sequence[Dict[str, Any]], views: Dict[str, Dict[str, Any]]) -> str:
+def render_metric_spec(rules: Sequence[Dict[str, Any]], views: Dict[str, Dict[str, Any]],
+                       counts: Mapping[str, Any] = None) -> str:
     """生成《交付-指标口径说明.md》。"""
     usable = enabled_rules(rules)
     by_channel = _group_by_channel(usable)
@@ -870,7 +959,7 @@ def render_metric_spec(rules: Sequence[Dict[str, Any]], views: Dict[str, Dict[st
         if channel and channel in channel_periods:
             method_to_period[method] = channel_periods[channel]
     lines = []
-    _spec_intro(lines, rules, usable)
+    _spec_intro(lines, rules, usable, counts)
     _spec_channel_overview(lines, by_channel, channel_periods, method_to_period)
     _spec_granularity(lines, usable)
     _spec_node_scoped(lines, usable, views)
@@ -914,23 +1003,30 @@ UNSUPPORTED_WORKAROUND = {
 }
 
 
-def _unsupported_intro(lines, items):
+def _unsupported_intro(lines, items, counts):
     """开头：这份清单是什么、3 条指标怎么处置。"""
+    client_total = counts.get('client_total')
+    effective_total = counts.get('effective_total')
     lines.append('# 不可提供指标清单（客户交付版）')
     lines.append('')
-    lines.append('客户指标库共 101 个指标，其中 **98 个可提供**（口径见《交付-指标口径说明.md》），'
-                 '**3 个无法提供**。本文档逐条说明：客户要什么、我们为什么给不了、能不能变通。')
+    lines.append('客户指标库共 %s 个指标，其中 **%s 个可提供**（口径见《交付-指标口径说明.md》），'
+                 '**%d 个无法提供**。本文档逐条说明：客户要什么、我们为什么给不了、能不能变通。' % (
+                     client_total, effective_total, len(items)))
     lines.append('')
-    lines.append('> - 数据来源：`tpops_kafka_collector/mapping/data/metric_rules.json`'
-                 '（`enabled = false` 的 3 条规则，每条自带 `unsupported_reason`）')
+    lines.append('> - 数据来源：`tpops_kafka_collector/mapping/data/excluded_metrics.json`'
+                 '（`reason = unsupported` 的 %d 条，每条自带排除理由）' % len(items))
     lines.append('> - 生成方式：`python tools/build_delivery_docs.py`（表驱动，重跑输出不变）')
     lines.append('')
     lines.append('## 1. 处置方式')
     lines.append('')
-    lines.append('- 这 3 个指标**不会出现在 Kafka 消息里**。')
-    lines.append('- 采集端每轮遇到它们时**丢弃并计数**：`dropped_unsupported` 计数 = **%d**'
-                 '（每轮固定 3），日志里记录被丢弃的指标名。' % len(items))
-    lines.append('- 计数会随每轮的采集报告一起上报，可用于核对「本轮应投指标数」与「实投指标数」的差。')
+    lines.append('- 这 %d 个指标**不会出现在 Kafka 消息里**'
+                 '（**已从生效口径移除**）。' % len(items))
+    lines.append('- 处置方式是**构建期排除**：它们在生成生效映射表时就被排除清单剔除了，'
+                 '**生效映射表里根本没有它们** —— 运行期没有「遍历到再丢弃」的分支，'
+                 '轮汇总里的 `dropped_unsupported` 恒为 **0**。')
+    lines.append('- 排除记录（指标码 + 理由）留在 '
+                 '`tpops_kafka_collector/mapping/data/excluded_metrics.json`，'
+                 '客户若要恢复其中某条，改数据文件即可，不用改代码。')
     lines.append('')
 
 
@@ -994,11 +1090,17 @@ def _unsupported_tail(lines, items):
     lines.append('')
 
 
-def render_unsupported(rules):
-    """生成《交付-不可提供指标清单.md》。"""
-    items = disabled_rules(rules)
+def render_unsupported(rules, customer_rows):
+    """生成《交付-不可提供指标清单.md》。
+
+    条目来自**排除清单**（`reason = unsupported`）—— 被排除的指标根本不在
+    生效映射表里，不能再从映射表里找「`enabled = false` 的规则」。
+    """
+    excluded_payload = load_excluded_metrics()
+    items = unsupported_items(excluded_payload.get('excluded') or (), customer_rows)
+    counts = excluded_payload.get('counts') or {}
     lines = []
-    _unsupported_intro(lines, items)
+    _unsupported_intro(lines, items, counts)
     _unsupported_table(lines, items)
     _unsupported_details(lines, items)
     _unsupported_tail(lines, items)
@@ -1235,7 +1337,7 @@ def detect_ocr_findings(rules: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]
     判据（与文档里写的一致）：
 
     1. 把指标英文名按 ``.`` / ``_`` 切成词；
-    2. 候选词表 = **全表 101 个指标名里的词** ∪ **本指标英文描述里的词**；
+    2. 候选词表 = **全表所有指标名里的词** ∪ **本指标英文描述里的词**；
     3. 若某词是候选词删掉 1~2 个字符得到的子序列，且差异**不是**英语屈折变化
        （-s / -es / -ed / -d / -ing / -n / -en），则疑似 OCR 缺字；
     4. 候选词表里的词若本身又是别的词的截断，则不作候选（只保留「最完整」的那个）。
@@ -1333,7 +1435,7 @@ def _ocr_intro(lines: List[str], rules: Sequence[Dict[str, Any]], customer_rows:
                  '因此本文档「我们实际用的名字」一列与「客户表里的英文名」一列**目前完全相同**。')
     lines.append('- 客户确认后，我们把 `metric_rules.json` 里对应规则的 `metric_code`（以及有问题的'
                  '`metric_name`）改成建议写法，**代码不需要改**；届时「我们实际用的名字」才会与客户表产生差异。')
-    lines.append('- **本次核对没有发现取值口径错误**：98 个可提供指标的取数方式、维度、刷新周期'
+    lines.append('- **本次核对没有发现取值口径错误**：%d 个可提供指标的取数方式、维度、刷新周期'
                  '都按映射表复核过，问题集中在**名称拼写**上。'
                  '（单位口径另见第 8 节 —— 客户表里有几处「指标单位」与语义对不上，**待客户确认**。）')
     lines.append('')
@@ -1349,7 +1451,7 @@ def _ocr_intro(lines: List[str], rules: Sequence[Dict[str, Any]], customer_rows:
     lines.append('**自动判据一：删字型**（脚本 `tools/build_delivery_docs.py` 的 `detect_ocr_findings`）：')
     lines.append('')
     lines.append('1. 把指标英文名按 `.` / `_` 切成词；')
-    lines.append('2. 候选词表 = 全表 101 个指标名里的词 ∪ 本指标中文名里的词；')
+    lines.append('2. 候选词表 = 全表 %d 个指标名里的词 ∪ 本指标中文名里的词；' % len(rules))
     lines.append('3. 某词若是候选词**删掉 1~2 个字符**得到的子序列，且差异**不是**英语屈折变化'
                  '（-s / -es / -ed / -d / -ing / -n / -en），则判为疑似 OCR 缺字；')
     lines.append('4. 候选词本身若又是别的词的截断，则不作候选（只保留最完整的写法）。')
@@ -1541,17 +1643,22 @@ def _ocr_conclusion(lines: List[str], customer_rows: Sequence[Dict[str, Any]],
 
 
 def render_ocr_checklist(rules, customer_rows):
-    """生成《交付-客户指标英文名核对清单.md》。"""
-    findings = detect_ocr_findings(rules)
-    counts = corpus_word_counts(rules)
+    """生成《交付-客户指标英文名核对清单.md》。
+
+    检测器跑在**客户指标库全量**（生效口径 + 被排除的）上 —— 核对清单的对象
+    是客户的指标表，不是我们的生效口径。
+    """
+    scope = customer_scope_rules(rules, customer_rows)
+    findings = detect_ocr_findings(scope)
+    counts = corpus_word_counts(scope)
     lines = []
-    _ocr_intro(lines, rules, customer_rows)
-    _ocr_main_table(lines, rules, counts)
-    _ocr_desc_table(lines, rules)
+    _ocr_intro(lines, scope, customer_rows)
+    _ocr_main_table(lines, scope, counts)
+    _ocr_desc_table(lines, scope)
     _ocr_style(lines)
     _ocr_auto_table(lines, findings, customer_rows)
-    _ocr_substitution_table(lines, rules)
-    _ocr_conclusion(lines, customer_rows, rules)
+    _ocr_substitution_table(lines, scope)
+    _ocr_conclusion(lines, customer_rows, scope)
     return '\n'.join(lines) + '\n'
 
 
@@ -1619,8 +1726,9 @@ def build_all() -> Dict[str, str]:
     views = load_merged_sql()
     customer_rows = load_customer_table()
     return {
-        SPEC_DOC: render_metric_spec(rules, views),
-        UNSUPPORTED_DOC: render_unsupported(rules),
+        SPEC_DOC: render_metric_spec(
+            rules, views, load_excluded_metrics().get('counts') or {}),
+        UNSUPPORTED_DOC: render_unsupported(rules, customer_rows),
         OCR_DOC: render_ocr_checklist(rules, customer_rows),
     }
 

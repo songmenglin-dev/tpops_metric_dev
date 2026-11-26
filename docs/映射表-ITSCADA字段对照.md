@@ -178,8 +178,8 @@
 | `status` | Integer | 必填 | TPOPS 字段 | convergence | `records[].status` | TPOPS 响应里直接取 | activated→1（告警）/ recovered、cleared→0（恢复） |
 | `recoverTime` | Long | 条件必填 | TPOPS 字段 | convergence | `records[].clear_alarm_time` | TPOPS 响应里直接取 | status=0（恢复）时必填；status=1（告警）时输出 null |
 | `resourceName` | String | 必填 | 组装 | 明细行自带 node_id 与 host_ip；收敛条目不带，按 alarm_id 关联明细行回填 | `records[].node_id / records[].host_ip` | 由上面几个字段组装 | resourceName 只能表示节点 → 拼 {host_ip}_{node_id}；仍拿不到节点时落到节点清单里的第一个 master CN |
-| `metricName` | String | 必填 | 映射表 | 按 alarm_id 查表 | `data/mapping/alarm_rules.json → metric_name` | 用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id] | 能对应到客户指标的告警用客户指标中文名；其余用告警名 |
-| `metricCode` | String | 必填 | 映射表 | 按 alarm_id 查表 | `data/mapping/alarm_rules.json → metric_code` | 用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id] | 能对应到客户指标的告警用客户指标英文名；其余用 gaussdb.alarm.<alarm_id> |
+| `metricName` | String | 必填 | 映射表 | 按 alarm_id 查表 | `data/mapping/alarm_rules.json → metric_name` | 用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id] | 能对应到客户指标的告警用客户指标中文名；其余用统一指标名（alarm_rules.json 的 event_metric 段） |
+| `metricCode` | String | 必填 | 映射表 | 按 alarm_id 查表 | `data/mapping/alarm_rules.json → metric_code` | 用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id] | 能对应到客户指标的告警用客户指标英文名；其余用统一指标名 gaussdb.alarm（alarm_rules.json 的 event_metric 段） |
 | `value` | String | 必填 | TPOPS 字段 | convergence | `records[].alarm_items_sum` | TPOPS 响应里直接取 | 事件类告警取命中节点数；指标类告警取该客户指标最近一次采样值（取不到则 null，不填 0） |
 | `unit` | String | 选填 | 映射表 | 按挂到的客户指标查表 | `data/mapping/metric_rules.json → unit` | 按挂到的客户指标查该条目的 unit | 挂到客户指标的告警取该指标单位；事件类告警为 null |
 | `tags` | Object | 选填 | 组装 | 两者都取 | `records[].instance_id / records[].instance_name / records[].node_id / records[].host_ip / records[].alarm_category / records[].alarm_type / records[].engine / records[].alarm_duration / records[]（明细行整行）` | 由上面几个字段组装 | 前 8 个平铺，明细行整行放 details[] |
@@ -208,13 +208,14 @@
 |---|---|---|---|
 | 1 | value 的线格式 | 按客户指标表【数据类型】序列化（整数/浮点→数字，字符/文本→字符串） | 两份方案的字段表都写 value 为 String，但指标样例里是数字 75.3、告警样例里是字符串 "95.5"。 |
 | 2 | 指标名字段的叫法 | 用字段表的 metricName / metricCode | 指标方案的字段表用 metricName/metricCode，告警方案的样例 JSON 里写的是 metric_name。 |
-| 3 | resourceName 与客户台账的对齐 | {host_ip}_{node_id}（节点 IP + TPOPS 节点 ID）；与节点无关的指标落到节点清单里的第一个 master CN | resourceName 只能表示一个节点 → 固定「节点 IP + 节点 ID」；表名/库名/端口这类业务维度改走 metricName/metricCode 的占位符与 tags.dimension_values。方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。 |
+| 3 | resourceName 与客户台账的对齐 | {host_ip}_{node_id}（节点 IP + TPOPS 节点 ID）；与节点无关的指标落到节点清单里的第一个 master CN | resourceName 只能表示一个节点 → 固定「节点 IP + 节点 ID」；表名/库名/端口这类业务维度改走 metricName/metricCode 的占位符与 tags.dimension_values；表级指标的维度值是 schema_name.table_name（如 public.t1）。方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。 |
 | 4 | 采集频率 | 以客户指标表【数据更新周期】为准（30 秒~24 小时共 7 档） | 方案建议「需告警的指标 1 分钟一次、无需告警的 5 分钟一次」，与客户表的分档不一致。 |
 | 5 | 状态类指标的展示值转义 | 平台枚举值原样透传（实测 1=正常、0=异常） | 5 条状态类指标（实例状态、主备状态）的客户展示值转义未定义。 |
-| 6 | 告警挂到哪个客户指标 | 257 条告警里只有 3 条能对应上客户指标（都指向 gaussdb.Tps），其余用 gaussdb.alarm.<alarm_id> 自造指标名 | 事件类告警没有对应的客户指标，需要客户确认这种挂法是否可接受。 |
+| 6 | 告警挂到哪个客户指标 | 未挂客户指标的 254 条事件类告警统一用 metricCode=gaussdb.alarm / metricName=数据库告警 | 原先每条告警各造一个 gaussdb.alarm.<alarm_id> 指标名（还有 gaussdb.alarm.>=75% 这种拿阈值当 ID 的），客户侧要建 254 条台账条目。统一后告警种类由 alarmId / alarmName / alarmContent 承载，ITSCADA 侧告警台账从 254 项变 1 项。**对外契约变化，待客户确认。** |
 | 7 | 慢 SQL 的 sql_text 能否外发 | 默认脱敏：字面量替换为 ?，并截断到 512 字符 | 含业务 SQL 文本，需客户书面确认。 |
 | 8 | A 类多 series 的归集口径 | 暂按逐组件各出一条消息（现状实现），维度键 COMPONENT_ID 归入 tags | A 类 11 个客户指标都是实例级一条消息，但平台按组件给出多条 series（rds092/rds093/rds400 各 3 条 CN、rds402 6 条 CN+DN、rds133 3 条 CN、gaussdb_instance_status 1 条 value、datanode_switch_status 9 条 DN）。合成方式属业务口径：速率类可求和，启动时刻可取最早，主备状态可按 DN 展开或归集为布尔。确认后由 metric_rules.json 的 value_rule 承载，不改消息信封。 |
-| 9 | 11 组英文名仅大小写不同、中文名不同 | 两套都投递（metricCode 只差前缀大小写，值完全一样） | 客户指标库 101 个指标里，英文名忽略大小写后有 11 组相同但中文名不同（全部是表级指标：小写 gaussdb. 前缀=中文名+表信息+2 分钟，大写 GAUSSDB. 前缀=英文名+事务信息+5 分钟）。客户侧若按大小写不敏感匹配，这 11 个指标会合并覆盖。要客户确认：是两条独立指标（需给出区分办法），还是同一条的重复登记（留哪一套）。清单见 docs/问题单.md TPOPS-003。 |
+| 9 | 11 组英文名仅大小写不同、中文名不同 | 只投递中文名正常的一套（小写 gaussdb. 前缀）；大写 GAUSSDB. 前缀的 11 条进排除清单，不产出消息 | 客户指标库 101 个指标里，英文名忽略大小写后有 11 组相同但中文名不同（全部是表级指标：小写 gaussdb. 前缀=中文名+表信息+2 分钟，大写 GAUSSDB. 前缀=英文名+事务信息+5 分钟）。客户侧若按大小写不敏感匹配，这 11 个指标会合并覆盖。本次按「保留中文名正常的一条」落地，被排除的 11 条见 tpops_kafka_collector/mapping/data/excluded_metrics.json。清单见 docs/问题单.md TPOPS-003。 |
 | 10 | 速率型指标发累计量，单位与值对不上 | 按源列原值发（累计计数），单位仍按客户表原样带 | 客户表里单位标成 tps/tuples/s/scans/s 的 10 个指标（GAUSSDB.[{#DATNAME}]_committed_transactions、_rolled_back_transactions 与 GAUSSDB.{#NAME}.number.Of.update.tuples 等 8 个表级指标），平台源列是累计计数，现发的是累计值；同族 4 个 *_records_per_second 用差分（counter_delta）口径是对的。改法：把 10 条规则的 value_rule 从 raw 改成 counter_delta；但差分窗口=采集周期（5 分钟），是否再除以秒数换算成「每秒」需客户确认。清单见 docs/问题单.md TPOPS-002。 |
 | 11 | 几处单位与来源字段语义对不上 | 按客户表原样带单位 | gaussdb.Temp_files 单位 b（源列 temp_files 是文件个数）、gaussdb.Conflicts 单位 ms（源列 conflicts 是冲突次数）、gaussdb.Blk_read_time 单位 个（源列 blk_read_time 是毫秒）、GAUSSDB.{#NAME}.Number.t.date.ples 单位 %（源列 n_tup_hot_upd 是行数）。是客户表抄错还是另有含义？确认后只改映射表。清单见 docs/问题单.md TPOPS-004。 |
+| 12 | 事件类告警的统一指标名取值 | metricCode=gaussdb.alarm、metricName=数据库告警 | 统一值写在 alarm_rules.json 的 event_metric 段（表驱动），改口径只改数据文件、不改代码。统一后 ITSCADA 侧的告警指标台账从 254 项变 1 项（告警种类由 alarmId / alarmName / alarmContent 承载）——**对外契约变化，需客户确认这个指标名与中文名。** |
 

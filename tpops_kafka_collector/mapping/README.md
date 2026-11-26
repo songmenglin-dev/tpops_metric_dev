@@ -9,7 +9,7 @@
 |---|---|
 | `docs/ITSCADA第三方指标数据接入对接方案V2.docx` | 指标消息的字段集合与语义（§6.2 字段表、§7 指标表模板） |
 | `docs/ITSCADA第三方告警数据接入对接方案V2.docx` | 告警消息的字段集合与语义（§3.2 字段表、§4 压缩规则） |
-| `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` / 指标库 | 101 个客户指标的规范：中文名、英文名、数据类型、周期、单位 |
+| `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` / 指标库 | 101 个客户指标的规范：中文名、英文名、数据类型、周期、单位（**只读**，不因排除清单改动） |
 | `docs/开发方案-GaussDB指标与告警采集.md` §4.3 | 每个指标走哪条取数通道、怎么从原始值算出客户值 |
 
 ## 文件布局
@@ -17,16 +17,18 @@
 ```
 tpops_kafka_collector/mapping/   # 生产代码：规则数据 + 执行代码（随包发布）
 ├── data/                     # 规则数据（表驱动）—— **生产环境的唯一真相源**
-│   ├── metric_rules.json     # 业务规则：101 条指标规则（98 可提供 + 3 标记丢弃）
-│   ├── response_rules.json   # 取数定位：响应体的哪一段哪一列（98 条 + 18 种形状）
-│   ├── kafka_field_mapping.json  # 字段映射：值 → Kafka 字段（98 条指标 + 4 种告警形态）
+│   ├── metric_rules.json     # 业务规则：87 条生效指标规则（全部 enabled）
+│   ├── excluded_metrics.json # 排除清单：14 条被排除的客户指标（11 重复 + 3 无法提供）
+│   ├── response_rules.json   # 取数定位：响应体的哪一段哪一列（87 条 + 18 种形状）
+│   ├── kafka_field_mapping.json  # 字段映射：值 → Kafka 字段（87 条指标 + 4 种告警形态）
 │   ├── alarm_rules.json      # 告警规则：等级/状态映射 + 257 条告警定义
+│   │                         #   （`event_metric` 段 = 未挂客户指标的统一指标名）
 │   ├── itscada_field_map.json  # 客户消息的字段清单（哪些字段、必填与否）
 │   ├── merged_sql.json       # 11 个合并 SQL 视图的定义 + 刷新档位 + 分页段
 │   ├── sql_merge.sql         # 合并 SQL 的归档留档（与生成器逐字符比对）
-│   ├── customer_metric_mapping.json  # 101 客户指标 → 可提供性判定（独立基准）
+│   ├── customer_metric_mapping.json  # 87 生效指标 → 可提供性判定（独立基准）
 │   ├── observed_columns.json # 实测留档的实际返回列（列名校验用，生成物）
-│   └── open_items.json       # 待客户确认的 8 项
+│   └── open_items.json       # 待客户确认的 12 项
 ├── __init__.py               # 对外接口
 ├── table.py                  # 加载与查表（MappingTable / MetricRule / AlarmDefinition）
 ├── rules.py                  # 取值规则引擎的对外接口 + 文档（13 种 value_rule.type）
@@ -222,6 +224,59 @@ python tools/build_kafka_mapping.py      # → kafka_field_mapping.json
 （`gaussdb.{#NAME}.garbage.Ratio` → `gaussdb.public.garbage.Ratio`）。
 
 测试会拿"实测行数"对账：`per_row` 的指标有几行就得产出几条消息。
+
+### 表级指标的维度值：`schema_name.table_name`
+
+表级指标的 `{#NAME}` 绑的是**两列**（`dimension_bindings` 的值可以是
+**点号连接的多个列名**）：
+
+```json
+"dimension_bindings": {"NAME": "schemaname.relname"},
+"value_rule": {"type": "raw", "params": {
+    "column": "n_tup_del", "row_policy": "per_row",
+    "group_by": ["schemaname", "relname"]}}
+```
+
+- 维度值 = `schemaname` 与 `relname` 用 `.` 连起来 → `public.t1`；
+- **分组按两列**（`schemaname` + `relname`）—— 只按 `relname` 分组会让
+  `public.t1` 与 `other.t1` 落进同一个键，两条消息在幂等层撞键、
+  后一条被**静默丢弃**；
+- 幂等键 = `instance_id + metric_name + 排序后的 dimensions + timestamp`，
+  维度不同 → 键不同 → 两条都投递；同一张表重复采集 → 键相同 → 仍然去重。
+
+组合绑定取不到列值 → 抛 `RuleError`，**不静默留 `{#NAME}`**。
+
+### 排除清单（`excluded_metrics.json`）
+
+从生效口径里剔除的客户指标（**14 条** = 11 条重复的英文变体 + 3 条无法提供）：
+
+```json
+{"metric_code": "GAUSSDB.{#NAME}.garbage.Ratio",
+ "metric_name": "({#NAME})Garbage ratio",
+ "reason": "duplicate",
+ "detail": "与 gaussdb.{#NAME}.garbage.Ratio 是同一条表级指标 ……",
+ "kept": "gaussdb.{#NAME}.garbage.Ratio"}
+```
+
+- `reason` = `duplicate`（重复）时**必带** `kept`（保留哪一条）；
+  `reason` = `unsupported`（无法提供）时不带 `kept`；
+- 排除发生在**构建期**（`tools/build_itscada_mapping.py` 生成映射表时跳过）——
+  运行期**没有**「遍历到再丢弃」的分支，被排除的指标码**根本不在**生效映射表里，
+  轮汇总里的 `dropped_unsupported` 恒为 **0**；
+- 改口径**只改这份数据文件**，不改代码。
+
+### 告警的统一指标名（`alarm_rules.json` 的 `event_metric` 段）
+
+平台 257 条告警定义里只有 3 条挂靠了客户指标（都指向 `gaussdb.Tps`）；
+其余 254 条事件类告警**共用同一个**指标名：
+
+```json
+"event_metric": {"metric_code": "gaussdb.alarm", "metric_name": "数据库告警"}
+```
+
+- 统一值**表驱动**（写在数据文件里），改口径只改数据、不改代码；
+- 告警种类由 `alarmId` / `alarmName` / `alarmContent` 承载，不靠 `metricCode` 区分；
+- `metric_code` 唯一性**只对指标规则**要求 —— 告警定义靠 `alarm_id` 唯一定位。
 
 ### 展开方式
 

@@ -1,0 +1,78 @@
+{
+  "recommendation": {
+    "available_modes": [
+      "inline",
+      "batch-inline",
+      "sdd"
+    ],
+    "recommendation": {
+      "mode": "sdd",
+      "reasons": [
+        "The declared work spans multiple waves, so SDD keeps dependencies and review receipts explicit."
+      ]
+    },
+    "facts": {
+      "workflow": "full",
+      "documented_task_count": 19,
+      "planned_task_count": 19,
+      "planned_wave_count": 4,
+      "has_parallel_wave": false,
+      "inline_threshold": 3
+    }
+  },
+  "waves": [
+    {
+      "id": "wave-1-mapping",
+      "strategy": "serial",
+      "tasks": [
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.5",
+        "1.6",
+        "1.7",
+        "1.8"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "wave-2-logging",
+      "strategy": "serial",
+      "tasks": [
+        "2.1",
+        "2.2",
+        "2.3",
+        "2.4",
+        "2.5",
+        "2.6",
+        "2.7"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "wave-3-deploy",
+      "strategy": "serial",
+      "tasks": [
+        "3.1",
+        "3.2",
+        "3.3"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "wave-4-verification",
+      "strategy": "serial",
+      "tasks": [
+        "3.4"
+      ],
+      "depends_on": []
+    }
+  ],
+  "artifacts_hash": "sha256:7cc1e176f66c39a9ea059f98ea65d100a606d8caae35565b932fc67a41ce126e",
+  "contract_hash": "sha256:f7b75d5a6042029294770105c57bad5938f3e61c8025444c2d42217d9ad1b3c0",
+  "workflow": "full",
+  "execution_plan_revision_at_recommendation": null,
+  "created_at": "2026-11-26T03:15:51.267Z",
+  "hash": "sha256:03681ea6940291eca5f450bd4fa62268edc92019560ddd7f8c566ad081c6295c"
+}

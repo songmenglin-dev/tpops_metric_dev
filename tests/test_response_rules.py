@@ -82,10 +82,10 @@ def _resolve(rule, payload, now_ms=1760000000000):
 # -- 覆盖面 ---------------------------------------------------------------
 
 def test_covers_all_enabled_metrics(rules):
-    """98 个可提供指标各有一条规则；3 个无法提供的不建规则。"""
+    """87 个生效指标各有一条规则；被排除的指标不建规则。"""
     metric_rules = _load(os.path.join(DATA_DIR, 'mapping', 'metric_rules.json'))['rules']
     enabled = set(r['metric_code'] for r in metric_rules if r.get('enabled'))
-    assert len(rules) == 98
+    assert len(rules) == 87
     assert set(r['metric_code'] for r in rules) == enabled
 
 

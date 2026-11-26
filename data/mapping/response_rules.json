@@ -1676,6 +1676,7 @@
         "value_column": "n_tup_del",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -1686,6 +1687,7 @@
             "column": "n_tup_del",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -1694,6 +1696,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -1707,7 +1710,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2187,6 +2190,7 @@
         "value_column": "n_dead_tup",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2197,6 +2201,7 @@
             "column": "n_dead_tup",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2205,6 +2210,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2218,7 +2224,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2281,6 +2287,7 @@
         "value_column": "n_tup_hot_upd",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2291,6 +2298,7 @@
             "column": "n_tup_hot_upd",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2299,6 +2307,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2312,7 +2321,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2375,6 +2384,7 @@
         "value_column": "idx_scan",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2385,6 +2395,7 @@
             "column": "idx_scan",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2393,6 +2404,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2406,7 +2418,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2469,6 +2481,7 @@
         "value_column": "seq_tup_read",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2479,6 +2492,7 @@
             "column": "seq_tup_read",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2487,6 +2501,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2500,7 +2515,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2563,6 +2578,7 @@
         "value_column": "idx_tup_fetch",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2573,6 +2589,7 @@
             "column": "idx_tup_fetch",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2581,6 +2598,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2594,7 +2612,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2657,6 +2675,7 @@
         "value_column": "n_tup_ins",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2667,6 +2686,7 @@
             "column": "n_tup_ins",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2675,6 +2695,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2688,7 +2709,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2751,6 +2772,7 @@
         "value_column": "n_live_tup",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2761,6 +2783,7 @@
             "column": "n_live_tup",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2769,6 +2792,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2782,7 +2806,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2845,6 +2869,7 @@
         "value_column": "n_tup_upd",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2855,6 +2880,7 @@
             "column": "n_tup_upd",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2863,6 +2889,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2876,7 +2903,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -2939,6 +2966,7 @@
         "value_column": "seq_scan",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -2949,6 +2977,7 @@
             "column": "seq_scan",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           }
@@ -2957,6 +2986,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -2970,7 +3000,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -3297,6 +3327,7 @@
         "value_column": "dead_tup_ratio",
         "match": {},
         "group_by": [
+          "schemaname",
           "relname"
         ]
       },
@@ -3307,6 +3338,7 @@
             "column": "dead_tup_ratio",
             "row_policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ]
           },
@@ -3316,6 +3348,7 @@
           "row": {
             "policy": "per_row",
             "group_by": [
+              "schemaname",
               "relname"
             ],
             "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
@@ -3329,7 +3362,7 @@
           }
         },
         "dimensions": {
-          "NAME": "relname"
+          "NAME": "schemaname.relname"
         },
         "placeholders": [
           "NAME"
@@ -5600,1041 +5633,6 @@
       },
       "needs_confirmation": false,
       "note": "count(*) 统计预备事务"
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.Number.ad.ples",
-      "metric_name": "({#NAME}) number of dead tuples",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "n_dead_tup",
-        "value_column": "n_dead_tup",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "n_dead_tup",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": null,
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "003_GAUSSDB.NAME.Number.ad.ples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.Number.lete.ples",
-      "metric_name": "({#NAME}) number of delete tuples",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "n_tup_del",
-        "value_column": "n_tup_del",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "n_tup_del",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": "tuples/s",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "004_GAUSSDB.NAME.Number.lete.ples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.garbage.Ratio",
-      "metric_name": "({#NAME})Garbage ratio",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "dead_tup_ratio",
-        "value_column": "dead_tup_ratio",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "dead_tup_ratio",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          },
-          "note": "比率已在合并 SQL 内用 CASE WHEN 算好（dead_tup_ratio）"
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "浮点",
-        "unit": "%",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "005_GAUSSDB.NAME.garbage.Ratio.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.Number.t.date.ples",
-      "metric_name": "({#NAME}) number of hot update tuples",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "n_tup_hot_upd",
-        "value_column": "n_tup_hot_upd",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "n_tup_hot_upd",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": "tuples/s",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "006_GAUSSDB.NAME.Number.t.date.ples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.index.scan",
-      "metric_name": "({#NAME})number of index scan",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "idx_scan",
-        "value_column": "idx_scan",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "idx_scan",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": "scans/s",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "007_GAUSSDB.NAME.number.Of.index.scan.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
-      "metric_name": "({#NAME})number of index tuples read",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "idx_tup_fetch",
-        "value_column": "idx_tup_fetch",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "idx_tup_fetch",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": "tuples/s",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "008_GAUSSDB.NAME.number.Of.dex.ples.ad.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.live.tuples",
-      "metric_name": "({#NAME})number of live tuples",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "n_live_tup",
-        "value_column": "n_live_tup",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "n_live_tup",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": null,
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "009_GAUSSDB.NAME.number.Of.live.tuples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
-      "metric_name": "({#NAME})number of insert tuples",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "n_tup_ins",
-        "value_column": "n_tup_ins",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "n_tup_ins",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": "tuples/s",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "010_GAUSSDB.NAME.number.Of.insert.tuples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
-      "metric_name": "({#NAME})number of sequencial scan",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "seq_scan",
-        "value_column": "seq_scan",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "seq_scan",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": "scans/s",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "011_GAUSSDB.NAME.number.Of.sequential.scan.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
-      "metric_name": "({#NAME})number of sequencial tuples read",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "seq_tup_read",
-        "value_column": "seq_tup_read",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "seq_tup_read",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": "tuples/s",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "012_GAUSSDB.NAME.number.Of.quential.ples.ad.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.update.tuples",
-      "metric_name": "({#NAME})number of update tuples",
-      "enabled": true,
-      "channel": "command_center_sql",
-      "shape": "cmd_rows_stat_user_tables",
-      "locate": {
-        "sql_key": "stat_user_tables",
-        "column": "n_tup_upd",
-        "value_column": "n_tup_upd",
-        "match": {},
-        "group_by": [
-          "relname"
-        ]
-      },
-      "business": {
-        "value_rule": {
-          "type": "raw",
-          "params": {
-            "column": "n_tup_upd",
-            "row_policy": "per_row",
-            "group_by": [
-              "relname"
-            ]
-          }
-        },
-        "scope": {
-          "row": {
-            "policy": "per_row",
-            "group_by": [
-              "relname"
-            ],
-            "note": "行作用域：per_row=一行一条消息；sum=全表聚合成一条；first=取第一行"
-          },
-          "node": {
-            "policy": "per_master",
-            "note": "命令中心同一 sql_key 在每个 master 各返一份，计数类差分基线按 master 分开"
-          },
-          "series": {
-            "policy": "not_applicable"
-          }
-        },
-        "dimensions": {
-          "NAME": "relname"
-        },
-        "placeholders": [
-          "NAME"
-        ],
-        "value_type": "整数",
-        "unit": "tuples/s",
-        "collect_cycle": {
-          "value": 5,
-          "unit": "分"
-        },
-        "time_policy": {
-          "source": "collect_time",
-          "fallback": "collect_time"
-        },
-        "missing": "null",
-        "idempotency": [
-          "instance_id",
-          "metric_name",
-          "dimensions",
-          "timestamp"
-        ]
-      },
-      "evidence": {
-        "sample_file": "013_GAUSSDB.NAME.number.Of.update.tuples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "note": ""
     },
     {
       "metric_code": "GAUSSDB.Buffers_Alloc",

@@ -1,4 +1,4 @@
-"""B 类（命令中心 SQL）82 个指标的**值相等**回归。
+"""B 类（命令中心 SQL）71 个指标的**值相等**回归。
 
 **这个文件守的是什么**：合并 SQL 返回形态下，取值口径错了**不报错**。
 列名对、聚合口径错（``aggregate`` 的 ``fn`` 写错、``raw`` 的 ``row_policy``
@@ -11,14 +11,14 @@
 留档重新抓取不会让回归跟着变绿。
 
 **期望值从哪来**：
-- B 类 82 条 → ``tests/fixtures/expected_values.json``
+- B 类 71 条 → ``tests/fixtures/expected_values.json``
   （wave-0 的那一张，逐字节等于 ``data/mapping/expected_values.json``），
   由 ``tools/expected_deriver.py`` 从留档原始行**独立推导**，不经过规则引擎；
 - 本文件断言的**被测对象**是 ``tpops_kafka_collector/mapping/rules.py``。
 
 两边是两套实现：引擎把 ``state_contains`` 理解错了，这里就会红。
 
-**覆盖**：82 条 B 类指标**逐条**断言（一条不落），累计计数器另加第 2 轮差分断言。
+**覆盖**：71 条 B 类指标**逐条**断言（一条不落），累计计数器另加第 2 轮差分断言。
 """
 import json
 
@@ -30,7 +30,7 @@ from tpops_kafka_collector.mapping.rules import CounterDeltaStore
 from tpops_kafka_collector.mapping.table import MetricRule
 
 #: B 类指标的条数（一条不落）。
-EXPECTED_B_COUNT = 82
+EXPECTED_B_COUNT = 71
 
 #: 累计计数器所在的视图（第 2 轮合成留档只改这个视图）。
 COUNTER_VIEW = 'stat_database'
@@ -59,7 +59,7 @@ def _evaluate(rule_payload, ctx):
 
 
 def _b_rules():
-    """82 条 B 类指标的声明（**包内**那份 —— 生产用的声明）。"""
+    """71 条 B 类指标的声明（**包内**那份 —— 生产用的声明）。"""
     from regression.conftest import package_mapping
 
     payload = package_mapping('metric_rules.json')
@@ -69,7 +69,7 @@ def _b_rules():
     ]
 
 
-#: 82 条 B 类指标的编码（有序）—— 收集期就要定下来（``parametrize`` 不能用夹具）。
+#: 71 条 B 类指标的编码（有序）—— 收集期就要定下来（``parametrize`` 不能用夹具）。
 B_CODES = sorted(rule['metric_code'] for rule in _b_rules())
 
 #: 累计计数器的 5 条。
@@ -81,17 +81,17 @@ COUNTER_CODES = sorted(
 
 # -- 覆盖完整性 ------------------------------------------------------------
 
-def test_b_class_rule_count_is_82(b_class_rules):
-    """B 类指标就是 82 条 —— 少一条就是少一条回归覆盖。"""
+def test_b_class_rule_count_is_71(b_class_rules):
+    """B 类指标就是 71 条 —— 少一条就是少一条回归覆盖。"""
     assert len(b_class_rules) == EXPECTED_B_COUNT
 
 
 def test_expected_table_covers_every_b_class_metric(expected_table):
-    """期望值表**一条不落**地覆盖 82 条 B 类指标。"""
+    """期望值表**一条不落**地覆盖 71 条 B 类指标。"""
     assert sorted(expected_table['expected']) == B_CODES
 
 
-# -- 值相等：82 条逐条断言 -----------------------------------------------
+# -- 值相等：71 条逐条断言 -----------------------------------------------
 
 @pytest.mark.parametrize('metric_code', B_CODES)
 def test_rule_engine_output_equals_expected_values(

@@ -1,4 +1,4 @@
-"""B 类（命令中心 SQL）82 个指标的**值相等**守卫。
+"""B 类（命令中心 SQL）71 个指标的**值相等**守卫。
 
 **这个文件守的是什么**：合并 SQL 返回形态下，取值口径错了**不报错**。
 列名对、聚合口径错（例如 ``aggregate`` 的 ``fn`` 写错、``raw`` 的 ``row_policy``
@@ -12,8 +12,8 @@
 （``tpops_kafka_collector/mapping/rules.py``），一边是独立推导的期望值。
 
 覆盖：
-- 82 条 B 类指标**逐条**断言「规则引擎输出 == 期望值表」（一条不落）；
-- 期望值表与 82 条 B 类指标**完全对应**（不多不少）；
+- 71 条 B 类指标**逐条**断言「规则引擎输出 == 期望值表」（一条不落）；
+- 期望值表与 71 条 B 类指标**完全对应**（不多不少）；
 - 期望值表与生成器输出**一致**（改了规则要重新生成）；
 - ``counter_delta`` 的 5 条：首轮无基线不产出值，第 2 轮差分速率 == 期望速率。
 """
@@ -36,7 +36,7 @@ EXPECTED_PATH = os.path.join(MAPPING_DIR, 'expected_values.json')
 PROBE_PATH = os.path.join(DATA_DIR, 'merged_sql', 'sql_merge_probe_result.json')
 
 B_CLASS = 'command_center_sql'
-EXPECTED_B_COUNT = 82
+EXPECTED_B_COUNT = 71
 COUNTER_VIEW = 'stat_database'
 
 
@@ -46,7 +46,7 @@ def _load(path):
 
 
 def _b_rules():
-    """82 条 B 类指标（channel == command_center_sql）的声明。"""
+    """71 条 B 类指标（channel == command_center_sql）的声明。"""
     payload = _load(METRIC_RULES_PATH)
     return [
         rule for rule in payload['rules']
@@ -109,13 +109,13 @@ def _expected_pairs(node_expected):
 
 # -- 期望值表本身的完整性 --------------------------------------------------
 
-def test_b_class_metric_count_is_82():
+def test_b_class_metric_count_is_71():
     assert len(B_RULES) == EXPECTED_B_COUNT
     assert len(B_CODES) == EXPECTED_B_COUNT
 
 
 def test_expected_table_covers_every_b_class_metric(expected_table):
-    """期望值表必须**一条不落**地覆盖 82 条 B 类指标。"""
+    """期望值表必须**一条不落**地覆盖 71 条 B 类指标。"""
     expected = expected_table['expected']
     assert len(expected) == EXPECTED_B_COUNT
     assert sorted(expected) == B_CODES
@@ -136,7 +136,7 @@ def test_expected_table_records_the_rule_type(expected_table):
         assert entry['sql_key']
 
 
-# -- 值相等：82 条逐条断言 ------------------------------------------------
+# -- 值相等：71 条逐条断言 ------------------------------------------------
 
 @pytest.mark.parametrize('metric_code', B_CODES)
 def test_rule_engine_output_equals_expected_values(

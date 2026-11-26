@@ -392,8 +392,9 @@ def test_alarm_message_has_exactly_the_documented_fields(table):
     assert message['priority'] == 2
     assert message['status'] == 1
     assert message['recoverTime'] is None
-    assert message['metricCode'] == 'gaussdb.alarm.2007010001'
-    assert message['metricName'] == '节点NTP状态异常'
+    # 未挂客户指标的事件类告警 → **统一指标名**（表驱动，alarm_rules.json 的 event_metric 段）
+    assert message['metricCode'] == 'gaussdb.alarm'
+    assert message['metricName'] == '数据库告警'
     assert message['value'] == '2'
     assert message['resourceName'] == '172.16.103.151_node-1'
 
@@ -512,7 +513,6 @@ def test_ratio_metrics_are_per_row(table):
     """比率列是按行算出来的，带维度的必须逐行取。"""
     for code in (
         'GAUSSDB.[{#DATNAME}]_cache_hit_ratio',
-        'GAUSSDB.{#NAME}.garbage.Ratio',
         'gaussdb.{#NAME}.garbage.Ratio',
     ):
         rule = _rule(table, code)

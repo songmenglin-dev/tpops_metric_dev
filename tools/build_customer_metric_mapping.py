@@ -29,6 +29,7 @@ import json
 import os
 import sys
 
+import excluded_metrics
 import xlsx_columns
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -462,6 +463,7 @@ def check_against_excel(rows, headers):
 def build(client_rows, headers):
     items = []
     col = _col(headers)
+    excluded = excluded_metrics.excluded_codes()
     for row, entry in zip(client_rows, MAPPING):
         expected_cn, tpops_metric, match_level, note, source = entry
         tpops_name = None
@@ -484,6 +486,9 @@ def build(client_rows, headers):
             "match_level": match_level,
             "note": note,
         })
+    # 排除发生在构建期：被排除清单剔除的指标不进生效口径。
+    # 客户 Excel 原件不动 —— 排除只落在排除清单与本判定结果里。
+    items = [it for it in items if it["customer_metric"] not in excluded]
     return items
 
 

@@ -287,12 +287,15 @@ def test_command_center_sql_tiers_come_from_the_mapping_table(mapping):
     plans = compute_channel_plans(mapping)
     plan = dict((item.channel, item) for item in plans)[CHANNEL_COMMAND_CENTER]
     assert plan.tiers == (60, 120, 300, 86400)
-    assert plan.metric_count == 82
+    assert plan.metric_count == 71
 
 
-def test_unsupported_metric_count_is_three(mapping):
-    """不可提供指标 3 条 —— 计数上报（``dropped_unsupported``）。"""
-    assert count_unsupported_metrics(mapping) == 3
+def test_unsupported_metric_count_is_zero(mapping):
+    """不可提供指标已在**构建期**排除 —— 计数上报恒为 0（``dropped_unsupported``）。
+
+    运行期没有「遍历到再丢弃」的分支：被排除的指标码根本不在生效映射表里。
+    """
+    assert count_unsupported_metrics(mapping) == 0
 
 
 def test_schedule_entry_is_immutable():

@@ -1,0 +1,70 @@
+{
+  "schema_version": 2,
+  "available_modes": [
+    "full",
+    "hotfix",
+    "tweak",
+    "quick",
+    "lightweight"
+  ],
+  "facts": {
+    "task_count": 18,
+    "file_count": 22,
+    "config_doc_only": "no",
+    "schema_api_change": "no",
+    "new_module": "yes",
+    "behavioral_constraint_change": "yes",
+    "cross_module_change": "yes",
+    "uncertainty": "low",
+    "request_kind": "standard",
+    "affected_paths": [
+      "tpops_kafka_collector/mapping",
+      "tpops_kafka_collector/collectors",
+      "tpops_kafka_collector/logging_setup.py",
+      "tpops_kafka_collector/scheduler_report.py",
+      "deploy/collector.sh",
+      "data/mapping",
+      "tools/build_itscada_mapping.py"
+    ],
+    "exclusion_checks": {
+      "production_behavior": "yes",
+      "public_boundary": "yes",
+      "installer": "yes",
+      "state_machine": "no",
+      "external_side_effect": "no",
+      "data_permission_config_semantics": "yes",
+      "expected_behavior_clear": "yes",
+      "verification_reproducible": "yes",
+      "impact_paths_complete": "yes"
+    }
+  },
+  "missing_facts": [],
+  "status": "ready",
+  "recommendation": {
+    "mode": "full",
+    "reasons": [
+      "Risk signals require the user to choose Quick or Full."
+    ],
+    "risk_reasons": [
+      "behavioral constraint changed (PRD, spec, design, data, or permission)",
+      "new module",
+      "cross-module change"
+    ]
+  },
+  "created_at": "2026-11-26T02:10:20.395Z",
+  "selection": {
+    "mode": "full",
+    "reason": "用户明确选择 Full：跨模块（映射层/采集器/调度/部署脚本）+ 新增日志模块 + 对外消息契约变化",
+    "followed_recommendation": true,
+    "acknowledged_non_recommendation": false,
+    "accepted_automatically": false,
+    "risk_override": false,
+    "verification_strategy": null,
+    "scope_confirmation": null,
+    "verification_result": null,
+    "escalation_reason": null,
+    "confirmed_at": "2026-11-26T02:13:34.050Z",
+    "selected_at": "2026-11-26T02:13:34.050Z"
+  },
+  "hash": "sha256:2099f40609fe3e2c86d3d2b8b11ec3522573ea00e3076aa86b56ce0bfee4cb0c"
+}

@@ -23,9 +23,10 @@ def table():
     return MappingTable.load(MAPPING_DIR)
 
 
-def test_metric_rules_cover_all_101_customer_metrics(table):
-    assert len(table.metric_rules) == 101
-    assert len(table.enabled_metric_rules()) == 98
+def test_metric_rules_cover_the_effective_customer_metrics(table):
+    """生效口径 = 87 条（客户指标库 101 条 − 排除清单 14 条）。"""
+    assert len(table.metric_rules) == 87
+    assert len(table.enabled_metric_rules()) == 87
 
 
 def test_metric_rules_match_customer_xlsx_names(table):
@@ -106,7 +107,7 @@ def test_severity_and_status_maps_cover_platform_values(table):
 def test_metrics_of_sql_key_partition_command_center_metrics(table):
     """82 个命令中心指标应能被 11 条合并 SQL 全量覆盖，且互不重叠。"""
     command_center = table.metrics_of_channel('command_center_sql')
-    assert len(command_center) == 82
+    assert len(command_center) == 71
     covered = []
     for sql_key in (
         'stat_database', 'stat_user_tables', 'activity_agg', 'activity_running',
@@ -114,20 +115,23 @@ def test_metrics_of_sql_key_partition_command_center_metrics(table):
         'prepared_xacts', 'dbstat_sum',
     ):
         covered.extend(table.metrics_of_sql_key(sql_key))
-    assert len(covered) == 82
-    assert len(set(rule.metric_code for rule in covered)) == 82
+    assert len(covered) == 71
+    assert len(set(rule.metric_code for rule in covered)) == 71
 
 
-def test_unsupported_metrics_are_disabled_with_reason(table):
+def test_unsupported_metrics_are_excluded_not_disabled(table):
+    """3 条无法提供的指标**不在生效映射表里**（构建期就被排除了）。
+
+    它们改由排除清单记录（``reason=unsupported`` + 理由）——
+    生效映射表里不再有 ``enabled=false`` 的规则。
+    """
     unsupported = [
         rule for rule in table.metric_rules if not rule.enabled
     ]
-    assert len(unsupported) == 3
-    codes = set(rule.metric_code for rule in unsupported)
-    assert codes == {
+    assert not unsupported, '生效映射表里不该有 enabled=false 的规则'
+    codes = set(rule.metric_code for rule in table.metric_rules)
+    assert not codes & {
         'gaussdb.Fastpath_function_call',
         'gaussdb.Disabled_conn',
         'gaussdb.sendAgentName',
     }
-    for rule in unsupported:
-        assert rule.source.get('api') is None

@@ -32,6 +32,7 @@ import os
 import re
 import sys
 
+import excluded_metrics
 import openpyxl
 import xlsx_columns
 
@@ -74,9 +75,11 @@ def _ensure_input(path, builder_func):
     return path
 
 # 占位符 → SQL 结果列。占位符名字取自客户指标名里的 {#XXX}。
+# 值可以是**点号连接的多个列名** —— 表级指标的 {#NAME} 绑成
+# `schema_name.table_name`（只绑 relname 会让不同 schema 的同名表撞键）。
 DIMENSION_COLUMN_BY_SQL = {
     'stat_database': {'DATNAME': 'datname', 'DATABASE_NAME': 'datname'},
-    'stat_user_tables': {'NAME': 'relname'},
+    'stat_user_tables': {'NAME': 'schemaname.relname'},
     'activity_agg': {'DATNAME': 'datname', 'NAME': 'relname'},
     'locks': {'DBNAME': 'datname'},
     'database': {'DATABASE_NAME': 'datname', 'DATNAME': 'datname'},
@@ -266,6 +269,37 @@ SOURCE_BY_CHANNEL = {
 }
 
 
+#: 事件类告警（未挂靠客户指标）的统一指标名 —— **默认值**。
+#: 实际生效的值取自 ``alarm_rules.json`` 的 ``event_metric`` 段（表驱动）：
+#: 改口径只改数据文件，生成器不覆盖它。
+DEFAULT_EVENT_METRIC = {
+    'metric_code': 'gaussdb.alarm',
+    'metric_name': '数据库告警',
+}
+
+
+def _load_event_metric():
+    """事件类告警的统一指标名（表驱动）。
+
+    优先取 ``alarm_rules.json`` 里已有的 ``event_metric`` 段 —— 那是**运行期
+    真相源**，运维改了它，重跑生成器不会被覆盖回去。
+    文件里没有（或坏了）时用 :data:`DEFAULT_EVENT_METRIC`。
+    """
+    if os.path.isfile(ALARM_RULES_OUT):
+        try:
+            payload = _read_json(ALARM_RULES_OUT)
+        except ValueError:
+            payload = {}
+        existing = payload.get('event_metric')
+        if isinstance(existing, dict) and existing.get('metric_code') \
+                and existing.get('metric_name'):
+            return {
+                'metric_code': existing['metric_code'],
+                'metric_name': existing['metric_name'],
+            }
+    return dict(DEFAULT_EVENT_METRIC)
+
+
 def _read_json(path):
     with io.open(path, encoding='utf-8') as handle:
         return json.load(handle)
@@ -398,6 +432,21 @@ def _dimension_bindings(placeholders, sql_key):
     return bindings
 
 
+def _group_by_columns(bindings):
+    """维度绑定 → 分组列（**点号串要拆成多列**）。
+
+    绑定值可能是 ``schemaname.relname`` —— 那是**两个列**的组合，
+    直接当一个列名会让分组退化成单列（不同 schema 的同名表又撞进同一个键）。
+    按绑定顺序去重，保持声明的先后。
+    """
+    columns = []
+    for spec in bindings.values():
+        for column in spec.split('.'):
+            if column not in columns:
+                columns.append(column)
+    return columns
+
+
 def _resolve_column(expr, columns):
     """把「视图.列」或「列」解析成合并 SQL 里的真实列名。"""
     if not expr or expr == NO_DIM:
@@ -417,7 +466,7 @@ def _row_policy(placeholders, sql_key, value_type):
       first   —— 指标无维度且非数值，取第一行（同一实例内取值一致）
     """
     bindings = _dimension_bindings(placeholders, sql_key)
-    group_by = sorted(set(bindings.values()))
+    group_by = _group_by_columns(bindings)
     if group_by:
         return 'per_row', group_by
     if value_type in ('整数', '浮点'):
@@ -500,7 +549,7 @@ def build_value_rule(metric_code, value_rule, sql_catalog, value_type, placehold
             'type': 'aggregate',
             'params': {
                 'filter': _aggregate_filter(expr, note),
-                'group_by': sorted(set(bindings.values())),
+                'group_by': _group_by_columns(bindings),
                 'fn': 'sum',
                 'value_column': 'cnt',
             },
@@ -578,7 +627,12 @@ def build_metric_rules():
 
     rules = []
     counts = {'可提供': 0, '无法提供': 0}
+    excluded = excluded_metrics.excluded_codes()
     for metric_code, item in spec.items():
+        # 排除发生在构建期：被排除清单剔除的指标**不进生效口径**，
+        # 运行期没有「遍历到再丢弃」的分支。
+        if metric_code in excluded:
+            continue
         avail = availability.get(metric_code, {})
         status = avail.get('status', '无法提供')
         counts[status] = counts.get(status, 0) + 1
@@ -662,6 +716,7 @@ def build_metric_rules():
 def build_alarm_rules():
     """告警规则：字段口径 + 平台 severity/status 枚举 + 告警定义 → ITSCADA 指标挂载。"""
     availability = {item['customer_metric']: item for item in _read_json(MAPPING_PATH)['items']}
+    event_metric = _load_event_metric()
     by_tpops = {}
     for metric_code, item in availability.items():
         tpops_metric = item.get('tpops_metric')
@@ -683,8 +738,10 @@ def build_alarm_rules():
                 metric_name = availability[metric_code]['customer_metric_name']
                 value_source = 'latest_metric_value'
             else:
-                metric_code = 'gaussdb.alarm.%s' % alarm_id
-                metric_name = item.get('告警名称') or ''
+                # 未挂客户指标的事件类告警 → **统一指标名**（表驱动）。
+                # 告警种类由 alarmId / alarmName / alarmContent 承载。
+                metric_code = event_metric['metric_code']
+                metric_name = event_metric['metric_name']
                 value_source = 'alarm_items_sum'
             definitions[alarm_id] = {
                 'alarm_name': item.get('告警名称') or '',
@@ -709,6 +766,7 @@ def build_alarm_rules():
             'data/alarm/catalog_event.json',
         ],
         'field_map_ref': 'itscada_field_map.json#alarm_message',
+        'event_metric': event_metric,
         'severity_to_priority': {
             'critical': 1,
             'major': 2,

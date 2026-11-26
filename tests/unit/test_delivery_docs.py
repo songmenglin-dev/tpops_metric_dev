@@ -3,8 +3,9 @@
 
 覆盖三份客户交付文档：
 
-  1. ``docs/交付-指标口径说明.md``          —— 覆盖全部 98 个可提供指标
-  2. ``docs/交付-不可提供指标清单.md``      —— 恰好 3 条，与 ``enabled=false`` 完全一致
+  1. ``docs/交付-指标口径说明.md``          —— 覆盖全部 87 个生效指标
+  2. ``docs/交付-不可提供指标清单.md``      —— 恰好 3 条，与排除清单的
+     ``reason=unsupported`` 完全一致
   3. ``docs/交付-客户指标英文名核对清单.md`` —— 每条都能在客户 xlsx 里找到对应行
 
 **防恒绿**：文件末尾的 ``test_guard_*`` 系列用「合成违规样本」验证守卫本身
@@ -40,23 +41,43 @@ REQUIRED_SPEC_COLUMNS = ('客户指标英文名', '中文名', '取数通道', '
 METRIC_CODE_RE = re.compile(r'`((?:gaussdb|GAUSSDB)[^`]*)`')
 
 
+EXCLUDED_PATH = os.path.join(
+    REPO_ROOT, 'tpops_kafka_collector', 'mapping', 'data', 'excluded_metrics.json')
+
+
 @pytest.fixture(scope='module')
 def rules():
-    """映射表的 101 条规则。"""
+    """映射表的 87 条生效规则。"""
     with open(METRIC_RULES_PATH, 'r', encoding='utf-8') as handle:
         return json.load(handle)['rules']
 
 
 @pytest.fixture(scope='module')
+def excluded():
+    """排除清单（14 条：11 条重复 + 3 条无法提供）。"""
+    with open(EXCLUDED_PATH, 'r', encoding='utf-8') as handle:
+        return json.load(handle)
+
+
+@pytest.fixture(scope='module')
 def enabled_codes(rules):
-    """98 个可提供指标的 metric_code。"""
+    """87 个生效指标的 metric_code。"""
     return set(rule['metric_code'] for rule in rules if rule.get('enabled'))
 
 
 @pytest.fixture(scope='module')
-def disabled_codes(rules):
-    """3 个不可提供指标的 metric_code。"""
-    return set(rule['metric_code'] for rule in rules if not rule.get('enabled'))
+def unsupported_codes(excluded):
+    """3 个无法提供指标的 metric_code（来自排除清单，不是映射表）。"""
+    return set(
+        entry['metric_code'] for entry in excluded['excluded']
+        if entry.get('reason') == 'unsupported'
+    )
+
+
+@pytest.fixture(scope='module')
+def scope(rules):
+    """客户指标库全量（生效口径 + 被排除的）—— OCR 检测器跑在它上面。"""
+    return builder.customer_scope_rules(rules, builder.load_customer_table())
 
 
 def _read(path):
@@ -138,7 +159,7 @@ def test_metric_spec_covers_all_enabled_metrics(enabled_codes):
     missing, extra = check_spec_coverage(text, enabled_codes)
     assert not missing, '口径说明缺少这些指标：%s' % '、'.join(missing)
     assert not extra, '口径说明里出现了不该有的指标：%s' % '、'.join(extra)
-    assert len(enabled_codes) == 98, '可提供指标数不是 98，映射表变了？'
+    assert len(enabled_codes) == 87, '生效指标数不是 87，映射表变了？'
 
 
 def test_metric_spec_rows_have_all_columns():
@@ -195,35 +216,40 @@ def test_metric_spec_value_rules_are_described(rules):
 # --------------------------------------------------------------------------
 # 2. 不可提供清单
 # --------------------------------------------------------------------------
-def test_unsupported_doc_lists_exactly_disabled_metrics(disabled_codes):
-    """不可提供清单 = 3 条，且与 metric_rules.json 里 enabled=false 的完全一致。"""
+def test_unsupported_doc_lists_exactly_the_unsupported_exclusions(unsupported_codes):
+    """不可提供清单 = 3 条，且与**排除清单**的 ``reason=unsupported`` 完全一致。
+
+    被排除的指标根本不在生效映射表里 —— 不能再去映射表里找「``enabled=false``
+    的规则」。
+    """
     text = _read(UNSUPPORTED_PATH)
-    missing, extra = check_unsupported_list(text, disabled_codes)
+    missing, extra = check_unsupported_list(text, unsupported_codes)
     assert not missing, '不可提供清单缺少：%s' % '、'.join(missing)
     assert not extra, '不可提供清单多出：%s' % '、'.join(extra)
-    assert len(disabled_codes) == 3, '不可提供指标数不是 3，映射表变了？'
+    assert len(unsupported_codes) == 3, '不可提供指标数不是 3，排除清单变了？'
 
 
-def test_unsupported_doc_explains_reason_and_workaround(rules):
-    """每条都要有「为什么给不了」和「能不能变通」，且理由来自映射表。"""
+def test_unsupported_doc_explains_reason_and_workaround(excluded):
+    """每条都要有「为什么给不了」和「能不能变通」，且理由来自排除清单。"""
     text = _read(UNSUPPORTED_PATH)
-    for rule in rules:
-        if rule.get('enabled'):
+    for entry in excluded['excluded']:
+        if entry.get('reason') != 'unsupported':
             continue
-        code = rule['metric_code']
+        code = entry['metric_code']
         assert code in text, '不可提供清单里没有 %s' % code
-        reason = rule.get('unsupported_reason') or rule.get('note') or ''
+        reason = entry.get('detail') or ''
         assert reason and reason in text, \
-            '不可提供清单没有引用映射表里的理由：%s' % code
+            '不可提供清单没有引用排除清单里的理由：%s' % code
         assert '**能不能变通**' in text, '不可提供清单没有写变通方案'
 
 
-def test_unsupported_doc_states_drop_count(rules):
-    """要写明这 3 条在采集时被丢弃并计数。"""
+def test_unsupported_doc_states_the_build_time_exclusion(excluded):
+    """要写明处置方式是**构建期排除**，运行期没有丢弃分支。"""
     text = _read(UNSUPPORTED_PATH)
     assert 'dropped_unsupported' in text
-    assert '丢弃并计数' in text
-    assert '= **3**' in text or '= 3' in text
+    assert '构建期' in text
+    assert '恒为 **0**' in text
+    assert '已从生效口径移除' in text or '从生效口径移除' in text
 
 
 # --------------------------------------------------------------------------
@@ -257,9 +283,9 @@ def test_ocr_checklist_has_suggestion_and_impact():
         assert '取值' in row['影响面'], '影响面要说明是否影响取值：%s' % row
 
 
-def test_detector_finds_known_ocr_typos(rules):
+def test_detector_finds_known_ocr_typos(scope):
     """自动检测器要能抓到已知的 OCR 错字。"""
-    findings = builder.detect_ocr_findings(rules)
+    findings = builder.detect_ocr_findings(scope)
     pairs = set((item['metric_code'], item['token']) for item in findings)
     assert ('GAUSSDB.Number_of_ansactions_mmitted_r_cond', 'ansactions') in pairs
     assert ('GAUSSDB.Number_of_ansactions_mmitted_r_cond', 'mmitted') in pairs
@@ -268,9 +294,13 @@ def test_detector_finds_known_ocr_typos(rules):
     assert ('GAUSSDB.Checkpoint_count_eckpoint_gments', 'gments') in pairs
 
 
-def test_ocr_review_entries_are_corroborated(rules):
-    """人工复核表里的每条，检测器都要能给出候选（复核表不能凭空调）"""
-    findings = builder.detect_ocr_findings(rules)
+def test_ocr_review_entries_are_corroborated(scope):
+    """人工复核表里的每条，检测器都要能给出候选（复核表不能凭空调）。
+
+    检测器跑在**客户指标库全量**上（生效口径 + 被排除的）—— 核对清单的对象
+    是客户的指标表。
+    """
+    findings = builder.detect_ocr_findings(scope)
     candidates = {}
     for item in findings:
         candidates.setdefault(item['metric_code'], set()).add(item['token'])
@@ -281,9 +311,14 @@ def test_ocr_review_entries_are_corroborated(rules):
                     '复核表里的 %s / %s 没有检测器佐证' % (code, bad)
 
 
-def test_other_docs_only_mention_known_metrics(rules):
-    """不可提供清单与 OCR 清单里出现的指标名也必须存在于映射表。"""
+def test_other_docs_only_mention_known_metrics(rules, excluded):
+    """不可提供清单与 OCR 清单里出现的指标名也必须已知。
+
+    「已知」= 生效映射表里的指标码 + **排除清单**里的指标码
+    （被排除的指标也在客户表里，OCR 清单仍会提到它们）。
+    """
     known = set(rule['metric_code'] for rule in rules)
+    known.update(entry['metric_code'] for entry in excluded['excluded'])
     for rule in rules:
         tpops_source = (rule.get('source') or {}).get('tpops_source')
         if tpops_source:
@@ -302,6 +337,39 @@ def test_other_docs_only_mention_known_metrics(rules):
                 continue
             assert code in known or code in suggestions, \
                 '%s 里出现了映射表里没有的指标名：%s' % (os.path.basename(path), code)
+
+
+# --------------------------------------------------------------------------
+# 3.5 三份文档的条数与生效映射表一致（防文档与代码漂移）
+# --------------------------------------------------------------------------
+def test_doc_counts_match_the_effective_mapping(rules, unsupported_codes, excluded):
+    """三份交付文档的条数必须与**生效映射表**对得上。
+
+    - 口径说明：每个生效指标恰好一行；
+    - 不可提供清单：与排除清单里 ``reason=unsupported`` 的条数一致；
+    - OCR 核对清单：条目只针对客户指标库全量（生效口径 + 被排除的）。
+    """
+    effective = len(rules)
+    assert effective == 87, '生效指标数不是 87，映射表变了？'
+
+    spec_rows = builder.parse_metric_spec_rows(_read(SPEC_PATH))
+    assert len(spec_rows) == effective, \
+        '口径说明 %d 行 ≠ 生效指标 %d 条' % (len(spec_rows), effective)
+
+    unsupported_rows = builder.parse_unsupported_rows(_read(UNSUPPORTED_PATH))
+    assert len(unsupported_rows) == len(unsupported_codes) == 3, \
+        '不可提供清单 %d 行 ≠ 排除清单的 3 条' % len(unsupported_rows)
+
+    scope = builder.customer_scope_rules(rules, builder.load_customer_table())
+    assert len(scope) == effective + excluded['counts']['total'], \
+        '客户指标库全量条数不对：%d' % len(scope)
+    listed = set(
+        row['客户表里的英文名'].strip().strip('`')
+        for row in builder.parse_ocr_rows(_read(OCR_PATH))
+    )
+    scope_codes = set(rule['metric_code'] for rule in scope)
+    assert listed <= scope_codes, \
+        'OCR 清单里有客户指标库之外的指标名：%s' % sorted(listed - scope_codes)
 
 
 # --------------------------------------------------------------------------
@@ -365,13 +433,13 @@ def test_guard_detects_incomplete_row():
     assert problems, '守卫没抓到缺字段的行'
 
 
-def test_guard_detects_wrong_unsupported_list(disabled_codes):
+def test_guard_detects_wrong_unsupported_list(unsupported_codes):
     """不可提供清单里塞进一条可提供指标 → 守卫必须报「多余」。"""
     text = _read(UNSUPPORTED_PATH)
     broken = _append_table_row(
         text, builder.TABLE_MARKS['unsupported'],
         '| 999 | `gaussdb.Tps` | 假不可提供 | 假的 | 假的 | 假的 |')
-    missing, extra = check_unsupported_list(broken, disabled_codes)
+    missing, extra = check_unsupported_list(broken, unsupported_codes)
     assert 'gaussdb.Tps' in extra, '守卫没抓到多余的不可提供指标'
     assert not missing, '守卫误报了缺失'
 

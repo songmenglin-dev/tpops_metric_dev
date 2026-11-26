@@ -77,6 +77,11 @@
 
 3 个判定为**无法提供**的指标不建文件（原因见 `data/customer_metric_unsupported.csv`）。
 
+> **归档 ≠ 生效口径**：本目录是**抓取归档**（平台事实，98 份样本），
+> 采集端的**生效口径**现在是 87 条指标（客户指标库 101 条 − 排除清单 14 条，
+> 见 `tpops_kafka_collector/mapping/data/excluded_metrics.json`）。
+> 被排除的 11 条重复表级指标的样本仍留在归档里 —— 归档是事实，生效口径是决定。
+
 ### 所有通道只查一个实例
 
 实测实例 = **分布式实例 `gauss-6374`**（`83cd68f2e4cb40b4b7e69240479ffa26in14`，mode=Combined）：

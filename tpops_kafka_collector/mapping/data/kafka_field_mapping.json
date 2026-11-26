@@ -3013,8 +3013,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可；累计删除行数",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)被删除的行总数（包括已回收行）",
-        "metricCode": "gaussdb.snapshot.Number.lete.ples",
+        "metricName": "(snapshot.snapshot)被删除的行总数（包括已回收行）",
+        "metricCode": "gaussdb.snapshot.snapshot.Number.lete.ples",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 24,
         "unit": null,
@@ -3026,7 +3026,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -3057,7 +3057,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -3575,8 +3575,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)已删除但未回收的行数（死亡行）",
-        "metricCode": "gaussdb.snapshot.Number.ad.ples",
+        "metricName": "(snapshot.snapshot)已删除但未回收的行数（死亡行）",
+        "metricCode": "gaussdb.snapshot.snapshot.Number.ad.ples",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 24,
         "unit": null,
@@ -3588,7 +3588,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -3619,7 +3619,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -3698,8 +3698,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)通过 HOT更新的行数",
-        "metricCode": "gaussdb.snapshot.Number.t.date.ples",
+        "metricName": "(snapshot.snapshot)通过 HOT更新的行数",
+        "metricCode": "gaussdb.snapshot.snapshot.Number.t.date.ples",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": "%",
@@ -3711,7 +3711,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -3742,7 +3742,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -3821,8 +3821,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)索引扫描次数",
-        "metricCode": "gaussdb.snapshot.number.Of.index.scan",
+        "metricName": "(snapshot.snapshot)索引扫描次数",
+        "metricCode": "gaussdb.snapshot.snapshot.number.Of.index.scan",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 954,
         "unit": null,
@@ -3834,7 +3834,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -3865,7 +3865,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -3944,8 +3944,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)顺序扫描读取的行数",
-        "metricCode": "gaussdb.snapshot.number.Of.quential.ples.ad",
+        "metricName": "(snapshot.snapshot)顺序扫描读取的行数",
+        "metricCode": "gaussdb.snapshot.snapshot.number.Of.quential.ples.ad",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 28825,
         "unit": null,
@@ -3957,7 +3957,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -3988,7 +3988,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -4067,8 +4067,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)通过索引扫描获取的行数",
-        "metricCode": "gaussdb.snapshot.number.Of.dex.ples.ad",
+        "metricName": "(snapshot.snapshot)通过索引扫描获取的行数",
+        "metricCode": "gaussdb.snapshot.snapshot.number.Of.dex.ples.ad",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 470,
         "unit": null,
@@ -4080,7 +4080,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -4111,7 +4111,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -4190,8 +4190,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)插入的行数",
-        "metricCode": "gaussdb.snapshot.number.Of.insert.tuples",
+        "metricName": "(snapshot.snapshot)插入的行数",
+        "metricCode": "gaussdb.snapshot.snapshot.number.Of.insert.tuples",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": null,
@@ -4203,7 +4203,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -4234,7 +4234,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -4313,8 +4313,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)当前活跃的行数",
-        "metricCode": "gaussdb.snapshot.number.Of.live.tuples",
+        "metricName": "(snapshot.snapshot)当前活跃的行数",
+        "metricCode": "gaussdb.snapshot.snapshot.number.Of.live.tuples",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 189,
         "unit": null,
@@ -4326,7 +4326,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -4357,7 +4357,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -4436,8 +4436,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)更新的行总数",
-        "metricCode": "gaussdb.snapshot.number.Of.update.tuples",
+        "metricName": "(snapshot.snapshot)更新的行总数",
+        "metricCode": "gaussdb.snapshot.snapshot.number.Of.update.tuples",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 213,
         "unit": null,
@@ -4449,7 +4449,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -4480,7 +4480,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -4559,8 +4559,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)顺序扫描次数",
-        "metricCode": "gaussdb.snapshot.number.Of.sequential.scan",
+        "metricName": "(snapshot.snapshot)顺序扫描次数",
+        "metricCode": "gaussdb.snapshot.snapshot.number.Of.sequential.scan",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 696,
         "unit": null,
@@ -4572,7 +4572,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -4603,7 +4603,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -4900,8 +4900,8 @@
       "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
       "message_count": 68,
       "sample_message": {
-        "metricName": "(snapshot)死亡行占比",
-        "metricCode": "gaussdb.snapshot.garbage.Ratio",
+        "metricName": "(snapshot.snapshot)死亡行占比",
+        "metricCode": "gaussdb.snapshot.snapshot.garbage.Ratio",
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
         "value": 11.27,
         "unit": null,
@@ -4913,7 +4913,7 @@
           "component_id": null,
           "host_ip": "172.16.103.126",
           "dimension_values": {
-            "NAME": "snapshot"
+            "NAME": "snapshot.snapshot"
           }
         }
       },
@@ -4944,7 +4944,7 @@
       },
       "needs_confirmation": false,
       "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
+        "NAME": "tpops_response_source.result[*].schemaname · tpops_response_source.result[*].relname"
       }
     },
     {
@@ -8122,1359 +8122,6 @@
       "needs_confirmation": false
     },
     {
-      "metric_code": "GAUSSDB.{#NAME}.Number.ad.ples",
-      "metric_name": "({#NAME}) number of dead tuples",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME}) number of dead tuples",
-        "metricCode": "GAUSSDB.{#NAME}.Number.ad.ples",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].n_dead_tup",
-        "unit": null,
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot) number of dead tuples",
-        "metricCode": "GAUSSDB.snapshot.Number.ad.ples",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 24,
-        "unit": null,
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "003_GAUSSDB.NAME.Number.ad.ples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.Number.lete.ples",
-      "metric_name": "({#NAME}) number of delete tuples",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME}) number of delete tuples",
-        "metricCode": "GAUSSDB.{#NAME}.Number.lete.ples",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].n_tup_del",
-        "unit": "tuples/s",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot) number of delete tuples",
-        "metricCode": "GAUSSDB.snapshot.Number.lete.ples",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 24,
-        "unit": "tuples/s",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "004_GAUSSDB.NAME.Number.lete.ples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.garbage.Ratio",
-      "metric_name": "({#NAME})Garbage ratio",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME})Garbage ratio",
-        "metricCode": "GAUSSDB.{#NAME}.garbage.Ratio",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].dead_tup_ratio",
-        "unit": "%",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot)Garbage ratio",
-        "metricCode": "GAUSSDB.snapshot.garbage.Ratio",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 11.27,
-        "unit": "%",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "005_GAUSSDB.NAME.garbage.Ratio.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.Number.t.date.ples",
-      "metric_name": "({#NAME}) number of hot update tuples",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME}) number of hot update tuples",
-        "metricCode": "GAUSSDB.{#NAME}.Number.t.date.ples",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].n_tup_hot_upd",
-        "unit": "tuples/s",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot) number of hot update tuples",
-        "metricCode": "GAUSSDB.snapshot.Number.t.date.ples",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 213,
-        "unit": "tuples/s",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "006_GAUSSDB.NAME.Number.t.date.ples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.index.scan",
-      "metric_name": "({#NAME})number of index scan",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME})number of index scan",
-        "metricCode": "GAUSSDB.{#NAME}.number.Of.index.scan",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].idx_scan",
-        "unit": "scans/s",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot)number of index scan",
-        "metricCode": "GAUSSDB.snapshot.number.Of.index.scan",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 954,
-        "unit": "scans/s",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "007_GAUSSDB.NAME.number.Of.index.scan.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
-      "metric_name": "({#NAME})number of index tuples read",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME})number of index tuples read",
-        "metricCode": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].idx_tup_fetch",
-        "unit": "tuples/s",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot)number of index tuples read",
-        "metricCode": "GAUSSDB.snapshot.number.Of.dex.ples.ad",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 470,
-        "unit": "tuples/s",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "008_GAUSSDB.NAME.number.Of.dex.ples.ad.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.live.tuples",
-      "metric_name": "({#NAME})number of live tuples",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME})number of live tuples",
-        "metricCode": "GAUSSDB.{#NAME}.number.Of.live.tuples",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].n_live_tup",
-        "unit": null,
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot)number of live tuples",
-        "metricCode": "GAUSSDB.snapshot.number.Of.live.tuples",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 189,
-        "unit": null,
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "009_GAUSSDB.NAME.number.Of.live.tuples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
-      "metric_name": "({#NAME})number of insert tuples",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME})number of insert tuples",
-        "metricCode": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].n_tup_ins",
-        "unit": "tuples/s",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot)number of insert tuples",
-        "metricCode": "GAUSSDB.snapshot.number.Of.insert.tuples",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 213,
-        "unit": "tuples/s",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "010_GAUSSDB.NAME.number.Of.insert.tuples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
-      "metric_name": "({#NAME})number of sequencial scan",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME})number of sequencial scan",
-        "metricCode": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].seq_scan",
-        "unit": "scans/s",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot)number of sequencial scan",
-        "metricCode": "GAUSSDB.snapshot.number.Of.sequential.scan",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 696,
-        "unit": "scans/s",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "011_GAUSSDB.NAME.number.Of.sequential.scan.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
-      "metric_name": "({#NAME})number of sequencial tuples read",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME})number of sequencial tuples read",
-        "metricCode": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].seq_tup_read",
-        "unit": "tuples/s",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot)number of sequencial tuples read",
-        "metricCode": "GAUSSDB.snapshot.number.Of.quential.ples.ad",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 28825,
-        "unit": "tuples/s",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "012_GAUSSDB.NAME.number.Of.quential.ples.ad.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.update.tuples",
-      "metric_name": "({#NAME})number of update tuples",
-      "message_type": "metric",
-      "tpops_response_source": {
-        "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-        "node_name": "gauss-6374_gaussdbv5_hcs2-0_0",
-        "status": "succeed",
-        "is_redirect": false,
-        "result": [
-          {
-            "schemaname": "snapshot",
-            "relname": "snapshot",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "213",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "213",
-            "seq_scan": "696",
-            "seq_tup_read": "28825",
-            "idx_scan": "954",
-            "idx_tup_fetch": "470",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_statement_responsetime_percentile",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          },
-          {
-            "schemaname": "snapshot",
-            "relname": "snap_summary_file_redo_iostat",
-            "n_live_tup": "189",
-            "n_dead_tup": "24",
-            "n_tup_ins": "213",
-            "n_tup_upd": "0",
-            "n_tup_del": "24",
-            "n_tup_hot_upd": "0",
-            "seq_scan": "27",
-            "seq_tup_read": "1485",
-            "idx_scan": "0",
-            "idx_tup_fetch": "0",
-            "dead_tup_ratio": "11.27"
-          }
-        ],
-        "out_format": "json",
-        "out_mode": "array",
-        "out_type": "map",
-        "download_file_id": null
-      },
-      "kafka_target": {
-        "metricName": "({#NAME})number of update tuples",
-        "metricCode": "GAUSSDB.{#NAME}.number.Of.update.tuples",
-        "resourceName": "{host_ip}_{node_id}",
-        "value": "tpops_response_source.result[*].n_tup_upd",
-        "unit": "tuples/s",
-        "clock": "collect_time",
-        "tags": "instance + node + dimensions"
-      },
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "remark": "按 {NAME} 展开：一行一条消息，result 的每一行产出一条（实测 68 行 → 68 条；6000 张表就是 6000 条）；资源粒度：表级（指标名带表占位符）；resourceName 指向节点清单里的第一个 master CN（数据与节点无关，固定一个节点）；各 master 返回的结果完全相同（DN 侧视图），取任一个 master 即可",
-      "message_count": 68,
-      "sample_message": {
-        "metricName": "(snapshot)number of update tuples",
-        "metricCode": "GAUSSDB.snapshot.number.Of.update.tuples",
-        "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "value": 213,
-        "unit": "tuples/s",
-        "clock": 1760000000000,
-        "tags": {
-          "instance_id": "83cd68f2e4cb40b4b7e69240479ffa26in14",
-          "instance_name": "gauss-6374",
-          "node_id": "3881c04403394ee1b36a2bf873e69007no14",
-          "component_id": null,
-          "host_ip": "172.16.103.126",
-          "dimension_values": {
-            "NAME": "snapshot"
-          }
-        }
-      },
-      "evidence": {
-        "sample_file": "013_GAUSSDB.NAME.number.Of.update.tuples.json",
-        "terminal_step": 3,
-        "api": "GET /rds/gaussdb/v3/command-center/command/73722acc-bff6-4d04-adc0-bc1e1fa1eb7d/batch-exec-job/48242a6d-5eed-4480-ab24-87fcc24f2267/task-record/0b5666b7-968f-47ca-8251-f525bca11823/detail",
-        "observed": {
-          "row_count": 68,
-          "columns": [
-            "dead_tup_ratio",
-            "idx_scan",
-            "idx_tup_fetch",
-            "n_dead_tup",
-            "n_live_tup",
-            "n_tup_del",
-            "n_tup_hot_upd",
-            "n_tup_ins",
-            "n_tup_upd",
-            "relname",
-            "schemaname",
-            "seq_scan",
-            "seq_tup_read"
-          ],
-          "master_nodes": 3,
-          "matched_rows": 68
-        }
-      },
-      "needs_confirmation": false,
-      "placeholder_bindings": {
-        "NAME": "tpops_response_source.result[*].relname"
-      }
-    },
-    {
       "metric_code": "GAUSSDB.Buffers_Alloc",
       "metric_name": "Buffers Alloc",
       "message_type": "metric",
@@ -12284,8 +10931,8 @@
         "status": "status_to_itscada[tpops_response_source.records[0].status]",
         "recoverTime": null,
         "resourceName": "{host_ip}_{node_id}",
-        "metricName": "节点NTP状态异常",
-        "metricCode": "gaussdb.alarm.2007010001",
+        "metricName": "数据库告警",
+        "metricCode": "gaussdb.alarm",
         "value": "tpops_response_source.records[0].alarm_items_sum",
         "unit": "告警定义里的单位（alarm_rules.json）",
         "tags": "tpops_response_source.records[0]"
@@ -12300,8 +10947,8 @@
         "status": 1,
         "recoverTime": null,
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "metricName": "节点NTP状态异常",
-        "metricCode": "gaussdb.alarm.2007010001",
+        "metricName": "数据库告警",
+        "metricCode": "gaussdb.alarm",
         "value": "1",
         "unit": null,
         "tags": {
@@ -12428,8 +11075,8 @@
         "status": "status_to_itscada[tpops_response_source.records[0].status]",
         "recoverTime": null,
         "resourceName": "{host_ip}_{node_id}",
-        "metricName": "节点NTP状态异常",
-        "metricCode": "gaussdb.alarm.2007010001",
+        "metricName": "数据库告警",
+        "metricCode": "gaussdb.alarm",
         "value": "tpops_response_source.convergence_records[0].alarm_items_sum",
         "unit": "告警定义里的单位（alarm_rules.json）",
         "tags": "tpops_response_source.records[0]"
@@ -12444,8 +11091,8 @@
         "status": 1,
         "recoverTime": null,
         "resourceName": "172.16.103.128_5a3cd027ad5c4f9bbb67d728c6d279c0no14",
-        "metricName": "节点NTP状态异常",
-        "metricCode": "gaussdb.alarm.2007010001",
+        "metricName": "数据库告警",
+        "metricCode": "gaussdb.alarm",
         "value": "1",
         "unit": null,
         "tags": {
@@ -12545,8 +11192,8 @@
         "status": "status_to_itscada[tpops_response_source.records[0].status]",
         "recoverTime": "tpops_response_source.records[0].clear_alarm_time",
         "resourceName": "{host_ip}_{node_id}",
-        "metricName": "节点NTP状态异常",
-        "metricCode": "gaussdb.alarm.2007010001",
+        "metricName": "数据库告警",
+        "metricCode": "gaussdb.alarm",
         "value": "tpops_response_source.records[0].alarm_items_sum",
         "unit": "告警定义里的单位（alarm_rules.json）",
         "tags": "tpops_response_source.records[0]"
@@ -12561,8 +11208,8 @@
         "status": 0,
         "recoverTime": 1793771169000,
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "metricName": "节点NTP状态异常",
-        "metricCode": "gaussdb.alarm.2007010001",
+        "metricName": "数据库告警",
+        "metricCode": "gaussdb.alarm",
         "value": "14",
         "unit": null,
         "tags": {
@@ -12693,8 +11340,8 @@
         "status": "status_to_itscada[tpops_response_source.records[0].status]",
         "recoverTime": "tpops_response_source.records[0].clear_alarm_time",
         "resourceName": "{host_ip}_{node_id}",
-        "metricName": "节点NTP状态异常",
-        "metricCode": "gaussdb.alarm.2007010001",
+        "metricName": "数据库告警",
+        "metricCode": "gaussdb.alarm",
         "value": "tpops_response_source.convergence_records[0].alarm_items_sum",
         "unit": "告警定义里的单位（alarm_rules.json）",
         "tags": "tpops_response_source.records[0]"
@@ -12709,8 +11356,8 @@
         "status": 0,
         "recoverTime": 1793771169000,
         "resourceName": "172.16.103.126_3881c04403394ee1b36a2bf873e69007no14",
-        "metricName": "节点NTP状态异常",
-        "metricCode": "gaussdb.alarm.2007010001",
+        "metricName": "数据库告警",
+        "metricCode": "gaussdb.alarm",
         "value": "14",
         "unit": null,
         "tags": {

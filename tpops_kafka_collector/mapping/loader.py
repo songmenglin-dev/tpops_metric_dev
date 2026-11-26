@@ -25,12 +25,15 @@
 import json
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 from ..errors import MappingError, ProtocolError
 from .table import AlarmDefinition, MetricRule, build_alarm_definition
 from .validation import (
+    check_effective_rule_count,
+    check_excluded_metrics_absent,
+    check_metric_code_uniqueness,
     check_placeholder_bindings,
     check_providable_coverage,
     check_rule_entries,
@@ -38,9 +41,9 @@ from .validation import (
 )
 
 __all__ = [
-    'CustomerMetric', 'LoadedMapping', 'ObservedColumns', 'PACKAGE_DATA_DIR',
-    'check_placeholder_bindings', 'check_providable_coverage', 'check_rule_entries',
-    'check_source_columns', 'load_mapping', 'validate_mapping',
+    'CustomerMetric', 'ExcludedMetric', 'LoadedMapping', 'ObservedColumns',
+    'PACKAGE_DATA_DIR', 'check_placeholder_bindings', 'check_providable_coverage',
+    'check_rule_entries', 'check_source_columns', 'load_mapping', 'validate_mapping',
 ]
 
 LOGGER = logging.getLogger(__name__)
@@ -54,6 +57,7 @@ FILES = {
     'alarm_rules': 'alarm_rules.json', 'kafka_field_mapping': 'kafka_field_mapping.json',
     'response_rules': 'response_rules.json', 'customer_metrics': 'customer_metric_mapping.json',
     'open_items': 'open_items.json', 'observed_columns': 'observed_columns.json',
+    'excluded_metrics': 'excluded_metrics.json',
 }
 
 @dataclass(frozen=True)
@@ -82,6 +86,20 @@ class CustomerMetric:
 
 
 @dataclass(frozen=True)
+class ExcludedMetric:
+    """排除清单里的一条（**不进生效口径**的客户指标）。
+
+    ``reason`` 为 ``duplicate`` 时 ``kept`` 指出保留哪一条；
+    ``unsupported`` 没有 ``kept``（没有可保留的对象）。
+    """
+    metric_code: str
+    metric_name: str
+    reason: str
+    detail: str
+    kept: Optional[str]
+
+
+@dataclass(frozen=True)
 class LoadedMapping:
     """加载好的映射数据（只读）。
 
@@ -98,6 +116,8 @@ class LoadedMapping:
     customer_metrics: Tuple[CustomerMetric, ...]
     open_items: Mapping[str, Any]
     observed: ObservedColumns
+    excluded_metrics: Tuple[ExcludedMetric, ...] = ()
+    excluded_counts: Mapping[str, int] = field(default_factory=dict)
 
     # -- 查表 -------------------------------------------------------------
 
@@ -138,12 +158,25 @@ def load_mapping(
 
 
 def validate_mapping(bundle: LoadedMapping) -> None:
-    """跑完四类校验；有不通过的就抛 ``MappingError``（带完整差异清单）。"""
+    """跑完全部校验；有不通过的就抛 ``MappingError``（带完整差异清单）。
+
+    除了四类映射校验，还校验**生效口径**三件事：
+
+    5. **排除清单的指标码一个都不在生效映射表里**（排除是构建期做的，运行期
+       不该再有被排除的指标）；
+    6. **生效规则的 ``metric_code`` 互不重复**（唯一性**只对指标规则**要求 ——
+       告警定义靠 ``alarm_id`` 定位，多条告警共用同一个 ``metricCode`` 是允许的）；
+    7. **生效规则数**与排除清单声明的生效条数一致。
+    """
     problems: List[str] = []
     problems.extend(check_source_columns(bundle.metric_rules, bundle.observed))
     problems.extend(check_providable_coverage(bundle.metric_rules, bundle.customer_metrics))
     problems.extend(check_rule_entries(bundle.metric_rules, bundle.customer_metrics))
     problems.extend(check_placeholder_bindings(bundle.metric_rules))
+    problems.extend(check_excluded_metrics_absent(bundle.metric_rules, bundle.excluded_metrics))
+    problems.extend(check_metric_code_uniqueness(bundle.metric_rules))
+    problems.extend(check_effective_rule_count(
+        bundle.metric_rules, bundle.excluded_counts.get('effective_total')))
     if problems:
         raise MappingError('启动期映射校验不通过：\n  ' + '\n  '.join(problems))
 
@@ -159,6 +192,7 @@ def _load_files(directory: str) -> LoadedMapping:
     rules_payload = _read_json(directory, 'metric_rules')
     customer_payload = _read_json(directory, 'customer_metrics')
     observed_payload = _read_json(directory, 'observed_columns')
+    excluded_payload = _read_json(directory, 'excluded_metrics')
     rules = _parse_rules(rules_payload)
     return LoadedMapping(
         field_map=field_map,
@@ -169,7 +203,29 @@ def _load_files(directory: str) -> LoadedMapping:
         customer_metrics=_parse_customer_metrics(customer_payload),
         open_items=open_items,
         observed=_parse_observed(observed_payload),
+        excluded_metrics=_parse_excluded_metrics(excluded_payload),
+        excluded_counts=dict(excluded_payload.get('counts') or {}),
     )
+
+
+def _parse_excluded_metrics(payload: Mapping[str, Any]) -> Tuple[ExcludedMetric, ...]:
+    """排除清单 → 排除项元组（结构不对就抛 ``ProtocolError``）。"""
+    items = payload.get('excluded')
+    if not isinstance(items, list):
+        raise ProtocolError('excluded_metrics.json 缺少 excluded 数组')
+    metrics = []  # type: List[ExcludedMetric]
+    for item in items:
+        code = item.get('metric_code')
+        if not code:
+            raise ProtocolError('excluded_metrics.json 里有条目没有 metric_code')
+        metrics.append(ExcludedMetric(
+            metric_code=code,
+            metric_name=item.get('metric_name') or '',
+            reason=item.get('reason') or '',
+            detail=item.get('detail') or '',
+            kept=item.get('kept'),
+        ))
+    return tuple(metrics)
 
 
 def _parse_rules(payload: Mapping[str, Any]) -> Tuple[MetricRule, ...]:

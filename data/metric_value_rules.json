@@ -21,10 +21,10 @@
   },
   "counts": {
     "A": 11,
-    "B": 82,
+    "B": 71,
     "C": 4,
     "D": 1,
-    "total": 98
+    "total": 87
   },
   "metrics": {
     "GAUSSDB.Number_of_ansactions_mmitted_r_cond": {
@@ -485,160 +485,6 @@
       "source_expr": "tup_fetched",
       "plan_rule": "raw",
       "dimensions": [],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.Number.ad.ples": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "n_dead_tup",
-      "sql_key": "stat_user_tables",
-      "source_expr": "n_dead_tup",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.Number.lete.ples": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "n_tup_del",
-      "sql_key": "stat_user_tables",
-      "source_expr": "n_tup_del",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.Number.t.date.ples": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "n_tup_hot_upd",
-      "sql_key": "stat_user_tables",
-      "source_expr": "n_tup_hot_upd",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.garbage.Ratio": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
-      "sql_key": "stat_user_tables",
-      "source_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
-      "plan_rule": "ratio",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.number.Of.dex.ples.ad": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "idx_tup_fetch",
-      "sql_key": "stat_user_tables",
-      "source_expr": "idx_tup_fetch",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.number.Of.index.scan": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "idx_scan",
-      "sql_key": "stat_user_tables",
-      "source_expr": "idx_scan",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.number.Of.insert.tuples": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "n_tup_ins",
-      "sql_key": "stat_user_tables",
-      "source_expr": "n_tup_ins",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.number.Of.live.tuples": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "n_live_tup",
-      "sql_key": "stat_user_tables",
-      "source_expr": "n_live_tup",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.number.Of.quential.ples.ad": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "seq_tup_read",
-      "sql_key": "stat_user_tables",
-      "source_expr": "seq_tup_read",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.number.Of.sequential.scan": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "seq_scan",
-      "sql_key": "stat_user_tables",
-      "source_expr": "seq_scan",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
-      "plan_note": ""
-    },
-    "GAUSSDB.{#NAME}.number.Of.update.tuples": {
-      "channel": "B",
-      "channel_label": "命令中心SQL",
-      "tpops_metric": null,
-      "match_level": "直接对应",
-      "plan_value_expr": "n_tup_upd",
-      "sql_key": "stat_user_tables",
-      "source_expr": "n_tup_upd",
-      "plan_rule": "raw",
-      "dimensions": [
-        "NAME"
-      ],
       "plan_note": ""
     },
     "gaussdb.{#NAME}.Number.ad.ples": {

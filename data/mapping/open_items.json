@@ -17,7 +17,7 @@
       "id": "resource-name",
       "topic": "resourceName 与客户台账的对齐",
       "default": "{host_ip}_{node_id}（节点 IP + TPOPS 节点 ID）；与节点无关的指标落到节点清单里的第一个 master CN",
-      "detail": "resourceName 只能表示一个节点 → 固定「节点 IP + 节点 ID」；表名/库名/端口这类业务维度改走 metricName/metricCode 的占位符与 tags.dimension_values。方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。"
+      "detail": "resourceName 只能表示一个节点 → 固定「节点 IP + 节点 ID」；表名/库名/端口这类业务维度改走 metricName/metricCode 的占位符与 tags.dimension_values；表级指标的维度值是 schema_name.table_name（如 public.t1）。方案要求与 ITSCADA 台账录入的资源名称完全一致；台账命名规则待客户提供。"
     },
     {
       "id": "collect-cycle",
@@ -34,8 +34,8 @@
     {
       "id": "alarm-metric-binding",
       "topic": "告警挂到哪个客户指标",
-      "default": "257 条告警里只有 3 条能对应上客户指标（都指向 gaussdb.Tps），其余用 gaussdb.alarm.<alarm_id> 自造指标名",
-      "detail": "事件类告警没有对应的客户指标，需要客户确认这种挂法是否可接受。"
+      "default": "未挂客户指标的 254 条事件类告警统一用 metricCode=gaussdb.alarm / metricName=数据库告警",
+      "detail": "原先每条告警各造一个 gaussdb.alarm.<alarm_id> 指标名（还有 gaussdb.alarm.>=75% 这种拿阈值当 ID 的），客户侧要建 254 条台账条目。统一后告警种类由 alarmId / alarmName / alarmContent 承载，ITSCADA 侧告警台账从 254 项变 1 项。**对外契约变化，待客户确认。**"
     },
     {
       "id": "slow-sql-masking",
@@ -52,8 +52,8 @@
     {
       "id": "metric-code-case",
       "topic": "11 组英文名仅大小写不同、中文名不同",
-      "default": "两套都投递（metricCode 只差前缀大小写，值完全一样）",
-      "detail": "客户指标库 101 个指标里，英文名忽略大小写后有 11 组相同但中文名不同（全部是表级指标：小写 gaussdb. 前缀=中文名+表信息+2 分钟，大写 GAUSSDB. 前缀=英文名+事务信息+5 分钟）。客户侧若按大小写不敏感匹配，这 11 个指标会合并覆盖。要客户确认：是两条独立指标（需给出区分办法），还是同一条的重复登记（留哪一套）。清单见 docs/问题单.md TPOPS-003。"
+      "default": "只投递中文名正常的一套（小写 gaussdb. 前缀）；大写 GAUSSDB. 前缀的 11 条进排除清单，不产出消息",
+      "detail": "客户指标库 101 个指标里，英文名忽略大小写后有 11 组相同但中文名不同（全部是表级指标：小写 gaussdb. 前缀=中文名+表信息+2 分钟，大写 GAUSSDB. 前缀=英文名+事务信息+5 分钟）。客户侧若按大小写不敏感匹配，这 11 个指标会合并覆盖。本次按「保留中文名正常的一条」落地，被排除的 11 条见 tpops_kafka_collector/mapping/data/excluded_metrics.json。清单见 docs/问题单.md TPOPS-003。"
     },
     {
       "id": "rate-unit-semantics",
@@ -66,6 +66,12 @@
       "topic": "几处单位与来源字段语义对不上",
       "default": "按客户表原样带单位",
       "detail": "gaussdb.Temp_files 单位 b（源列 temp_files 是文件个数）、gaussdb.Conflicts 单位 ms（源列 conflicts 是冲突次数）、gaussdb.Blk_read_time 单位 个（源列 blk_read_time 是毫秒）、GAUSSDB.{#NAME}.Number.t.date.ples 单位 %（源列 n_tup_hot_upd 是行数）。是客户表抄错还是另有含义？确认后只改映射表。清单见 docs/问题单.md TPOPS-004。"
+    },
+    {
+      "id": "alarm-unified-metric",
+      "topic": "事件类告警的统一指标名取值",
+      "default": "metricCode=gaussdb.alarm、metricName=数据库告警",
+      "detail": "统一值写在 alarm_rules.json 的 event_metric 段（表驱动），改口径只改数据文件、不改代码。统一后 ITSCADA 侧的告警指标台账从 254 项变 1 项（告警种类由 alarmId / alarmName / alarmContent 承载）——**对外契约变化，需客户确认这个指标名与中文名。**"
     }
   ]
 }

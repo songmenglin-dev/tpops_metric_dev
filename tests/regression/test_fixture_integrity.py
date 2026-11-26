@@ -155,10 +155,10 @@ def test_non_b_expected_values_fixture_matches_the_generator():
     assert load_json(EXPECTED_NON_B_PATH) == build_regression_fixtures.build_non_b_table()
 
 
-def test_expected_values_table_covers_the_82_b_class_metrics(expected_table):
-    """B 类期望值表覆盖 82 条，一条不落。"""
+def test_expected_values_table_covers_the_71_b_class_metrics(expected_table):
+    """B 类期望值表覆盖 71 条，一条不落。"""
     expected = expected_table['expected']
-    assert len(expected) == 82
+    assert len(expected) == 71
 
 
 def test_non_b_expected_values_table_covers_the_16_other_metrics(

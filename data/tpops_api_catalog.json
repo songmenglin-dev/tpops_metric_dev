@@ -5,7 +5,7 @@
     "api_count": 9,
     "metric_apis": 5,
     "prerequisite_apis": 4,
-    "covered_metrics": 98
+    "covered_metrics": 87
   },
   "platform_facts": {
     "api_survey": {
@@ -291,7 +291,7 @@
       "uri": "/rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
       "method": "POST",
       "purpose": "统一命令中心：执行单条命令。general_single_sql_query 可执行任意 SQL，是本方案 82 个 pg_stat 类指标的主通道",
-      "covers_metrics": 82,
+      "covers_metrics": 71,
       "is_prerequisite": false,
       "request": {
         "headers": {

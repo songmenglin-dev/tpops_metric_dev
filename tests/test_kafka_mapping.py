@@ -149,14 +149,15 @@ def _resolve(source, parts):
 
 
 def _parse_all(expression):
-    """复合表达式（如比值 a ÷ b）拆成多组路径。"""
+    """复合表达式（如比值 a ÷ b、列拼接 a · b）拆成多组路径。"""
     if not _is_reference(expression):
         return []
     paths = []
     for side in expression.split(' ÷ '):
-        parts = _parse_path(side.strip())
-        if parts:
-            paths.append(parts)
+        for piece in side.split(' · '):
+            parts = _parse_path(piece.strip())
+            if parts:
+                paths.append(parts)
     return paths
 
 
@@ -192,7 +193,7 @@ def test_covers_all_enabled_metrics(payload):
     metric_rules = _load(METRIC_RULES_PATH)['rules']
     enabled = set(r['metric_code'] for r in metric_rules if r.get('enabled'))
     mapped = set(m['metric_code'] for m in payload['metric_mappings'])
-    assert len(payload['metric_mappings']) == 98
+    assert len(payload['metric_mappings']) == 87
     assert mapped == enabled
 
 

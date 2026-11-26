@@ -33,7 +33,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from ..ids import alarm_idempotency_key
 from ..mapping.message import build_alarm_message
 from ..mapping.nodes import select_master_node
-from ..mapping.table import AlarmDefinition
+from ..mapping.table import AlarmDefinition, build_event_alarm_definition
 from ..tpops.alarms import DEFAULT_LIMIT, fetch_all_alarm_records
 
 LOGGER = logging.getLogger(__name__)
@@ -249,27 +249,21 @@ def _definition_for(
     row: Mapping[str, Any],
     alarm_id: str,
 ) -> AlarmDefinition:
-    """取告警定义；定义缺失时按「``gaussdb.alarm.<alarm_id>`` 自造指标名」兜底。"""
+    """取告警定义；定义缺失时按**统一指标名**兜底。
+
+    统一指标名来自映射数据（``alarm_rules.json`` 的 ``event_metric`` 段）——
+    与事件类告警的口径一致，代码里不写死任何客户口径。
+    """
     definition = mapping.alarm_definition(alarm_id)
     if definition is not None:
         return definition
+    event_metric = (mapping.alarm_rules or {}).get('event_metric') or {}
     LOGGER.warning(
-        '告警定义缺失：alarm_id=%s（平台新告警？），按 gaussdb.alarm.%s 兜底挂载',
-        alarm_id, alarm_id,
+        '告警定义缺失：alarm_id=%s（平台新告警？），按统一指标名 %s 兜底挂载',
+        alarm_id, event_metric.get('metric_code'),
     )
-    alarm_name = row.get('alarm_name') or ''
-    return AlarmDefinition(
-        alarm_id=alarm_id,
-        alarm_name=alarm_name,
-        alarm_kind=row.get('alarm_type') or '',
-        default_level='',
-        default_priority=None,
-        threshold='',
-        metric_code=f'gaussdb.alarm.{alarm_id}',
-        metric_name=alarm_name,
-        value_source='alarm_items_sum',
-        linked_customer_metric=None,
-    )
+    return build_event_alarm_definition(
+        alarm_id, row.get('alarm_name') or '', event_metric)
 
 
 def _unit_for(mapping: Any, definition: AlarmDefinition) -> Optional[str]:

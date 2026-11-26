@@ -1,0 +1,48 @@
+# .spec-superflow.yaml — lightweight state machine
+# Derived data. Always rebuildable from artifacts. Lost/corrupt → fall back to content-level detection.
+
+# === Core state ===
+state: approved-for-build
+workflow: full
+revision: 1
+
+# === Hashes (fast staleness detection) ===
+artifacts_hash: sha256:7cc1e176f66c39a9ea059f98ea65d100a606d8caae35565b932fc67a41ce126e
+contract_hash: sha256:f7b75d5a6042029294770105c57bad5938f3e61c8025444c2d42217d9ad1b3c0
+
+# === Execution progress ===
+execution_mode: sdd
+execution_plan_hash: sha256:0442fd8c548ce504ec11362176ca651ab57510dd58a370e2d645ecac34960d4a
+execution_plan_revision: 1
+batches_completed: 0
+test_result: null
+spec_merged: false
+spec_publication_receipt: null
+
+# === Metadata ===
+change_name: tpops-mapping-and-logging
+last_transition: 2026-11-26T03:16:10.065Z
+last_transition_from: bridging
+last_transition_to: approved-for-build
+
+# === Decision points ===
+dp_0_decisions: 变更名=tpops-mapping-and-logging；意图=在既有 tpops_kafka_collector 采集端上做三件事：(1) 指标更新——删除客户指标库中 11 组表级重复指标的英文变体（保留「表信息」分类中文名版本）与 3 条无法提供指标，101→87 条；(2) 日志优化——每类采集器每轮打印本轮总结（获取量/已推送量/耗时等），collector.sh run 改后台运行、日志落盘，拆「总日志（简洁汇总各采集器采集推送情况）」+「各采集器自己的采集推送日志」，并产出日志框架规范与格式供用户审核；(3) 字段映射——告警不涉及指标名时 metricName 与 metricCode 统一为一个固定名（拟 gaussdb.alarm / 「数据库告警」，待客户确认）；表级指标用 schema_name.table_name 替换表名占位符，避免不同 schema 同名表幂等碰撞。范围=三条工作流并行，均在本 change 内；不含客户 Kafka 地址/Topic 联调（P5，仍在变更外）、不含 8 项 open_items 待客户确认项的结论。约束=Python 3.7.9 语法红线；依赖锁 kafka-python==2.0.2 requests>=2.25,<3.2；采集端单文件<400 行、函数<50 行；凭据只走环境变量、禁硬编码/写日志/入库；DTO 用 frozen dataclass 不可变；错误显式包装带上下文、logging 不用 print、不静默吞异常；TPOPS 接口红线（两套命名空间、mini-token 认证失败不重试防锁号、verify_tls=False、指标窗口≥1h、end_time 回退 5 分钟、is_latest_point_only=false、12 分组码硬编码、告警 limit≤100 分页且历史仅 30 天需显式告警、命令中心 statistics.running==0 判结束、result 二次 json.loads、只在 master 执行、GaussDB 方言无 FILTER）；映射层表驱动不写死；日志不得落凭据/mini-token/业务 SQL 文本。artifact_language=zh。workflow_path=full（用户显式选择，与推荐一致）。沟通=我起草用户审；口径变更/对外契约变更/删减范围集中提问不逐条打断。
+dp_0_result: confirmed
+dp_0_confirmed: true
+dp_0_timestamp: 2026-11-26T02:13:43Z
+dp_1_result: folded into DP-2: 需求确认（proposal.md）在 DP-2 的工件审查中一并完成 —— 通过 ssf validate 并获用户批准；本次未单列 DP-1
+dp_1_timestamp: 2026-11-26T02:56:52Z
+dp_2_result: approved (修订版2): 在修订版1基础上按用户三项指示再改日志框架 —— (c) 日志框架改用 loguru 0.8.0（已在 Python 3.7.9 实测：requires_python>=3.5、py3-none-any 纯 Python wheel、Linux+py3.7 零传递依赖、rotation/retention/filter/{time:YYYY-MM-DD} 文件名/{level:<8}/异常堆栈全部原生可用、同名冲突自动改名），不自研 handler/轮转/保留/格式化；(d) 格式直接用 loguru 原生格式，不强制 logback（用户明确「直接用loguru的日志格式即可」），JSON sink 用 loguru 的 format= 自定义函数产出既有 schema 并摊平 k=v；(e) 全面改用 loguru API（from loguru import logger，调用点 LOGGER.info(...) 不动，5 个采集器模块各加 LOGGER=logger.bind(channel=...)），第三方库 stdlib 日志经官方 InterceptHandler 转发并 logger.disable 降噪。据此删除原自研的 logging_pattern.py 任务与 logging_files.py，改为 logging_setup.py 重写为 loguru sink 装配；新增 loguru 依赖落地任务(requirements-runtime.txt + 离线部署包 + CLAUDE.md 约定更新)。新增依赖不破坏「x86_64/aarch64 共用一份部署包」。修订后 proposal/specs/design/tasks 全部重新通过 ssf validate
+dp_2_timestamp: 2026-11-26T03:08:28Z
+dp_3_result: approved: 执行合同已批准 —— Intent Lock（三条已观察事实 + 范围内外）、19 条已批准需求（R1~R19，含关键场景与 8 条机械可判定的验收检查）、Design Constraints（架构/接口/依赖/数据 + TPOPS 接口红线 + py3.7.9 红线 + 依赖锁含新增 loguru==0.8.0）、4 个执行波次（wave-1-mapping 映射口径 / wave-2-logging 日志框架 / wave-3-deploy 部署 / wave-4-verification 门禁，各带任务、依赖、策略、输入输出、完成标准、review report 路径与 pass receipt 要求）、Test Obligations（RED 先行行为 7 组 + 边界情况 8 组 + 回归敏感区 7 组）、需求→波次映射 19/19 无遗漏、Review Gates（4 个 receipt 全 pass 才收口）、Escalation Rules（8 条不得继续实现的情形 + 回退 specifying/bridging 的触发条件）。未映射需求=0。三处带不确定已登记且不阻塞：告警统一名初值 gaussdb.alarm/数据库告警（客户可改数据文件）、「保留 3 天」= 最近 3 个自然日含当天、表级 metricCode 每表一个后客户台账录入方式待确认
+dp_3_timestamp: 2026-11-26T03:15:46Z
+dp_4_result: sdd: plan revision 1; user-confirmed; 用户选定 sdd：4 个 wave、19 条需求、跨模块改动（映射层/日志框架/部署脚本），需显式依赖与每 wave 的 review receipt
+dp_4_timestamp: 2026-11-26T03:16:01.998Z
+dp_5_result: null
+dp_5_timestamp: null
+dp_5_decisions: null
+dp_5_confirmed: null
+dp_6_result: null
+dp_6_timestamp: null
+dp_7_result: null
+dp_7_timestamp: null

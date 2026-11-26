@@ -29,6 +29,9 @@ if TYPE_CHECKING:  # pragma: no cover - 只为类型注解，运行期不导入�
     from .loader import CustomerMetric, ObservedColumns
 
 __all__ = [
+    'check_effective_rule_count',
+    'check_excluded_metrics_absent',
+    'check_metric_code_uniqueness',
     'check_placeholder_bindings',
     'check_providable_coverage',
     'check_rule_entries',
@@ -78,13 +81,16 @@ def _dimension_column_problems(
         available = merged_views.get(view)
         if available is None:
             continue
-        for placeholder, column in sorted((rule.dimension_bindings or {}).items()):
-            if column not in available:
-                problems.append(
-                    f'{rule.metric_code} 的维度绑定 {placeholder}→{column} '
-                    f'引用了不在实测留档视图 {view} 实际列里的列'
-                    f'（实际列有 {sorted(available)}）'
-                )
+        for placeholder, spec in sorted((rule.dimension_bindings or {}).items()):
+            # 绑定值可能是点号串（``schemaname.relname``）—— 那是**两个列**，
+            # 逐个列校验。
+            for column in spec.split('.'):
+                if column not in available:
+                    problems.append(
+                        f'{rule.metric_code} 的维度绑定 {placeholder}→{spec} '
+                        f'引用了不在实测留档视图 {view} 实际列里的列 {column}'
+                        f'（实际列有 {sorted(available)}）'
+                    )
     return problems
 
 
@@ -224,3 +230,69 @@ def check_placeholder_bindings(rules: Sequence[MetricRule]) -> List[str]:
                 f'与指标名里的占位符 {sorted(in_name)} 不一致'
             )
     return problems
+
+
+# -- 校验 5/6/7：生效口径（排除清单 / 唯一性 / 条数）---------------------
+def check_excluded_metrics_absent(
+    rules: Sequence[MetricRule],
+    excluded: Sequence[Any],
+) -> List[str]:
+    """排除清单里的指标码**一个都不在**生效映射表里。
+
+    排除发生在**构建期**（生成器跳过清单里的指标码），所以生效映射表里
+    出现被排除的码 = 有人绕过生成器手改了映射表 → 启动失败并打印差异。
+    """
+    excluded_codes = set(
+        item.metric_code if hasattr(item, 'metric_code') else item
+        for item in excluded or ()
+    )
+    if not excluded_codes:
+        return []
+    leaked = sorted(
+        rule.metric_code for rule in rules if rule.metric_code in excluded_codes
+    )
+    if not leaked:
+        return []
+    return [
+        '被排除清单剔除的指标码仍出现在生效映射表里：%s'
+        '（排除应在构建期生效，运行期没有丢弃分支）' % leaked
+    ]
+
+
+def check_metric_code_uniqueness(rules: Sequence[MetricRule]) -> List[str]:
+    """生效规则的 ``metric_code`` 互不重复。
+
+    **唯一性只对指标规则要求** —— 告警定义靠 ``alarm_id`` 唯一定位，
+    多条事件类告警共用同一个 ``metricCode`` 是**允许**的（告警统一指标名）。
+    """
+    seen = {}  # type: Dict[str, int]
+    for rule in rules:
+        seen[rule.metric_code] = seen.get(rule.metric_code, 0) + 1
+    duplicated = sorted(code for code, count in seen.items() if count > 1)
+    if not duplicated:
+        return []
+    return [
+        '生效规则的 metric_code 有重复（每个指标码只能有一条规则）：%s' % duplicated
+    ]
+
+
+def check_effective_rule_count(
+    rules: Sequence[MetricRule],
+    expected: Any = None,
+) -> List[str]:
+    """生效规则条数与排除清单声明的生效条数一致。
+
+    ``expected`` 来自**排除清单数据文件**的 ``counts.effective_total``
+    （客户指标库 101 条 − 排除 14 条 = 生效 87 条）—— 条数不写死在代码里。
+    清单没声明时只做「不重复」的兜底，不报条数问题。
+    """
+    if expected is None:
+        return []
+    actual = len(rules)
+    if actual == expected:
+        return []
+    return [
+        '生效指标规则条数不对：期望 %d 条，实际 %d 条'
+        '（口径见 excluded_metrics.json 的 counts.effective_total）'
+        % (expected, actual)
+    ]

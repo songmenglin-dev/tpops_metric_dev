@@ -375,9 +375,25 @@ def _dimensions(
     bindings: Optional[Mapping[str, str]],
     row: Mapping[str, Any],
 ) -> Dict[str, Any]:
+    """维度值 —— 绑定值支持**点号连接的多个列名**（``schemaname.relname``）。
+
+    表级指标的 ``{#NAME}`` 绑成 ``schema_name.table_name``，各列的值用
+    ``.`` 连起来（与生产实现 ``mapping/rules_context.py`` 同一口径）。
+    """
     dims = {}
-    for placeholder, column in (bindings or {}).items():
-        dims[placeholder] = row.get(column)
+    for placeholder, spec in (bindings or {}).items():
+        columns = spec.split('.') if '.' in spec else [spec]
+        if len(columns) == 1:
+            dims[placeholder] = row.get(columns[0])
+            continue
+        values = []
+        for column in columns:
+            value = row.get(column)
+            if value is None:
+                raise ArchiveError(
+                    '维度绑定 %s→%s 取不到列 %s 的值' % (placeholder, spec, column))
+            values.append(str(value))
+        dims[placeholder] = '.'.join(values)
     return dims
 
 

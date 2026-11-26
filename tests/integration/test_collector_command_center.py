@@ -3,15 +3,15 @@
 
 **TPOPS 与 Kafka 一律 mock** —— 本文件不发起任何网络请求。
 
-守的是这个项目里**最大的一块**（82 个客户指标走这条通道）的六个要害：
+守的是这个项目里**最大的一块**（71 个客户指标走这条通道）的六个要害：
 
 1. **必须走 ``decode_merged`` / ``merge_pages``** —— 合并形态当行列表用，
-   82 个指标会**静默全变 0**（本项目最危险的失败形态）；
+   71 个指标会**静默全变 0**（本项目最危险的失败形态）；
 2. **必须检查 ``outcome.ok``** —— 命令中心失败不抛异常，不检查就是静默丢数据；
 3. **分页只对可增长视图生效** —— 固定视图每页重复返回全量，累加会翻倍；
 4. **``node_scoped`` 归集** —— ``true`` 各 master 各自一份，``false`` 只取第一个 master；
 5. **输出上限 102400 B** —— 接近上限记 WARNING，超了整条失败（不是截断）；
-6. **值等于期望值表** —— 82 条逐条断言（不是「非零」判据）。
+6. **值等于期望值表** —— 71 条逐条断言（不是「非零」判据）。
 """
 import io
 import json
@@ -262,7 +262,8 @@ def _growable_page(row_count, offset=0):
     row = dict(_base_row())
     for name in GROWABLE_VIEWS:
         row[name] = json.dumps(
-            [{'relname': 't%d_%d' % (offset, i)} for i in range(row_count)]
+            [{'schemaname': 'public', 'relname': 't%d_%d' % (offset, i)}
+             for i in range(row_count)]
         )
     return json.dumps([row])
 
@@ -423,16 +424,16 @@ def test_output_limit_constant_matches_the_platform_value():
 
 
 # ---------------------------------------------------------------------------
-# 6. 值等于期望值表（82 条逐条）
+# 6. 值等于期望值表（71 条逐条）
 # ---------------------------------------------------------------------------
 
 def test_collected_values_equal_the_expected_table(mapping, probe_nodes, node_rows, expected_table):
-    """**82 条逐条**：采集器产出的值 == 期望值表。
+    """**71 条逐条**：采集器产出的值 == 期望值表。
 
     期望值表由**独立推导器**从实测留档原始行推出
     （``tools/expected_deriver.py``），不是抄规则引擎的输出。
 
-    **这条守卫覆盖全部 82 条指标码**（不是 47 条）：
+    **这条守卫覆盖全部 71 条指标码**（不是 47 条）：
 
     - 期望值表的键是**模板码**（``GAUSSDB.[{#DATNAME}]_committed_transactions``），
       消息里的 ``metricCode`` 是**占位符替换后的码**
@@ -501,7 +502,7 @@ def test_collected_values_equal_the_expected_table(mapping, probe_nodes, node_ro
     assert checked == EXPECTED_COMPARISONS, (
         '比到的条数与期望值表对不上', checked, EXPECTED_COMPARISONS,
     )
-    # 82 条指标码里，**有期望值**的那些一条都不许漏
+    # 71 条指标码里，**有期望值**的那些一条都不许漏
     assert compared_codes == _codes_with_expected_values(expected_table), (
         '有期望值的指标码没被比到',
         sorted(_codes_with_expected_values(expected_table) - compared_codes),
@@ -509,8 +510,9 @@ def test_collected_values_equal_the_expected_table(mapping, probe_nodes, node_ro
 
 
 #: 期望值表在**第一轮**（差分指标还没基线）的逐维度比对条数。
-#: 82 条指标码 × 3 个 master × 各自主机上的维度条目数 —— 由期望值表算出。
-EXPECTED_COMPARISONS = 1700
+#: 71 条指标码 × 3 个 master × 各自主机上的维度条目数 —— 由期望值表算出。
+#: （生效口径去掉 11 条重复的表级指标后，条数随之变化。）
+EXPECTED_COMPARISONS = 954
 
 
 def _codes_with_expected_values(expected_table):
@@ -527,7 +529,7 @@ def _codes_with_expected_values(expected_table):
 def test_every_b_class_rule_is_covered_by_the_produced_messages(
     mapping, probe_nodes, node_rows
 ):
-    """**82 条指标码一条不落**（按模板码归并消息）。
+    """**71 条指标码一条不落**（按模板码归并消息）。
 
     第一轮有 6 条指标码**产不出消息**，且都是**有据可依**的：
 
@@ -547,7 +549,7 @@ def test_every_b_class_rule_is_covered_by_the_produced_messages(
         rule for rule in mapping.metric_rules
         if rule.enabled and rule.source.get('source') == 'command_center_sql'
     ]
-    assert len(rules) == 82
+    assert len(rules) == 71
     missing = sorted(rule.metric_code for rule in rules
                      if rule.metric_code not in produced_codes)
     assert missing == sorted(NO_VALUE_CODES), missing
@@ -573,12 +575,12 @@ def _template_code(message):
 
 
 def test_expected_table_covers_the_b_class_rules(mapping):
-    """期望值表覆盖全部 82 条 B 类规则（一条不落）。"""
+    """期望值表覆盖全部 71 条 B 类规则（一条不落）。"""
     rules = [
         rule for rule in mapping.metric_rules
         if rule.enabled and rule.source.get('source') == 'command_center_sql'
     ]
-    assert len(rules) == 82
+    assert len(rules) == 71
 
 
 # ---------------------------------------------------------------------------

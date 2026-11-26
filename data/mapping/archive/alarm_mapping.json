@@ -257,7 +257,7 @@
       "source_type": "mapping_table",
       "source": "data/mapping/alarm_rules.json",
       "source_in": "按 alarm_id 查表",
-      "transform": "能对应到客户指标的告警用客户指标中文名；其余用告警名",
+      "transform": "能对应到客户指标的告警用客户指标中文名；其余用统一指标名（alarm_rules.json 的 event_metric 段）",
       "source_field": "metric_name",
       "source_lookup": "用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id]"
     },
@@ -268,7 +268,7 @@
       "source_type": "mapping_table",
       "source": "data/mapping/alarm_rules.json",
       "source_in": "按 alarm_id 查表",
-      "transform": "能对应到客户指标的告警用客户指标英文名；其余用 gaussdb.alarm.<alarm_id>",
+      "transform": "能对应到客户指标的告警用客户指标英文名；其余用统一指标名 gaussdb.alarm（alarm_rules.json 的 event_metric 段）",
       "source_field": "metric_code",
       "source_lookup": "用 alarm_id 匹配 alarm_rules.json 的 definitions[alarm_id]"
     },

@@ -9,9 +9,9 @@
   ],
   "field_map_ref": "itscada_field_map.json",
   "counts": {
-    "total": 101,
-    "enabled": 98,
-    "disabled": 3,
+    "total": 87,
+    "enabled": 87,
+    "disabled": 0,
     "needs_confirmation": 5
   },
   "rules": [
@@ -655,6 +655,7 @@
           "column": "n_tup_del",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -666,7 +667,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "累计删除行数",
       "needs_confirmation": false
@@ -900,6 +901,7 @@
           "column": "n_dead_tup",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -911,7 +913,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -944,6 +946,7 @@
           "column": "n_tup_hot_upd",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -955,7 +958,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -988,6 +991,7 @@
           "column": "idx_scan",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -999,7 +1003,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -1032,6 +1036,7 @@
           "column": "seq_tup_read",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -1043,7 +1048,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -1076,6 +1081,7 @@
           "column": "idx_tup_fetch",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -1087,7 +1093,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -1120,6 +1126,7 @@
           "column": "n_tup_ins",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -1131,7 +1138,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -1164,6 +1171,7 @@
           "column": "n_live_tup",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -1175,7 +1183,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -1208,6 +1216,7 @@
           "column": "n_tup_upd",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -1219,7 +1228,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -1252,6 +1261,7 @@
           "column": "seq_scan",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         }
@@ -1263,7 +1273,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -1434,6 +1444,7 @@
           "column": "dead_tup_ratio",
           "row_policy": "per_row",
           "group_by": [
+            "schemaname",
             "relname"
           ]
         },
@@ -1446,7 +1457,7 @@
       "master_view": "identical",
       "node_scoped": false,
       "dimension_bindings": {
-        "NAME": "relname"
+        "NAME": "schemaname.relname"
       },
       "note": "",
       "needs_confirmation": false
@@ -1765,38 +1776,6 @@
       "dimension_bindings": {},
       "note": "",
       "needs_confirmation": false
-    },
-    {
-      "metric_code": "gaussdb.Fastpath_function_call",
-      "metric_name": "快路径函数调用的连接数",
-      "resource_type": "GAUSSDB实例",
-      "category": "连接情况",
-      "value_type": "整数",
-      "unit": "个",
-      "collect_cycle": {
-        "value": 1,
-        "unit": "分"
-      },
-      "status": "无法提供",
-      "match_level": "",
-      "enabled": false,
-      "source": {
-        "api": null,
-        "source": null,
-        "tpops_source": null,
-        "value_source_expr": null,
-        "sql_key": null,
-        "method": "无法提供"
-      },
-      "value_rule": null,
-      "placeholders": [],
-      "resource_granularity": "instance",
-      "master_view": null,
-      "node_scoped": false,
-      "dimension_bindings": {},
-      "note": "PG 侧无 fastpath 计数器；pg_settings 仅有 gsi_fastpath_level 开关",
-      "needs_confirmation": false,
-      "unsupported_reason": "PG 侧无 fastpath 计数器；pg_settings 仅有 gsi_fastpath_level 开关"
     },
     {
       "metric_code": "gaussdb.Total_conn",
@@ -2297,38 +2276,6 @@
       "needs_confirmation": false
     },
     {
-      "metric_code": "gaussdb.Disabled_conn",
-      "metric_name": "禁用的连接数",
-      "resource_type": "GAUSSDB实例",
-      "category": "连接情况",
-      "value_type": "整数",
-      "unit": "个",
-      "collect_cycle": {
-        "value": 1,
-        "unit": "分"
-      },
-      "status": "无法提供",
-      "match_level": "",
-      "enabled": false,
-      "source": {
-        "api": null,
-        "source": null,
-        "tpops_source": null,
-        "value_source_expr": null,
-        "sql_key": null,
-        "method": "无法提供"
-      },
-      "value_rule": null,
-      "placeholders": [],
-      "resource_granularity": "instance",
-      "master_view": null,
-      "node_scoped": false,
-      "dimension_bindings": {},
-      "note": "PG 无「禁用连接」概念；pg_settings 仅有 reserved_connections 等预留连接",
-      "needs_confirmation": false,
-      "unsupported_reason": "PG 无「禁用连接」概念；pg_settings 仅有 reserved_connections 等预留连接"
-    },
-    {
       "metric_code": "gaussdb.Idle_conn",
       "metric_name": "空闲连接数",
       "resource_type": "GAUSSDB实例",
@@ -2535,523 +2482,6 @@
       "node_scoped": false,
       "dimension_bindings": {},
       "note": "count(*) 统计预备事务",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "gaussdb.sendAgentName",
-      "metric_name": "发送设备名给Agent",
-      "resource_type": "GAUSSDB实例",
-      "category": "Agent",
-      "value_type": "文本",
-      "unit": null,
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "无法提供",
-      "match_level": "",
-      "enabled": false,
-      "source": {
-        "api": null,
-        "source": null,
-        "tpops_source": null,
-        "value_source_expr": null,
-        "sql_key": null,
-        "method": "无法提供"
-      },
-      "value_rule": null,
-      "placeholders": [],
-      "resource_granularity": "instance",
-      "master_view": null,
-      "node_scoped": false,
-      "dimension_bindings": {},
-      "note": "Agent 侧行为，不是数据库可查询的监控指标",
-      "needs_confirmation": false,
-      "unsupported_reason": "Agent 侧行为，不是数据库可查询的监控指标"
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.Number.ad.ples",
-      "metric_name": "({#NAME}) number of dead tuples",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": null,
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.n_dead_tup",
-        "value_source_expr": "n_dead_tup",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "n_dead_tup",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.Number.lete.ples",
-      "metric_name": "({#NAME}) number of delete tuples",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": "tuples/s",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.n_tup_del",
-        "value_source_expr": "n_tup_del",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "n_tup_del",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.garbage.Ratio",
-      "metric_name": "({#NAME})Garbage ratio",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "浮点",
-      "unit": "%",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.n_dead_tup/(n_live_tup+n_dead_tup)",
-        "value_source_expr": "n_dead_tup/(n_live_tup+n_dead_tup)",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "dead_tup_ratio",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        },
-        "note": "比率已在合并 SQL 内用 CASE WHEN 算好（dead_tup_ratio）"
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.Number.t.date.ples",
-      "metric_name": "({#NAME}) number of hot update tuples",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": "tuples/s",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.n_tup_hot_upd",
-        "value_source_expr": "n_tup_hot_upd",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "n_tup_hot_upd",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.index.scan",
-      "metric_name": "({#NAME})number of index scan",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": "scans/s",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.idx_scan",
-        "value_source_expr": "idx_scan",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "idx_scan",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
-      "metric_name": "({#NAME})number of index tuples read",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": "tuples/s",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.idx_tup_fetch",
-        "value_source_expr": "idx_tup_fetch",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "idx_tup_fetch",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.live.tuples",
-      "metric_name": "({#NAME})number of live tuples",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": null,
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.n_live_tup",
-        "value_source_expr": "n_live_tup",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "n_live_tup",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
-      "metric_name": "({#NAME})number of insert tuples",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": "tuples/s",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.n_tup_ins",
-        "value_source_expr": "n_tup_ins",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "n_tup_ins",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
-      "metric_name": "({#NAME})number of sequencial scan",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": "scans/s",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.seq_scan",
-        "value_source_expr": "seq_scan",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "seq_scan",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
-      "metric_name": "({#NAME})number of sequencial tuples read",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": "tuples/s",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.seq_tup_read",
-        "value_source_expr": "seq_tup_read",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "seq_tup_read",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
-      "needs_confirmation": false
-    },
-    {
-      "metric_code": "GAUSSDB.{#NAME}.number.Of.update.tuples",
-      "metric_name": "({#NAME})number of update tuples",
-      "resource_type": "GAUSSDB实例",
-      "category": "事务信息",
-      "value_type": "整数",
-      "unit": "tuples/s",
-      "collect_cycle": {
-        "value": 5,
-        "unit": "分"
-      },
-      "status": "可提供",
-      "match_level": "直接对应",
-      "enabled": true,
-      "source": {
-        "api": "POST /rds/gaussdb/v3/command-center/customer-commands/{cmd_id}",
-        "source": "command_center_sql",
-        "tpops_source": "pg_stat_user_tables.n_tup_upd",
-        "value_source_expr": "n_tup_upd",
-        "sql_key": "stat_user_tables",
-        "method": "命令中心SQL"
-      },
-      "value_rule": {
-        "type": "raw",
-        "params": {
-          "column": "n_tup_upd",
-          "row_policy": "per_row",
-          "group_by": [
-            "relname"
-          ]
-        }
-      },
-      "placeholders": [
-        "NAME"
-      ],
-      "resource_granularity": "table",
-      "master_view": "identical",
-      "node_scoped": false,
-      "dimension_bindings": {
-        "NAME": "relname"
-      },
-      "note": "",
       "needs_confirmation": false
     },
     {

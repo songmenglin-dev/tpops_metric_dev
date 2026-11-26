@@ -35,6 +35,7 @@ DATA_DIR = os.path.join(PACKAGE_DIR, 'mapping', 'data')
 # 它是从留档生成的，不是仓库文件的副本。
 COPIED_FILES = {
     'metric_rules.json': os.path.join('data', 'mapping', 'metric_rules.json'),
+    'excluded_metrics.json': os.path.join('data', 'mapping', 'excluded_metrics.json'),
     'alarm_rules.json': os.path.join('data', 'mapping', 'alarm_rules.json'),
     'itscada_field_map.json': os.path.join('data', 'mapping', 'itscada_field_map.json'),
     'kafka_field_mapping.json': os.path.join('data', 'mapping', 'kafka_field_mapping.json'),
@@ -73,8 +74,8 @@ def _mutate(sandbox, filename, mutator):
 # -- 加载 -----------------------------------------------------------------
 def test_load_mapping_reads_the_real_tables():
     bundle = loader.load_mapping()
-    assert len(bundle.metric_rules) == 101
-    assert len(bundle.customer_metrics) == 101
+    assert len(bundle.metric_rules) == 87
+    assert len(bundle.customer_metrics) == 87
     assert len(bundle.alarm_rules['definitions']) == 257
     assert len(bundle.observed.merged_views) == 11
 

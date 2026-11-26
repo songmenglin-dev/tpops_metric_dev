@@ -14,7 +14,7 @@ import build_metric_value_rules as value_builder  # noqa: E402
 
 
 def test_metric_value_rules_are_stable():
-    """取值规则生成器可重复：两次生成结果一致，且覆盖 98 条可提供指标。
+    """取值规则生成器可重复：两次生成结果一致，且覆盖 87 条生效指标。
 
     `data/metric_value_rules.json` 是不入库的中间产物，由
     `tools/build_metric_value_rules.py` 从开发方案 §4.3 机械生成；
@@ -23,7 +23,7 @@ def test_metric_value_rules_are_stable():
     first = value_builder._build_metrics(value_builder._read_plan())
     second = value_builder._build_metrics(value_builder._read_plan())
     assert first == second
-    assert len(first) == 98
+    assert len(first) == 87
 
 
 def test_metric_rules_file_is_up_to_date():
@@ -43,7 +43,7 @@ def test_alarm_rules_file_is_up_to_date():
 
 
 def test_value_rules_cover_all_provided_metrics():
-    """开发方案 §4.3 的 98 条规则与可提供性判定一一对应。"""
+    """开发方案 §4.3 的规则（扣除排除清单）与可提供性判定一一对应。"""
     availability = json.load(
         io.open(os.path.join(DATA_DIR, 'customer_metric_mapping.json'), encoding='utf-8')
     )

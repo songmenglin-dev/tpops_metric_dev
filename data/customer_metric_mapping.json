@@ -4,14 +4,14 @@
     "tpops_metrics": "data/customer_metric_mapping.json"
   },
   "generated_by": "tools/build_customer_metric_mapping.py",
-  "total": 101,
+  "total": 87,
   "statistics": {
-    "total": 101,
-    "provided_by_tpops": 98,
-    "not_provided_by_tpops": 3,
-    "provided_ratio": 0.9703,
+    "total": 87,
+    "provided_by_tpops": 87,
+    "not_provided_by_tpops": 0,
+    "provided_ratio": 1.0,
     "by_match_level": {
-      "直接对应": 79,
+      "直接对应": 68,
       "可统计": 3,
       "近似对应": 10,
       "需换算": 6
@@ -19,12 +19,12 @@
     "by_source": {
       "监控指标接口": 11,
       "诊断优化接口": 4,
-      "命令中心SQL": 82,
+      "命令中心SQL": 71,
       "实例接口": 1
     },
     "by_customer_category": {
       "事务信息": {
-        "可提供": 18,
+        "可提供": 7,
         "无法提供": 0
       },
       "慢查询信息": {
@@ -45,7 +45,7 @@
       },
       "连接情况": {
         "可提供": 8,
-        "无法提供": 2
+        "无法提供": 0
       },
       "基本信息": {
         "可提供": 10,
@@ -58,10 +58,6 @@
       "数据库统计信息": {
         "可提供": 1,
         "无法提供": 0
-      },
-      "Agent": {
-        "可提供": 0,
-        "无法提供": 1
       },
       "Bgwriter信息": {
         "可提供": 8,
@@ -552,17 +548,6 @@
       "note": ""
     },
     {
-      "customer_metric": "gaussdb.Fastpath_function_call",
-      "customer_metric_name": "快路径函数调用的连接数",
-      "customer_category": "连接情况",
-      "tpops_metric": null,
-      "tpops_metric_name": null,
-      "source": "",
-      "status": "无法提供",
-      "match_level": "",
-      "note": "PG 侧无 fastpath 计数器；pg_settings 仅有 gsi_fastpath_level 开关"
-    },
-    {
       "customer_metric": "gaussdb.Total_conn",
       "customer_metric_name": "总连接数",
       "customer_category": "连接情况",
@@ -706,17 +691,6 @@
       "note": "state='active'；平台另有 rds117"
     },
     {
-      "customer_metric": "gaussdb.Disabled_conn",
-      "customer_metric_name": "禁用的连接数",
-      "customer_category": "连接情况",
-      "tpops_metric": null,
-      "tpops_metric_name": null,
-      "source": "",
-      "status": "无法提供",
-      "match_level": "",
-      "note": "PG 无「禁用连接」概念；pg_settings 仅有 reserved_connections 等预留连接"
-    },
-    {
       "customer_metric": "gaussdb.Idle_conn",
       "customer_metric_name": "空闲连接数",
       "customer_category": "连接情况",
@@ -770,138 +744,6 @@
       "status": "可提供",
       "match_level": "直接对应",
       "note": "count(*) 统计预备事务"
-    },
-    {
-      "customer_metric": "gaussdb.sendAgentName",
-      "customer_metric_name": "发送设备名给Agent",
-      "customer_category": "Agent",
-      "tpops_metric": null,
-      "tpops_metric_name": null,
-      "source": "",
-      "status": "无法提供",
-      "match_level": "",
-      "note": "Agent 侧行为，不是数据库可查询的监控指标"
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.Number.ad.ples",
-      "customer_metric_name": "({#NAME}) number of dead tuples",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.n_dead_tup",
-      "tpops_metric_name": "表死亡行数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.Number.lete.ples",
-      "customer_metric_name": "({#NAME}) number of delete tuples",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.n_tup_del",
-      "tpops_metric_name": "表累计删除行数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.garbage.Ratio",
-      "customer_metric_name": "({#NAME})Garbage ratio",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.n_dead_tup/(n_live_tup+n_dead_tup)",
-      "tpops_metric_name": "表死亡行占比",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.Number.t.date.ples",
-      "customer_metric_name": "({#NAME}) number of hot update tuples",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.n_tup_hot_upd",
-      "tpops_metric_name": "表累计 HOT 更新行数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.number.Of.index.scan",
-      "customer_metric_name": "({#NAME})number of index scan",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.idx_scan",
-      "tpops_metric_name": "表索引扫描次数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.number.Of.dex.ples.ad",
-      "customer_metric_name": "({#NAME})number of index tuples read",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.idx_tup_fetch",
-      "tpops_metric_name": "表索引扫描获取行数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.number.Of.live.tuples",
-      "customer_metric_name": "({#NAME})number of live tuples",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.n_live_tup",
-      "tpops_metric_name": "表活跃行数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.number.Of.insert.tuples",
-      "customer_metric_name": "({#NAME})number of insert tuples",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.n_tup_ins",
-      "tpops_metric_name": "表累计插入行数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.number.Of.sequential.scan",
-      "customer_metric_name": "({#NAME})number of sequencial scan",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.seq_scan",
-      "tpops_metric_name": "表顺序扫描次数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.number.Of.quential.ples.ad",
-      "customer_metric_name": "({#NAME})number of sequencial tuples read",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.seq_tup_read",
-      "tpops_metric_name": "表顺序扫描读取行数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
-    },
-    {
-      "customer_metric": "GAUSSDB.{#NAME}.number.Of.update.tuples",
-      "customer_metric_name": "({#NAME})number of update tuples",
-      "customer_category": "事务信息",
-      "tpops_metric": "pg_stat_user_tables.n_tup_upd",
-      "tpops_metric_name": "表累计更新行数",
-      "source": "命令中心SQL",
-      "status": "可提供",
-      "match_level": "直接对应",
-      "note": ""
     },
     {
       "customer_metric": "GAUSSDB.Buffers_Alloc",
