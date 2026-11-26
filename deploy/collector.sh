@@ -745,7 +745,7 @@ cmd_verify() {
 
   echo "== 4. 运行时依赖 =="
   local mod
-  for mod in requests kafka urllib3; do
+  for mod in requests kafka urllib3 loguru; do
     if "$py" -c "import $mod" >/dev/null 2>&1; then
       ok "$mod $("$py" -c "import $mod as m; print(getattr(m, '__version__', '?'))" 2>/dev/null)"
     else

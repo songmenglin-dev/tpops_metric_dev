@@ -3,8 +3,8 @@
 - ``counter_delta``：累计计数 → 速率（差分基线在 ``deltas.py``）；
 - ``ratio_across``：分子分母来自**不同视图**（``activity_agg`` / ``stat_database``）。
 """
-import logging
 from typing import Any, List, Mapping
+from loguru import logger
 
 from .rules_context import (
     MetricValue,
@@ -15,7 +15,7 @@ from .rules_context import (
     to_number,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 
 def eval_counter_delta(metric_rule: Any, rule: Mapping[str, Any], ctx: RuleContext,
@@ -59,7 +59,7 @@ def eval_ratio_across(metric_rule: Any, rule: Mapping[str, Any], ctx: RuleContex
     denominator = side_value(params.get('denominator') or {}, ctx)
     if not denominator:
         LOGGER.warning(
-            'ratio_across 的分母不可用（%s），本轮不产出该指标的值',
+            'ratio_across 的分母不可用（{}），本轮不产出该指标的值',
             (params.get('denominator') or {}).get('sql_key'),
         )
         return []

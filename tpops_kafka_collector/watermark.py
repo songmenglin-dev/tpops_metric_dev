@@ -18,16 +18,16 @@
 单实例假设（开发方案 §5.6.4）：同一时刻只有一个进程写这个文件。
 """
 import json
-import logging
 import os
 import tempfile
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Tuple
+from loguru import logger
 
 from .errors import TpopsError
 from .ids import DEFAULT_IDEMPOTENCY_LRU_CAPACITY, IdempotencyKeyLRU
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 #: 水位文件的格式版本。结构不兼容变更时 +1，旧文件按「版本不兼容」拒绝加载。
 WATERMARK_STATE_VERSION = 1
@@ -236,7 +236,7 @@ class WatermarkStore:
         """把当前状态原子写到磁盘。"""
         payload = self.snapshot().to_payload()
         _atomic_write_json(self._path, payload)
-        LOGGER.debug('水位已落盘：%s', self._path)
+        LOGGER.debug('水位已落盘：{}', self._path)
 
     def _apply(self, state: WatermarkState) -> None:
         self._metric_watermarks = {
@@ -354,4 +354,4 @@ def _fsync_directory(directory: str) -> None:
             os.close(dir_fd)
     except OSError as exc:
         # 部分平台（如 Windows）不支持目录 fsync；替换本身已是原子的。
-        LOGGER.debug('目录 fsync 失败，不影响原子性：%s（%s）', directory, exc)
+        LOGGER.debug('目录 fsync 失败，不影响原子性：{}（{}）', directory, exc)

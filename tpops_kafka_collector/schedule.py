@@ -15,13 +15,13 @@
 采集时刻（60 秒）远小于该指标的档位周期（86400 秒）→ **不需要提前刷新**，
 该档位自然落在 60 秒的刷新里。
 """
-import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+from loguru import logger
 
 from .collectors.instance import collect_cycle_seconds
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'ALARM_INTERVAL_SECONDS',
@@ -149,14 +149,14 @@ def _tiers_by_channel(mapping: Any) -> Dict[str, List[int]]:
         channel = SOURCE_TO_CHANNEL.get(raw_channel)
         if channel is None:
             LOGGER.warning(
-                '映射表里有认不出的取数通道 %r（指标 %s）—— 不参与调度',
+                '映射表里有认不出的取数通道 {!r}（指标 {}）—— 不参与调度',
                 raw_channel, getattr(rule, 'metric_code', '?'),
             )
             continue
         tier = collect_cycle_seconds(getattr(rule, 'collect_cycle', None))
         if tier <= 0:
             LOGGER.warning(
-                '指标 %s 没有可用的 collect_cycle —— 不参与调度',
+                '指标 {} 没有可用的 collect_cycle —— 不参与调度',
                 getattr(rule, 'metric_code', '?'),
             )
             continue

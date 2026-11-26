@@ -20,9 +20,9 @@
 采集器**不推进水位**（那是 wave 3 调度器的职责），只返回结果。
 """
 
-import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from ..errors import MappingError
 from ..mapping.message import build_metric_message
@@ -30,7 +30,7 @@ from ..mapping.rules import RuleContext, evaluate
 from ..tpops.instances import fetch_instances, select_instance
 from ..tpops.metrics import utc_now_ms
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger.bind(channel="instance")
 
 __all__ = [
     'CYCLE_UNIT_SECONDS',
@@ -130,13 +130,13 @@ class InstanceCollector:
         instances = fetch_instances(self._client)
         if not instances:
             LOGGER.error(
-                '实例列表为空（目标实例 %s）—— 本轮不产出 D 类消息', instance_id
+                '实例列表为空（目标实例 {}）—— 本轮不产出 D 类消息', instance_id
             )
             return empty
         instance = select_instance(instances, instance_id)
         if instance is None:
             LOGGER.error(
-                '找不到目标实例 %s —— 本轮不产出 D 类消息', instance_id
+                '找不到目标实例 {} —— 本轮不产出 D 类消息', instance_id
             )
             return empty
 
@@ -161,7 +161,7 @@ class InstanceCollector:
             value = self._rule_value(rule, instance, now_ms)
             if value is None:
                 LOGGER.error(
-                    'D 类指标的 %s 取不到（实例 %s）—— 不产出该条消息',
+                    'D 类指标的 {} 取不到（实例 {}）—— 不产出该条消息',
                     _field_name(rule), instance.instance_id,
                 )
                 continue

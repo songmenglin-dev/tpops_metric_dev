@@ -32,14 +32,14 @@
 本模块**只做取数与解析**，不做映射、不拼 Kafka 消息。
 """
 
-import logging
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from ..errors import ProtocolError
 from .client import GAUSSDB_V3, RDS_V3_2, require_fields
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'INSTANCE_FIELDS',

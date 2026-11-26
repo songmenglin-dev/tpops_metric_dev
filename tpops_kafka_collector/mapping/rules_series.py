@@ -3,12 +3,12 @@
 A 类（监控指标接口）按**组件**给出多条 series —— 每个组件（CN / DN）一条，
 维度键是 ``COMPONENT_ID``。规则在这一层取「每个组件的一个点」。
 """
-import logging
 from typing import Any, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from .rules_context import MetricValue, RuleContext, RuleError, point_timestamp
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 
 def eval_series_point(metric_rule: Any, rule: Mapping[str, Any], ctx: RuleContext,
@@ -46,7 +46,7 @@ def eval_enum_map(metric_rule: Any, rule: Mapping[str, Any], ctx: RuleContext,
             results.append((dims, mapping[key], timestamp))
         elif default == 'passthrough':
             LOGGER.warning(
-                '枚举未命中，原样透传：指标 %s 的值 %r 不在枚举表里',
+                '枚举未命中，原样透传：指标 {} 的值 {!r} 不在枚举表里',
                 metric_rule.metric_code, value,
             )
             results.append((dims, value, timestamp))

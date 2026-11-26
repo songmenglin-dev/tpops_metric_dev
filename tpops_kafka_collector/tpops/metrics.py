@@ -19,15 +19,15 @@
 采集器把结果交给映射层与投递层，不在这里拼 Kafka 消息。
 """
 import collections.abc
-import logging
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from ..errors import TpopsError
 from .client import RDS_V3
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'GROUP_CATALOG_PATH', 'IS_LATEST_POINT_ONLY', 'METRIC_GROUPS', 'METRICS_PATH',
@@ -368,7 +368,7 @@ def fetch_metric_catalog(
         metrics = _group_metrics(payload)
         if not metrics:
             LOGGER.warning(
-                '监控指标空分组告警：分组码 %s 未返回任何指标'
+                '监控指标空分组告警：分组码 {} 未返回任何指标'
                 '（平台对错误分组码返回 200 + 空 series，不报错）',
                 group,
             )

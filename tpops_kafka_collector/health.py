@@ -29,17 +29,17 @@
 """
 import errno
 import json
-import logging
 import threading
 import time
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from loguru import logger
 from typing import Any, Callable, Dict, Iterable, Optional, Tuple
 from urllib.parse import urlsplit
 
 from .config import Config
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'HEALTH_PATH',
@@ -153,7 +153,7 @@ def _run_probe(probe: DependencyProbe) -> DependencyStatus:
         result = probe.check()
     except Exception as exc:  # noqa: BLE001 —— 探针异常不得拖垮端点
         # 只记异常类型，不记异常消息：消息里可能带口令/令牌。
-        LOGGER.warning('依赖探针 %s 执行异常：%s', probe.name, type(exc).__name__)
+        LOGGER.warning('依赖探针 {} 执行异常：{}', probe.name, type(exc).__name__)
         return DependencyStatus(name=probe.name, is_ready=False, reason='探针执行异常')
     return _to_status(probe.name, result)
 
@@ -301,7 +301,7 @@ class _HealthRequestHandler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt: str, *args: Any) -> None:
         """请求日志走 ``logging``，不用 ``print``。"""
-        LOGGER.debug('健康端点 %s', fmt % args)
+        LOGGER.debug('健康端点 {}', fmt % args)
 
 
 class HealthServer:
@@ -377,7 +377,7 @@ class HealthServer:
         thread.daemon = True
         thread.start()
         self._thread = thread
-        LOGGER.info('健康端点已启动：%s:%s', self._host, self._port)
+        LOGGER.info('健康端点已启动：{}:{}', self._host, self._port)
         return self
 
     def stop(self) -> None:

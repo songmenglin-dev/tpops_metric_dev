@@ -391,3 +391,102 @@ def test_auth_failure_cooldown_rejects_negative_value():
     with pytest.raises(ConfigError) as excinfo:
         load_config(_env(TPOPS_AUTH_FAILURE_COOLDOWN_SECONDS='-1'))
     assert 'TPOPS_AUTH_FAILURE_COOLDOWN_SECONDS' in str(excinfo.value)
+
+
+# --------------------------------------------------------------------------
+# 日志目录与切分保留（wave-2 任务 2.4）
+# --------------------------------------------------------------------------
+
+def test_log_dir_defaults_to_none_which_means_stderr_only():
+    """LOG_DIR 未设置 → 只写 stderr（不落盘）。"""
+    cfg = load_config(_env())
+    assert cfg.log_dir is None
+
+
+def test_log_dir_is_created_when_missing(tmp_path):
+    """日志目录不存在 → 自动创建。"""
+    target = tmp_path / 'logs'
+    cfg = load_config(_env(LOG_DIR=str(target)))
+    assert cfg.log_dir == str(target)
+    assert target.is_dir()
+
+
+def test_unusable_log_dir_fails_fast_with_the_path(tmp_path):
+    """日志目录不可用（父路径不是目录）→ 启动失败，错误信息说明路径。"""
+    blocker = tmp_path / 'not-a-dir'
+    blocker.write_text('x', encoding='utf-8')
+    with pytest.raises(ConfigError) as excinfo:
+        load_config(_env(LOG_DIR=str(blocker / 'logs')))
+    assert 'LOG_DIR' in str(excinfo.value)
+    assert 'logs' in str(excinfo.value)
+
+
+def test_unwritable_log_dir_fails_fast_with_the_path(tmp_path):
+    """日志目录不可写 → 启动失败（不静默降级为「只写 stderr」）。"""
+    import os
+    if os.geteuid() == 0:
+        pytest.skip('root 会无视写权限，跳过')
+    target = tmp_path / 'readonly'
+    target.mkdir()
+    os.chmod(str(target), 0o500)
+    try:
+        with pytest.raises(ConfigError) as excinfo:
+            load_config(_env(LOG_DIR=str(target)))
+        assert 'LOG_DIR' in str(excinfo.value)
+        assert str(target) in str(excinfo.value)
+    finally:
+        os.chmod(str(target), 0o700)
+
+
+def test_log_max_bytes_defaults_to_50_mb():
+    cfg = load_config(_env())
+    assert cfg.log_max_bytes == 50 * 1024 * 1024
+
+
+def test_log_max_bytes_is_read_from_environment():
+    cfg = load_config(_env(LOG_MAX_BYTES='1048576'))
+    assert cfg.log_max_bytes == 1048576
+
+
+@pytest.mark.parametrize('value', ['0', '-1', 'abc', '1024'])
+def test_invalid_log_max_bytes_is_rejected(value):
+    with pytest.raises(ConfigError) as excinfo:
+        load_config(_env(LOG_MAX_BYTES=value))
+    assert 'LOG_MAX_BYTES' in str(excinfo.value)
+
+
+def test_log_retention_days_defaults_to_three():
+    cfg = load_config(_env())
+    assert cfg.log_retention_days == 3
+
+
+def test_log_retention_days_is_read_from_environment():
+    cfg = load_config(_env(LOG_RETENTION_DAYS='7'))
+    assert cfg.log_retention_days == 7
+
+
+@pytest.mark.parametrize('value', ['0', '-2', 'abc'])
+def test_invalid_log_retention_days_is_rejected(value):
+    with pytest.raises(ConfigError) as excinfo:
+        load_config(_env(LOG_RETENTION_DAYS=value))
+    assert 'LOG_RETENTION_DAYS' in str(excinfo.value)
+
+
+def test_log_format_json_is_still_supported():
+    cfg = load_config(_env(LOG_FORMAT='json'))
+    assert cfg.log_format == 'json'
+    assert cfg.log_pattern is None
+
+
+def test_log_format_accepts_a_loguru_pattern():
+    """LOG_FORMAT 可以直接给 loguru 原生格式串（覆盖 text 模式的默认格式）。"""
+    pattern = '{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name} | {message}'
+    cfg = load_config(_env(LOG_FORMAT=pattern))
+    assert cfg.log_format == 'text'
+    assert cfg.log_pattern == pattern
+
+
+def test_log_pattern_env_var_overrides_the_text_format():
+    cfg = load_config(_env(LOG_PATTERN='{level} | {message}'))
+    assert cfg.log_format == 'text'
+    assert cfg.log_pattern == '{level} | {message}'

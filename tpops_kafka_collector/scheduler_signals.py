@@ -5,12 +5,12 @@
 **只在主线程里能装** —— ``signal.signal`` 在子线程里抛 ``ValueError``；
 装不上就记 WARNING 并照常跑（不因为装不上信号处理就不干活）。
 """
-import logging
 import signal
 import threading
 from typing import Any, Dict
+from loguru import logger
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = ['install_signal_handlers', 'restore_signal_handlers']
 
@@ -26,7 +26,7 @@ def install_signal_handlers(shutdown: threading.Event) -> Dict[int, Any]:
             previous[signum] = signal.getsignal(signum)
             signal.signal(signum, lambda *_: shutdown.set())
         except (ValueError, OSError) as exc:
-            LOGGER.warning('装信号处理失败（不在主线程？）：%s', exc)
+            LOGGER.warning('装信号处理失败（不在主线程？）：{}', exc)
     return previous
 
 
@@ -36,4 +36,4 @@ def restore_signal_handlers(previous: Dict[int, Any]) -> None:
         try:
             signal.signal(signum, handler)
         except (ValueError, OSError):  # pragma: no cover —— 退出路径
-            LOGGER.debug('还原信号处理失败：%s', signum)
+            LOGGER.debug('还原信号处理失败：{}', signum)

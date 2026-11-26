@@ -11,8 +11,8 @@
    已经被记成「已投递」→ 下轮被当成重复跳过 → **静默丢数据**；
 3. **投递失败要隔离** —— 某组投递失败不影响其它组（进程不退出）。
 """
-import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
+from loguru import logger
 
 from .kafka.records import alarm_record, metric_record
 from .schedule import CHANNEL_ALARM
@@ -27,9 +27,23 @@ from .scheduler_types import (
     reason,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = ['MessageDelivery']
+
+
+def _merge_stats(
+    current: Optional[DeliveryStats], addition: DeliveryStats
+) -> DeliveryStats:
+    """把一个通道的又一组投递统计并进去。"""
+    if current is None:
+        return addition
+    return DeliveryStats(
+        planned=current.planned + addition.planned,
+        delivered=current.delivered + addition.delivered,
+        failed=current.failed + addition.failed,
+        alarms=current.alarms + addition.alarms,
+    )
 
 
 class MessageDelivery:
@@ -66,6 +80,31 @@ class MessageDelivery:
         failures = [item for item in (metric_failure, alarm_failure) if item]
         return stats, failures
 
+    def deliver_all(
+        self, outcomes: Mapping[Tuple[str, str], TaskOutcome]
+    ) -> Tuple[DeliveryStats, Dict[str, DeliveryStats], List[TaskFailure]]:
+        """逐组投递本轮所有结果（**逐组隔离**：一组失败不影响别的）。
+
+        :returns: ``(合计统计, 按通道统计, 失败清单)``。
+            按通道统计供每通道汇总行使用（wave-2 任务 2.5）。
+        """
+        planned = delivered = failed = alarms = 0
+        by_channel = {}  # type: Dict[str, DeliveryStats]
+        failures = []  # type: List[TaskFailure]
+        for key in sorted(outcomes):
+            channel, instance_id = key
+            stats, group_failures = self.deliver(channel, instance_id, outcomes[key])
+            planned += stats.planned
+            delivered += stats.delivered
+            failed += stats.failed
+            alarms += stats.alarms
+            by_channel[channel] = _merge_stats(by_channel.get(channel), stats)
+            failures.extend(group_failures)
+        total = DeliveryStats(
+            planned=planned, delivered=delivered, failed=failed, alarms=alarms,
+        )
+        return total, by_channel, failures
+
     # -- 指标 -------------------------------------------------------------
 
     def _deliver_metrics(
@@ -89,7 +128,7 @@ class MessageDelivery:
                 # **告警通道本来就不产出指标消息**（告警走 ``outcome.alarms``），
                 # 不排除它 → 每 30 秒一条无意义的 WARNING，会把真告警淹掉。
                 LOGGER.warning(
-                    '本轮该组没有产出任何指标消息（空结果）—— channel=%s instance=%s',
+                    '本轮该组没有产出任何指标消息（空结果）—— channel={} instance={}',
                     channel, instance_id,
                 )
             return DeliveryStats(), None
@@ -98,7 +137,7 @@ class MessageDelivery:
         except Exception as exc:  # noqa: B902 —— 投递失败要隔离
             # **不变量**：指标水位**只能在投递成功之后**推进（与告警侧同一条）。
             LOGGER.exception(
-                '指标投递失败 —— 整批不推进水位，下轮重投：channel=%s instance=%s',
+                '指标投递失败 —— 整批不推进水位，下轮重投：channel={} instance={}',
                 channel, instance_id,
             )
             return (
@@ -139,7 +178,7 @@ class MessageDelivery:
             # 没有任何计数能暴露它）。守卫见
             # ``tests/unit/test_scheduler_alarm_guards.py``。
             LOGGER.exception(
-                '告警投递失败 —— 整批不推进水位，下轮重投：channel=%s instance=%s',
+                '告警投递失败 —— 整批不推进水位，下轮重投：channel={} instance={}',
                 channel, instance_id,
             )
             return (
@@ -160,7 +199,7 @@ class MessageDelivery:
         if end_time_ms is None:
             LOGGER.warning(
                 '该组没有报告结束时刻 —— 本轮不推进指标水位'
-                '（宁可重复投递，也不丢数据）：channel=%s instance=%s',
+                '（宁可重复投递，也不丢数据）：channel={} instance={}',
                 channel, instance_id,
             )
             return

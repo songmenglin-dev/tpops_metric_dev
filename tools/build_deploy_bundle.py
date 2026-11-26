@@ -3,8 +3,8 @@
 
 为什么有这个东西
 ----------------
-采集端的运行时依赖只有 ``requests`` / ``kafka-python`` / ``urllib3`` 三个
-**纯 Python** 包（无 C 扩展），因此：
+采集端的运行时依赖只有 ``requests`` / ``kafka-python`` / ``urllib3`` /
+``loguru`` 四个**纯 Python** 包（无 C 扩展），因此：
 
 * 同一份 wheel 可以同时跑在 **x86_64** 与 **aarch64** 上 ——
   麒麟两种架构**不需要分别打包**；

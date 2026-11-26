@@ -64,7 +64,7 @@ data/mapping/             # 映射规则数据（**表驱动，不写死在代�
 ├── metric_mapping_instance.json           # D 类 实例接口的字段映射
 ├── alarm_mapping.json                     # 告警的字段映射
 ├── itscada_field_map.json   # 客户消息的字段清单（哪些字段、必填与否）
-├── metric_rules.json        # 101 条指标规则（98 可提供 + 3 丢弃）
+├── metric_rules.json        # 87 条生效指标规则（101 条里 87 可提供，14 条不在生效口径内）
 ├── alarm_rules.json         # 告警规则 + 257 条告警定义
 └── open_items.json          # 待客户确认的 7 项
 
@@ -168,6 +168,7 @@ python -m tpops_kafka_collector.main
 kafka-python==2.0.2    # 纯 Python；2.1+ 不再支持 3.7
 requests>=2.25,<2.32   # 2.32 起要求 Python ≥3.8（2.32.5 要 ≥3.9）
 urllib3>=1.21.1,<3     # 生产代码直接 import 它（此前只靠 requests 隐式带入）
+loguru==0.8.0          # 日志框架；0.8.0 是最后一个支持 Python 3.7 的版本
 pytest>=7,<8
 pytest-cov<5
 openpyxl>=3.0,<3.12    # 仅离线工具与测试用
@@ -181,7 +182,7 @@ openpyxl>=3.0,<3.12    # 仅离线工具与测试用
 ## 部署形态（目标机）
 
 **生产部署不需要 conda** —— 采集端的运行时依赖只有 `requests` / `kafka-python` /
-`urllib3` 三个**纯 Python** 包（无 C 扩展）：
+`urllib3` / `loguru` 四个**纯 Python** 包（无 C 扩展）：
 
 - 目标机只要有 **Python 3.7 ~ 3.11**（麒麟 V10 SP2+ 自带 3.7.9）即可，
   **不装 conda、不编译、不联网**；
@@ -270,7 +271,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 
 - **凭据只走环境变量**，禁止硬编码、禁止写入日志、禁止入库（`.env` 已 gitignore）。
 - **不可变数据**：跨模块传递用 frozen dataclass / NamedTuple，不原地修改。
-- 错误显式处理：捕获后包装成自定义异常并带上下文，**不静默吞异常**；用 `logging`，不用 `print`。
+- 错误显式处理：捕获后包装成自定义异常并带上下文，**不静默吞异常**；用 `loguru` 的 `logger`，不用 `print`。
 - 采集端代码单文件 < 400 行、函数 < 50 行；按功能分模块，不堆大文件。
   （`tools/` 下有几个离线脚本超 400 行，是历史产物；采集端按上面的新结构写，不沿用。）
 - 测试用 pytest：映射、窗口计算、序列化写单元测试；TPOPS 与 Kafka 一律 mock。目标覆盖率 80%。
@@ -291,7 +292,8 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
    与 `docs/ITSCADA第三方告警数据接入对接方案V2.docx`），字段集合以两份方案的字段表为准，
    指标名以客户指标库 `高斯DB-指标明细（客户要求的应该要提供的指标明细）.xlsx` 的「指标库」sheet
    （101 个指标）为准。该表英文名存在 OCR 错字（如 `GAUSSDB.Number_of_ansactions_mmitted_r_cond`），
-   需与客户核对正确拼写。可提供性**已判定：98 可提供 / 3 无法提供**，逐指标真实调用 **98/98 通过**。
+   需与客户核对正确拼写。可提供性**已判定：87 可提供**（wave-1 已把 11 条仅大小写不同的
+   英文变体合并掉；另有 3 个无法提供 —— 合计 14 条不在生效口径内），逐指标真实调用 **98/98 通过**。
    落地：`data/mapping/itscada_field_map.json`（字段级映射）+ `data/mapping/metric_rules.json`（逐指标规则）。
 2. **客户指标 → 取数方法的映射表已建好** —— `data/customer_metric_query_plan.json`
    （101 条逐指标查询方案，**生成物不入库**，由 `tools/build_metric_query_plan.py` 从
@@ -327,7 +329,7 @@ GET  …/batch-exec-job/{job_id}/task-record/{task_id}/detail → {status, resul
 
 | 文件 | 内容 |
 |---|---|
-| `docs/GaussDB指标至ItScada指标开发.md` | **项目概要**：需求简介 / 时间线 / API 调研（12 个接口、每个接口承担多少指标）/ 指标取数情况（98 可提供 + 3 无法提供） |
+| `docs/GaussDB指标至ItScada指标开发.md` | **项目概要**：需求简介 / 时间线 / API 调研（12 个接口、每个接口承担多少指标）/ 指标取数情况（87 可提供 + 14 条不在生效口径内） |
 | `docs/开发方案-GaussDB指标与告警采集.md` | **开发方案 v2.1**（v2.0 重写版 + §7.1.1 里程碑时间线）：需求分析 → 调研 → 需求定稿（消息模型/Topic/周期/口径/脱敏已冻结）→ 技术设计（API 详解 + 逐指标取数 + 11 条合并 SQL）→ 代码设计 → 测试策略 → 里程碑与时间线 → 风险登记册 |
 | `docs/README.md` | 文档总索引 |
 | `docs/api/API参考-监控大盘.md` | 指标查询接口定义 |

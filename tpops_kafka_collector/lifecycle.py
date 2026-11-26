@@ -38,16 +38,16 @@
    **跳过 atexit 钩子**（py3.7 的 ``concurrent.futures.thread`` 在 atexit
    里 ``join()`` 所有工作线程 —— 有一个在途 HTTP 挂住就会把进程拖死）。
 """
-import logging
 import threading
 import time
 from typing import Any, Callable, Optional
+from loguru import logger
 
 from .scheduler import Scheduler
 from .scheduler_signals import install_signal_handlers, restore_signal_handlers
 from .scheduler_types import TickResult
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'POLL_INTERVAL_SECONDS',
@@ -149,7 +149,7 @@ def _wait_for_next_tick(
     remaining = interval - elapsed
     if remaining <= 0:
         LOGGER.warning(
-            '本轮耗时 %.3f 秒，超过轮询间隔 %.3f 秒 —— 重新锚定到当前时刻'
+            '本轮耗时 {:.3f} 秒，超过轮询间隔 {:.3f} 秒 —— 重新锚定到当前时刻'
             '（不堆积、不累积漂移）',
             elapsed, interval,
         )
@@ -187,7 +187,7 @@ def _run_one_tick(
     if _wait_for_tick(worker, shutdown, deadline_seconds, monotonic):
         return True
     LOGGER.warning(
-        '在途请求超过 %d 秒仍未结束 —— 放弃等待本轮结果'
+        '在途请求超过 {} 秒仍未结束 —— 放弃等待本轮结果'
         '（未投出的消息水位不推进，下轮重投）',
         deadline_seconds,
     )
@@ -268,5 +268,5 @@ def run(
     finally:
         restore_signal_handlers(previous)
         shutdown_runtime(runtime)
-    LOGGER.info('采集端已优雅退出（退出码 %d）', EXIT_OK)
+    LOGGER.info('采集端已优雅退出（退出码 {}）', EXIT_OK)
     return EXIT_OK

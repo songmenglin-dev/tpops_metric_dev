@@ -464,18 +464,25 @@ def test_guard_detects_unknown_ocr_entry():
 DEPLOY_DOC_PATH = os.path.join(DOCS_DIR, '交付-部署运行说明.md')
 ENV_EXAMPLE_PATH = os.path.join(REPO_ROOT, '.env.example')
 CONFIG_PATH = os.path.join(REPO_ROOT, 'tpops_kafka_collector', 'config.py')
+#: 日志相关的配置解析单独成文件（config.py 贴着 400 行红线）—— 一并扫描。
+LOG_CONFIG_PATH = os.path.join(REPO_ROOT, 'tpops_kafka_collector', 'log_config.py')
+CONFIG_PATHS = (CONFIG_PATH, LOG_CONFIG_PATH)
 
 #: 凭据类变量 —— .env.example 里必须留空（禁硬编码口令）。
 SECRET_ENV_VARS = ('TPOPS_PASSWORD',)
 
 #: config.py 应当读取的环境变量数（清单见开发方案 §5.5）。
-EXPECTED_ENV_VAR_COUNT = 30
+#: wave-2 起日志相关的四项（LOG_DIR / LOG_PATTERN / LOG_MAX_BYTES /
+#: LOG_RETENTION_DAYS）由 log_config.py 解析 —— 一并计入。
+EXPECTED_ENV_VAR_COUNT = 34
 
 
 def config_env_vars():
-    """config.py 实际读取的环境变量名集合。"""
-    return set(re.findall(
-        r"env,\s*'([A-Z][A-Z0-9_]+)'", _read(CONFIG_PATH)))
+    """配置层实际读取的环境变量名集合（config.py + log_config.py）。"""
+    names = set()
+    for path in CONFIG_PATHS:
+        names |= set(re.findall(r"env,\s*'([A-Z][A-Z0-9_]+)'", _read(path)))
+    return names
 
 
 def _normalize_default(value):
@@ -506,6 +513,10 @@ def config_env_defaults():
     match = re.search(r'PLATFORM_LIMIT_MAX\s*=\s*(\d+)', text)
     if match:
         constants['PLATFORM_LIMIT_MAX'] = match.group(1)
+    for name in ('DEFAULT_LOG_MAX_BYTES', 'DEFAULT_LOG_RETENTION_DAYS'):
+        match = re.search(name + r'\s*=\s*(\d+)', text)
+        if match:
+            constants[name] = match.group(1)
     defaults = {}
     for name, raw in re.findall(
             r"env,\s*'([A-Z][A-Z0-9_]+)'\s*,\s*([^,)\n]+)", text):

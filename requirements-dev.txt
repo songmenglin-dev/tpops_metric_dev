@@ -10,6 +10,13 @@
 pytest>=7,<8
 pytest-cov<5
 
+# --- 静态检查 ---
+# ruff 版本**必须钉死**：仓库的 ruff.toml 用 target-version = "py37" + select=UP/FA102，
+# 而 ruff 的规则集在版本之间会变（0.9+ 起的 UP 规则更激进、且会对非法 noqa 告警），
+# 同一个代码库在不同 ruff 版本下报的违规条数不一样（历史基线 717~808 条，
+# 不是本次改动引入的）。钉一个版本 → lint 门槛可复现。
+ruff==0.4.10
+
 # --- 离线工具 ---
 # openpyxl 被 tests/test_mapping_table.py 与 tools/build_*.py 直接使用，
 # 是硬依赖（未用 importorskip 保护）；<3.12 在 3.7 上解析到 3.1.3。

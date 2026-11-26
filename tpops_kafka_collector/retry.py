@@ -27,15 +27,15 @@ u ∈ [0, 1] 来自随机源。这样「至少等满基准退避」恒成立，�
 ``jitter_ratio = 0`` 时退避序列完全确定。
 """
 import functools
-import logging
 import random
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Tuple
+from loguru import logger
 
 from .errors import is_retryable
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'DEFAULT_BASE_DELAY',
@@ -168,13 +168,13 @@ def retry_call(
                 raise
             if attempts >= policy.max_attempts:
                 LOGGER.error(
-                    '重试次数用尽，放弃：%s（%s：%s）',
+                    '重试次数用尽，放弃：{}（{}：{}）',
                     label, type(exc).__name__, exc,
                 )
                 raise
             delay = compute_delay(policy, attempts - 1, random_source)
             LOGGER.warning(
-                '第 %s/%s 次重试 %s，等待 %.3f 秒：%s：%s',
+                '第 {}/{} 次重试 {}，等待 {:.3f} 秒：{}：{}',
                 attempts, policy.max_attempts, label, delay, type(exc).__name__, exc,
             )
             sleep(delay)

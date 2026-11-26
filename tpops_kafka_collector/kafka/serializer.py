@@ -17,11 +17,11 @@
 """
 
 import json
-import logging
 import math
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 # -- 信封（顺序即输出顺序）----------------------------------------------
 METRIC_FIELDS: Tuple[str, ...] = (
@@ -161,13 +161,13 @@ def to_epoch_millis(value: Any) -> Optional[int]:
         try:
             value = float(value)
         except ValueError:
-            LOGGER.warning('时间戳不是数字，按缺失处理：%r', value)
+            LOGGER.warning('时间戳不是数字，按缺失处理：{!r}', value)
             return None
     if not isinstance(value, (int, float)):
-        LOGGER.warning('时间戳类型不认识，按缺失处理：%r', value)
+        LOGGER.warning('时间戳类型不认识，按缺失处理：{!r}', value)
         return None
     if isinstance(value, float) and not math.isfinite(value):
-        LOGGER.warning('时间戳不是有限数，按缺失处理：%r', value)
+        LOGGER.warning('时间戳不是有限数，按缺失处理：{!r}', value)
         return None
     if value <= 0:
         return None
@@ -218,7 +218,7 @@ def _ordered_payload(
         payload[name] = value
     extra = sorted(set(message) - set(fields))
     if extra:
-        LOGGER.warning('%s 消息含信封外字段，已丢弃：%s', kind, extra)
+        LOGGER.warning('{} 消息含信封外字段，已丢弃：{}', kind, extra)
     return payload
 
 
@@ -241,7 +241,7 @@ def _normalize_tags(tags: Any, kind: str) -> Dict[str, Any]:
         result[name] = value
     extra = sorted(set(tags) - set(fields))
     if extra:
-        LOGGER.warning('%s 消息的 tags 含信封外键，已丢弃：%s', kind, extra)
+        LOGGER.warning('{} 消息的 tags 含信封外键，已丢弃：{}', kind, extra)
     return result
 
 

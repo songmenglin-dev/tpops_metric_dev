@@ -31,19 +31,19 @@
 （py3.7 的 ``concurrent.futures.thread`` 在 atexit 里 ``join()``
 所有工作线程 —— 有一个在途 HTTP 挂住就会把进程拖死）。
 """
-import logging
 import os
 import sys
 import threading
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, Tuple
+from loguru import logger
 
 from .config import ConfigError, load_config
 from .executors import build_executors
 from .health import DependencyProbe, HealthServer, ReadinessMonitor
 from .kafka.producer import MessageProducer
-from .logging_setup import setup_logging, setup_logging_from_config
+from .logging_setup import LogSetupError, setup_logging, setup_logging_from_config
 from .mapping.loader import load_mapping
 from .mapping.rules_deltas import CounterDeltaStore
 from .platform_profile import PROFILE_FILENAME, PlatformProfile
@@ -67,7 +67,7 @@ from .tpops.command_center import CommandCenterClient
 from .tpops.command_center_nodes import MasterNodeRegistry
 from .watermark import WatermarkStore
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'EXIT_CONFIG_ERROR',
@@ -159,7 +159,7 @@ def build_runtime(
     )
     health = _build_health(config, tpops, scheduler, health_server, start_health)
     LOGGER.info(
-        '装配完成：%d 个实例 / %d 个通道 / 不可提供指标 %d 条',
+        '装配完成：{} 个实例 / {} 个通道 / 不可提供指标 {} 条',
         len(instances), len(executors), count_unsupported_metrics(bundle),
     )
     return Runtime(
@@ -299,10 +299,16 @@ def main(env: Any = None) -> int:
     try:
         config = load_config(env)
     except ConfigError as exc:
-        LOGGER.error('配置校验失败，进程退出：%s', exc)
+        LOGGER.error('配置校验失败，进程退出：{}', exc)
         return EXIT_CONFIG_ERROR
-    setup_logging_from_config(config)
-    LOGGER.info('采集端启动：状态目录 %s', config.state_dir)
+    try:
+        setup_logging_from_config(config)
+    except LogSetupError as exc:
+        # 日志目录在「配置校验之后」变得不可用（例如权限被回收）——
+        # 直接以退出码 2 退出，不带着坏日志继续跑。
+        LOGGER.error('日志装配失败，进程退出：{}', exc)
+        return EXIT_CONFIG_ERROR
+    LOGGER.info('采集端启动：状态目录 {}', config.state_dir)
     try:
         runtime = build_runtime(config, start_health=True)
     except Exception:  # noqa: B902 —— 装配失败要说清楚，不要裸崩

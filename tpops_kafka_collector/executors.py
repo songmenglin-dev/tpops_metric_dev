@@ -32,9 +32,9 @@ instance      ``collectors.instance.InstanceCollector``     映射表实算
 alarm         ``collectors.alarm.collect_alarms``          30 秒
 ============  ==========================================  ==================
 """
-import logging
 import threading
 from typing import Any, Callable, Dict, Optional
+from loguru import logger
 
 from .collectors.alarm import collect_alarms
 from .collectors.command_center import CommandCenterCollector
@@ -53,7 +53,7 @@ from .scheduler_types import InstanceTarget, TaskOutcome, alarm_stream
 from .tpops.call_tracking import CatalogCachingClient, CountingClient
 from .tpops.metrics import GROUP_CATALOG_PATH, resolve_window_from_config, utc_now_ms
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = ['build_executors']
 
@@ -158,7 +158,7 @@ def _guard(
     def run(instance: InstanceTarget) -> TaskOutcome:
         if stop.is_set():
             LOGGER.info(
-                '已收到停机信号，跳过本组采集（不发任何 HTTP 请求）：实例 %s',
+                '已收到停机信号，跳过本组采集（不发任何 HTTP 请求）：实例 {}',
                 instance.instance_id,
             )
             # 停机跳过 → **一次请求都没发** → 调用数是 0（不是默认的 1）。
@@ -233,7 +233,7 @@ def _command_center_executor(
         failed = result.pages <= 0
         if failed:
             LOGGER.warning(
-                '命令中心本轮没有取到数据（实例 %s）—— 不推进水位，下轮重取',
+                '命令中心本轮没有取到数据（实例 {}）—— 不推进水位，下轮重取',
                 target.instance_id,
             )
         return TaskOutcome(

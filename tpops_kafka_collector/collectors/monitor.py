@@ -22,8 +22,8 @@
 采集器**不推进水位**（那是 wave 3 调度器的职责），只返回结果。
 """
 
-import logging
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from ..errors import DecodeError, TpopsError
 from ..mapping.decode import decode
@@ -40,7 +40,7 @@ from ..tpops.metrics import (
     utc_now_ms,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger.bind(channel="monitor")
 
 __all__ = ['MonitorCollector']
 
@@ -108,7 +108,7 @@ class MonitorCollector:
         messages = []  # type: List[Dict[str, Any]]
         for rule in self._rules:
             messages.extend(self._messages_of_rule(rule, payload, window, now_ms))
-        LOGGER.info('A 类采集完成：%d 条消息（%d 个客户指标）', len(messages), len(self._rules))
+        LOGGER.info('A 类采集完成：{} 条消息（{} 个客户指标）', len(messages), len(self._rules))
         return tuple(messages)
 
     # ------------------------------------------------------------------
@@ -139,13 +139,13 @@ class MonitorCollector:
         try:
             catalog = fetch_metric_catalog(self._client, self._instance_id)
         except TpopsError as exc:
-            LOGGER.error('监控指标分组目录查询失败（不影响取数，但分组码无法校验）：%s', exc)
+            LOGGER.error('监控指标分组目录查询失败（不影响取数，但分组码无法校验）：{}', exc)
             return
 
         empty = sorted(group for group, metrics in catalog.items() if not metrics)
         if empty:
             LOGGER.warning(
-                '监控指标空分组告警：分组码 %s 未返回任何指标'
+                '监控指标空分组告警：分组码 {} 未返回任何指标'
                 '（平台对错误分组码返回 200 + 空 series，不报错）',
                 ', '.join(empty),
             )
@@ -159,7 +159,7 @@ class MonitorCollector:
         missing = sorted(set(names) - available)
         if missing:
             LOGGER.warning(
-                '监控指标目录里没有这些平台指标：%s（对应客户指标本轮可能无数据）',
+                '监控指标目录里没有这些平台指标：{}（对应客户指标本轮可能无数据）',
                 ', '.join(missing),
             )
 
@@ -174,14 +174,14 @@ class MonitorCollector:
         response = self._responses.get(rule.metric_code)
         if response is None:
             LOGGER.error(
-                '响应规则表里没有监控指标 %s 的定位条件（channel=%s）',
+                '响应规则表里没有监控指标 {} 的定位条件（channel={}）',
                 rule.metric_code, MONITOR_SOURCE,
             )
             return []
         shape = self._shapes.get(response.get('shape'))
         if shape is None:
             LOGGER.error(
-                '响应规则表里没有监控指标 %s 的形状 %s',
+                '响应规则表里没有监控指标 {} 的形状 {}',
                 rule.metric_code, response.get('shape'),
             )
             return []
@@ -191,7 +191,7 @@ class MonitorCollector:
             context = decode(payload, shape, locate, now_ms)
         except DecodeError as exc:
             LOGGER.warning(
-                '监控指标 %s 本轮没有数据（响应体里没有它的 series）：%s',
+                '监控指标 {} 本轮没有数据（响应体里没有它的 series）：{}',
                 rule.metric_code, exc,
             )
             return []
@@ -202,7 +202,7 @@ class MonitorCollector:
         try:
             values = evaluate(rule, context, None)
         except RuleError as exc:
-            LOGGER.error('监控指标 %s 的取值规则执行失败：%s', rule.metric_code, exc)
+            LOGGER.error('监控指标 {} 的取值规则执行失败：{}', rule.metric_code, exc)
             return []
 
         messages = []  # type: List[Dict[str, Any]]
@@ -246,7 +246,7 @@ class MonitorCollector:
         if node is None:
             if rule.node_scoped:
                 LOGGER.warning(
-                    '监控指标 %s 的组件 %s 在节点清单里找不到 —— 资源名回落到第一个 master CN',
+                    '监控指标 {} 的组件 {} 在节点清单里找不到 —— 资源名回落到第一个 master CN',
                     rule.metric_code, component_id,
                 )
             return context
@@ -337,7 +337,7 @@ def _sliced_context(
     ]
     if not keep:
         LOGGER.warning(
-            '监控指标 %s 的数据点都不在本档周期内（平台时间戳粒度可能粗于采集周期 %d 秒）'
+            '监控指标 {} 的数据点都不在本档周期内（平台时间戳粒度可能粗于采集周期 {} 秒）'
             '—— 本轮回退到窗口内最新点',
             code, tier,
         )

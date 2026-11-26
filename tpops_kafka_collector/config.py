@@ -3,18 +3,24 @@
 全部配置项来自环境变量（开发方案 §5.5）。本模块**只读环境变量**：
 不发起任何网络请求、不读取仓库根目录下的任何文件。
 
+唯一的例外是 ``LOG_DIR``：按规格要求**目录不存在就创建**，因此本模块会有一处
+文件系统副作用 —— 但绝不静默降级：目录不可用/不可写时直接抛 :class:`ConfigError`
+（退出码 2）。解析逻辑在 :mod:`tpops_kafka_collector.log_config`。
+
 设计约束：
 - 加载一次，得到不可变（frozen dataclass）的 :class:`Config`；
   运行期间不再回头读环境变量。
 - 必填项缺失或数值越界 → 抛 :class:`ConfigError`，调用方据此在进入主循环前快速失败。
 - 凭据（``TPOPS_PASSWORD``）不进日志、不进异常消息、不进 ``repr``。
 """
-import logging
 import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, Mapping, Optional, Tuple
 
-LOGGER = logging.getLogger(__name__)
+from . import log_config
+from loguru import logger
+
+LOGGER = logger
 
 #: 允许在异常消息中回显取值的变量。凭据类一律不在其中 ——
 #: 缺失/非法时只报变量名，绝不报值。
@@ -25,6 +31,12 @@ _FALSE_VALUES = frozenset({"false", "0", "no", "off"})
 
 _LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 _LOG_FORMATS = ("text", "json")
+#: 单个日志文件的大小上限默认值（50 MB = 52428800 字节）。
+DEFAULT_LOG_MAX_BYTES = 52428800
+#: 日志保留天数默认值（3 个自然日，含当天）。
+DEFAULT_LOG_RETENTION_DAYS = 3
+#: LOG_MAX_BYTES 的下限 —— 再小就切得太碎，没有意义。
+LOG_MAX_BYTES_MIN = 4096
 #: 允许的压缩算法 —— **只有 none 与 gzip**。
 #:
 #: kafka-python 2.0.2 的 gzip 走标准库 zlib，零额外依赖；
@@ -96,7 +108,16 @@ class Config:
     health_host: str = '127.0.0.1'
     health_port: int = 8088
     log_level: str = 'INFO'
+    #: ``text`` 或 ``json``。
     log_format: str = 'text'
+    #: loguru 原生格式串（覆盖 text 模式的默认格式）；``None`` = 用 loguru 原生格式。
+    log_pattern: Optional[str] = None
+    #: 日志目录；``None`` = **只写 stderr，不落盘**。
+    log_dir: Optional[str] = None
+    #: 单个日志文件的大小上限（字节）。
+    log_max_bytes: int = DEFAULT_LOG_MAX_BYTES
+    #: 保留天数（自然日，含当天）。
+    log_retention_days: int = DEFAULT_LOG_RETENTION_DAYS
 
 
 # ---------------------------------------------------------------------------
@@ -321,13 +342,21 @@ def _retry_fields(env: Mapping[str, str]) -> Dict[str, Any]:
 
 def _runtime_fields(env: Mapping[str, str]) -> Dict[str, Any]:
     """状态目录、健康端点与日志配置。"""
-    return {
+    fields = {
         'state_dir': _text(env, 'STATE_DIR', './state'),
         'health_host': _text(env, 'HEALTH_HOST', '127.0.0.1'),
         'health_port': _int(env, 'HEALTH_PORT', 8088, minimum=1, maximum=65535),
         'log_level': _enum(env, 'LOG_LEVEL', 'INFO', _LOG_LEVELS),
-        'log_format': _enum(env, 'LOG_FORMAT', 'text', _LOG_FORMATS),
+        'log_max_bytes': _int(env, 'LOG_MAX_BYTES', DEFAULT_LOG_MAX_BYTES,
+                              minimum=LOG_MAX_BYTES_MIN),
+        'log_retention_days': _int(env, 'LOG_RETENTION_DAYS',
+                                   DEFAULT_LOG_RETENTION_DAYS, minimum=1),
     }
+    try:
+        fields.update(log_config.log_fields(env, _LOG_FORMATS))
+    except log_config.LogConfigError as exc:
+        raise ConfigError(str(exc))
+    return fields
 
 
 # ---------------------------------------------------------------------------
@@ -359,8 +388,8 @@ def load_config(env: Optional[Mapping[str, str]] = None) -> Config:
         return Config(**fields)
     except ConfigError as exc:
         # 消息里只含变量名/非法值/允许范围，凭据值不会出现在这里。
-        LOGGER.error('配置校验失败：%s', exc)
+        LOGGER.error('配置校验失败：{}', exc)
         raise
     except TypeError as exc:
-        LOGGER.error('配置装配失败：%s', exc)
+        LOGGER.error('配置装配失败：{}', exc)
         raise ConfigError(f'配置装配失败：{exc}')

@@ -27,11 +27,12 @@
 ``scheduler.py``（本模块）      到期判定 → 两维并发 → 汇总
 ============================  =========================================
 """
-import logging
 import threading
 import time
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
+from .channel_stats import TaskTimer, aggregate_channel_stats
 from .schedule import ChannelPlan, DueTable, ScheduleEntry
 from .scheduler_delivery import MessageDelivery
 from .scheduler_report import (
@@ -47,6 +48,7 @@ from .scheduler_tasks import (
     TaskCollector,
 )
 from .scheduler_types import (
+    ChannelRoundStats,
     DeliveryStats,
     InstanceTarget,
     SchedulerError,
@@ -57,7 +59,7 @@ from .scheduler_types import (
     metric_stream,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'CONSECUTIVE_FAILURE_ROUNDS',
@@ -133,8 +135,12 @@ class Scheduler:
         self._dropped_cumulative = 0
         self._baselines_restored = False
         self._delivery = MessageDelivery(producer, watermark)
+        self._timer = TaskTimer(self._clock)
         self._collector = TaskCollector(
-            executors=self._executors,
+            executors={
+                channel: self._timer.wrap(channel, executor)
+                for channel, executor in self._executors.items()
+            },
             instances=self._instances,
             max_workers=self._max_workers,
             clock=self._clock,
@@ -171,20 +177,21 @@ class Scheduler:
         """跑一轮：挑出到期通道 → 并发采集 → 投递 → 推进水位 → 汇总。"""
         started = self._clock()
         self._tick_index += 1
+        self._timer.reset()
         self._restore_baselines()
         due, skipped = self._due.split_due(started)
         tasks = self._build_tasks(due)
         mark = self._call_mark()
         outcomes, collect_failures = self._collect_all(tasks)
         round_calls = self._call_delta(mark)
-        totals, delivery_failures = self._deliver_all(outcomes)
+        totals, by_channel, delivery_failures = self._delivery.deliver_all(outcomes)
         self._persist_baselines()
         result = self._build_result(
             due, skipped, totals, collect_failures, delivery_failures,
             started, outcomes, round_calls,
         )
         self._note_round_health(result)
-        self._log_summary(result)
+        self._log_summary(result, self._channel_stats(due, outcomes, by_channel))
         return result
 
     def run(self, shutdown_event: Any) -> None:
@@ -255,30 +262,21 @@ class Scheduler:
             return 0
         return max(int(getter()) - int(mark), 0)
 
-    # -- 投递 -------------------------------------------------------------
+    # -- 通道级统计 -------------------------------------------------------
 
-    def _deliver_all(
-        self, outcomes: Mapping[Tuple[str, str], TaskOutcome]
-    ) -> Tuple[DeliveryStats, List[TaskFailure]]:
-        """把本轮采集到的消息逐组投出去（**逐组隔离**：一组失败不影响别的）。"""
-        planned = delivered = failed = alarms = 0
-        failures = []  # type: List[TaskFailure]
-        for key in sorted(outcomes):
-            channel, instance_id = key
-            stats, group_failures = self._delivery.deliver(
-                channel, instance_id, outcomes[key],
-            )
-            planned += stats.planned
-            delivered += stats.delivered
-            failed += stats.failed
-            alarms += stats.alarms
-            failures.extend(group_failures)
-        return (
-            DeliveryStats(
-                planned=planned, delivered=delivered,
-                failed=failed, alarms=alarms,
-            ),
-            failures,
+    def _channel_stats(
+        self,
+        due: Sequence[str],
+        outcomes: Mapping[Tuple[str, str], TaskOutcome],
+        by_channel: Mapping[str, DeliveryStats],
+    ) -> Tuple[ChannelRoundStats, ...]:
+        """本轮**每通道一行**的统计（wave-2 任务 2.5）。"""
+        return aggregate_channel_stats(
+            self._tick_index,
+            outcomes,
+            by_channel,
+            self._timer.spans(),
+            {channel: len(self._instances) for channel in due},
         )
 
     # -- 差分基线 ---------------------------------------------------------
@@ -299,7 +297,7 @@ class Scheduler:
             return
         self._watermark.export_baselines_into(self._delta_store)
         LOGGER.info(
-            '差分基线已从水位文件恢复到采集端：%d 条（含作用域键）', len(baselines),
+            '差分基线已从水位文件恢复到采集端：{} 条（含作用域键）', len(baselines),
         )
 
     def _persist_baselines(self) -> None:
@@ -356,10 +354,13 @@ class Scheduler:
             result, self._consecutive_failures,
         )
 
-    def _log_summary(self, result: TickResult) -> None:
+    def _log_summary(
+        self, result: TickResult, channel_stats: Sequence[ChannelRoundStats] = ()
+    ) -> None:
         """每轮汇总日志 —— 字段名与开发方案 §4.9.1 逐字一致。"""
         self._dropped_cumulative = log_round_summary(
             result, self._dropped_unsupported, self._dropped_cumulative,
+            channel_stats,
         )
 
     # -- 内部 -------------------------------------------------------------

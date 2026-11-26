@@ -15,14 +15,14 @@
    （基线键不含节点，不隔离会互相覆盖）。
 """
 
-import logging
 from typing import Any, Callable, Dict, List, Mapping, Sequence, Tuple
+from loguru import logger
 
 from ..mapping.message import build_metric_message
 from ..mapping.rules import evaluate
 from .command_center_helpers import host_node_id
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger.bind(channel="command_center")
 
 __all__ = ['build_messages']
 
@@ -52,7 +52,7 @@ def build_messages(
         # → 退回结果的第一个，但**要记 WARNING**，别静默错配。
         shared = list(values_by_node.values())[0]
         LOGGER.warning(
-            '承载资源名的 master（%s）不在本轮结果里 —— '
+            '承载资源名的 master（{}）不在本轮结果里 —— '
             '与节点无关的指标退回用第一个结果节点的值',
             host_id,
         )
@@ -107,8 +107,8 @@ def _rule_messages(
         # → 拿别的节点的值挂到承载节点上就是「值与资源名不同源」，
         #   本轮不产出（不静默错配）。
         LOGGER.warning(
-            '与节点无关的指标 %s 的承载 master 本轮没回结果，'
-            '且各 master 的值不一致（master_view=%s）—— 本轮不产出该指标',
+            '与节点无关的指标 {} 的承载 master 本轮没回结果，'
+            '且各 master 的值不一致（master_view={}）—— 本轮不产出该指标',
             rule.metric_code, rule.master_view,
         )
         return []

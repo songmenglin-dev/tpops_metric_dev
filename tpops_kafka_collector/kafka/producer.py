@@ -15,11 +15,11 @@
 
 记录 / 结果 / Key 规则在 :mod:`tpops_kafka_collector.kafka.records`。
 """
-import logging
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
+from loguru import logger
 
 from ..errors import TransientError
 from .records import (
@@ -31,7 +31,7 @@ from .records import (
     metric_record,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'ACKS',
@@ -120,7 +120,7 @@ def supported_kwargs(config: Mapping[str, Any]) -> Dict[str, Any]:
     known = set(KafkaProducer.DEFAULT_CONFIG)
     dropped = sorted(set(config) - known)
     if dropped:
-        LOGGER.info('当前 kafka-python 不支持的配置项已忽略：%s', dropped)
+        LOGGER.info('当前 kafka-python 不支持的配置项已忽略：{}', dropped)
     return {name: value for name, value in config.items() if name in known}
 
 
@@ -297,7 +297,7 @@ class MessageProducer:
             except Exception as exc:  # noqa: B902 —— 逐条兜住，转成失败原因
                 error = _reason(exc)
                 LOGGER.error(
-                    'Kafka 发送阶段失败：topic=%s key=%s：%s', topic, record.key, error
+                    'Kafka 发送阶段失败：topic={} key={}：{}', topic, record.key, error
                 )
             outcomes.append((record, future, error))
         return outcomes
@@ -310,7 +310,7 @@ class MessageProducer:
         try:
             self._producer.flush()
         except Exception as exc:  # noqa: B902 —— flush 失败由逐条确认结果体现
-            LOGGER.error('Kafka flush 失败：%s', _reason(exc))
+            LOGGER.error('Kafka flush 失败：{}', _reason(exc))
 
     def ensure_topics(self, admin: Optional[Any] = None) -> Tuple[str, ...]:
         """按配置的分区数建两个 Topic（已存在则跳过）。
@@ -353,7 +353,7 @@ class MessageProducer:
             try:
                 client.create_topics([topic], validate_only=False)
             except TopicAlreadyExistsError:
-                LOGGER.info('Topic 已存在，跳过创建：%s', name)
+                LOGGER.info('Topic 已存在，跳过创建：{}', name)
             except KafkaError as exc:
                 raise TransientError(f'创建 Kafka Topic 失败（{name}）：{exc}') from exc
 
@@ -367,7 +367,7 @@ class MessageProducer:
         try:
             close()
         except Exception as exc:  # noqa: B902 —— 关闭失败只记日志，不影响退出
-            LOGGER.error('关闭 Kafka 生产者失败：%s', _reason(exc))
+            LOGGER.error('关闭 Kafka 生产者失败：{}', _reason(exc))
 
 
 # --- 内部实现 ------------------------------------------------------------

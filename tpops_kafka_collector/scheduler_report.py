@@ -11,17 +11,26 @@
 规格 ``specs/delivery-and-state/spec.md`` 再点名两个：
 ``calls``（外部调用次数）与 ``delivery_rate``（投递成功率）。
 """
-import logging
-from typing import Any
+from typing import Any, Sequence
 
-LOGGER = logging.getLogger(__name__)
+from .scheduler_types import ChannelRoundStats
+from loguru import logger
+
+LOGGER = logger
 
 __all__ = [
     'CONSECUTIVE_FAILURE_ROUNDS',
     'EXTERNAL_CALL_BUDGET',
+    'log_channel_summaries',
     'log_round_summary',
     'note_round_health',
 ]
+
+#: 每通道汇总行的字段（顺序固定，名字不自定义）。
+CHANNEL_SUMMARY_FORMAT = (
+    'channel={} tick={} instances={} fetched={} mapped={} produced={} '
+    'failed={} windows={} calls={} elapsed={:.1f}s delivery_rate={:.3f}'
+)
 
 #: 单轮外部调用数预算（规格「单轮外部调用数与投递成功率可观测」）。
 EXTERNAL_CALL_BUDGET = 42
@@ -30,18 +39,41 @@ EXTERNAL_CALL_BUDGET = 42
 CONSECUTIVE_FAILURE_ROUNDS = 3
 
 
+def log_channel_summaries(stats: Sequence[ChannelRoundStats]) -> None:
+    """每通道一行汇总（决策 6）。
+
+    同一个通道的行打**两次**：
+
+    - 一次绑 ``channel=…`` → 进**该通道日志**（明细那一侧）；
+    - 一次只绑 ``collector.summary`` → 进**总日志**（一眼看全各通道的量）。
+
+    两行的**字段完全相同**（纯 ``k=v`` token，值里不含空格），
+    这样 JSON 模式下能摊平成顶层字段。
+    """
+    for item in stats:
+        args = (
+            item.channel, item.tick, item.instances, item.fetched, item.mapped,
+            item.produced, item.failed, item.windows, item.calls,
+            item.elapsed, item.delivery_rate,
+        )
+        LOGGER.bind(channel=item.channel).info(CHANNEL_SUMMARY_FORMAT, *args)
+        LOGGER.bind(logger_name='collector.summary').info(CHANNEL_SUMMARY_FORMAT, *args)
+
+
 def log_round_summary(
     result: Any,
     dropped_unsupported: int,
     dropped_cumulative: int,
+    channel_stats: Sequence[ChannelRoundStats] = (),
 ) -> int:
     """记每轮汇总日志；返回**更新后的**累计丢弃数。"""
+    log_channel_summaries(channel_stats)
     planned = result.mapped
     rate = (result.produced / float(planned)) if planned else 1.0
     LOGGER.info(
-        'tick=%d elapsed=%.1fs fetched=%d mapped=%d produced=%d failed=%d '
-        'dropped_unsupported=%d windows=%d alarms=%d calls=%d '
-        'delivery_rate=%.3f groups=%s skipped=%s',
+        'tick={} elapsed={:.1f}s fetched={} mapped={} produced={} failed={} '
+        'dropped_unsupported={} windows={} alarms={} calls={} '
+        'delivery_rate={:.3f} groups={} skipped={}',
         result.tick_index,
         result.duration_seconds,
         result.fetched,
@@ -58,12 +90,12 @@ def log_round_summary(
     )
     cumulative = dropped_cumulative + dropped_unsupported
     LOGGER.info(
-        '不可提供指标 %d 条（本轮不产出，累计 %d）',
+        '不可提供指标 {} 条（本轮不产出，累计 {}）',
         dropped_unsupported, cumulative,
     )
     if result.external_calls > EXTERNAL_CALL_BUDGET:
         LOGGER.warning(
-            '单轮外部调用数 %d 超出预算 %d —— 检查是否有重复采集',
+            '单轮外部调用数 {} 超出预算 {} —— 检查是否有重复采集',
             result.external_calls, EXTERNAL_CALL_BUDGET,
         )
     return cumulative
@@ -83,7 +115,7 @@ def note_round_health(result: Any, consecutive_failures: int) -> int:
     if count % CONSECUTIVE_FAILURE_ROUNDS != 0:
         return count
     LOGGER.error(
-        '连续 %d 轮采集全失败，采集链路可能已中断'
+        '连续 {} 轮采集全失败，采集链路可能已中断'
         '（进程不退出，交由 supervisor 重启）',
         count,
     )

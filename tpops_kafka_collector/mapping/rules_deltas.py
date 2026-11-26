@@ -18,12 +18,12 @@
 作用域并进维度键（``scope:key``），**键的形状仍然是二元组**，
 水位文件那一侧不用改。
 """
-import logging
 from typing import Any, Dict, Mapping, Optional, Tuple
+from loguru import logger
 
 from .rules_context import dimension_key
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'CounterDeltaStore',
@@ -68,7 +68,7 @@ class CounterDeltaStore:
         if previous is None:
             self._baselines[key] = (counter_value, now_ms)
             LOGGER.debug(
-                '首轮无基线，仅建立基线：metric=%s dims=%s scope=%s value=%s',
+                '首轮无基线，仅建立基线：metric={} dims={} scope={} value={}',
                 metric_code, dimensions, scope, counter_value,
             )
             return None, '首轮无基线，仅建立基线'
@@ -77,14 +77,14 @@ class CounterDeltaStore:
             self._baselines[key] = (counter_value, now_ms)
             LOGGER.error(
                 '累计计数回退，判定实例重启，丢弃本轮差分并重建基线：'
-                'metric=%s dims=%s scope=%s 上次=%s 本次=%s',
+                'metric={} dims={} scope={} 上次={} 本次={}',
                 metric_code, dimensions, scope, last_value, counter_value,
             )
             return None, '累计值回退，判定实例重启，丢弃本轮差分并重建基线'
         elapsed = (now_ms - last_ms) / 1000.0
         if elapsed <= 0:
             LOGGER.warning(
-                '采集时刻未推进，丢弃本轮差分：metric=%s dims=%s scope=%s now=%s last=%s',
+                '采集时刻未推进，丢弃本轮差分：metric={} dims={} scope={} now={} last={}',
                 metric_code, dimensions, scope, now_ms, last_ms,
             )
             return None, '采集时刻未推进，丢弃本轮差分'

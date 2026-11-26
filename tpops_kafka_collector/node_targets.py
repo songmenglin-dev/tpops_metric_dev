@@ -12,15 +12,15 @@
 3. **取不到就不采** —— 重试用尽后该实例**不参与采集**；
    **所有**实例都取不到 → **启动失败**（那等于平台不可达）。
 """
-import logging
 import time
 from typing import Any, Callable, Optional, Tuple
+from loguru import logger
 
 from .retry import RetryPolicy, retry_call
 from .scheduler_types import InstanceTarget
 from .tpops.instances import fetch_instance_nodes
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'NODE_FETCH_POLICY',
@@ -69,7 +69,7 @@ def build_instances(
             nodes = fetch_nodes(client, item.instance_id, effective, sleep)
         except Exception:  # noqa: B902 —— 该实例降级，不拖垮其它实例
             LOGGER.exception(
-                '取节点清单失败（实例 %s）—— 该实例不参与采集'
+                '取节点清单失败（实例 {}）—— 该实例不参与采集'
                 '（resourceName 会退化成只有 node_id，宁可不采）',
                 item.instance_id,
             )

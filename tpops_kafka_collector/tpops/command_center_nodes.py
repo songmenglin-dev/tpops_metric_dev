@@ -12,13 +12,13 @@
    否则同一个节点会被下发两次。
 3. **节点清单按实例缓存 1 小时** —— 不每轮都拉平台。
 """
-import logging
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple  # noqa: F401  （Dict/List 仅用于 # type: 注释）
+from loguru import logger
 
 from ..errors import ProtocolError
 from .client import GAUSSDB_V3, require_fields
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = ['EXECUTE_NODE_PATH', 'NODE_CACHE_TTL_SECONDS', 'MasterNodeRegistry']
 

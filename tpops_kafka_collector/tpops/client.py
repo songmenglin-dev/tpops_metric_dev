@@ -23,12 +23,12 @@
 
 凭据只从参数/环境变量进来，**不进日志、不进异常消息、不进 ``repr``**。
 """
-import logging
 import time
 from typing import Any, Callable, Dict, Mapping, Optional
 
 import requests
 import urllib3
+from loguru import logger
 
 from ..errors import (
     AuthError,
@@ -40,7 +40,7 @@ from ..errors import (
 from .call_tracking import CallCounter
 from .protocol import require_fields
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'AUTH_PATH',
@@ -193,7 +193,7 @@ class TpopsClient:
         并锁号）。消息里不含密码、不含 token。
         """
         self._raise_if_in_cooldown()
-        LOGGER.debug('TPOPS 认证请求：POST %s', AUTH_PATH)
+        LOGGER.debug('TPOPS 认证请求：POST {}', AUTH_PATH)
         try:
             response = self._send(
                 'POST',
@@ -228,13 +228,13 @@ class TpopsClient:
         self._token_expires_at = self._clock() + self._token_ttl(response)
         self._auth_failed_at = None
         self._auth_failure = None
-        LOGGER.debug('TPOPS 认证成功，token 有效期 %s 秒', self._token_expires_at)
+        LOGGER.debug('TPOPS 认证成功，token 有效期 {} 秒', self._token_expires_at)
 
     def _remember_auth_failure(self, error: BaseException) -> None:
         """记下认证失败，进入静默期（期内不再发起认证请求）。"""
         self._auth_failed_at = self._clock()
         self._auth_failure = error
-        LOGGER.error('TPOPS 认证失败：%s', error)
+        LOGGER.error('TPOPS 认证失败：{}', error)
 
     def _raise_if_in_cooldown(self) -> None:
         """静默期内直接复用上次的失败结论，**不发请求**。"""
@@ -299,7 +299,7 @@ class TpopsClient:
         response = self._send(method, path, token, params, payload)
         if response.status_code == 401:
             LOGGER.warning(
-                'TPOPS 业务请求返回 401，强制刷新 token 后重试一次：%s %s', method, path
+                'TPOPS 业务请求返回 401，强制刷新 token 后重试一次：{} {}', method, path
             )
             token = self.token(refresh=True)
             response = self._send(method, path, token, params, payload)
@@ -320,7 +320,7 @@ class TpopsClient:
         headers = {LANGUAGE_HEADER: DEFAULT_LANGUAGE}
         if token:
             headers[TOKEN_HEADER] = token
-        LOGGER.debug('TPOPS 请求：%s %s', method, path)
+        LOGGER.debug('TPOPS 请求：{} {}', method, path)
         # **真正发出的请求**才计数 —— 计数点必须在「发出去」这一刻，
         # 不能在调用入口（否则重试 / 401 刷新会被漏掉或重复计）。
         self._calls.record()
@@ -335,7 +335,7 @@ class TpopsClient:
             )
         except requests.exceptions.RequestException as exc:
             raise self._transport_error(exc, method, path) from exc
-        LOGGER.debug('TPOPS 响应：%s %s -> HTTP %s', method, path, response.status_code)
+        LOGGER.debug('TPOPS 响应：{} {} -> HTTP {}', method, path, response.status_code)
         return response
 
     def _transport_error(

@@ -29,11 +29,11 @@
 重试判定**不在本模块另写一份** —— 统一走 ``errors.is_retryable``；
 重试编排走 ``retry.retry_call``。
 """
-import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple  # noqa: F401  （Dict 仅用于 # type: 注释）
+from loguru import logger
 
 from ..errors import ProtocolError, TransientError
 from ..retry import RetryPolicy, retry_call
@@ -46,7 +46,7 @@ from .command_center_result import (
     parse_result_rows,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'CommandCenterClient',
@@ -200,7 +200,7 @@ class CommandCenterClient:
             return replace(outcome, attempts=attempts[0])
         except Exception as exc:  # noqa: B902 —— 判定后原样记录，不静默吞
             LOGGER.error(
-                '命令中心 SQL 执行失败（%s）：%s', _sql_label(sql_text), exc
+                '命令中心 SQL 执行失败（{}）：{}', _sql_label(sql_text), exc
             )
             return SqlOutcome(
                 sql_text=sql_text,

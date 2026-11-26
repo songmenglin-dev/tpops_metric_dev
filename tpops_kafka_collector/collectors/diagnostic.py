@@ -32,9 +32,9 @@
 （消息组装走 ``mapping/message.py``，序列化走 ``kafka/serializer.py``）。
 """
 
-import logging
 import time
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from ..errors import MappingError
 from ..mapping.loader import LoadedMapping
@@ -46,7 +46,7 @@ from ..tpops.diagnostic import (
     fetch_diagnostic_collection,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger.bind(channel="diagnostic")
 
 __all__ = ['DiagnosticCollector', 'SQL_TEXT_FIELDS']
 
@@ -150,7 +150,7 @@ class DiagnosticCollector:
             )
             if not rows:
                 LOGGER.warning(
-                    '诊断优化集合 %s 本轮为空（%s）—— 计数值按 0 记，明细类指标不产出',
+                    '诊断优化集合 {} 本轮为空（{}）—— 计数值按 0 记，明细类指标不产出',
                     collection, instance_id,
                 )
             collections[collection] = self._sanitize_rows(rows)
@@ -184,7 +184,7 @@ class DiagnosticCollector:
         context = contexts.get(collection or '')
         if context is None:
             LOGGER.error(
-                'C 类指标 %s 声明的集合 %s 本轮没有取到 —— 不产出该指标',
+                'C 类指标 {} 声明的集合 {} 本轮没有取到 —— 不产出该指标',
                 rule.metric_code, collection,
             )
             return ()
@@ -192,13 +192,13 @@ class DiagnosticCollector:
         for dimensions, value, timestamp in evaluate(rule, context):
             if value is None:
                 LOGGER.warning(
-                    'C 类指标 %s 本轮取不到值 —— 不产出该条消息（缺值不填 0）',
+                    'C 类指标 {} 本轮取不到值 —— 不产出该条消息（缺值不填 0）',
                     rule.metric_code,
                 )
                 continue
             if isinstance(value, (list, tuple)) and not value:
                 LOGGER.warning(
-                    'C 类指标 %s 本轮没有可产出的明细 —— 不产出该条消息',
+                    'C 类指标 {} 本轮没有可产出的明细 —— 不产出该条消息',
                     rule.metric_code,
                 )
                 continue

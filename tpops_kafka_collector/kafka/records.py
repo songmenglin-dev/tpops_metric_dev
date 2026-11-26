@@ -10,14 +10,14 @@
 - **序列化**：``payload`` 一律由 :mod:`tpops_kafka_collector.kafka.serializer`
   产出（全仓唯一的 ``json.dumps`` 出口），本模块不自己拼 JSON。
 """
-import logging
 from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Tuple
+from loguru import logger
 
 from ..errors import ProduceError
 from .serializer import serialize_alarm, serialize_metric
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'BatchResult',

@@ -33,9 +33,9 @@
 采集器**不推进水位**（那是 wave 3 调度器的职责），只返回结果。
 """
 
-import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from ..mapping.decode import decode_merged, merge_pages
 from ..mapping.rules_deltas import CounterDeltaStore, ScopedCounterDeltaStore
@@ -58,7 +58,7 @@ from .command_center_helpers import (
     tier_of,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger.bind(channel="command_center")
 
 __all__ = [
     'COMMAND_CENTER_SOURCE',
@@ -232,7 +232,7 @@ class CommandCenterCollector:
             # 认出来并停下，否则采集器会**无限翻页**把整轮卡死。
             if same_as_previous(signatures, previous):
                 LOGGER.warning(
-                    '命令中心返回了与上一页相同的内容（实例 %s，offset %d）—— '
+                    '命令中心返回了与上一页相同的内容（实例 {}，offset {}）—— '
                     '平台可能未生效 offset，本轮停止翻页',
                     instance_id, offset,
                 )
@@ -253,7 +253,7 @@ class CommandCenterCollector:
         if is_output_limit_error(outcome.error) and page_size > MIN_PAGE_SIZE:
             smaller = max(MIN_PAGE_SIZE, page_size // 2)
             LOGGER.warning(
-                '命令中心输出超过平台上限（%d B），页容量 %d → %d 重试',
+                '命令中心输出超过平台上限（{} B），页容量 {} → {} 重试',
                 OUTPUT_LIMIT_BYTES, page_size, smaller,
             )
             retry_bodies, retry_pages = self._fetch_pages(
@@ -264,7 +264,7 @@ class CommandCenterCollector:
             self._page_size = smaller
             return retry_bodies, retry_pages
         LOGGER.error(
-            '命令中心取数失败（实例 %s，第 %d 页）：%s',
+            '命令中心取数失败（实例 {}，第 {} 页）：{}',
             instance_id, offset, outcome.error,
         )
         return None, 0
@@ -280,8 +280,8 @@ class CommandCenterCollector:
             size = approx_size_bytes(task.rows)
             if size >= threshold:
                 LOGGER.warning(
-                    '命令中心单个节点的结果接近平台输出上限（%d / %d B，'
-                    '节点 %s，实例 %s）—— 建议缩小页容量',
+                    '命令中心单个节点的结果接近平台输出上限（{} / {} B，'
+                    '节点 {}，实例 {}）—— 建议缩小页容量',
                     size, OUTPUT_LIMIT_BYTES, task.node_id, instance_id,
                 )
 
@@ -334,7 +334,7 @@ class CommandCenterCollector:
         getter = getattr(self._cc, 'master_nodes', None)
         if getter is None:
             LOGGER.error(
-                '命令中心客户端没有 master_nodes（实例 %s）—— '
+                '命令中心客户端没有 master_nodes（实例 {}）—— '
                 '节点身份换不出来，资源名会指错节点',
                 instance_id,
             )
@@ -343,7 +343,7 @@ class CommandCenterCollector:
             return tuple(getter(instance_id))
         except Exception as exc:  # noqa: B902 —— 取不到清单不该毁掉整轮采集
             LOGGER.error(
-                '命令中心节点清单取不到（实例 %s）：%s —— '
+                '命令中心节点清单取不到（实例 {}）：{} —— '
                 '节点身份换不出来，资源名会指错节点',
                 instance_id, exc,
             )

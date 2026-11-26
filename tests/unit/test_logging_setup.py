@@ -40,15 +40,19 @@ def test_info_level_is_silenced_when_level_is_warning():
 
 
 def test_text_format_is_time_level_module_message():
-    """text 格式：时间 | 级别 | 模块 | 消息。"""
+    """text 格式：loguru 原生形态 —— 时间 | 级别 | 模块:函数:行号 - 消息。
+
+    wave-2 起 text 用的是 loguru 原生格式（不再是自研的 logback pattern），
+    所以这里断言的是「原生形态」：三段、级别单独一段、末尾是消息。
+    """
     stream = _stream('INFO', 'text')
     logging.getLogger('tpops_kafka_collector.demo').info('一条消息')
     line = _records(stream)[0]
     parts = [part.strip() for part in line.split('|')]
-    assert len(parts) == 4, line
+    assert len(parts) == 3, line
     assert parts[1] == 'INFO'
-    assert parts[2] == 'tpops_kafka_collector.demo'
-    assert parts[3] == '一条消息'
+    assert 'test_logging_setup' in parts[2], line
+    assert parts[2].endswith('一条消息'), line
 
 
 def test_json_format_emits_one_json_object_per_line():
@@ -114,8 +118,12 @@ def test_noisy_third_party_loggers_are_quieted():
     assert logging.getLogger('urllib3').level == logging.WARNING
 
 
-def test_output_goes_to_stderr_by_default():
-    """默认输出到 stderr（常驻进程的标准做法）。"""
+def test_output_goes_to_stderr_by_default(capsys):
+    """默认输出到 stderr（常驻进程的标准做法）。
+
+    wave-2 起根 handler 是**转发器**（把 stdlib 日志送进 loguru），
+    真正写 stderr 的是 loguru 的 sink —— 所以这里断言「输出真的落到 stderr」。
+    """
     setup_logging('INFO', 'text')
     root = logging.getLogger()
     owned = [
@@ -123,4 +131,5 @@ def test_output_goes_to_stderr_by_default():
         if getattr(handler, '_tpops_collector_handler', False)
     ]
     assert owned, '本模块应装了一个 handler'
-    assert owned[0].stream is not None
+    logging.getLogger('tpops_kafka_collector.demo').info('落到 stderr 了')
+    assert '落到 stderr 了' in capsys.readouterr().err

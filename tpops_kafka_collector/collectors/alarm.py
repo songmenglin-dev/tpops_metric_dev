@@ -25,10 +25,10 @@
 消息组装用 ``mapping/message.py`` 的 :func:`build_alarm_message`，
 序列化由 ``kafka/serializer.py`` 独家负责 —— 本模块不拼 JSON 消息。
 """
-import logging
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from ..ids import alarm_idempotency_key
 from ..mapping.message import build_alarm_message
@@ -36,7 +36,7 @@ from ..mapping.nodes import select_master_node
 from ..mapping.table import AlarmDefinition, build_event_alarm_definition
 from ..tpops.alarms import DEFAULT_LIMIT, fetch_all_alarm_records
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger.bind(channel="alarm")
 
 __all__ = ['AlarmCollectionResult', 'AlarmMessage', 'collect_alarms']
 
@@ -116,7 +116,7 @@ def collect_alarms(
     messages += _build_messages(
         mapping, nodes, history_convergence, history_index, instance_id, limit_ms)
     LOGGER.info(
-        '告警采集完成：收敛 %d 条 + 明细 %d 行 → 产出 %d 条消息',
+        '告警采集完成：收敛 {} 条 + 明细 {} 行 → 产出 {} 条消息',
         len(active_convergence) + len(history_convergence),
         len(active_detail) + len(history_detail),
         len(messages),
@@ -234,7 +234,7 @@ def _node_context(
         return {'node_id': node_id, 'host_ip': host_ip}
     if identities:
         LOGGER.info(
-            '一条告警命中 %d 个节点，节点身份回填不了 → 落第一个 master CN'
+            '一条告警命中 {} 个节点，节点身份回填不了 → 落第一个 master CN'
             '（真实节点在 details 里）',
             len(identities),
         )
@@ -259,7 +259,7 @@ def _definition_for(
         return definition
     event_metric = (mapping.alarm_rules or {}).get('event_metric') or {}
     LOGGER.warning(
-        '告警定义缺失：alarm_id=%s（平台新告警？），按统一指标名 %s 兜底挂载',
+        '告警定义缺失：alarm_id={}（平台新告警？），按统一指标名 {} 兜底挂载',
         alarm_id, event_metric.get('metric_code'),
     )
     return build_event_alarm_definition(
@@ -306,7 +306,7 @@ def _as_millis(watermark: Any) -> Optional[int]:
     try:
         return int(str(watermark).strip())
     except (TypeError, ValueError):
-        LOGGER.warning('告警水位无法解析为毫秒时间戳，按无水位处理：%r', watermark)
+        LOGGER.warning('告警水位无法解析为毫秒时间戳，按无水位处理：{!r}', watermark)
         return None
 
 
@@ -323,14 +323,14 @@ def _warn_history_gap(
     latest = _latest_history_time(history_rows)
     if latest is None:
         LOGGER.info(
-            '历史告警为空（平台 %d 天保留窗口内没有历史告警），无法核对缺口',
+            '历史告警为空（平台 {} 天保留窗口内没有历史告警），无法核对缺口',
             retention_days,
         )
         return
     age_days = (now_ms - latest) / float(MILLIS_PER_DAY)
     if age_days > retention_days:
         LOGGER.warning(
-            '告警历史缺口告警：最新历史告警时间距今 %.1f 天，超过平台 %d 天保留窗口；'
+            '告警历史缺口告警：最新历史告警时间距今 {:.1f} 天，超过平台 {} 天保留窗口；'
             '该时间段平台侧已无更早数据，采集端无法补回',
             age_days, retention_days,
         )
@@ -347,7 +347,7 @@ def _warn_downtime_gap(
     idle_days = (now_ms - limit_ms) / float(MILLIS_PER_DAY)
     if idle_days > retention_days:
         LOGGER.warning(
-            '告警历史缺口告警：告警水位距今 %.1f 天，超过平台 %d 天保留窗口；'
+            '告警历史缺口告警：告警水位距今 {:.1f} 天，超过平台 {} 天保留窗口；'
             '停机期间（更早）的告警平台侧已无数据，采集端无法补回',
             idle_days, retention_days,
         )

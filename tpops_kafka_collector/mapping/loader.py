@@ -23,10 +23,10 @@
 """
 
 import json
-import logging
 import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Tuple
+from loguru import logger
 
 from ..errors import MappingError, ProtocolError
 from .table import AlarmDefinition, MetricRule, build_alarm_definition
@@ -46,7 +46,7 @@ __all__ = [
     'check_rule_entries', 'check_source_columns', 'load_mapping', 'validate_mapping',
 ]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 #: 包内映射数据目录（**不依赖仓库根**）。
 PACKAGE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
@@ -151,7 +151,7 @@ def load_mapping(
     bundle = _load_files(data_dir or PACKAGE_DATA_DIR)
     if validate:
         validate_mapping(bundle)
-    LOGGER.info('映射表加载完成：%d 条指标规则 / %d 条客户指标 / %d 条告警定义',
+    LOGGER.info('映射表加载完成：{} 条指标规则 / {} 条客户指标 / {} 条告警定义',
                 len(bundle.metric_rules), len(bundle.customer_metrics),
                 len(bundle.alarm_rules.get('definitions') or {}))
     return bundle

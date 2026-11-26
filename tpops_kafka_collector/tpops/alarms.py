@@ -17,15 +17,15 @@
 
 本模块只做「发请求 + 翻页 + 结构校验」，不组装消息（那是映射层与采集器的职责）。
 """
-import logging
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Tuple
+from loguru import logger
 
 from ..errors import TpopsError
 from .client import RDS_V3
 from .protocol import require_fields
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'ALARM_RECORDS_PATH',
@@ -101,7 +101,7 @@ def build_query_body(
         for name, value in (('alarm_id', alarm_id), ('instance_id', instance_id)):
             if value:
                 LOGGER.warning(
-                    '收敛形态下平台侧 %s 过滤无效，已忽略（改由本地归并）：%s',
+                    '收敛形态下平台侧 {} 过滤无效，已忽略（改由本地归并）：{}',
                     name, value,
                 )
     else:
@@ -176,12 +176,12 @@ def fetch_all_alarm_records(
         offset += limit
         if pages >= max_pages:
             LOGGER.warning(
-                '告警记录翻页达到上限 %d 页（已取 %d 条 / total_count=%d），后续未取',
+                '告警记录翻页达到上限 {} 页（已取 {} 条 / total_count={}），后续未取',
                 max_pages, len(collected), page.total_count,
             )
             break
     LOGGER.debug(
-        '告警记录拉取完成：is_active=%s is_convergence=%s 共 %d 条（%d 页）',
+        '告警记录拉取完成：is_active={} is_convergence={} 共 {} 条（{} 页）',
         is_active, is_convergence, len(collected), pages,
     )
     return tuple(collected)

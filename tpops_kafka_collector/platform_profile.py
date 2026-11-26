@@ -29,18 +29,18 @@
 改画像文件（可手工编辑）后下一轮启动生效。
 """
 import json
-import logging
 import os
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Set, Tuple
+from loguru import logger
 
 from .errors import TpopsError
 from .tpops.instances import fetch_instances
 from .watermark import _atomic_write_json
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'PROFILE_FILENAME',
@@ -201,7 +201,7 @@ class PlatformProfile:
         if os.path.exists(path):
             profile = cls.load(path)
             LOGGER.info(
-                '平台画像已从固化文件读取（不重新发现）：%s（%d 个实例）',
+                '平台画像已从固化文件读取（不重新发现）：{}（{} 个实例）',
                 path, len(profile.instances),
             )
             if reconcile:
@@ -210,7 +210,7 @@ class PlatformProfile:
         profile = cls.discover(client, node_registry=node_registry, clock=clock)
         cls.save(path, profile)
         LOGGER.info(
-            '平台画像已固化：%s（%d 个实例，发现时刻 %s）',
+            '平台画像已固化：{}（{} 个实例，发现时刻 {}）',
             path, len(profile.instances), profile.discovered_at,
         )
         return profile
@@ -236,7 +236,7 @@ class PlatformProfile:
                 engine_version=str(meta.engine_version or ''),
                 master_count=_master_count(node_registry, meta.instance_id),
             ))
-        LOGGER.info('平台画像发现完成：%d 个实例', len(entries))
+        LOGGER.info('平台画像发现完成：{} 个实例', len(entries))
         return cls(PROFILE_VERSION, tuple(entries), _utc_now_iso(clock))
 
     # -- 核对 -------------------------------------------------------------
@@ -292,7 +292,7 @@ def _compare_instance(
     """
     if meta is None:
         LOGGER.error(
-            '平台画像里的实例 %s（%s）在平台实例列表里已不存在 —— '
+            '平台画像里的实例 {}（{}）在平台实例列表里已不存在 —— '
             '需人工确认（被删除或重建？），本轮不采集它',
             item.instance_id, item.instance_name or '-',
         )
@@ -308,7 +308,7 @@ def _compare_engine(item: ProfileInstance, meta: Any) -> bool:
     if current_engine == item.engine_name:
         return False
     LOGGER.warning(
-        '实例 %s 的引擎名与画像不一致（画像 %s → 平台 %s）—— '
+        '实例 {} 的引擎名与画像不一致（画像 {} → 平台 {}）—— '
         '平台升级后指标码可能已变，映射表可能需要重新生成',
         item.instance_id, item.engine_name or '-', current_engine or '-',
     )
@@ -323,7 +323,7 @@ def _compare_master_count(item: ProfileInstance, node_registry: Any) -> bool:
     if current_master == item.master_count:
         return False
     LOGGER.warning(
-        '实例 %s 的 master 节点数与画像不一致（画像 %d → 当前 %d）—— '
+        '实例 {} 的 master 节点数与画像不一致（画像 {} → 当前 {}）—— '
         '拓扑变了（扩缩容），多 master 归集口径要复核',
         item.instance_id, item.master_count, current_master,
     )
@@ -342,7 +342,7 @@ def _scan_added(platform: Sequence[Any], recorded: Set[str]) -> List[str]:
             continue
         added.append(meta.instance_id)
         LOGGER.warning(
-            '平台新增了实例 %s（%s）—— 平台画像里没有记录，需人工更新'
+            '平台新增了实例 {}（{}）—— 平台画像里没有记录，需人工更新'
             '（删除画像文件可重新发现）',
             meta.instance_id, meta.name or '-',
         )
@@ -361,7 +361,7 @@ def _master_count(node_registry: Any, instance_id: str) -> int:
         nodes = node_registry.nodes(instance_id)
     except Exception as exc:  # noqa: B902 —— 取不到清单只影响这一个计数
         LOGGER.error(
-            '取 master 节点清单失败（实例 %s）：%s —— master_count 记 0',
+            '取 master 节点清单失败（实例 {}）：{} —— master_count 记 0',
             instance_id, exc,
         )
         return 0

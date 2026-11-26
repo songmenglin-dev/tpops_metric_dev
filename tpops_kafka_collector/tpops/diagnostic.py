@@ -26,13 +26,13 @@
 本模块**只懂 TPOPS**：不发消息、不认识客户字段、不做业务计算。
 """
 
-import logging
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from ..errors import MappingError, ProtocolError
 from .client import GAUSSDB_V3
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'COLLECTION_PATHS',
@@ -225,14 +225,14 @@ def _parse_collection(
         )
     if collection not in body:
         LOGGER.warning(
-            '诊断优化接口返回体里没有集合 %s（%s）—— 本轮按空集合处理',
+            '诊断优化接口返回体里没有集合 {}（{}）—— 本轮按空集合处理',
             collection, endpoint,
         )
         return ()
     rows = body.get(collection)
     if rows is None:
         LOGGER.warning(
-            '诊断优化接口的集合 %s 是 null（%s）—— 本轮按空集合处理',
+            '诊断优化接口的集合 {} 是 null（{}）—— 本轮按空集合处理',
             collection, endpoint,
         )
         return ()

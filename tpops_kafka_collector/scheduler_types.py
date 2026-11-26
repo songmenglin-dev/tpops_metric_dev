@@ -12,16 +12,17 @@
 告警水位 ``stream``            ``f'{instance_id}:alarm'``
 ============================  ==========================================
 """
-import logging
 from dataclasses import dataclass
 from typing import Any, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from .errors import TpopsError
 from .ids import metric_idempotency_key
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
+    'ChannelRoundStats',
     'DeliveryStats',
     'InstanceTarget',
     'SchedulerError',
@@ -107,6 +108,40 @@ class DeliveryStats:
     delivered: int = 0
     failed: int = 0
     alarms: int = 0
+
+
+@dataclass(frozen=True)
+class ChannelRoundStats:
+    """**一个通道**一轮的统计（不可变）。
+
+    字段名与每通道汇总日志**逐字一致**（不自创）——
+    客户侧日志平台按这些字段取值。
+
+    :param channel: 通道名（``monitor`` / ``command_center`` / …）。
+    :param tick: 轮次序号。
+    :param instances: 本轮该通道参与的实例数。
+    :param fetched: 该通道各实例 ``TaskOutcome.fetched`` 之和。
+    :param mapped: 该通道各实例 ``DeliveryStats.planned`` 之和
+        （**幂等过滤后**实际尝试投递的消息数）。
+    :param produced: 该通道各实例 ``DeliveryStats.delivered`` 之和。
+    :param failed: 该通道各实例 ``DeliveryStats.failed`` 之和。
+    :param windows: 该通道各实例 ``TaskOutcome.windows`` 之和。
+    :param calls: 该通道各实例 ``TaskOutcome.external_calls`` 之和。
+    :param elapsed: 该通道本轮的墙钟耗时（秒）。
+    :param delivery_rate: ``produced / mapped``（``mapped=0`` 时记 1.000）。
+    """
+
+    channel: str
+    tick: int = 0
+    instances: int = 0
+    fetched: int = 0
+    mapped: int = 0
+    produced: int = 0
+    failed: int = 0
+    windows: int = 0
+    calls: int = 0
+    elapsed: float = 0.0
+    delivery_rate: float = 1.0
 
 
 @dataclass(frozen=True)

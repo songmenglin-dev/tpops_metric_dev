@@ -6,11 +6,11 @@
 - 时间戳是客户字段 ``clock`` 的来源（A 类取与 value 同一下标的
   ``timestamps[i]``，其余取采集完成时刻）。
 """
-import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 # 取值结果：(维度键值, 值, 数据时间戳)
 MetricValue = Tuple[Dict[str, Any], Any, Optional[int]]
@@ -186,7 +186,7 @@ def grouped_items(
     for key, group_rows in groups.items():
         if len(group_rows) > 1:
             LOGGER.warning(
-                '分组键重复：指标 %s 的 group_by=%s 命中 %d 行同名对象，维度值不唯一',
+                '分组键重复：指标 {} 的 group_by={} 命中 {} 行同名对象，维度值不唯一',
                 metric_rule.metric_code, list(group_by), len(group_rows),
             )
         for row in group_rows:

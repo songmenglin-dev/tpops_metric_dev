@@ -13,12 +13,12 @@
    （规格「放弃等待该请求 …… 不挂死」）；线程池**不等待回收**
    （``shutdown(wait=False)``），不让本轮卡在等 worker 上。
 """
-import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from loguru import logger
 
 from .scheduler_types import (
     InstanceTarget,
@@ -28,7 +28,7 @@ from .scheduler_types import (
     reason,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 __all__ = [
     'DEFAULT_SHUTDOWN_GRACE_SECONDS',
@@ -100,7 +100,7 @@ class TaskCollector:
             return outcomes, failures
         workers = min(len(tasks), self._max_workers)
         LOGGER.info(
-            '本轮到期 %d 个通道 × %d 个实例 = %d 个任务，线程池并发 %d 个',
+            '本轮到期 {} 个通道 × {} 个实例 = {} 个任务，线程池并发 {} 个',
             len(set(task.channel for task in tasks)),
             len(self._instances),
             len(tasks),
@@ -149,7 +149,7 @@ class TaskCollector:
             if deadline is None and self._is_shutting_down():
                 deadline = self._clock() + self._shutdown_grace
                 LOGGER.warning(
-                    '收到停机信号 —— 在途任务最多再等 %s 秒，超时就放弃等待',
+                    '收到停机信号 —— 在途任务最多再等 {} 秒，超时就放弃等待',
                     self._shutdown_grace,
                 )
             timeout = self._wait_slice(deadline)
@@ -183,7 +183,7 @@ class TaskCollector:
         """一个采集组失败 —— 记失败清单（其余组不受影响）。"""
         LOGGER.exception(
             '采集组失败（该组数据留待下轮，其余组不受影响）：'
-            'channel=%s instance=%s',
+            'channel={} instance={}',
             task.channel, task.instance.instance_id,
         )
         return TaskFailure(
@@ -196,8 +196,8 @@ class TaskCollector:
     def _timeout_failure(self, task: Task) -> TaskFailure:
         """在途任务超时被放弃 —— 记一条失败（该组数据留待下轮重投）。"""
         LOGGER.error(
-            '在途任务超过 %s 秒仍未结束 —— 放弃等待（该组数据留待下轮重投）：'
-            'channel=%s instance=%s',
+            '在途任务超过 {} 秒仍未结束 —— 放弃等待（该组数据留待下轮重投）：'
+            'channel={} instance={}',
             self._shutdown_grace, task.channel, task.instance.instance_id,
         )
         return TaskFailure(

@@ -25,11 +25,11 @@ import ``tools/``（设计决策 2），但渲染必须与生成器**同源同�
 """
 
 import json
-import logging
 import os
 import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Tuple
+from loguru import logger
 
 from ..config import Config
 from ..errors import MappingError
@@ -41,7 +41,7 @@ __all__ = [
     'select_views',
 ]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 #: 包内映射数据目录（**不依赖仓库根、不依赖 cwd**）。
 PACKAGE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')

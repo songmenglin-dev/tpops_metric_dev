@@ -49,13 +49,13 @@
   数值正则的前视条件把它排除在外。
 """
 
-import logging
 import re
 from typing import Any, Tuple
+from loguru import logger
 
 from ..errors import MappingError
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logger
 
 #: 慢 SQL 文本的默认上限（与 ``Config.sql_text_max_length`` 的默认值一致）
 DEFAULT_MAX_LENGTH = 512
@@ -184,7 +184,7 @@ def sanitize_sql(
     if len(result) < len(text):
         # 只记长度，不记内容 —— 日志里不能出现业务 SQL。
         LOGGER.warning(
-            '慢 SQL 文本已截断：原长 %d 字符 → 保留 %d 字符（上限 %d，脱敏 %s）',
+            '慢 SQL 文本已截断：原长 {} 字符 → 保留 {} 字符（上限 {}，脱敏 {}）',
             len(text), len(result), max_length,
             '开' if masking_enabled else '关',
         )

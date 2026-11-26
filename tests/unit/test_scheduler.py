@@ -805,6 +805,66 @@ def test_summary_log_uses_the_agreed_field_names(caplog):
     assert 'dropped_unsupported=3' in caplog.text
 
 
+def test_each_due_channel_gets_its_own_summary_row(caplog):
+    """每个**到期且完成**的通道都有一行汇总（wave-2 决策 6）。
+
+    同一行打两次：一次绑 ``channel=…``（进通道日志）、
+    一次绑 ``collector.summary``（进总日志）—— 两行字段完全相同。
+    """
+    scheduler = make_scheduler(
+        {
+            CHANNEL_MONITOR: recorder(
+                CHANNEL_MONITOR, [], messages=(metric_message('metric-1'),),
+                end_time_ms=1234,
+            ),
+            CHANNEL_COMMAND_CENTER: recorder(
+                CHANNEL_COMMAND_CENTER, [], messages=(metric_message('metric-2'),),
+                end_time_ms=1234,
+            ),
+        },
+        plans=make_plans(((CHANNEL_MONITOR, 30), (CHANNEL_COMMAND_CENTER, 30))),
+    )
+    with caplog.at_level('INFO'):
+        scheduler.tick()
+
+    rows = [r.getMessage() for r in caplog.records
+            if r.getMessage().startswith('channel=')]
+    # 两个通道 × 两次（通道日志 + 总日志）
+    assert len(rows) == 4, rows
+    assert sum('channel=monitor' in row for row in rows) == 2, rows
+    assert sum('channel=command_center' in row for row in rows) == 2, rows
+    for row in rows:
+        keys = [token.split('=')[0] for token in row.split()]
+        assert keys == [
+            'channel', 'tick', 'instances', 'fetched', 'mapped', 'produced',
+            'failed', 'windows', 'calls', 'elapsed', 'delivery_rate',
+        ], row
+
+
+def test_a_channel_that_ran_nothing_gets_no_summary_row(caplog):
+    """没跑成的通道不出汇总行（它的失败由整体行体现）。"""
+    def failing(instance):
+        raise RuntimeError('平台挂了')
+
+    scheduler = make_scheduler(
+        {
+            CHANNEL_MONITOR: failing,
+            CHANNEL_COMMAND_CENTER: recorder(
+                CHANNEL_COMMAND_CENTER, [], messages=(metric_message('metric-2'),),
+                end_time_ms=1234,
+            ),
+        },
+        plans=make_plans(((CHANNEL_MONITOR, 30), (CHANNEL_COMMAND_CENTER, 30))),
+    )
+    with caplog.at_level('INFO'):
+        scheduler.tick()
+
+    rows = [r.getMessage() for r in caplog.records
+            if r.getMessage().startswith('channel=')]
+    assert all('channel=monitor' not in row for row in rows), rows
+    assert any('channel=command_center' in row for row in rows), rows
+
+
 def test_external_call_budget_overrun_is_logged(caplog):
     """单轮外部调用数超预算 → WARNING。"""
     scheduler = make_scheduler(

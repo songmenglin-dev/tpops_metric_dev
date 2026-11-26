@@ -58,6 +58,7 @@ def _fake_wheels(directory):
     for name in ('requests-2.31.0-py3-none-any.whl',
                  'urllib3-2.0.7-py3-none-any.whl',
                  'kafka_python-2.0.2-py2.py3-none-any.whl',
+                 'loguru-0.8.0-py3-none-any.whl',
                  'certifi-2024.2.2-py3-none-any.whl'):
         with open(os.path.join(directory, name), 'wb') as handle:
             handle.write(b'')
@@ -85,8 +86,9 @@ def bundle(tmp_path):
 # 依赖拆分
 # --------------------------------------------------------------------------
 def test_runtime_requirements_declares_exactly_the_runtime_deps():
-    """运行时依赖 = 生产代码真正 import 的三个包。"""
-    assert _requirement_names(RUNTIME_REQUIREMENTS) == ['requests', 'kafka-python', 'urllib3']
+    """运行时依赖 = 生产代码真正 import 的四个包（wave-2 起含 loguru）。"""
+    assert _requirement_names(RUNTIME_REQUIREMENTS) == [
+        'requests', 'kafka-python', 'urllib3', 'loguru']
 
 
 def test_runtime_requirements_excludes_test_and_tool_only_packages():
@@ -209,7 +211,7 @@ def test_build_bundle_rejects_platform_specific_wheel(tmp_path):
 
 def test_assert_arch_independent_accepts_pure_wheels(tmp_path):
     wheels = _fake_wheels(str(tmp_path / 'w'))
-    assert len(bdb.assert_arch_independent(wheels)) == 4
+    assert len(bdb.assert_arch_independent(wheels)) == 5  # 含 wave-2 新增的 loguru
 
 
 # --------------------------------------------------------------------------
